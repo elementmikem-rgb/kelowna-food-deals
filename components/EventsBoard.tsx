@@ -6,7 +6,8 @@ import type { EventType } from "@/db/schema";
 import { todayDowPacific, dowFullName } from "@/lib/time";
 import { DayTabs } from "./DayTabs";
 import { EventTypeFilter } from "./EventTypeFilter";
-import { EventCard } from "./EventCard";
+import { EventVenueGroup } from "./EventVenueGroup";
+import { groupByVenue } from "@/lib/group-by-venue";
 
 const WEEKEND_DAYS = [5, 6, 0]; // Fri, Sat, Sun
 
@@ -41,6 +42,9 @@ export function EventsBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recurring, selectedDay, selectedType]);
 
+  const groupedRecurring = useMemo(() => groupByVenue(filtered), [filtered]);
+  const groupedUpcoming = useMemo(() => groupByVenue(upcoming), [upcoming]);
+
   const label =
     selectedDay === "weekend" ? "This Weekend" : dowFullName(selectedDay) + (selectedDay === today ? " (today)" : "");
 
@@ -68,31 +72,42 @@ export function EventsBoard({
 
         <p className="text-sm text-muted">
           {label} · {filtered.length} event
-          {filtered.length === 1 ? "" : "s"}
+          {filtered.length === 1 ? "" : "s"} at {groupedRecurring.length} place
+          {groupedRecurring.length === 1 ? "" : "s"}
         </p>
 
-        {filtered.length === 0 ? (
+        {groupedRecurring.length === 0 ? (
           <p className="text-muted-2 text-sm py-8 text-center">
             No recurring events found for this day/type yet.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filtered.map((e) => (
-              <EventCard key={e.id} event={e} />
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+            {groupedRecurring.map((g) => (
+              <EventVenueGroup
+                key={g.venueId}
+                venueId={g.venueId}
+                venueName={g.venueName}
+                events={g.items}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {upcoming.length > 0 && (
+      {groupedUpcoming.length > 0 && (
         <section className="flex flex-col gap-3">
           <div>
             <h2 className="font-display text-2xl text-foreground">One-Off & Upcoming</h2>
             <p className="text-sm text-muted">Specific dates, not weekly recurring.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {upcoming.map((e) => (
-              <EventCard key={e.id} event={e} />
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+            {groupedUpcoming.map((g) => (
+              <EventVenueGroup
+                key={g.venueId}
+                venueId={g.venueId}
+                venueName={g.venueName}
+                events={g.items}
+              />
             ))}
           </div>
         </section>

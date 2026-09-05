@@ -6,7 +6,8 @@ import type { SpecialCategory } from "@/db/schema";
 import { todayDowPacific, dowFullName } from "@/lib/time";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
-import { SpecialCard } from "./SpecialCard";
+import { SpecialVenueGroup } from "./SpecialVenueGroup";
+import { groupByVenue } from "@/lib/group-by-venue";
 
 function timeToMinutes(time: string | null): number {
   if (!time) return Number.MAX_SAFE_INTEGER; // no start time sorts last within its day
@@ -45,6 +46,8 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
       });
   }, [specials, selectedDay, selectedCategory]);
 
+  const grouped = useMemo(() => groupByVenue(filtered), [filtered]);
+
   return (
     <div className="flex flex-col gap-4">
       <DayTabs selected={selectedDay} today={today} onSelect={setSelectedDay} />
@@ -53,17 +56,23 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
       <p className="text-sm text-muted">
         {dowFullName(selectedDay)}
         {selectedDay === today ? " (today)" : ""} · {filtered.length} special
-        {filtered.length === 1 ? "" : "s"}
+        {filtered.length === 1 ? "" : "s"} at {grouped.length} place
+        {grouped.length === 1 ? "" : "s"}
       </p>
 
-      {filtered.length === 0 ? (
+      {grouped.length === 0 ? (
         <p className="text-muted-2 text-sm py-8 text-center">
           No specials found for this day/category yet.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((s) => (
-            <SpecialCard key={s.id} special={s} />
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+          {grouped.map((g) => (
+            <SpecialVenueGroup
+              key={g.venueId}
+              venueId={g.venueId}
+              venueName={g.venueName}
+              specials={g.items}
+            />
           ))}
         </div>
       )}
