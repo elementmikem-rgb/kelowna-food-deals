@@ -10,3 +10,17 @@ export const CATEGORY_LABELS: Record<string, string> = {
   wing_night: "Wing Night",
   other: "Other",
 };
+
+export const EVENT_TYPE_LABELS: Record<string, string> = {
+  live_music: "Live Music",
+  trivia: "Trivia",
+  karaoke: "Karaoke",
+  sports_night: "Sports Night",
+  other: "Other",
+};
+
+export function formatEventDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
+}

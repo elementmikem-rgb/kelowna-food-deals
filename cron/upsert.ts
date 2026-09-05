@@ -1,12 +1,17 @@
-import { db, specials, scrapeRuns, venues } from "@/db";
+import { db, specials, events, scrapeRuns, venues } from "@/db";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
-import type { ExtractedSpecial } from "./extract";
+import type { ExtractedSpecial, ExtractedEvent } from "./extract";
 
 export async function markVenueStillCurrent(venueId: number): Promise<void> {
+  const now = new Date();
   await db
     .update(specials)
-    .set({ lastVerifiedAt: new Date() })
+    .set({ lastVerifiedAt: now })
     .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
+  await db
+    .update(events)
+    .set({ lastVerifiedAt: now })
+    .where(and(eq(events.venueId, venueId), isNull(events.archivedAt)));
 }
 
 // Archives every currently-active special for the venue (so they surface in
@@ -38,6 +43,38 @@ export async function replaceVenueSpecials(
         sourceUrl,
         confidence: s.confidence,
         extractionNotes: s.extraction_notes,
+      }))
+    );
+  });
+}
+
+export async function replaceVenueEvents(
+  venueId: number,
+  sourceUrl: string,
+  extracted: ExtractedEvent[]
+): Promise<void> {
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(events)
+      .set({ archivedAt: now })
+      .where(and(eq(events.venueId, venueId), isNull(events.archivedAt)));
+    if (extracted.length === 0) return;
+    await tx.insert(events).values(
+      extracted.map((e) => ({
+        venueId,
+        title: e.title,
+        description: e.description,
+        eventType: e.event_type,
+        dayOfWeek: e.day_of_week,
+        specificDate: e.specific_date,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        coverChargeCents: e.cover_charge_cents,
+        lastVerifiedAt: now,
+        sourceUrl,
+        confidence: e.confidence,
+        extractionNotes: e.extraction_notes,
       }))
     );
   });

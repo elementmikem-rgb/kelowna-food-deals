@@ -1,12 +1,13 @@
 import { fetchAndExtractText } from "./fetch";
 import { normalizeText, hashText } from "./hash";
-import { extractSpecials } from "./extract";
+import { extractVenueContent } from "./extract";
 import {
   getActiveVenues,
   getLastContentHash,
   logScrapeRun,
   markVenueStillCurrent,
   replaceVenueSpecials,
+  replaceVenueEvents,
 } from "./upsert";
 
 const TOKEN_CEILING = 50_000;
@@ -61,8 +62,9 @@ async function processVenue(venue: {
   }
 
   try {
-    const { specials, tokensUsed } = await extractSpecials(normalized);
+    const { specials, events, tokensUsed } = await extractVenueContent(normalized);
     await replaceVenueSpecials(venue.id, url, specials);
+    await replaceVenueEvents(venue.id, url, events);
     await logScrapeRun({
       venueId: venue.id,
       contentHash: hash,
@@ -71,7 +73,7 @@ async function processVenue(venue: {
       error: null,
     });
     console.log(
-      `[${venue.name}] changed, extracted ${specials.length} special(s), ${tokensUsed} tokens`
+      `[${venue.name}] changed, extracted ${specials.length} special(s) and ${events.length} event(s), ${tokensUsed} tokens`
     );
     return { tokensUsed };
   } catch (err) {

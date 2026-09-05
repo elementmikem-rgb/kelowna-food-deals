@@ -8,5 +8,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "hourly",
       priority: 1,
     },
+    {
+      url: "https://kelownafooddeals.shop/events",
+      lastModified: new Date(),
+      changeFrequency: "hourly",
+      priority: 0.8,
+    },
   ];
 }

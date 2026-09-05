@@ -15,6 +15,13 @@
       "when": 1788576807497,
       "tag": "0001_real_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788578542959,
+      "tag": "0002_common_loa",
+      "breakpoints": true
     }
   ]
 }

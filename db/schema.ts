@@ -9,6 +9,7 @@ import {
   timestamp,
   real,
   doublePrecision,
+  date,
 } from "drizzle-orm/pg-core";
 
 export const specialsSchema = pgSchema("specials");
@@ -53,6 +54,35 @@ export const specials = specialsSchema.table("specials", {
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
   archivedAt: timestamp("archived_at", { withTimezone: true }), // set when superseded by a change; null = currently active
+});
+
+export const eventType = [
+  "live_music",
+  "trivia",
+  "karaoke",
+  "sports_night",
+  "other",
+] as const;
+export type EventType = (typeof eventType)[number];
+
+export const events = specialsSchema.table("events", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  title: text("title").notNull(), // e.g. act/performer name or event name
+  description: text("description"),
+  eventType: text("event_type").$type<EventType>().notNull(),
+  dayOfWeek: smallint("day_of_week"), // recurring weekly event; null if one-off
+  specificDate: date("specific_date"), // one-off event on this exact date; null if recurring
+  startTime: time("start_time"),
+  endTime: time("end_time"),
+  coverChargeCents: integer("cover_charge_cents"), // null = free / not stated
+  lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+  sourceUrl: text("source_url"),
+  confidence: real("confidence").notNull().default(1),
+  extractionNotes: text("extraction_notes"),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
 
 export const scrapeRuns = specialsSchema.table("scrape_runs", {

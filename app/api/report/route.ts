@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, specials, venues } from "@/db";
+import { db, specials, events, venues } from "@/db";
 import { eq } from "drizzle-orm";
 import { sendReportEmail } from "@/lib/brevo";
 
 const reportSchema = z.object({
   specialId: z.number().int().positive(),
   venueId: z.number().int().positive(),
+  kind: z.enum(["special", "event"]).default("special"),
 });
 
 export async function POST(req: NextRequest) {
@@ -16,26 +17,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  const { specialId, venueId } = parsed.data;
+  const { specialId, venueId, kind } = parsed.data;
 
-  const rows = await db
-    .select({
-      specialTitle: specials.title,
-      venueName: venues.name,
-    })
-    .from(specials)
-    .innerJoin(venues, eq(specials.venueId, venues.id))
-    .where(eq(specials.id, specialId))
-    .limit(1);
+  const rows =
+    kind === "event"
+      ? await db
+          .select({ itemTitle: events.title, venueName: venues.name })
+          .from(events)
+          .innerJoin(venues, eq(events.venueId, venues.id))
+          .where(eq(events.id, specialId))
+          .limit(1)
+      : await db
+          .select({ itemTitle: specials.title, venueName: venues.name })
+          .from(specials)
+          .innerJoin(venues, eq(specials.venueId, venues.id))
+          .where(eq(specials.id, specialId))
+          .limit(1);
 
   const row = rows[0];
+  const label = kind === "event" ? "Event" : "Special";
 
   try {
     await sendReportEmail({
-      subject: `Specials report: ${row?.venueName ?? `venue #${venueId}`}`,
+      subject: `${label} report: ${row?.venueName ?? `venue #${venueId}`}`,
       textContent: [
         `Venue: ${row?.venueName ?? "unknown"} (id ${venueId})`,
-        `Special: ${row?.specialTitle ?? "unknown"} (id ${specialId})`,
+        `${label}: ${row?.itemTitle ?? "unknown"} (id ${specialId})`,
         "Reported as incorrect via the public site.",
       ].join("\n"),
     });
