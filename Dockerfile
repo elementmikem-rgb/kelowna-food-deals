@@ -23,15 +23,15 @@ COPY . .
 # Under Railway's native Railpack/Nixpacks builder, service env vars are
 # auto-injected during the build step -- Docker builds don't get that for
 # free. `next build` touches every route module while collecting page data
-# (even ones that render dynamically at runtime), and db/index.ts and
-# lib/stripe.ts both throw at import time if their required env var is
-# missing, which broke the build here. Railway auto-populates any ARG that
-# matches a service variable name, so declaring these is enough to restore
-# the values Railpack builds got automatically.
+# (even ones that render dynamically at runtime, and even on services like
+# cron that never serve that route), and db/index.ts throws at import time
+# if DATABASE_URL is missing. Railway auto-populates any ARG that matches a
+# service variable name, so declaring it is enough to restore the value
+# Railpack builds got automatically. (lib/stripe.ts used to need the same
+# treatment for STRIPE_SECRET_KEY -- fixed properly instead by making it
+# lazy-init, since the cron service has no Stripe key at all and never will.)
 ARG DATABASE_URL
-ARG STRIPE_SECRET_KEY
 ENV DATABASE_URL=$DATABASE_URL
-ENV STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
 
 RUN npm run build
 
