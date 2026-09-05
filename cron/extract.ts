@@ -63,8 +63,8 @@ export type ExtractedEvent = Omit<z.infer<typeof extractedEventSchema>, "evidenc
 };
 
 const extractionResultSchema = z.object({
-  specials: z.array(extractedSpecialSchema),
-  events: z.array(extractedEventSchema),
+  specials: z.array(extractedSpecialSchema).default([]),
+  events: z.array(extractedEventSchema).default([]),
 });
 
 const SYSTEM_PROMPT = `You extract two kinds of listings from raw scraped page text for a Kelowna, BC venue: food/drink SPECIALS and scheduled EVENTS (live music, trivia, karaoke, sports nights). A page may contain both, either, or neither.

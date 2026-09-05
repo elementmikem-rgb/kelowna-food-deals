@@ -1,5 +1,5 @@
 import { db, specials, events, scrapeRuns, venues } from "@/db";
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import type { ExtractedSpecial, ExtractedEvent } from "./extract";
 
 export async function markVenueStillCurrent(venueId: number): Promise<void> {
@@ -90,8 +90,32 @@ export async function logScrapeRun(row: {
   await db.insert(scrapeRuns).values(row);
 }
 
+// Order by how long ago each venue was last attempted (never-scraped first),
+// so a token-ceiling abort mid-run starves a different tail each time instead
+// of always the same venues past whatever the fixed order used to put first.
 export async function getActiveVenues() {
-  return db.select().from(venues).where(eq(venues.active, true));
+  const lastRun = db
+    .select({
+      venueId: scrapeRuns.venueId,
+      ranAt: sql<Date>`max(${scrapeRuns.ranAt})`.as("ran_at"),
+    })
+    .from(scrapeRuns)
+    .groupBy(scrapeRuns.venueId)
+    .as("last_run");
+
+  const rows = await db
+    .select({
+      id: venues.id,
+      name: venues.name,
+      website: venues.website,
+      menuUrl: venues.menuUrl,
+    })
+    .from(venues)
+    .leftJoin(lastRun, eq(venues.id, lastRun.venueId))
+    .where(eq(venues.active, true))
+    .orderBy(sql`${lastRun.ranAt} asc nulls first`);
+
+  return rows;
 }
 
 export async function getLastContentHash(venueId: number): Promise<string | null> {
