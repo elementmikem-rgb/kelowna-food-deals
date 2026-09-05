@@ -4,6 +4,7 @@ import { EventsBoard } from "@/components/EventsBoard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
+import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 
 export const revalidate = 3600; // ISR: refresh at most once an hour
 
@@ -32,6 +33,8 @@ export default async function EventsPage() {
         active="events"
         subtitle="Live music, trivia, and karaoke nights around town — verified, not guessed."
       />
+
+      <SubmitEventCTA />
 
       <EventsBoard recurring={recurring} upcoming={upcoming} />
 

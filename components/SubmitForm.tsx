@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Status = "idle" | "sending" | "auto_approved" | "needs_review" | "error";
 
@@ -18,8 +19,11 @@ function fileToBase64(file: File): Promise<{ data: string; mimeType: string }> {
 }
 
 export function SubmitForm({ venues }: { venues: { id: number; name: string }[] }) {
+  const searchParams = useSearchParams();
+  const initialType = searchParams.get("type") === "event" ? "event" : "special";
+
   const [venueId, setVenueId] = useState<number | "">("");
-  const [submissionType, setSubmissionType] = useState<"special" | "event">("special");
+  const [submissionType, setSubmissionType] = useState<"special" | "event">(initialType);
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>("idle");
