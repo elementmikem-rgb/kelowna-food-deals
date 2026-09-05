@@ -81,9 +81,9 @@ SPECIALS rules, no exceptions:
 EVENTS rules, no exceptions:
 - Extract ONLY events with an EXPLICITLY stated day/date AND a stated event type (e.g. "Live Music every Friday 8pm", "Trivia Night Tuesdays"). A vague mention like "check out our events page" or "live entertainment" with no day/time is NOT a qualifying event.
 - title: the act/performer name if given, otherwise a short descriptive name (e.g. "Trivia Night").
-- day_of_week: for a RECURRING weekly event (e.g. "every Friday"). Use null if it's a one-off with a specific_date instead, or if no day is stated.
+- day_of_week and specific_date are MUTUALLY EXCLUSIVE — exactly one of them must be non-null, never both and never neither. day_of_week means "this happens every week on this weekday" (e.g. "Trivia every Tuesday"); specific_date means "this happens once, on this exact calendar date" (e.g. a named performer's one-night show, even if that date happens to fall on a Saturday). A one-off event with a named date must have day_of_week set to null — do NOT also fill in day_of_week just because the date lands on that weekday, or a single show will incorrectly appear to repeat every week.
+- day_of_week: for a RECURRING weekly event (e.g. "every Friday"). Use null for anything tied to one specific date instead.
 - specific_date: "YYYY-MM-DD" for a ONE-OFF event tied to an exact calendar date. Use null for recurring weekly events. Never guess a date — only use this when an explicit date is stated in the text. If the text gives a month and day but no year (e.g. "Thursday September 10"), resolve the year yourself using the current date given below: pick the soonest occurrence of that month/day that is on or after today (rolling into next year only if that month/day has already passed this year). Never default to the current year blindly, and never guess a year the text doesn't otherwise support.
-- An event must have EITHER day_of_week OR specific_date set (not both null) to qualify.
 - event_type: "live_music" for bands/DJs/performers, "trivia" for trivia/quiz nights, "karaoke", "sports_night" for game-watching nights, "other" for anything else that qualifies.
 - cover_charge_cents: whole cents if a cover/ticket price is explicitly stated, otherwise null (null does not disqualify the event — most local live music nights are free).
 

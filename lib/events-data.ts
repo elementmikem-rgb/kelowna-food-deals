@@ -44,11 +44,22 @@ function pacificTodayISODate(): string {
 
 export async function getRecurringEvents(): Promise<EventWithVenue[]> {
   // Recurring weekly events always belong to one of our tracked venues.
+  // Excludes rows that also carry a specificDate -- those are one-off events
+  // that happen to land on a given weekday (e.g. a Saturday concert), not a
+  // weekly recurrence, and showing them here made a single-night show appear
+  // to repeat every week on that day.
   const rows = await db
     .select(recurringColumns)
     .from(events)
     .innerJoin(venues, eq(events.venueId, venues.id))
-    .where(and(eq(venues.active, true), isNull(events.archivedAt), gte(events.dayOfWeek, 0)));
+    .where(
+      and(
+        eq(venues.active, true),
+        isNull(events.archivedAt),
+        gte(events.dayOfWeek, 0),
+        isNull(events.specificDate)
+      )
+    );
 
   return rows as EventWithVenue[];
 }
