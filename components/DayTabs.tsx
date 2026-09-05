@@ -22,7 +22,8 @@ export function DayTabs({
           <button
             key={dow}
             onClick={() => onSelect(dow)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-mono-tabular border transition-colors ${
+            data-selected={isSelected}
+            className={`press-pill shrink-0 rounded-full px-4 py-1.5 text-sm font-mono-tabular border ${
               isSelected
                 ? "bg-accent text-background border-accent"
                 : "bg-transparent text-muted border-border hover:border-muted"

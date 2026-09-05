@@ -45,7 +45,7 @@ export function TipJar() {
             key={a.cents}
             onClick={() => startCheckout(a.cents)}
             disabled={loadingCents !== null}
-            className="rounded-full bg-accent text-background px-5 py-2 text-sm font-medium disabled:opacity-50"
+            className="press-pill rounded-full bg-accent text-background px-5 py-2 text-sm font-medium disabled:opacity-50"
           >
             {loadingCents === a.cents ? "…" : a.label}
           </button>

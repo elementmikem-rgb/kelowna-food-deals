@@ -121,7 +121,8 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
             type="button"
             key={t}
             onClick={() => setSubmissionType(t)}
-            className={`rounded-full px-4 py-1.5 text-sm border transition-colors ${
+            data-selected={submissionType === t}
+            className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
               submissionType === t
                 ? "bg-accent text-background border-accent"
                 : "bg-transparent text-muted border-border"
@@ -164,7 +165,7 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded-full bg-accent text-background px-5 py-2 text-sm font-medium disabled:opacity-50 self-start"
+        className="press-pill rounded-full bg-accent text-background px-5 py-2 text-sm font-medium disabled:opacity-50 self-start"
       >
         {status === "sending" ? "Checking…" : "Submit"}
       </button>

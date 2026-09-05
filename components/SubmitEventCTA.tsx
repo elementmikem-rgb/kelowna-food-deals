@@ -8,7 +8,7 @@ export function SubmitEventCTA() {
       </p>
       <Link
         href="/submit?type=event"
-        className="rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium self-start sm:self-auto"
+        className="press-pill rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium self-start sm:self-auto"
       >
         Submit an event
       </Link>

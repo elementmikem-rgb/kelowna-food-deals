@@ -5,7 +5,8 @@ export function SiteNav({ active }: { active: "specials" | "events" }) {
     <nav className="flex gap-2">
       <Link
         href="/"
-        className={`rounded-full px-4 py-1.5 text-sm border transition-colors ${
+        data-selected={active === "specials"}
+        className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
           active === "specials"
             ? "bg-accent text-background border-accent"
             : "bg-transparent text-muted border-border hover:border-muted"
@@ -15,7 +16,8 @@ export function SiteNav({ active }: { active: "specials" | "events" }) {
       </Link>
       <Link
         href="/events"
-        className={`rounded-full px-4 py-1.5 text-sm border transition-colors ${
+        data-selected={active === "events"}
+        className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
           active === "events"
             ? "bg-accent text-background border-accent"
             : "bg-transparent text-muted border-border hover:border-muted"

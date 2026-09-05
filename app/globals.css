@@ -80,16 +80,40 @@ h1, h2, h3, .font-display {
 
 /* --- Orchard crate-label signature --- */
 
+:root {
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 .pin-card {
   position: relative;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-  transform: rotate(var(--tilt, 0deg));
+  transition: transform 420ms var(--ease-spring), box-shadow 420ms var(--ease-spring);
+  transform: rotate(var(--tilt, 0deg)) translateY(0);
+  box-shadow: 0 1px 2px rgba(42, 40, 24, 0.08), 0 6px 14px rgba(42, 40, 24, 0.05);
+  animation: card-settle 520ms var(--ease-spring) backwards;
 }
 
 .pin-card:hover,
 .pin-card:focus-within {
-  transform: rotate(0deg) translateY(-3px);
-  box-shadow: 0 10px 22px rgba(42, 40, 24, 0.12);
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 0 2px 4px rgba(42, 40, 24, 0.1), 0 16px 28px rgba(42, 40, 24, 0.14);
+}
+
+.pin-card::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -6px;
+  height: 14px;
+  background: radial-gradient(ellipse at center, rgba(42, 40, 24, 0.16), transparent 70%);
+  opacity: 0;
+  transition: opacity 420ms var(--ease-spring);
+  z-index: -1;
+}
+
+.pin-card:hover::after,
+.pin-card:focus-within::after {
+  opacity: 1;
 }
 
 .pin-card.tilt-a {
@@ -111,13 +135,55 @@ h1, h2, h3, .font-display {
   background: radial-gradient(circle at 35% 30%, #e2745a, var(--accent-dim) 70%);
   box-shadow: 0 2px 3px rgba(42, 40, 24, 0.35);
   z-index: 1;
+  transition: transform 420ms var(--ease-spring);
+}
+
+.pin-card:hover::before,
+.pin-card:focus-within::before {
+  transform: translateY(-1px) scale(1.08);
+}
+
+@keyframes card-settle {
+  from {
+    opacity: 0;
+    transform: rotate(var(--tilt, 0deg)) translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg)) translateY(0) scale(1);
+  }
+}
+
+.pin-card:nth-child(1) { animation-delay: 0ms; }
+.pin-card:nth-child(2) { animation-delay: 40ms; }
+.pin-card:nth-child(3) { animation-delay: 80ms; }
+.pin-card:nth-child(4) { animation-delay: 120ms; }
+.pin-card:nth-child(5) { animation-delay: 160ms; }
+.pin-card:nth-child(6) { animation-delay: 200ms; }
+.pin-card:nth-child(n+7) { animation-delay: 220ms; }
+
+.press-pill {
+  transition: transform 260ms var(--ease-spring), background-color 260ms var(--ease-spring), border-color 260ms var(--ease-spring), color 260ms var(--ease-spring), box-shadow 260ms var(--ease-spring);
+}
+
+.press-pill:active {
+  transform: scale(0.94);
+}
+
+.press-pill[data-selected="true"] {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pin-card,
   .pin-card:hover,
-  .pin-card:focus-within {
+  .pin-card:focus-within,
+  .pin-card::before,
+  .pin-card::after,
+  .press-pill,
+  .press-pill:active {
     transition: none;
+    animation: none;
     transform: none;
   }
 }

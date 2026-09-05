@@ -27,7 +27,8 @@ export function CategoryFilter({
           <button
             key={opt}
             onClick={() => onSelect(opt)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide border transition-colors ${
+            data-selected={isSelected}
+            className={`press-pill shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide border ${
               isSelected
                 ? "bg-surface-raised text-accent border-accent-dim"
                 : "bg-transparent text-muted-2 border-border hover:border-muted"
