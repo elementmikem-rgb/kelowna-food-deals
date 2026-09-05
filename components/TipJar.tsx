@@ -15,6 +15,7 @@ export function TipJar() {
   async function startCheckout(amountCents: number) {
     setError(null);
     setLoadingCents(amountCents);
+    window.kdsTrack?.("tip_click", String(amountCents));
     try {
       const res = await fetch("/api/tip/checkout", {
         method: "POST",

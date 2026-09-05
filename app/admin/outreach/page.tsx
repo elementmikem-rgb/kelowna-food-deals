@@ -31,9 +31,14 @@ export default async function AdminOutreachPage() {
         <h1 className="font-display text-2xl text-foreground">
           Venue outreach ({venueRows.length})
         </h1>
-        <Link href="/admin/inbox" className="text-sm text-accent-dim underline">
-          Inbox →
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
+            Analytics
+          </Link>
+          <Link href="/admin/inbox" className="text-sm text-accent-dim underline">
+            Inbox →
+          </Link>
+        </div>
       </div>
 
       {venueRows.length === 0 ? (

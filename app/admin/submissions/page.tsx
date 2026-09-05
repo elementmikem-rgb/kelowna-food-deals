@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db, submissions, venues } from "@/db";
 import { and, asc, eq } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
@@ -24,9 +25,19 @@ export default async function AdminSubmissionsPage() {
 
   return (
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-6">
-      <h1 className="font-display text-2xl text-foreground">
-        Submissions needing review ({rows.length})
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl text-foreground">
+          Submissions needing review ({rows.length})
+        </h1>
+        <div className="flex gap-3">
+          <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
+            Analytics
+          </Link>
+          <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
+            Outreach
+          </Link>
+        </div>
+      </div>
 
       {rows.length === 0 ? (
         <p className="text-muted-2 text-sm">Nothing waiting — you&apos;re caught up.</p>

@@ -199,3 +199,18 @@ export const scrapeRuns = specialsSchema.table("scrape_runs", {
   tokensUsed: integer("tokens_used").notNull().default(0),
   error: text("error"),
 });
+
+export const analyticsEvents = specialsSchema.table("analytics_events", {
+  id: serial("id").primaryKey(),
+  eventType: text("event_type").notNull(), // "pageview" | "cta_click" | "submission" | "tip" | ...
+  eventLabel: text("event_label"), // e.g. venue id/name, button name
+  page: text("page").notNull(),
+  sessionId: text("session_id").notNull(),
+  visitorId: text("visitor_id").notNull(),
+  referrer: text("referrer"),
+  country: text("country"), // from Cloudflare's CF-IPCountry header
+  utmSource: text("utm_source"),
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

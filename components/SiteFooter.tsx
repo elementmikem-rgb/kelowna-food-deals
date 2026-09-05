@@ -15,6 +15,9 @@ export async function SiteFooter() {
       <Link href="/submit" className="text-accent-dim underline">
         See something wrong or missing? Tell us
       </Link>
+      <Link href="/blog" className="text-muted-2 underline">
+        Blog
+      </Link>
     </footer>
   );
 }

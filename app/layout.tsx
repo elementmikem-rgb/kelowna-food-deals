@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Fraunces, Karla, Geist_Mono } from "next/font/google";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -82,6 +84,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
+        <AnalyticsTracker />
+        <Script src="/js/track.js" strategy="afterInteractive" />
       </body>
     </html>
   );

@@ -25,9 +25,14 @@ export default async function AdminInboxPage() {
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl text-foreground">Inbox ({rows.length})</h1>
-        <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
-          ← Outreach
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
+            ← Outreach
+          </Link>
+          <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
+            Analytics
+          </Link>
+        </div>
       </div>
 
       {rows.length === 0 ? (

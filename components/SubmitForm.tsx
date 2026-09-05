@@ -69,6 +69,7 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setResult(data);
       setStatus("done");
+      window.kdsTrack?.("submission", data.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStatus("error");

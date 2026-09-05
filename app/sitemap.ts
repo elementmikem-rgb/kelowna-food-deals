@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db, venues } from "@/db";
 import { eq } from "drizzle-orm";
+import { BLOG_POSTS } from "@/lib/blog-data";
 
 const BASE_URL = "https://kelownafooddeals.shop";
 
@@ -17,6 +18,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+    url: `${BASE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.publishedAt),
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
   return [
     {
       url: BASE_URL,
@@ -31,11 +39,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.5,
+    },
+    {
       url: `${BASE_URL}/submit`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.3,
     },
     ...venuePages,
+    ...blogPages,
   ];
 }

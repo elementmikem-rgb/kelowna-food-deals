@@ -1,5 +1,6 @@
 import { fetchAndExtractText } from "./fetch";
 import { scrapeCastanetEvents } from "./scrapeCastanet";
+import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { normalizeText, hashText } from "./hash";
 import { extractVenueContent } from "./extract";
 import {
@@ -117,6 +118,13 @@ async function main() {
     console.log(`Castanet events: refreshed ${inserted} nightlife-adjacent event(s)`);
   } catch (err) {
     console.error("Castanet scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    const { deleted } = await pruneAnalyticsEvents();
+    console.log(`Analytics: pruned ${deleted} event(s) older than the retention window`);
+  } catch (err) {
+    console.error("Analytics pruning failed:", err instanceof Error ? err.message : err);
   }
 
   if (aborted) {
