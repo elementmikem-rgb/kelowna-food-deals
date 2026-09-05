@@ -100,7 +100,10 @@ export interface ExtractionOutcome {
   tokensUsed: number;
 }
 
-const DISCOUNT_SIGNAL = /(\$|%|\boff\b|\bfree\b|\bhalf\b|\bbogo\b|\bbuy one\b|\bdiscount(ed)?\b|\bdeal\b)/i;
+// ½ is the Unicode fraction character, not the spelled-out word "half" --
+// source pages routinely use it ("½ Price Bottles of Wine") and it matched
+// nothing here, silently dropping otherwise-valid discount specials.
+const DISCOUNT_SIGNAL = /(\$|%|½|\boff\b|\bfree\b|\bhalf\b|\bbogo\b|\bbuy one\b|\bdiscount(ed)?\b|\bdeal\b)/i;
 
 function collapseWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim().toLowerCase();
