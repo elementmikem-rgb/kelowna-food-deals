@@ -72,7 +72,7 @@ const SYSTEM_PROMPT = `You extract two kinds of listings from raw scraped page t
 SPECIALS rules, no exceptions:
 - Extract ONLY specials that are EXPLICITLY stated with a stated price OR an explicit discount (e.g. "$5 off", "half price wings", "$8 caesars"). A time window on its own (e.g. "Happy Hour 3-6pm") is NOT a qualifying special unless a price or discount is also stated somewhere near it. Do NOT infer, guess, or invent a special that is not clearly written in the text.
 - A Happy Hour (or similar) section almost always lists SEVERAL separately priced items (e.g. "6\" Hot Honey Pizza $10", "Draft Beer $1 off", "House Wine $6.75"). Extract EACH one as its own separate special with its own exact price and its own short, specific evidence_quote — never summarize multiple priced items into one umbrella entry like "Happy Hour" or "Happy Hour Drinks", since that produces a vague title with no single price and a quote that won't match verbatim (both are why such entries get rejected). One special per priced line item, always.
-- day_of_week: 0=Sunday ... 6=Saturday. Use null ONLY if the special explicitly runs every day of the week (e.g. "daily happy hour", "7 days a week") or no day/range is stated at all. If an explicit range is given (e.g. "Mon-Fri", "weekdays", "Tue-Thu"), do NOT collapse it to null — that would falsely show it on days it doesn't run. Instead, output ONE separate entry per day in that range, each with identical price/description/times but its own day_of_week value (e.g. "Mon-Fri" -> 5 entries for day_of_week 1,2,3,4,5). "Weekends" -> entries for 0 and 6.
+- day_of_week: 0=Sunday ... 6=Saturday. Use null ONLY if the special explicitly runs every day of the week (e.g. "daily happy hour", "7 days a week") or no day/range is stated at all. If an explicit range is given (e.g. "Mon-Fri", "weekdays", "Tue-Thu"), do NOT collapse it to null — that would falsely show it on days it doesn't run. Instead, output ONE separate entry per day in that range, each with identical price/description/times/evidence_quote but its own day_of_week value (e.g. "Mon-Fri" -> 5 entries for day_of_week 1,2,3,4,5, all five copying the exact same evidence_quote — do NOT invent a different per-day quote for each copy, since the source text only states the range once). "Weekends" -> entries for 0 and 6.
 - is_monthly: true ONLY when the text explicitly frames the special as a month-long promotion tied to a specific month (e.g. "September Special", "Feature of the Month", "all month long"). When true, set day_of_week/start_time/end_time to null.
 - start_time / end_time: 24-hour "HH:MM" format. Use null if not stated. Always null when is_monthly is true.
 - price_cents: whole cents (e.g. "$8.50" -> 850). Use null if there's a discount but no absolute price (e.g. "half off wings").
@@ -112,7 +112,7 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 3072,
+    max_tokens: 8192,
     system: SYSTEM_PROMPT,
     messages: [
       {

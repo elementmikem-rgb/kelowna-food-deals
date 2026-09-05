@@ -78,3 +78,60 @@ export async function fetchAndExtractText(url: string): Promise<FetchResult> {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
+
+// Some venue sites load their specials/events content via client-side JS
+// (widgets, calendar boxes) that a plain fetch never sees — the page has no
+// text there at all until a real browser runs its scripts. Used only for
+// venues explicitly flagged venues.requiresBrowser, set once an admin
+// confirms a venue needs it (checking every venue with a browser every night
+// would be needlessly slow/heavy for the ~1 in 60 that actually need it).
+//
+// Alpine ships no Playwright browser builds — playwright-core drives
+// Alpine's own `chromium` package via an explicit executablePath instead.
+// Same pattern already proven in Photaro's utils/leadSiteScraper.js.
+function resolveChromiumPath(): string | undefined {
+  const fs = require("fs") as typeof import("fs");
+  const candidates = [process.env.CHROMIUM_PATH, "/usr/bin/chromium-browser", "/usr/bin/chromium"].filter(
+    (p): p is string => !!p
+  );
+  return candidates.find((p) => {
+    try {
+      return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+}
+
+export async function fetchAndExtractTextViaBrowser(url: string): Promise<FetchResult> {
+  const allowed = await isAllowedByRobots(url);
+  if (!allowed) {
+    return { ok: false, error: "disallowed by robots.txt" };
+  }
+
+  let browser: import("playwright-core").Browser | undefined;
+  try {
+    await rateLimit();
+    const { chromium } = await import("playwright-core");
+    const executablePath = resolveChromiumPath();
+    browser = await chromium.launch(
+      executablePath
+        ? {
+            executablePath,
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+          }
+        : undefined
+    );
+    const page = await browser.newPage({ userAgent: USER_AGENT });
+    await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
+    const text = await page.evaluate(() => {
+      document.querySelectorAll("script, style, noscript, svg, nav, footer").forEach((el) => el.remove());
+      return document.body.innerText;
+    });
+    return { ok: true, text };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+}

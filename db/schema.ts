@@ -31,6 +31,11 @@ export const venues = specialsSchema.table(
     contactEmail: text("contact_email"),
     sourceUrls: text("source_urls").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
+    // Some venue sites (e.g. O'Flannigan's) load their specials/events board
+    // via client-side JS, invisible to a plain HTTP fetch. Set true once
+    // that's confirmed so the cron uses a headless-browser fetch for this
+    // venue instead of wasting a plain-fetch attempt every night.
+    requiresBrowser: boolean("requires_browser").notNull().default(false),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );

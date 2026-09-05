@@ -7,7 +7,7 @@
 // venue's page content hash is unchanged, so venues whose source page hasn't
 // changed since their last scrape would keep the old, wrong data indefinitely.
 // This bypasses that hash gate once to apply the corrected prompt everywhere.
-import { fetchAndExtractText } from "../cron/fetch";
+import { fetchAndExtractText, fetchAndExtractTextViaBrowser } from "../cron/fetch";
 import { normalizeText, hashText } from "../cron/hash";
 import { extractVenueContent } from "../cron/extract";
 import { getActiveVenues, logScrapeRun, replaceVenueSpecials, replaceVenueEvents } from "../cron/upsert";
@@ -35,7 +35,9 @@ async function main() {
       continue;
     }
 
-    const fetched = await fetchAndExtractText(url);
+    const fetched = venue.requiresBrowser
+      ? await fetchAndExtractTextViaBrowser(url)
+      : await fetchAndExtractText(url);
     if (!fetched.ok) {
       console.error(`[${venue.name}] fetch failed: ${fetched.error}`);
       await logScrapeRun({ venueId: venue.id, contentHash: null, changed: false, tokensUsed: 0, error: fetched.error });

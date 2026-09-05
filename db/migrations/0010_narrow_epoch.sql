@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venues" ADD COLUMN "requires_browser" boolean DEFAULT false NOT NULL;

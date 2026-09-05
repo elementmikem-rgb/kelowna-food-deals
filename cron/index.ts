@@ -1,4 +1,4 @@
-import { fetchAndExtractText } from "./fetch";
+import { fetchAndExtractText, fetchAndExtractTextViaBrowser } from "./fetch";
 import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { normalizeText, hashText } from "./hash";
@@ -19,6 +19,7 @@ async function processVenue(venue: {
   name: string;
   website: string | null;
   menuUrl: string | null;
+  requiresBrowser: boolean;
 }): Promise<{ tokensUsed: number }> {
   const url = venue.menuUrl ?? venue.website;
   if (!url) {
@@ -33,7 +34,9 @@ async function processVenue(venue: {
     return { tokensUsed: 0 };
   }
 
-  const fetched = await fetchAndExtractText(url);
+  const fetched = venue.requiresBrowser
+    ? await fetchAndExtractTextViaBrowser(url)
+    : await fetchAndExtractText(url);
   if (!fetched.ok) {
     await logScrapeRun({
       venueId: venue.id,

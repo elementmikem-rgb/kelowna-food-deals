@@ -109,6 +109,7 @@ export async function getActiveVenues() {
       name: venues.name,
       website: venues.website,
       menuUrl: venues.menuUrl,
+      requiresBrowser: venues.requiresBrowser,
     })
     .from(venues)
     .leftJoin(lastRun, eq(venues.id, lastRun.venueId))
