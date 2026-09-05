@@ -28,11 +28,46 @@ export const venues = specialsSchema.table(
     website: text("website"),
     menuUrl: text("menu_url"),
     instagramHandle: text("instagram_handle"),
+    contactEmail: text("contact_email"),
     sourceUrls: text("source_urls").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );
+
+export const outreachSendStatus = ["queued", "sent", "failed", "bounced", "replied"] as const;
+export type OutreachSendStatus = (typeof outreachSendStatus)[number];
+
+export const outreachSends = specialsSchema.table("outreach_sends", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  toEmail: text("to_email").notNull(),
+  subject: text("subject").notNull(),
+  htmlBody: text("html_body").notNull(),
+  status: text("status").$type<OutreachSendStatus>().notNull().default("queued"),
+  brevoMessageId: text("brevo_message_id"),
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  openedAt: timestamp("opened_at", { withTimezone: true }),
+  clickedAt: timestamp("clicked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const inboundEmails = specialsSchema.table("inbound_emails", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "set null" }), // matched by from-email, nullable if no match
+  brevoMessageId: text("brevo_message_id"),
+  inReplyTo: text("in_reply_to"),
+  fromEmail: text("from_email").notNull(),
+  fromName: text("from_name"),
+  subject: text("subject"),
+  textBody: text("text_body"),
+  htmlBody: text("html_body"),
+  read: boolean("read").notNull().default(false),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const specialCategory = [
   "happy_hour",
