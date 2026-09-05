@@ -1,11 +1,22 @@
 import type { SpecialWithVenue } from "./data";
+import { todayDowPacific, isStale } from "./time";
 
 export function buildSpecialsJsonLd(specials: SpecialWithVenue[]) {
+  const today = todayDowPacific();
+  // The page only ever shows today's specials (SpecialsBoard filters by day), so the
+  // structured data must match: publishing every day-of-week's specials as InStock every
+  // day told crawlers something the rendered page didn't say, and kept advertising specials
+  // as available long past the point the UI itself greys them out as stale.
+  const runningToday = specials.filter(
+    (s) =>
+      (s.dayOfWeek === null || s.dayOfWeek === today || s.isMonthly) &&
+      !isStale(s.lastVerifiedAt)
+  );
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Kelowna Food and Drink Specials",
-    itemListElement: specials.map((s, i) => ({
+    itemListElement: runningToday.map((s, i) => ({
       "@type": "ListItem",
       position: i + 1,
       item: {

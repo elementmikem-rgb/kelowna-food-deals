@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, specials, events, venues } from "@/db";
 import { eq, sql } from "drizzle-orm";
 import { sendReportEmail } from "@/lib/brevo";
+import { checkRateLimit } from "@/lib/request-rate-limit";
 
 const reportSchema = z.object({
   specialId: z.number().int().positive(),
@@ -11,6 +12,11 @@ const reportSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const { ok: withinLimit } = await checkRateLimit(req, "report", 10, 60);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "too many reports, try again later" }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = reportSchema.safeParse(body);
   if (!parsed.success) {
@@ -39,15 +45,18 @@ export async function POST(req: NextRequest) {
           .limit(1);
 
   const row = rows[0];
+  if (!row) {
+    return NextResponse.json({ error: "not found" }, { status: 400 });
+  }
   const label = kind === "event" ? "Event" : "Special";
-  const placeName = row?.venueName ?? row?.locationName ?? "unknown";
+  const placeName = row.venueName ?? row.locationName ?? "unknown";
 
   try {
     await sendReportEmail({
       subject: `${label} report: ${placeName}`,
       textContent: [
         `Venue: ${placeName}${venueId ? ` (id ${venueId})` : ""}`,
-        `${label}: ${row?.itemTitle ?? "unknown"} (id ${specialId})`,
+        `${label}: ${row.itemTitle ?? "unknown"} (id ${specialId})`,
         "Reported as incorrect via the public site.",
       ].join("\n"),
     });

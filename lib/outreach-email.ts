@@ -3,6 +3,7 @@ interface SendParams {
   subject: string;
   htmlContent: string;
   replyTo?: string;
+  headers?: Record<string, string>;
 }
 
 interface SendResult {
@@ -14,6 +15,7 @@ export async function sendOutreachEmail({
   subject,
   htmlContent,
   replyTo,
+  headers,
 }: SendParams): Promise<SendResult> {
   const apiKey = process.env.BREVO_API_KEY;
   const fromEmail = process.env.REPORT_EMAIL_FROM;
@@ -29,11 +31,12 @@ export async function sendOutreachEmail({
       "api-key": apiKey,
     },
     body: JSON.stringify({
-      sender: { email: fromEmail, name: "Kelowna Daily Specials" },
+      sender: { email: fromEmail, name: "Kelowna Food Deals" },
       to: [{ email: to }],
       replyTo: replyTo ? { email: replyTo } : { email: "reply@reply.kelownafooddeals.shop" },
       subject,
       htmlContent,
+      headers,
     }),
   });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venues" ADD COLUMN "unsubscribed_at" timestamp with time zone;

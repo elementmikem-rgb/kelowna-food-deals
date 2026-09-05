@@ -10,6 +10,10 @@ const DOW_FULL = [
   "Saturday",
 ] as const;
 
+export function pacificTodayISODate(now: Date = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: PACIFIC_TZ });
+}
+
 export function todayDowPacific(now: Date = new Date()): number {
   const weekday = new Intl.DateTimeFormat("en-US", {
     timeZone: PACIFIC_TZ,

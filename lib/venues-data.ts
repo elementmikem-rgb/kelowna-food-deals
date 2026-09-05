@@ -1,7 +1,8 @@
 import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
-import { and, desc, eq, isNull, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull, or, gte } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
+import { pacificTodayISODate } from "./time";
 
 export interface VenueDetail {
   id: number;
@@ -129,6 +130,7 @@ export async function getVenueMenuItems(venueId: number): Promise<VenueMenuItem[
 }
 
 export async function getVenueEvents(venueId: number): Promise<EventWithVenue[]> {
+  const today = pacificTodayISODate();
   const rows = await db
     .select({
       id: events.id,
@@ -147,7 +149,16 @@ export async function getVenueEvents(venueId: number): Promise<EventWithVenue[]>
     })
     .from(events)
     .innerJoin(venues, eq(events.venueId, venues.id))
-    .where(and(eq(events.venueId, venueId), isNull(events.archivedAt)));
+    .where(
+      and(
+        eq(events.venueId, venueId),
+        isNull(events.archivedAt),
+        // Recurring events (specificDate null) always show; one-off events only show
+        // until their date passes -- otherwise an expired concert renders as current
+        // forever, since nothing else in the app archives a one-off event by date.
+        or(isNull(events.specificDate), gte(events.specificDate, today))
+      )
+    );
 
   return rows as EventWithVenue[];
 }

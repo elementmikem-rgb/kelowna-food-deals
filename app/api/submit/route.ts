@@ -3,10 +3,19 @@ import { z } from "zod";
 import { db, venues, specials, events, menuItems, submissions } from "@/db";
 import { eq } from "drizzle-orm";
 import { reviewSubmission, AUTO_APPROVE_CONFIDENCE } from "@/lib/submission-review";
-import { savePhotoOnApproval } from "@/lib/venue-photos";
+import { checkRateLimit } from "@/lib/request-rate-limit";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
+
+const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function validTimeOrNull(v: string | null): string | null {
+  return v && TIME_RE.test(v) ? v : null;
+}
+function validDateOrNull(v: string | null): string | null {
+  return v && DATE_RE.test(v) ? v : null;
+}
 
 const submitSchema = z.object({
   venueId: z.number().int().positive(),
@@ -16,6 +25,13 @@ const submitSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Each request costs a real Claude vision call plus a permanent DB row storing the
+  // full photo, so this endpoint needs its own ceiling separate from the AI cost cap.
+  const { ok: withinLimit } = await checkRateLimit(req, "submit", 5, 60);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "too many submissions, try again later" }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = submitSchema.safeParse(body);
   if (!parsed.success) {
@@ -49,101 +65,103 @@ export async function POST(req: NextRequest) {
     const resolvedItemKeys: string[] = [];
     let autoApprovedCount = 0;
 
-    for (let i = 0; i < result.specials.length; i++) {
-      const s = result.specials[i];
-      if (s.confidence >= AUTO_APPROVE_CONFIDENCE) {
-        await db.insert(specials).values({
-          venueId,
-          title: s.title,
-          description: s.description,
-          priceCents: s.price_cents,
-          dayOfWeek: s.day_of_week,
-          isMonthly: s.is_monthly,
-          startTime: s.start_time,
-          endTime: s.end_time,
-          category: s.category,
-          lastVerifiedAt: now,
-          sourceUrl: null,
-          confidence: s.confidence,
-          extractionNotes: "Submitted by a visitor, AI-verified.",
-        });
-        resolvedItemKeys.push(`special:${i}`);
-        autoApprovedCount++;
+    // Wrapped in one transaction: previously a mid-loop insert failure (e.g. a bad
+    // date/time string) could leave some items already published live while the
+    // submissions bookkeeping row never got written, permanently orphaning them.
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < result.specials.length; i++) {
+        const s = result.specials[i];
+        if (s.confidence >= AUTO_APPROVE_CONFIDENCE) {
+          await tx.insert(specials).values({
+            venueId,
+            title: s.title,
+            description: s.description,
+            priceCents: s.price_cents,
+            dayOfWeek: s.day_of_week,
+            isMonthly: s.is_monthly,
+            startTime: validTimeOrNull(s.start_time),
+            endTime: validTimeOrNull(s.end_time),
+            category: s.category,
+            lastVerifiedAt: now,
+            sourceUrl: null,
+            confidence: s.confidence,
+            extractionNotes: "Submitted by a visitor, AI-verified.",
+          });
+          resolvedItemKeys.push(`special:${i}`);
+          autoApprovedCount++;
+        }
       }
-    }
 
-    for (let i = 0; i < result.events.length; i++) {
-      const e = result.events[i];
-      if (e.confidence >= AUTO_APPROVE_CONFIDENCE && (e.day_of_week !== null || e.specific_date !== null)) {
-        await db.insert(events).values({
-          venueId,
-          title: e.title,
-          description: e.description,
-          eventType: e.event_type,
-          dayOfWeek: e.day_of_week,
-          specificDate: e.specific_date,
-          startTime: e.start_time,
-          endTime: e.end_time,
-          coverChargeCents: e.cover_charge_cents,
-          lastVerifiedAt: now,
-          sourceUrl: null,
-          confidence: e.confidence,
-          extractionNotes: "Submitted by a visitor, AI-verified.",
-        });
-        resolvedItemKeys.push(`event:${i}`);
-        autoApprovedCount++;
+      for (let i = 0; i < result.events.length; i++) {
+        const e = result.events[i];
+        if (e.confidence >= AUTO_APPROVE_CONFIDENCE && (e.day_of_week !== null || e.specific_date !== null)) {
+          await tx.insert(events).values({
+            venueId,
+            title: e.title,
+            description: e.description,
+            eventType: e.event_type,
+            dayOfWeek: e.day_of_week,
+            specificDate: validDateOrNull(e.specific_date),
+            startTime: validTimeOrNull(e.start_time),
+            endTime: validTimeOrNull(e.end_time),
+            coverChargeCents: e.cover_charge_cents,
+            lastVerifiedAt: now,
+            sourceUrl: null,
+            confidence: e.confidence,
+            extractionNotes: "Submitted by a visitor, AI-verified.",
+          });
+          resolvedItemKeys.push(`event:${i}`);
+          autoApprovedCount++;
+        }
       }
-    }
 
-    for (let i = 0; i < result.menu_items.length; i++) {
-      const m = result.menu_items[i];
-      if (m.confidence >= AUTO_APPROVE_CONFIDENCE) {
-        await db.insert(menuItems).values({
-          venueId,
-          name: m.name,
-          description: m.description,
-          priceCents: m.price_cents,
-          lastVerifiedAt: now,
-          sourceUrl: null,
-          confidence: m.confidence,
-          extractionNotes: "Submitted by a visitor, AI-verified.",
-        });
-        resolvedItemKeys.push(`menuItem:${i}`);
-        autoApprovedCount++;
+      for (let i = 0; i < result.menu_items.length; i++) {
+        const m = result.menu_items[i];
+        if (m.confidence >= AUTO_APPROVE_CONFIDENCE) {
+          await tx.insert(menuItems).values({
+            venueId,
+            name: m.name,
+            description: m.description,
+            priceCents: m.price_cents,
+            lastVerifiedAt: now,
+            sourceUrl: null,
+            confidence: m.confidence,
+            extractionNotes: "Submitted by a visitor, AI-verified.",
+          });
+          resolvedItemKeys.push(`menuItem:${i}`);
+          autoApprovedCount++;
+        }
       }
-    }
+    });
 
     const totalItems = result.specials.length + result.events.length + result.menu_items.length;
     const pendingCount = totalItems - autoApprovedCount;
-    const status = totalItems === 0 ? "rejected" : pendingCount > 0 ? "needs_review" : "auto_approved";
+    const hasPhoto = !!(photoBase64 && photoMimeType);
+    // A photo is never auto-published here regardless of text confidence -- it only goes
+    // live via the admin approve action (app/api/admin/submissions/[id]/route.ts), so any
+    // submission carrying a photo stays in the review queue even if its text auto-approved.
+    const status =
+      totalItems === 0 && !hasPhoto
+        ? "rejected"
+        : pendingCount > 0 || hasPhoto
+          ? "needs_review"
+          : "auto_approved";
 
-    const [savedSubmission] = await db
-      .insert(submissions)
-      .values({
-        venueId,
-        rawText: text,
-        photoData: photoBase64,
-        photoMimeType,
-        status,
-        aiExtracted: result,
-        aiConfidence: null,
-        aiNotes:
-          totalItems === 0
-            ? "No qualifying specials, events, or menu items found."
-            : `${autoApprovedCount} auto-published, ${pendingCount} pending review.`,
-        resolvedItemKeys,
-        reviewedAt: pendingCount === 0 ? now : null,
-      })
-      .returning({ id: submissions.id });
-
-    if (photoBase64 && photoMimeType && autoApprovedCount > 0) {
-      await savePhotoOnApproval({
-        venueId,
-        photoData: photoBase64,
-        photoMimeType,
-        submissionId: savedSubmission.id,
-      });
-    }
+    await db.insert(submissions).values({
+      venueId,
+      rawText: text,
+      photoData: photoBase64,
+      photoMimeType,
+      status,
+      aiExtracted: result,
+      aiConfidence: null,
+      aiNotes:
+        totalItems === 0
+          ? "No qualifying specials, events, or menu items found."
+          : `${autoApprovedCount} auto-published, ${pendingCount} pending review.`,
+      resolvedItemKeys,
+      reviewedAt: status === "needs_review" ? null : now,
+    });
 
     return NextResponse.json({
       status,

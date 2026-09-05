@@ -78,6 +78,20 @@
       "when": 1788618472984,
       "tag": "0010_narrow_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788651194264,
+      "tag": "0011_milky_romulus",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788652107624,
+      "tag": "0012_spicy_gateway",
+      "breakpoints": true
     }
   ]
 }

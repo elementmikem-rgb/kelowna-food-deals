@@ -36,6 +36,9 @@ export const venues = specialsSchema.table(
     // that's confirmed so the cron uses a headless-browser fetch for this
     // venue instead of wasting a plain-fetch attempt every night.
     requiresBrowser: boolean("requires_browser").notNull().default(false),
+    // Set when a venue unsubscribes from outreach email via the link in that email.
+    // Checked before every outreach send so a "stop" is honored, not just noted.
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );
@@ -219,3 +222,17 @@ export const analyticsEvents = specialsSchema.table("analytics_events", {
   utmCampaign: text("utm_campaign"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Fixed-window per-IP rate limiting for public write endpoints (submit, report) and the
+// admin login attempt counter. windowStart is truncated to the window size (e.g. the top
+// of the hour) so a single row can be atomically incremented via ON CONFLICT.
+export const rateLimits = specialsSchema.table(
+  "rate_limits",
+  {
+    id: serial("id").primaryKey(),
+    key: text("key").notNull(), // e.g. "submit:1.2.3.4" or "login:1.2.3.4"
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull().default(1),
+  },
+  (table) => [uniqueIndex("rate_limits_key_window_unique").on(table.key, table.windowStart)]
+);

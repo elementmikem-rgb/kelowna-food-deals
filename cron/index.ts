@@ -3,6 +3,8 @@ import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { normalizeText, hashText } from "./hash";
 import { extractVenueContent } from "./extract";
+import { db } from "@/db";
+import { sql } from "drizzle-orm";
 import {
   getActiveVenues,
   getLastContentHash,
@@ -13,6 +15,9 @@ import {
 } from "./upsert";
 
 const TOKEN_CEILING = 50_000;
+// Arbitrary fixed key for this cron's advisory lock -- any int works as long as it's
+// stable across runs and not reused by another job sharing the same database.
+const CRON_LOCK_KEY = 8_412_991;
 
 async function processVenue(venue: {
   id: number;
@@ -85,7 +90,10 @@ async function processVenue(venue: {
     const message = err instanceof Error ? err.message : String(err);
     await logScrapeRun({
       venueId: venue.id,
-      contentHash: hash,
+      // null, not hash: recording the new hash here would make tomorrow's run see
+      // previousHash === hash and skip extraction forever, permanently freezing this
+      // venue on a single transient failure while it still reads as "verified today".
+      contentHash: null,
       changed: true,
       tokensUsed: 0,
       error: `extraction failed: ${message}`,
@@ -96,6 +104,26 @@ async function processVenue(venue: {
 }
 
 async function main() {
+  // Without this, two overlapping invocations (a slow run plus a new scheduled trigger)
+  // both read the same "previous hash" for a venue, both conclude it changed, and each
+  // archive-then-insert -- leaving two full sets of active specials/events live at once.
+  const [{ locked }] = await db.execute<{ locked: boolean }>(
+    sql`select pg_try_advisory_lock(${CRON_LOCK_KEY}) as locked`
+  );
+  if (!locked) {
+    console.error("Another cron run already holds the lock -- exiting without scraping.");
+    process.exitCode = 1;
+    return;
+  }
+
+  try {
+    await runScrapeCycle();
+  } finally {
+    await db.execute(sql`select pg_advisory_unlock(${CRON_LOCK_KEY})`);
+  }
+}
+
+async function runScrapeCycle() {
   const venueList = await getActiveVenues();
   console.log(`Starting scrape run for ${venueList.length} active venue(s)`);
 

@@ -1,9 +1,14 @@
 import type { MetadataRoute } from "next";
-import { db, venues } from "@/db";
-import { eq } from "drizzle-orm";
+import { db, venues, specials } from "@/db";
+import { eq, isNull, max } from "drizzle-orm";
 import { BLOG_POSTS } from "@/lib/blog-data";
 
 const BASE_URL = "https://kelownafooddeals.shop";
+
+// Without this, Next prerenders the sitemap once at build time and it never
+// regenerates -- venues added by the nightly cron wouldn't appear until the
+// next deploy, and lastModified would freeze to the build timestamp forever.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activeVenues = await db
@@ -11,9 +16,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from(venues)
     .where(eq(venues.active, true));
 
+  // venues has no updatedAt column, so derive a real per-venue lastModified
+  // from its most recently verified special rather than always "now".
+  const lastVerifiedRows = await db
+    .select({ venueId: specials.venueId, lastVerifiedAt: max(specials.lastVerifiedAt) })
+    .from(specials)
+    .where(isNull(specials.archivedAt))
+    .groupBy(specials.venueId);
+  const lastVerifiedByVenue = new Map(
+    lastVerifiedRows.map((r) => [r.venueId, r.lastVerifiedAt ? new Date(r.lastVerifiedAt) : new Date()])
+  );
+
   const venuePages: MetadataRoute.Sitemap = activeVenues.map((v) => ({
     url: `${BASE_URL}/venues/${v.id}`,
-    lastModified: new Date(),
+    lastModified: lastVerifiedByVenue.get(v.id) ?? new Date(),
     changeFrequency: "daily",
     priority: 0.6,
   }));

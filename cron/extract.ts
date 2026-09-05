@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { SpecialCategory, EventType } from "@/db/schema";
+import { pacificTodayISODate } from "@/lib/time";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -120,7 +121,7 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
     messages: [
       {
         role: "user",
-        content: `Today's date is ${new Date().toISOString().slice(0, 10)} (Kelowna, BC). Here is the raw scraped page text. Extract specials and events per the rules.\n\n---\n${truncated}\n---`,
+        content: `Today's date is ${pacificTodayISODate()} (Kelowna, BC). Here is the raw scraped page text. Extract specials and events per the rules.\n\n---\n${truncated}\n---`,
       },
     ],
     tools: [

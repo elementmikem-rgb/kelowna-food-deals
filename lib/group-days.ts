@@ -27,12 +27,16 @@ interface DayGroupable {
   startTime: string | null;
   endTime: string | null;
   dayOfWeek: number | null;
+  venueId?: number | null;
 }
 
 export function groupByDayRange<T extends DayGroupable>(items: T[]): (T & { dayLabel: string | null })[] {
   const groups = new Map<string, T[]>();
   for (const item of items) {
-    const key = `${item.title}|${item.description}|${item.priceCents}|${item.category}|${item.startTime}|${item.endTime}`;
+    // venueId is included so a multi-venue caller (e.g. PreviousSpecials, which lists
+    // across every active venue) can't collapse two different venues' identically-named
+    // specials into one card attributed to only one of them.
+    const key = `${item.venueId}|${item.title}|${item.description}|${item.priceCents}|${item.category}|${item.startTime}|${item.endTime}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(item);
   }

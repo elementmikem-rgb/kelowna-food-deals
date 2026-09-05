@@ -177,33 +177,37 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
   // Refresh strategy: this is a short rolling window (today + weekend), so
   // wipe yesterday's castanet-sourced rows and insert the fresh set rather
   // than trying to diff/upsert against a source with no stable IDs of its own.
-  await db.delete(events).where(like(events.extractionNotes, `${SOURCE_TAG}%`));
-
+  // Guard against an empty result BEFORE deleting -- fetchAndParse returns [] on
+  // any upstream failure (non-2xx, markup change), and deleting first would wipe
+  // the whole feed on every such outage instead of leaving yesterday's data up.
   if (parsed.length === 0) return { inserted: 0 };
 
   const now = new Date();
-  await db.insert(events).values(
-    parsed.map((e) => {
-      const matchedVenueId = venueByName.get(e.locationName.toLowerCase()) ?? null;
-      return {
-        venueId: matchedVenueId,
-        locationName: matchedVenueId ? null : e.locationName,
-        locationAddress: matchedVenueId ? null : e.locationAddress,
-        title: e.title,
-        description: e.description,
-        eventType: classifyEventType(e.title, e.description ?? ""),
-        dayOfWeek: null,
-        specificDate: e.specificDate,
-        startTime: e.startTime,
-        endTime: null,
-        coverChargeCents: parseCoverCharge(e.description ?? ""),
-        lastVerifiedAt: now,
-        sourceUrl: e.sourceUrl,
-        confidence: 0.9,
-        extractionNotes: `${SOURCE_TAG} | ${e.sourceUrl}`,
-      };
-    })
-  );
+  await db.transaction(async (tx) => {
+    await tx.delete(events).where(like(events.extractionNotes, `${SOURCE_TAG}%`));
+    await tx.insert(events).values(
+      parsed.map((e) => {
+        const matchedVenueId = venueByName.get(e.locationName.toLowerCase()) ?? null;
+        return {
+          venueId: matchedVenueId,
+          locationName: matchedVenueId ? null : e.locationName,
+          locationAddress: matchedVenueId ? null : e.locationAddress,
+          title: e.title,
+          description: e.description,
+          eventType: classifyEventType(e.title, e.description ?? ""),
+          dayOfWeek: null,
+          specificDate: e.specificDate,
+          startTime: e.startTime,
+          endTime: null,
+          coverChargeCents: parseCoverCharge(e.description ?? ""),
+          lastVerifiedAt: now,
+          sourceUrl: e.sourceUrl,
+          confidence: 0.9,
+          extractionNotes: `${SOURCE_TAG} | ${e.sourceUrl}`,
+        };
+      })
+    );
+  });
 
   return { inserted: parsed.length };
 }
