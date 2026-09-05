@@ -274,6 +274,118 @@ const SEED_VENUES: SeedVenue[] = [
     website: "https://woodsmangroup.com/woodys-pub/",
     menuUrl: "https://woodsmangroup.com/woodys-pub/",
   },
+
+  // Reddit-sourced (r/Kelowna) — verified separately
+  {
+    name: "Montana's BBQ & Bar",
+    address: "1500 Banks Rd Unit 400, Kelowna, BC V1X 7Y1",
+    website: "https://www.montanas.ca/en/locations/bc/kelowna/1500-banks-rd",
+    menuUrl: "https://www.montanas.ca/en/locations/bc/kelowna/1500-banks-rd",
+  },
+  {
+    name: "Original Joe's Kelowna",
+    address: "2728 Pandosy Street, Kelowna, BC V1Y 1V7",
+    website: "https://www.originaljoes.ca/en/locations/bc/kelowna/2728-pandosy-street",
+    menuUrl: "https://www.originaljoes.ca/en/locations/bc/kelowna/2728-pandosy-street",
+  },
+  {
+    name: "Boomers Bar & Grill",
+    address: "4105 Gordon Drive, Kelowna, BC V1W 4Z1",
+    website: "https://boomerskelowna.com/",
+    menuUrl: "https://boomerskelowna.com/",
+  },
+  {
+    name: "Mickie's Pub",
+    address: "2170 Harvey Avenue, Kelowna, BC V1Y 6G8",
+    website: "https://mickiespub.com",
+    menuUrl: "https://mickiespub.com",
+  },
+  {
+    name: "The Canadian Brewhouse Kelowna",
+    address: "3030 Pandosy Street, Kelowna, BC",
+    website: "https://thecanadianbrewhouse.com/locations/kelowna/",
+    menuUrl: "https://thecanadianbrewhouse.com/locations/kelowna/",
+  },
+  {
+    name: "Dakoda's Sports Bar & Grill",
+    address: "1574 Harvey Avenue, Kelowna, BC V1Y 6G2",
+    website: "https://dakodas.com/",
+    menuUrl: "https://dakodas.com/",
+  },
+  {
+    name: "McCulloch Station Pub",
+    address: "2789 KLO Road, Kelowna, BC V1W 4A5",
+    website: "https://www.mccullochstation.ca/",
+    menuUrl: "https://www.mccullochstation.ca/",
+  },
+  {
+    name: "Baxter's Bar & Grill",
+    address: "#2-1745 Spall Road, Kelowna, BC V1Y 4P7",
+    website: "https://baxtersbarandgrill.com/",
+    menuUrl: "https://baxtersbarandgrill.com/",
+  },
+  {
+    name: "Match Eatery & Public House Kelowna",
+    address: "1300 Water Street, Kelowna, BC V1Y 9P3",
+    website: "https://matchpub.com/kelowna",
+    menuUrl: "https://matchpub.com/kelowna",
+  },
+  {
+    name: "Cantina del Centro",
+    address: "271 Bernard Ave, Kelowna, BC V1Y 6N2",
+    website: "https://cantinadelcentro.ca/kelowna/",
+    menuUrl: "https://cantinadelcentro.ca/kelowna/",
+  },
+  {
+    name: "Salsa and Sabor",
+    address: "540 Hollywood Road S, Kelowna, BC",
+    website: "https://salsaandsabor.ca/",
+    menuUrl: "https://salsaandsabor.ca/",
+  },
+  {
+    name: "Red Swan Pizza (Banks Rd)",
+    address: "1500 Banks Road #302, Kelowna, BC",
+    website: "https://locations.redswanpizza.ca/",
+    menuUrl: "https://locations.redswanpizza.ca/",
+  },
+  {
+    name: "Bin 4 Burger Lounge",
+    address: "1616 Powick Road, Kelowna, BC V1X 7G5",
+    website: "https://bin4burgerlounge.com/locations/kelowna/",
+    menuUrl: "https://bin4burgerlounge.com/locations/kelowna/",
+  },
+  {
+    name: "Social 242 Lounge & Grill",
+    address: "242 Lawrence Ave, Kelowna, BC V1Y 6L3",
+    website: "https://www.social242.com/",
+    menuUrl: "https://www.social242.com/",
+  },
+  {
+    name: "The Coop Wicked Chicken & Bar",
+    address: "274 Bernard Avenue, Kelowna, BC V1Y 6N4",
+    website: "https://thecoopwickedchicken.com/order-now/kelowna/",
+    menuUrl: "https://thecoopwickedchicken.com/order-now/kelowna/",
+  },
+
+  // Peachland
+  {
+    name: "Jac's On The Beach",
+    address: "5866B Beach Ave, Peachland, BC",
+    website: "https://www.jacsonthebeach.com/",
+    menuUrl: "https://www.jacsonthebeach.com/",
+  },
+  {
+    name: "Edgewater Inn Bar & Grill",
+    address: "5830 Beach Ave, Peachland, BC V0H 1X7",
+    website: "http://edgewaterpub.weebly.com/",
+    menuUrl: "http://edgewaterpub.weebly.com/",
+  },
+  {
+    name: "Gasthaus on the Lake",
+    address: "5790 Beach Avenue, Peachland, BC",
+    website: "https://gasthaus.ca/",
+    menuUrl: "https://gasthaus.ca/",
+  },
 ];
 
 async function main() {
