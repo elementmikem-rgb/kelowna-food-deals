@@ -22,9 +22,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params;
   const venue = await getVenueById(Number(id));
   if (!venue) return { title: "Venue not found" };
+  const title = `${venue.name} — Kelowna Specials & Events`;
+  const description = `Current food/drink specials, events, and info for ${venue.name} — ${venue.address}. Verified, not guessed.`;
+  const url = `https://kelownafooddeals.shop/venues/${venue.id}`;
   return {
-    title: `${venue.name} — Specials & Events`,
-    description: `Current specials, events, and info for ${venue.name} in Kelowna, BC. ${venue.address}.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url },
   };
 }
 
@@ -45,8 +50,33 @@ export default async function VenuePage({ params }: PageProps) {
   const mapQuery = encodeURIComponent(venue.address);
   const reviewsQuery = encodeURIComponent(`${venue.name} Kelowna reviews`);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FoodEstablishment",
+    name: venue.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: venue.address,
+      addressLocality: "Kelowna",
+      addressRegion: "BC",
+      addressCountry: "CA",
+    },
+    url: venue.website ?? undefined,
+    telephone: venue.phone ?? undefined,
+    menu: venue.menuUrl ?? undefined,
+    geo:
+      venue.lat !== null && venue.lng !== null
+        ? { "@type": "GeoCoordinates", latitude: venue.lat, longitude: venue.lng }
+        : undefined,
+  };
+
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-8">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <div>
         <Link href="/" className="text-sm text-accent-dim hover:underline">
           ← All specials

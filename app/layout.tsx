@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 const SITE_URL = "https://kelownafooddeals.shop";
 const SITE_TITLE = "Kelowna Daily Specials — Food & Drink Deals Today";
 const SITE_DESCRIPTION =
-  "What food and drink specials are actually running in Kelowna, BC today — happy hours, wing nights, and food deals, checked and verified daily, not scraped and guessed.";
+  "What food and drink specials are actually running today in Kelowna, West Kelowna, Lake Country, and Peachland, BC — happy hours, wing nights, and food deals, checked and verified daily, not scraped and guessed.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -38,6 +38,10 @@ export const metadata: Metadata = {
     "Kelowna wing night",
     "Kelowna restaurant deals",
     "Kelowna BC food specials today",
+    "West Kelowna happy hour",
+    "Lake Country BC restaurants",
+    "Peachland restaurants",
+    "Okanagan happy hour",
   ],
   applicationName: "Kelowna Daily Specials",
   manifest: "/manifest.json",

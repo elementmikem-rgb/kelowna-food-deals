@@ -13,7 +13,7 @@ export function SiteHeader({
       <div className="flex items-center gap-4">
         <Image
           src="/icons/icon-192.png"
-          alt=""
+          alt="Kelowna Daily Specials logo"
           width={56}
           height={56}
           className="rounded-full shrink-0"

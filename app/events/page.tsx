@@ -8,9 +8,16 @@ import { TipJar } from "@/components/TipJar";
 export const revalidate = 3600; // ISR: refresh at most once an hour
 
 export const metadata: Metadata = {
-  title: "Live Music & Events",
+  title: "Kelowna Live Music & Events Tonight",
   description:
     "Live music, trivia, karaoke, and sports nights happening at Kelowna bars and restaurants — checked and verified, not a stale calendar.",
+  alternates: { canonical: "https://kelownafooddeals.shop/events" },
+  openGraph: {
+    title: "Kelowna Live Music & Events Tonight",
+    description:
+      "Live music, trivia, karaoke, and sports nights happening at Kelowna bars and restaurants — checked and verified.",
+    url: "https://kelownafooddeals.shop/events",
+  },
 };
 
 export default async function EventsPage() {
