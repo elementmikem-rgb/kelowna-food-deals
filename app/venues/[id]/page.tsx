@@ -71,9 +71,36 @@ export default async function VenuePage({ params }: PageProps) {
     url: venue.website ?? undefined,
     telephone: venue.phone ?? undefined,
     menu: venue.menuUrl ?? undefined,
+    image:
+      venuePhotos.length > 0
+        ? `https://kelownafooddeals.shop/api/venue-photos/${venuePhotos[0].id}`
+        : undefined,
     geo:
       venue.lat !== null && venue.lng !== null
         ? { "@type": "GeoCoordinates", latitude: venue.lat, longitude: venue.lng }
+        : undefined,
+    hasMenu:
+      venueMenuItems.length > 0
+        ? {
+            "@type": "Menu",
+            hasMenuSection: {
+              "@type": "MenuSection",
+              name: "Full Menu",
+              hasMenuItem: venueMenuItems.map((m) => ({
+                "@type": "MenuItem",
+                name: m.name,
+                description: m.description ?? undefined,
+                offers:
+                  m.priceCents !== null
+                    ? {
+                        "@type": "Offer",
+                        price: (m.priceCents / 100).toFixed(2),
+                        priceCurrency: "CAD",
+                      }
+                    : undefined,
+              })),
+            },
+          }
         : undefined,
   };
 

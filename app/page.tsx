@@ -6,6 +6,7 @@ import { TipJar } from "@/components/TipJar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
+import { HomeIntroCallout } from "@/components/HomeIntroCallout";
 import { buildSpecialsJsonLd } from "@/lib/seo";
 
 export const revalidate = 3600; // ISR: refresh at most once an hour
@@ -30,6 +31,8 @@ export default async function Home() {
         active="specials"
         subtitle="What's actually on today — verified, not guessed."
       />
+
+      <HomeIntroCallout />
 
       <SpecialsBoard specials={specials} />
       <MonthlySpecials specials={monthlySpecials} />

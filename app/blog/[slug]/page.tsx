@@ -54,6 +54,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: post.title,
     description: post.metaDescription,
     datePublished: post.publishedAt,
+    image: "https://kelownafooddeals.shop/icons/icon-512.png",
     author: { "@type": "Organization", name: "Kelowna Daily Specials" },
     publisher: { "@type": "Organization", name: "Kelowna Daily Specials" },
     mainEntityOfPage: `https://kelownafooddeals.shop/blog/${post.slug}`,

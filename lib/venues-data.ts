@@ -88,17 +88,15 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
 
 export interface VenuePhoto {
   id: number;
-  photoData: string;
-  photoMimeType: string;
   caption: string | null;
 }
 
+// Only id + caption — the actual image bytes are served from
+// /api/venue-photos/[id] so the page HTML doesn't inline base64 blobs.
 export async function getVenuePhotos(venueId: number): Promise<VenuePhoto[]> {
   const rows = await db
     .select({
       id: venuePhotos.id,
-      photoData: venuePhotos.photoData,
-      photoMimeType: venuePhotos.photoMimeType,
       caption: venuePhotos.caption,
     })
     .from(venuePhotos)

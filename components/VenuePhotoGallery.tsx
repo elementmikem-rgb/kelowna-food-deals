@@ -24,7 +24,7 @@ export function VenuePhotoGallery({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`data:${photo.photoMimeType};base64,${photo.photoData}`}
+              src={`/api/venue-photos/${photo.id}`}
               alt={photo.caption ?? `${venueName} menu photo`}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -40,7 +40,7 @@ export function VenuePhotoGallery({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`data:${open.photoMimeType};base64,${open.photoData}`}
+            src={`/api/venue-photos/${open.id}`}
             alt={open.caption ?? `${venueName} menu photo`}
             className="max-w-full max-h-full rounded-lg"
           />
