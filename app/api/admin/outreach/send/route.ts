@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, venues, outreachSends } from "@/db";
 import { eq } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
+import { isAdminAuthed } from "@/lib/admin-auth";
 
 const sendSchema = z.object({ venueId: z.number().int().positive() });
 
@@ -21,6 +22,10 @@ function buildOutreachHtml(venueName: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthed(req)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = sendSchema.safeParse(body);
   if (!parsed.success) {

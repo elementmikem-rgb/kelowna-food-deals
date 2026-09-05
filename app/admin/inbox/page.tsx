@@ -1,33 +1,28 @@
 import Link from "next/link";
-import { db, inboundEmails, venues } from "@/db";
-import { desc, eq } from "drizzle-orm";
-import { AdminInboxRow } from "@/components/AdminInboxRow";
+import { getInboxThreads } from "@/lib/inbox-data";
+import { InboxThreadList } from "@/components/InboxThreadList";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminInboxPage() {
-  const rows = await db
-    .select({
-      id: inboundEmails.id,
-      venueName: venues.name,
-      fromEmail: inboundEmails.fromEmail,
-      fromName: inboundEmails.fromName,
-      subject: inboundEmails.subject,
-      textBody: inboundEmails.textBody,
-      read: inboundEmails.read,
-      receivedAt: inboundEmails.receivedAt,
-    })
-    .from(inboundEmails)
-    .leftJoin(venues, eq(inboundEmails.venueId, venues.id))
-    .orderBy(desc(inboundEmails.receivedAt));
+  const threads = await getInboxThreads();
+  const unreadTotal = threads.reduce((sum, t) => sum + t.unreadCount, 0);
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">Inbox ({rows.length})</h1>
-        <div className="flex gap-3">
+        <h1 className="font-display text-2xl text-foreground">
+          Inbox {unreadTotal > 0 && <span className="text-accent">({unreadTotal})</span>}
+        </h1>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/inbox/compose"
+            className="press-pill rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium"
+          >
+            Compose
+          </Link>
           <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
-            ← Outreach
+            Outreach
           </Link>
           <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
             Analytics
@@ -35,17 +30,12 @@ export default async function AdminInboxPage() {
         </div>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="text-muted-2 text-sm">No replies yet.</p>
+      {threads.length === 0 ? (
+        <p className="text-muted-2 text-sm">No conversations yet.</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {rows.map((r) => (
-            <AdminInboxRow
-              key={r.id}
-              email={{ ...r, receivedAt: r.receivedAt.toISOString() }}
-            />
-          ))}
-        </div>
+        <InboxThreadList
+          threads={threads.map((t) => ({ ...t, lastAt: t.lastAt.toISOString() }))}
+        />
       )}
     </div>
   );
