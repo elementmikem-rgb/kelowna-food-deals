@@ -26,6 +26,10 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent");
     if (isBotUserAgent(userAgent)) return NextResponse.json({ ok: true });
 
+    // Second line of defense for the kds_dnt opt-out cookie (client already
+    // skips sending when set) — covers any client that bypasses track.js.
+    if (req.cookies.get("kds_dnt")?.value === "1") return NextResponse.json({ ok: true });
+
     const country = req.headers.get("cf-ipcountry");
 
     await trackEvent({

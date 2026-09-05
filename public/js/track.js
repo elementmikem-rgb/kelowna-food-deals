@@ -24,6 +24,15 @@
     }
   }
 
+  function isExcluded() {
+    return document.cookie.indexOf("kds_dnt=1") !== -1;
+  }
+
+  if (isExcluded()) {
+    window.kdsTrack = function () {};
+    return;
+  }
+
   var visitorId = getOrSet(window.localStorage, "kds_vid", randomId);
   var sessionId = getOrSet(window.sessionStorage, "kds_sid", randomId);
 
