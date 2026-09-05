@@ -114,16 +114,21 @@ export async function fetchAndExtractTextViaBrowser(url: string): Promise<FetchR
     await rateLimit();
     const { chromium } = await import("playwright-core");
     const executablePath = resolveChromiumPath();
-    browser = await chromium.launch(
-      executablePath
-        ? {
-            executablePath,
-            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-          }
-        : undefined
-    );
+    // --disable-http2 works around net::ERR_HTTP2_PROTOCOL_ERROR seen on some
+    // sites (e.g. montanas.ca) specifically with Playwright-launched Chromium
+    // -- a real interactive Chrome browser loads the same page fine, so this
+    // looks like an ALPN/H2-negotiation quirk tied to Playwright's launch
+    // flags rather than anything wrong with the target site.
+    const launchArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-http2"];
+    browser = await chromium.launch(executablePath ? { executablePath, args: launchArgs } : { args: launchArgs });
     const page = await browser.newPage({ userAgent: USER_AGENT });
-    await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
+    // "load" instead of "networkidle": a page with any persistent connection
+    // (a chat widget, an analytics beacon) never reaches "networkidle" and
+    // times out even though the real content finished rendering ages ago
+    // (seen on montanas.ca). A short fixed wait after "load" covers the
+    // common case of content injected shortly after the load event.
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.waitForTimeout(2500);
     const text = await page.evaluate(() => {
       document.querySelectorAll("script, style, noscript, svg, nav, footer").forEach((el) => el.remove());
       return document.body.innerText;
