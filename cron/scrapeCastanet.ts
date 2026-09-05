@@ -48,6 +48,20 @@ function parseCoverCharge(description: string): number | null {
   return Math.round(parseFloat(match[1]) * 100);
 }
 
+// Castanet's CMS double-encodes some entities (e.g. literal "&ndash;" text
+// survives cheerio's normal decoding), so decode common ones a second pass.
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&ndash;/g, "–")
+    .replace(/&mdash;/g, "—")
+    .replace(/&rsquo;/g, "’")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ");
+}
+
 function pacificToday(): Date {
   const parts = new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" }).split("-");
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
@@ -126,8 +140,8 @@ async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
     if (!specificDate) continue;
 
     results.push({
-      title,
-      description,
+      title: decodeEntities(title),
+      description: description ? decodeEntities(description) : null,
       locationName: locationLine.split(",")[0].trim(),
       locationAddress: locationLine,
       specificDate,
