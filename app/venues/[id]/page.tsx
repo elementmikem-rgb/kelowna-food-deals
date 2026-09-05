@@ -7,12 +7,14 @@ import {
   getVenuePreviousSpecials,
   getVenueEvents,
   getVenuePhotos,
+  getVenueMenuItems,
 } from "@/lib/venues-data";
 import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
+import { formatPrice } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -43,12 +45,14 @@ export default async function VenuePage({ params }: PageProps) {
   const venue = await getVenueById(venueId);
   if (!venue) notFound();
 
-  const [venueSpecials, venueEvents, previousSpecials, venuePhotos] = await Promise.all([
-    getVenueSpecials(venueId),
-    getVenueEvents(venueId),
-    getVenuePreviousSpecials(venueId),
-    getVenuePhotos(venueId),
-  ]);
+  const [venueSpecials, venueEvents, previousSpecials, venuePhotos, venueMenuItems] =
+    await Promise.all([
+      getVenueSpecials(venueId),
+      getVenueEvents(venueId),
+      getVenuePreviousSpecials(venueId),
+      getVenuePhotos(venueId),
+      getVenueMenuItems(venueId),
+    ]);
 
   const mapQuery = encodeURIComponent(venue.address);
   const reviewsQuery = encodeURIComponent(`${venue.name} Kelowna reviews`);
@@ -142,7 +146,7 @@ export default async function VenuePage({ params }: PageProps) {
 
       {venuePhotos.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">Menu &amp; Photos</h2>
+          <h2 className="font-display text-2xl text-foreground">Photos</h2>
           <p className="text-sm text-muted-2 -mt-1">
             Submitted by visitors — menus, boards, and signage as spotted in the wild.
           </p>
@@ -170,6 +174,33 @@ export default async function VenuePage({ params }: PageProps) {
             {venueEvents.map((e) => (
               <EventCard key={e.id} event={e} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {venueMenuItems.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-2xl text-foreground">Full Menu</h2>
+          <p className="text-sm text-muted-2 -mt-1">
+            Regular menu items spotted by visitors — not deals, just what&apos;s on offer.
+          </p>
+          <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
+            {venueMenuItems.map((m) => {
+              const price = formatPrice(m.priceCents);
+              return (
+                <div key={m.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-sm font-medium text-foreground/90">{m.name}</span>
+                    {m.description && (
+                      <span className="text-xs text-muted">{m.description}</span>
+                    )}
+                  </div>
+                  {price && (
+                    <span className="font-mono-tabular text-sm text-muted shrink-0">{price}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

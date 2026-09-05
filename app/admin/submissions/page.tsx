@@ -9,13 +9,12 @@ export default async function AdminSubmissionsPage() {
     .select({
       id: submissions.id,
       venueName: venues.name,
-      submissionType: submissions.submissionType,
       rawText: submissions.rawText,
       photoData: submissions.photoData,
       photoMimeType: submissions.photoMimeType,
       aiExtracted: submissions.aiExtracted,
-      aiConfidence: submissions.aiConfidence,
       aiNotes: submissions.aiNotes,
+      resolvedItemKeys: submissions.resolvedItemKeys,
       createdAt: submissions.createdAt,
     })
     .from(submissions)

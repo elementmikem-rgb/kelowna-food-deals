@@ -57,6 +57,13 @@
       "when": 1788587771027,
       "tag": "0007_black_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788589987767,
+      "tag": "0008_luxuriant_jack_power",
+      "breakpoints": true
     }
   ]
 }

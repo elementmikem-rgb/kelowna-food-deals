@@ -1,61 +1,117 @@
 "use client";
 
 import { useState } from "react";
+import type { SubmissionReviewResult } from "@/lib/submission-review";
+import { formatPrice } from "@/lib/format";
 
 interface SubmissionRowData {
   id: number;
   venueName: string;
-  submissionType: "special" | "event";
   rawText: string | null;
   photoData: string | null;
   photoMimeType: string | null;
   aiExtracted: unknown;
-  aiConfidence: number | null;
   aiNotes: string | null;
+  resolvedItemKeys: string[];
   createdAt: string;
 }
 
-export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
-  const [resolved, setResolved] = useState<"approve" | "reject" | null>(null);
-  const [loading, setLoading] = useState(false);
+type ItemType = "special" | "event" | "menuItem";
+
+function ItemCard({
+  submissionId,
+  itemType,
+  itemIndex,
+  title,
+  subtitle,
+  description,
+  confidence,
+  notes,
+  onResolved,
+}: {
+  submissionId: number;
+  itemType: ItemType;
+  itemIndex: number;
+  title: string;
+  subtitle: string;
+  description: string | null;
+  confidence: number;
+  notes: string | null;
+  onResolved: (key: string) => void;
+}) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
+  const key = `${itemType}:${itemIndex}`;
 
   async function act(action: "approve" | "reject") {
-    setLoading(true);
+    setState("loading");
     setError(null);
     try {
-      const res = await fetch(`/api/admin/submissions/${submission.id}`, {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, itemType, itemIndex }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
-      setResolved(action);
+      setState("done");
+      onResolved(key);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
-    } finally {
-      setLoading(false);
+      setState("idle");
     }
   }
 
-  if (resolved) {
-    return (
-      <div className="rounded-xl border border-border bg-surface p-4 opacity-50">
-        <p className="text-sm text-muted">
-          {resolved === "approve" ? "Approved" : "Rejected"} — {submission.venueName}
-        </p>
+  if (state === "done") return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-surface-raised p-3 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-wide text-muted-2">{itemType}</span>
+        <span className="text-[10px] text-muted-2">confidence {confidence.toFixed(2)}</span>
       </div>
-    );
-  }
+      <p className="text-sm font-medium text-foreground/90">{title}</p>
+      <p className="text-xs text-muted">{subtitle}</p>
+      {description && <p className="text-xs text-muted">{description}</p>}
+      {notes && <p className="text-xs text-stale">note: {notes}</p>}
+      {error && <p className="text-xs text-stale">{error}</p>}
+      <div className="flex gap-2 mt-1">
+        <button
+          onClick={() => act("approve")}
+          disabled={state === "loading"}
+          className="press-pill rounded-full bg-accent text-background px-3 py-1 text-xs font-medium disabled:opacity-50"
+        >
+          Approve
+        </button>
+        <button
+          onClick={() => act("reject")}
+          disabled={state === "loading"}
+          className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
+  const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
+  const extracted = submission.aiExtracted as SubmissionReviewResult | null;
+
+  const specials = extracted?.specials ?? [];
+  const eventsList = extracted?.events ?? [];
+  const menuItemsList = extracted?.menu_items ?? [];
+  const totalItems = specials.length + eventsList.length + menuItemsList.length;
+  const remaining = totalItems - resolvedKeys.length;
+
+  if (extracted && remaining <= 0) return null;
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg text-foreground">{submission.venueName}</h3>
-        <span className="text-xs uppercase tracking-wide text-muted-2">
-          {submission.submissionType}
-        </span>
+        <span className="text-xs text-muted-2">{remaining} pending</span>
       </div>
 
       {submission.rawText && (
@@ -70,34 +126,67 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
         />
       )}
 
-      {submission.aiExtracted != null && (
-        <div className="rounded-lg bg-surface-raised p-3 text-xs font-mono-tabular whitespace-pre-wrap">
-          {JSON.stringify(submission.aiExtracted, null, 2)}
-        </div>
+      {!extracted && (
+        <p className="text-xs text-stale">{submission.aiNotes ?? "AI review failed."}</p>
       )}
 
-      <p className="text-xs text-muted">
-        AI confidence: {submission.aiConfidence?.toFixed(2) ?? "n/a"}
-        {submission.aiNotes ? ` — ${submission.aiNotes}` : ""}
-      </p>
-
-      {error && <p className="text-xs text-stale">{error}</p>}
-
-      <div className="flex gap-2">
-        <button
-          onClick={() => act("approve")}
-          disabled={loading}
-          className="rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium disabled:opacity-50"
-        >
-          Approve
-        </button>
-        <button
-          onClick={() => act("reject")}
-          disabled={loading}
-          className="rounded-full border border-border px-4 py-1.5 text-sm text-muted disabled:opacity-50"
-        >
-          Reject
-        </button>
+      <div className="flex flex-col gap-2">
+        {specials.map((s, i) =>
+          resolvedKeys.includes(`special:${i}`) ? null : (
+            <ItemCard
+              key={`special:${i}`}
+              submissionId={submission.id}
+              itemType="special"
+              itemIndex={i}
+              title={s.title}
+              subtitle={[
+                formatPrice(s.price_cents),
+                s.start_time ?? "",
+                s.day_of_week !== null ? `day ${s.day_of_week}` : "any day",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              description={s.description}
+              confidence={s.confidence}
+              notes={s.notes}
+              onResolved={(key) => setResolvedKeys((prev) => [...prev, key])}
+            />
+          )
+        )}
+        {eventsList.map((e, i) =>
+          resolvedKeys.includes(`event:${i}`) ? null : (
+            <ItemCard
+              key={`event:${i}`}
+              submissionId={submission.id}
+              itemType="event"
+              itemIndex={i}
+              title={e.title}
+              subtitle={[e.event_type, e.specific_date ?? "", e.start_time ?? ""]
+                .filter(Boolean)
+                .join(" · ")}
+              description={e.description}
+              confidence={e.confidence}
+              notes={e.notes}
+              onResolved={(key) => setResolvedKeys((prev) => [...prev, key])}
+            />
+          )
+        )}
+        {menuItemsList.map((m, i) =>
+          resolvedKeys.includes(`menuItem:${i}`) ? null : (
+            <ItemCard
+              key={`menuItem:${i}`}
+              submissionId={submission.id}
+              itemType="menuItem"
+              itemIndex={i}
+              title={m.name}
+              subtitle={formatPrice(m.price_cents) ?? ""}
+              description={m.description}
+              confidence={m.confidence}
+              notes={m.notes}
+              onResolved={(key) => setResolvedKeys((prev) => [...prev, key])}
+            />
+          )
+        )}
       </div>
     </div>
   );

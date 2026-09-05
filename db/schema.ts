@@ -142,17 +142,36 @@ export const submissions = specialsSchema.table("submissions", {
   venueId: integer("venue_id")
     .notNull()
     .references(() => venues.id, { onDelete: "cascade" }),
-  submissionType: text("submission_type").$type<SubmissionType>().notNull(),
+  submissionType: text("submission_type").$type<SubmissionType>(), // legacy, unused now that a submission can yield mixed item types
   rawText: text("raw_text"),
   photoData: text("photo_data"), // base64-encoded image, size-capped at the API layer
   photoMimeType: text("photo_mime_type"),
   status: text("status").$type<SubmissionStatus>().notNull().default("needs_review"),
-  aiExtracted: jsonb("ai_extracted"), // structured special/event fields the AI proposed
+  aiExtracted: jsonb("ai_extracted"), // { specials: [...], events: [...], menuItems: [...] } proposed by the AI
   aiConfidence: real("ai_confidence"),
   aiNotes: text("ai_notes"),
-  resultingRowId: integer("resulting_row_id"), // id in specials/events once approved
+  resultingRowId: integer("resulting_row_id"), // legacy, unused now that a submission can yield multiple rows
+  resolvedItemKeys: text("resolved_item_keys")
+    .array()
+    .notNull()
+    .default([]), // e.g. "special:0", "event:1" — items already approved/rejected by an admin
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+});
+
+export const menuItems = specialsSchema.table("menu_items", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  priceCents: integer("price_cents"), // regular menu price, not a deal — null if not stated
+  lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+  sourceUrl: text("source_url"),
+  confidence: real("confidence").notNull().default(1),
+  extractionNotes: text("extraction_notes"),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
 
 export const venuePhotos = specialsSchema.table("venue_photos", {

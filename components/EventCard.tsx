@@ -70,7 +70,7 @@ export function EventCard({ event }: { event: EventWithVenue }) {
           <span className="font-mono-tabular text-sm text-muted">{timeWindow}</span>
         )}
         <span className="font-mono-tabular text-sm text-muted">
-          {cover ? `${cover} cover` : "Free"}
+          {event.coverChargeCents ? `${cover} cover` : "Free"}
         </span>
       </div>
 

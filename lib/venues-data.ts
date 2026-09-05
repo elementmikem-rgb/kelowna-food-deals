@@ -1,4 +1,4 @@
-import { db, venues, specials, events, venuePhotos } from "@/db";
+import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
 import { and, desc, eq, isNull, isNotNull } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
@@ -104,6 +104,28 @@ export async function getVenuePhotos(venueId: number): Promise<VenuePhoto[]> {
     .from(venuePhotos)
     .where(eq(venuePhotos.venueId, venueId))
     .orderBy(desc(venuePhotos.createdAt));
+
+  return rows;
+}
+
+export interface VenueMenuItem {
+  id: number;
+  name: string;
+  description: string | null;
+  priceCents: number | null;
+}
+
+export async function getVenueMenuItems(venueId: number): Promise<VenueMenuItem[]> {
+  const rows = await db
+    .select({
+      id: menuItems.id,
+      name: menuItems.name,
+      description: menuItems.description,
+      priceCents: menuItems.priceCents,
+    })
+    .from(menuItems)
+    .where(and(eq(menuItems.venueId, venueId), isNull(menuItems.archivedAt)))
+    .orderBy(desc(menuItems.lastVerifiedAt));
 
   return rows;
 }

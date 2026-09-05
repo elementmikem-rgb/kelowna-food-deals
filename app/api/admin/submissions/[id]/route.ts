@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, submissions, specials, events } from "@/db";
-import { eq } from "drizzle-orm";
-import type { SpecialReviewResult, EventReviewResult } from "@/lib/submission-review";
+import { db, submissions, specials, events, menuItems, venuePhotos } from "@/db";
+import { eq, and } from "drizzle-orm";
+import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
 
-const actionSchema = z.object({ action: z.enum(["approve", "reject"]) });
+const actionSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+  itemType: z.enum(["special", "event", "menuItem"]),
+  itemIndex: z.number().int().nonnegative(),
+});
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +23,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid action" }, { status: 400 });
   }
+  const { action, itemType, itemIndex } = parsed.data;
+  const itemKey = `${itemType}:${itemIndex}`;
 
   const [submission] = await db
     .select()
@@ -29,85 +35,98 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
   if (submission.status !== "needs_review") {
-    return NextResponse.json({ error: "already reviewed" }, { status: 409 });
+    return NextResponse.json({ error: "submission already fully resolved" }, { status: 409 });
+  }
+  if (submission.resolvedItemKeys.includes(itemKey)) {
+    return NextResponse.json({ error: "item already resolved" }, { status: 409 });
+  }
+  if (!submission.aiExtracted) {
+    return NextResponse.json({ error: "no extracted data" }, { status: 400 });
   }
 
   const now = new Date();
+  const extracted = submission.aiExtracted as SubmissionReviewResult;
 
-  if (parsed.data.action === "reject") {
-    await db
-      .update(submissions)
-      .set({ status: "rejected", reviewedAt: now })
-      .where(eq(submissions.id, submissionId));
-    return NextResponse.json({ ok: true });
-  }
-
-  if (!submission.aiExtracted) {
-    return NextResponse.json({ error: "no extracted data to approve" }, { status: 400 });
-  }
-
-  let resultingRowId: number;
-  if (submission.submissionType === "special") {
-    const result = submission.aiExtracted as SpecialReviewResult;
-    if (!result.title) {
-      return NextResponse.json({ error: "missing title" }, { status: 400 });
-    }
-    const [inserted] = await db
-      .insert(specials)
-      .values({
+  if (action === "approve") {
+    if (itemType === "special") {
+      const s = extracted.specials[itemIndex];
+      if (!s) return NextResponse.json({ error: "item not found" }, { status: 400 });
+      await db.insert(specials).values({
         venueId: submission.venueId,
-        title: result.title,
-        description: result.description,
-        priceCents: result.price_cents,
-        dayOfWeek: result.day_of_week,
-        isMonthly: result.is_monthly ?? false,
-        startTime: result.start_time,
-        endTime: result.end_time,
-        category: result.category ?? "other",
+        title: s.title,
+        description: s.description,
+        priceCents: s.price_cents,
+        dayOfWeek: s.day_of_week,
+        isMonthly: s.is_monthly,
+        startTime: s.start_time,
+        endTime: s.end_time,
+        category: s.category,
         lastVerifiedAt: now,
         sourceUrl: null,
-        confidence: result.confidence,
+        confidence: s.confidence,
         extractionNotes: "Submitted by a visitor, approved by admin.",
-      })
-      .returning({ id: specials.id });
-    resultingRowId = inserted.id;
-  } else {
-    const result = submission.aiExtracted as EventReviewResult;
-    if (!result.title) {
-      return NextResponse.json({ error: "missing title" }, { status: 400 });
-    }
-    const [inserted] = await db
-      .insert(events)
-      .values({
+      });
+    } else if (itemType === "event") {
+      const e = extracted.events[itemIndex];
+      if (!e) return NextResponse.json({ error: "item not found" }, { status: 400 });
+      await db.insert(events).values({
         venueId: submission.venueId,
-        title: result.title,
-        description: result.description,
-        eventType: result.event_type ?? "other",
-        dayOfWeek: result.day_of_week,
-        specificDate: result.specific_date,
-        startTime: result.start_time,
-        endTime: result.end_time,
-        coverChargeCents: result.cover_charge_cents,
+        title: e.title,
+        description: e.description,
+        eventType: e.event_type,
+        dayOfWeek: e.day_of_week,
+        specificDate: e.specific_date,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        coverChargeCents: e.cover_charge_cents,
         lastVerifiedAt: now,
         sourceUrl: null,
-        confidence: result.confidence,
+        confidence: e.confidence,
         extractionNotes: "Submitted by a visitor, approved by admin.",
-      })
-      .returning({ id: events.id });
-    resultingRowId = inserted.id;
+      });
+    } else {
+      const m = extracted.menu_items[itemIndex];
+      if (!m) return NextResponse.json({ error: "item not found" }, { status: 400 });
+      await db.insert(menuItems).values({
+        venueId: submission.venueId,
+        name: m.name,
+        description: m.description,
+        priceCents: m.price_cents,
+        lastVerifiedAt: now,
+        sourceUrl: null,
+        confidence: m.confidence,
+        extractionNotes: "Submitted by a visitor, approved by admin.",
+      });
+    }
+
+    const [existingPhoto] = await db
+      .select({ id: venuePhotos.id })
+      .from(venuePhotos)
+      .where(and(eq(venuePhotos.submissionId, submission.id)))
+      .limit(1);
+    if (!existingPhoto) {
+      await savePhotoOnApproval({
+        venueId: submission.venueId,
+        photoData: submission.photoData,
+        photoMimeType: submission.photoMimeType,
+        submissionId: submission.id,
+      });
+    }
   }
+
+  const updatedKeys = [...submission.resolvedItemKeys, itemKey];
+  const totalItems =
+    extracted.specials.length + extracted.events.length + extracted.menu_items.length;
+  const fullyResolved = updatedKeys.length >= totalItems;
 
   await db
     .update(submissions)
-    .set({ status: "approved", reviewedAt: now, resultingRowId })
+    .set({
+      resolvedItemKeys: updatedKeys,
+      status: fullyResolved ? "approved" : "needs_review",
+      reviewedAt: fullyResolved ? now : null,
+    })
     .where(eq(submissions.id, submissionId));
 
-  await savePhotoOnApproval({
-    venueId: submission.venueId,
-    photoData: submission.photoData,
-    photoMimeType: submission.photoMimeType,
-    submissionId: submission.id,
-  });
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, fullyResolved });
 }

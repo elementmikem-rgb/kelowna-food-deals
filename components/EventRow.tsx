@@ -52,7 +52,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
             <span className="font-mono-tabular text-[11px] text-muted">{timeWindow}</span>
           )}
           <span className="font-mono-tabular text-[11px] text-muted">
-            {cover ? `${cover} cover` : "Free"}
+            {event.coverChargeCents ? `${cover} cover` : "Free"}
           </span>
         </div>
       </div>
