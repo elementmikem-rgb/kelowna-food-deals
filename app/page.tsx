@@ -4,6 +4,7 @@ import { MonthlySpecials } from "@/components/MonthlySpecials";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { TipJar } from "@/components/TipJar";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { buildSpecialsJsonLd } from "@/lib/seo";
 
 export const revalidate = 3600; // ISR: refresh at most once an hour
@@ -34,6 +35,7 @@ export default async function Home() {
       <PreviousSpecials specials={previousSpecials} />
 
       <TipJar />
+      <SiteFooter />
     </div>
   );
 }

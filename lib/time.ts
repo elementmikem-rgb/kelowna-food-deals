@@ -61,3 +61,11 @@ export function formatTimeWindow(start: string | null, end: string | null): stri
   if (s && e) return `${s}–${e}`;
   return s ?? e ?? null;
 }
+
+export function formatCheckedAt(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: PACIFIC_TZ,
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}

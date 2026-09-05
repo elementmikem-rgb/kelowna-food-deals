@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getRecurringEvents, getUpcomingOneOffEvents } from "@/lib/events-data";
 import { EventsBoard } from "@/components/EventsBoard";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 
 export const revalidate = 3600; // ISR: refresh at most once an hour
@@ -28,6 +29,7 @@ export default async function EventsPage() {
       <EventsBoard recurring={recurring} upcoming={upcoming} />
 
       <TipJar />
+      <SiteFooter />
     </div>
   );
 }
