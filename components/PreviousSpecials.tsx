@@ -2,9 +2,11 @@ import Link from "next/link";
 import type { PreviousSpecial } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatVerifiedRelative } from "@/lib/time";
+import { groupByDayRange } from "@/lib/group-days";
 
 export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) {
   if (specials.length === 0) return null;
+  const grouped = groupByDayRange(specials);
 
   return (
     <section className="flex flex-col gap-3">
@@ -15,7 +17,7 @@ export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) 
         </p>
       </div>
       <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
-        {specials.map((s) => {
+        {grouped.map((s) => {
           const price = formatPrice(s.priceCents);
           return (
             <div
@@ -30,7 +32,8 @@ export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) 
                   — {s.title}
                 </span>
                 <span className="text-xs text-muted-2">
-                  {CATEGORY_LABELS[s.category]} · replaced{" "}
+                  {CATEGORY_LABELS[s.category]}
+                  {s.dayLabel && s.dayLabel !== "Daily" ? ` · ${s.dayLabel}` : ""} · replaced{" "}
                   {formatVerifiedRelative(s.archivedAt).replace("verified", "")}
                 </span>
               </div>

@@ -16,6 +16,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 import { ShareButton } from "@/components/ShareButton";
 import { formatPrice } from "@/lib/format";
+import { groupByDayRange } from "@/lib/group-days";
 
 export const revalidate = 3600;
 
@@ -196,8 +197,8 @@ export default async function VenuePage({ params }: PageProps) {
           <p className="text-muted-2 text-sm">No current specials on file for this venue.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {venueSpecials.map((s) => (
-              <SpecialCard key={s.id} special={s} />
+            {groupByDayRange(venueSpecials).map((s) => (
+              <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} />
             ))}
           </div>
         )}

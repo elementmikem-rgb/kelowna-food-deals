@@ -7,7 +7,13 @@ import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
 
-export function SpecialCard({ special }: { special: SpecialWithVenue }) {
+export function SpecialCard({
+  special,
+  dayLabel,
+}: {
+  special: SpecialWithVenue;
+  dayLabel?: string | null;
+}) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -66,6 +72,11 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
         )}
         {timeWindow && (
           <span className="font-mono-tabular text-sm text-muted">{timeWindow}</span>
+        )}
+        {dayLabel && dayLabel !== "Daily" && (
+          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-2">
+            {dayLabel}
+          </span>
         )}
       </div>
 
