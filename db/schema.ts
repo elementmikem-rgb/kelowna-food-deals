@@ -73,9 +73,9 @@ export type EventType = (typeof eventType)[number];
 
 export const events = specialsSchema.table("events", {
   id: serial("id").primaryKey(),
-  venueId: integer("venue_id")
-    .notNull()
-    .references(() => venues.id, { onDelete: "cascade" }),
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }), // null for events at a place not in our venues table (e.g. a winery hosting a concert)
+  locationName: text("location_name"), // used when venueId is null
+  locationAddress: text("location_address"), // used when venueId is null
   title: text("title").notNull(), // e.g. act/performer name or event name
   description: text("description"),
   eventType: text("event_type").$type<EventType>().notNull(),

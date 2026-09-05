@@ -24,8 +24,8 @@ export function MonthlySpecials({ specials }: { specials: SpecialWithVenue[] }) 
       <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
         {grouped.map((g) => (
           <SpecialVenueGroup
-            key={g.venueId}
-            venueId={g.venueId}
+            key={g.key}
+            venueId={g.venueId!}
             venueName={g.venueName}
             specials={g.items}
           />

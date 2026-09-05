@@ -1,18 +1,20 @@
 export interface VenueGroup<T> {
-  venueId: number;
+  key: string;
+  venueId: number | null;
   venueName: string;
   items: T[];
 }
 
-export function groupByVenue<T extends { venueId: number; venueName: string }>(
+export function groupByVenue<T extends { venueId: number | null; venueName: string }>(
   items: T[]
 ): VenueGroup<T>[] {
-  const map = new Map<number, VenueGroup<T>>();
+  const map = new Map<string, VenueGroup<T>>();
   for (const item of items) {
-    let group = map.get(item.venueId);
+    const key = item.venueId !== null ? `v${item.venueId}` : `n:${item.venueName}`;
+    let group = map.get(key);
     if (!group) {
-      group = { venueId: item.venueId, venueName: item.venueName, items: [] };
-      map.set(item.venueId, group);
+      group = { key, venueId: item.venueId, venueName: item.venueName, items: [] };
+      map.set(key, group);
     }
     group.items.push(item);
   }

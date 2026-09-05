@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, specials, events, venues } from "@/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { sendReportEmail } from "@/lib/brevo";
 
 const reportSchema = z.object({
   specialId: z.number().int().positive(),
-  venueId: z.number().int().positive(),
+  venueId: z.number().int().positive().nullable(),
   kind: z.enum(["special", "event"]).default("special"),
 });
 
@@ -22,13 +22,17 @@ export async function POST(req: NextRequest) {
   const rows =
     kind === "event"
       ? await db
-          .select({ itemTitle: events.title, venueName: venues.name })
+          .select({
+            itemTitle: events.title,
+            venueName: venues.name,
+            locationName: events.locationName,
+          })
           .from(events)
-          .innerJoin(venues, eq(events.venueId, venues.id))
+          .leftJoin(venues, eq(events.venueId, venues.id))
           .where(eq(events.id, specialId))
           .limit(1)
       : await db
-          .select({ itemTitle: specials.title, venueName: venues.name })
+          .select({ itemTitle: specials.title, venueName: venues.name, locationName: sql`null` })
           .from(specials)
           .innerJoin(venues, eq(specials.venueId, venues.id))
           .where(eq(specials.id, specialId))
@@ -36,12 +40,13 @@ export async function POST(req: NextRequest) {
 
   const row = rows[0];
   const label = kind === "event" ? "Event" : "Special";
+  const placeName = row?.venueName ?? row?.locationName ?? "unknown";
 
   try {
     await sendReportEmail({
-      subject: `${label} report: ${row?.venueName ?? `venue #${venueId}`}`,
+      subject: `${label} report: ${placeName}`,
       textContent: [
-        `Venue: ${row?.venueName ?? "unknown"} (id ${venueId})`,
+        `Venue: ${placeName}${venueId ? ` (id ${venueId})` : ""}`,
         `${label}: ${row?.itemTitle ?? "unknown"} (id ${specialId})`,
         "Reported as incorrect via the public site.",
       ].join("\n"),

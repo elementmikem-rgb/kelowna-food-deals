@@ -62,6 +62,15 @@ export function EventRow({ event }: { event: EventWithVenue }) {
           <span className="text-[11px] text-stale">
             stale — {formatVerifiedRelative(event.lastVerifiedAt)}
           </span>
+        ) : event.venueId === null && event.sourceUrl ? (
+          <a
+            href={event.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative z-10 text-[11px] text-accent-dim hover:underline"
+          >
+            Details ↗
+          </a>
         ) : (
           <span />
         )}

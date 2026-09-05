@@ -7,6 +7,7 @@ import { todayDowPacific, dowFullName } from "@/lib/time";
 import { DayTabs } from "./DayTabs";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { EventVenueGroup } from "./EventVenueGroup";
+import { EventsCalendar } from "./EventsCalendar";
 import { groupByVenue } from "@/lib/group-by-venue";
 
 const WEEKEND_DAYS = [5, 6, 0]; // Fri, Sat, Sun
@@ -27,6 +28,20 @@ export function EventsBoard({
   const today = useMemo(() => todayDowPacific(), []);
   const [selectedDay, setSelectedDay] = useState<number | "weekend">(today);
   const [selectedType, setSelectedType] = useState<EventType | "all">("all");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const todayKey = useMemo(
+    () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" }),
+    []
+  );
+  const upcomingDates = useMemo(
+    () => new Set(upcoming.map((e) => e.specificDate).filter((d): d is string => d !== null)),
+    [upcoming]
+  );
+  const dateFilteredUpcoming = useMemo(
+    () => (selectedDate ? upcoming.filter((e) => e.specificDate === selectedDate) : upcoming),
+    [upcoming, selectedDate]
+  );
 
   const activeDays = selectedDay === "weekend" ? WEEKEND_DAYS : [selectedDay];
 
@@ -43,7 +58,10 @@ export function EventsBoard({
   }, [recurring, selectedDay, selectedType]);
 
   const groupedRecurring = useMemo(() => groupByVenue(filtered), [filtered]);
-  const groupedUpcoming = useMemo(() => groupByVenue(upcoming), [upcoming]);
+  const groupedUpcoming = useMemo(
+    () => groupByVenue(dateFilteredUpcoming),
+    [dateFilteredUpcoming]
+  );
 
   const label =
     selectedDay === "weekend" ? "This Weekend" : dowFullName(selectedDay) + (selectedDay === today ? " (today)" : "");
@@ -84,7 +102,7 @@ export function EventsBoard({
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
             {groupedRecurring.map((g) => (
               <EventVenueGroup
-                key={g.venueId}
+                key={g.key}
                 venueId={g.venueId}
                 venueName={g.venueName}
                 events={g.items}
@@ -94,21 +112,39 @@ export function EventsBoard({
         )}
       </div>
 
-      {groupedUpcoming.length > 0 && (
+      {upcoming.length > 0 && (
         <section className="flex flex-col gap-3">
           <div>
             <h2 className="font-display text-2xl text-foreground">One-Off & Upcoming</h2>
             <p className="text-sm text-muted">Specific dates, not weekly recurring.</p>
           </div>
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
-            {groupedUpcoming.map((g) => (
-              <EventVenueGroup
-                key={g.venueId}
-                venueId={g.venueId}
-                venueName={g.venueName}
-                events={g.items}
-              />
-            ))}
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <EventsCalendar
+              eventDates={upcomingDates}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              todayKey={todayKey}
+            />
+
+            <div className="flex-1 w-full">
+              {groupedUpcoming.length === 0 ? (
+                <p className="text-muted-2 text-sm py-8 text-center">
+                  No events found for that date.
+                </p>
+              ) : (
+                <div className="columns-1 sm:columns-2 gap-3">
+                  {groupedUpcoming.map((g) => (
+                    <EventVenueGroup
+                      key={g.key}
+                      venueId={g.venueId}
+                      venueName={g.venueName}
+                      events={g.items}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       )}

@@ -1,4 +1,5 @@
 import { fetchAndExtractText } from "./fetch";
+import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { normalizeText, hashText } from "./hash";
 import { extractVenueContent } from "./extract";
 import {
@@ -110,6 +111,13 @@ async function main() {
   }
 
   console.log(`Run complete. Total tokens used: ${totalTokens}`);
+
+  try {
+    const { inserted } = await scrapeCastanetEvents();
+    console.log(`Castanet events: refreshed ${inserted} nightlife-adjacent event(s)`);
+  } catch (err) {
+    console.error("Castanet scrape failed:", err instanceof Error ? err.message : err);
+  }
 
   if (aborted) {
     process.exitCode = 1;
