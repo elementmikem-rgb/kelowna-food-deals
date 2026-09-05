@@ -19,9 +19,14 @@ export function SiteHeader({
           className="rounded-full shrink-0"
         />
         <div className="flex flex-col gap-1">
-          <h1 className="font-display text-3xl sm:text-4xl text-foreground">
-            <span className="hand-underline">Kelowna</span> Daily Specials
-          </h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="font-display text-3xl sm:text-4xl text-foreground">
+              <span className="hand-underline">Kelowna</span> Daily Specials
+            </h1>
+            <span className="stamp px-2.5 py-1 text-[10px] hidden sm:inline-flex">
+              Okanagan · verified
+            </span>
+          </div>
           <p className="text-muted text-sm">{subtitle}</p>
         </div>
       </div>

@@ -32,7 +32,7 @@ export function EventCard({ event }: { event: EventWithVenue }) {
 
   return (
     <article
-      className={`rounded-2xl border border-border bg-surface p-4 flex flex-col gap-2 shadow-[0_2px_10px_rgba(43,36,32,0.05)] ${
+      className={`pin-card ${event.id % 2 === 0 ? "tilt-a" : "tilt-b"} rounded-2xl border border-border bg-surface p-4 pt-5 flex flex-col gap-2 shadow-[0_2px_10px_rgba(42,40,24,0.06)] ${
         stale ? "opacity-50" : ""
       }`}
     >
@@ -42,7 +42,7 @@ export function EventCard({ event }: { event: EventWithVenue }) {
             {event.venueName}
           </Link>
         </h3>
-        <span className="shrink-0 rounded-full border border-accent-dim/30 bg-accent-soft/40 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent-dim">
+        <span className="shrink-0 rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
           {EVENT_TYPE_LABELS[event.eventType]}
         </span>
       </div>
