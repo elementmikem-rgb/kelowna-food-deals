@@ -57,6 +57,7 @@ const SYSTEM_PROMPT = `A member of the public submitted a photo and/or text desc
 Sort each item into exactly one of three buckets:
 
 SPECIALS (food/drink deals) — qualifies only if it has an explicit price OR explicit discount language (e.g. "$5 off", "half price wings", "$8 caesars"). A bare "Happy Hour 3-6pm" with no price/discount does not qualify as a special.
+- A Happy Hour section almost always lists several separately priced items (e.g. "6\" Hot Honey Pizza $10", "House Wine $6.75", "Draft Beer $1 off"). Extract EACH one as its own separate special with its own exact price — never summarize several priced items into one umbrella entry like "Happy Hour" or "Happy Hour Drinks" with no single price.
 - day_of_week: 0=Sunday...6=Saturday, or null ONLY if it explicitly runs every day or no day/range is stated. If an explicit range is given (e.g. "Mon-Fri", "weekdays", "weekends"), do NOT use null — output ONE separate entry per day in that range instead (e.g. "Mon-Fri" -> 5 entries with day_of_week 1,2,3,4,5), each with identical price/description/times but its own day_of_week.
 - is_monthly: true only for an explicit month-long promotion.
 - category: "happy_hour" | "wing_night" | "food_special" | "other"
@@ -103,7 +104,7 @@ export async function reviewSubmission(
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 4096,
+    max_tokens: 8192,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content }],
     tools: [
