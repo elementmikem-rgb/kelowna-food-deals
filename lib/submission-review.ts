@@ -57,7 +57,7 @@ const SYSTEM_PROMPT = `A member of the public submitted a photo and/or text desc
 Sort each item into exactly one of three buckets:
 
 SPECIALS (food/drink deals) — qualifies only if it has an explicit price OR explicit discount language (e.g. "$5 off", "half price wings", "$8 caesars"). A bare "Happy Hour 3-6pm" with no price/discount does not qualify as a special.
-- day_of_week: 0=Sunday...6=Saturday, or null if daily/unstated/unclear.
+- day_of_week: 0=Sunday...6=Saturday, or null ONLY if it explicitly runs every day or no day/range is stated. If an explicit range is given (e.g. "Mon-Fri", "weekdays", "weekends"), do NOT use null — output ONE separate entry per day in that range instead (e.g. "Mon-Fri" -> 5 entries with day_of_week 1,2,3,4,5), each with identical price/description/times but its own day_of_week.
 - is_monthly: true only for an explicit month-long promotion.
 - category: "happy_hour" | "wing_night" | "food_special" | "other"
 

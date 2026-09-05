@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { SiteNav } from "./SiteNav";
+import { ShareButton } from "./ShareButton";
 
 export function SiteHeader({
   active,
@@ -30,7 +31,14 @@ export function SiteHeader({
           <p className="text-muted text-sm">{subtitle}</p>
         </div>
       </div>
-      <SiteNav active={active} />
+      <div className="flex items-center gap-2">
+        <SiteNav active={active} />
+        <ShareButton
+          title="Kelowna Daily Specials"
+          text="Verified food & drink specials happening today around Kelowna:"
+          url="https://kelownafooddeals.shop/"
+        />
+      </div>
     </header>
   );
 }

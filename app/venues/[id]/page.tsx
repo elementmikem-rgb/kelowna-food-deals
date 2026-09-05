@@ -14,6 +14,7 @@ import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
+import { ShareButton } from "@/components/ShareButton";
 import { formatPrice } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -118,7 +119,15 @@ export default async function VenuePage({ params }: PageProps) {
       </div>
 
       <header className="flex flex-col gap-2">
-        <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
+          <ShareButton
+            title={venue.name}
+            text={`Specials & events at ${venue.name} — Kelowna Daily Specials:`}
+            url={`https://kelownafooddeals.shop/venues/${venue.id}`}
+            className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
+          />
+        </div>
         <p className="text-muted text-sm">{venue.address}</p>
         <div className="flex flex-wrap gap-3 text-sm mt-1">
           {venue.website && (
