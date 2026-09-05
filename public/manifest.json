@@ -1,0 +1,14 @@
+{
+  "name": "Kelowna Daily Specials",
+  "short_name": "KDS",
+  "description": "What food and drink specials are running in Kelowna today — verified, not guessed.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6ef",
+  "theme_color": "#b5502c",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

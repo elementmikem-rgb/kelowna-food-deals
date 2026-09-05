@@ -31,7 +31,7 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
 
   return (
     <article
-      className={`rounded-xl border border-border bg-surface p-4 flex flex-col gap-2 ${
+      className={`rounded-2xl border border-border bg-surface p-4 flex flex-col gap-2 shadow-[0_2px_10px_rgba(43,36,32,0.05)] ${
         stale ? "opacity-50" : ""
       }`}
     >
@@ -39,7 +39,7 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
         <h3 className="font-display text-xl leading-tight text-foreground">
           {special.venueName}
         </h3>
-        <span className="shrink-0 rounded-full border border-accent-dim px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent">
+        <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
           {CATEGORY_LABELS[special.category]}
         </span>
       </div>

@@ -13,6 +13,7 @@ const extractedSpecialSchema = z.object({
   description: z.string().nullable(),
   price_cents: z.number().int().nonnegative().nullable(),
   day_of_week: z.number().int().min(0).max(6).nullable(),
+  is_monthly: z.boolean(),
   start_time: z
     .string()
     .regex(/^\d{2}:\d{2}(:\d{2})?$/)
@@ -45,7 +46,8 @@ Rules, no exceptions:
 - evidence_quote: for every special you report, copy a short VERBATIM substring (exact characters, no paraphrasing) directly from the provided page text that contains the price or discount language proving this special is real. If you cannot find and copy such a literal substring, do not report that special at all — this is not optional.
 - If the text contains no qualifying specials, return an empty "specials" array. An empty array is a correct, expected answer for most pages — do not force a result.
 - day_of_week: 0=Sunday ... 6=Saturday. Use null if the special runs daily or the day is not stated. If a range like "Mon-Fri" is given, you may only pick ONE day per entry, so instead set day_of_week to null and note the range in extraction_notes, UNLESS the special is explicitly per-day with different details.
-- start_time / end_time: 24-hour "HH:MM" format. Use null if not stated.
+- is_monthly: true ONLY when the text explicitly frames the special as a month-long promotion tied to a specific month (e.g. "September Special", "Feature of the Month", "all month long"). When true, set day_of_week/start_time/end_time to null — a monthly special is not tied to a specific weekday or time window. false for every ordinary daily/weekly special.
+- start_time / end_time: 24-hour "HH:MM" format. Use null if not stated. Always null when is_monthly is true.
 - price_cents: whole cents (e.g. "$8.50" -> 850). Use null if there's a discount but no absolute price (e.g. "half off wings").
 - category: "happy_hour" for drink/general happy hour specials, "wing_night" for wing-specific specials, "food_special" for other food specials, "other" for anything else that qualifies.
 - confidence: 0 to 1. Lower confidence (below 0.6) whenever the day or time window is ambiguous, inferred from vague wording, or the source text itself looked stale/uncertain. Use 1.0 only when day, time, and price are all explicitly and unambiguously stated.
@@ -93,6 +95,7 @@ export async function extractSpecials(pageText: string): Promise<ExtractionOutco
                   description: { type: ["string", "null"] },
                   price_cents: { type: ["integer", "null"] },
                   day_of_week: { type: ["integer", "null"] },
+                  is_monthly: { type: "boolean" },
                   start_time: { type: ["string", "null"] },
                   end_time: { type: ["string", "null"] },
                   category: {
@@ -112,6 +115,7 @@ export async function extractSpecials(pageText: string): Promise<ExtractionOutco
                   "description",
                   "price_cents",
                   "day_of_week",
+                  "is_monthly",
                   "start_time",
                   "end_time",
                   "category",

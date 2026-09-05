@@ -44,6 +44,7 @@ export const specials = specialsSchema.table("specials", {
   description: text("description"),
   priceCents: integer("price_cents"),
   dayOfWeek: smallint("day_of_week"), // 0-6, null = daily
+  isMonthly: boolean("is_monthly").notNull().default(false), // runs all month, ignores dayOfWeek/startTime/endTime
   startTime: time("start_time"),
   endTime: time("end_time"),
   category: text("category").$type<SpecialCategory>().notNull(),
@@ -51,6 +52,7 @@ export const specials = specialsSchema.table("specials", {
   sourceUrl: text("source_url"),
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
+  archivedAt: timestamp("archived_at", { withTimezone: true }), // set when superseded by a change; null = currently active
 });
 
 export const scrapeRuns = specialsSchema.table("scrape_runs", {

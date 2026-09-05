@@ -23,6 +23,7 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
 
   const filtered = useMemo(() => {
     return specials
+      .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
       .sort((a, b) => {

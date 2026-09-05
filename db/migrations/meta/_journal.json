@@ -8,6 +8,13 @@
       "when": 1788572719532,
       "tag": "0000_noisy_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788576807497,
+      "tag": "0001_real_magneto",
+      "breakpoints": true
     }
   ]
 }

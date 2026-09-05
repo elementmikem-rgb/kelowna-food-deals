@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070709;
-  --surface: #101014;
-  --surface-raised: #17171c;
-  --foreground: #f2f2f0;
-  --muted: #8b8b93;
-  --muted-2: #58585f;
-  --accent: #4af0a8;
-  --accent-dim: #2f9c6d;
-  --border: #232329;
-  --stale: #3d3d42;
+  --background: #faf6ef;
+  --surface: #fffdf8;
+  --surface-raised: #f3ecdc;
+  --foreground: #2b2420;
+  --muted: #6b5f52;
+  --muted-2: #9c8f7e;
+  --accent: #b5502c;
+  --accent-dim: #8c3d21;
+  --accent-soft: #e9c9b0;
+  --evergreen: #2f4a3c;
+  --border: #e6dcc8;
+  --stale: #b7ab93;
 }
 
 @theme inline {
@@ -22,24 +24,48 @@
   --color-muted-2: var(--muted-2);
   --color-accent: var(--accent);
   --color-accent-dim: var(--accent-dim);
+  --color-accent-soft: var(--accent-soft);
+  --color-evergreen: var(--evergreen);
   --color-border: var(--border);
   --color-stale: var(--stale);
-  --font-display: var(--font-dm-serif-display);
-  --font-body: var(--font-outfit);
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-karla);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(43, 36, 32, 0.05) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-body), sans-serif;
 }
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display), serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .font-mono-tabular {
   font-family: var(--font-mono), monospace;
   font-variant-numeric: tabular-nums;
+}
+
+.hand-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.hand-underline::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: -0.15em;
+  height: 0.32em;
+  background: var(--accent-soft);
+  z-index: -1;
+  transform: rotate(-0.6deg);
+  border-radius: 2px;
 }

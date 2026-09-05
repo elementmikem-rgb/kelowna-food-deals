@@ -1,14 +1,16 @@
 import { db, specials, scrapeRuns, venues } from "@/db";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import type { ExtractedSpecial } from "./extract";
 
 export async function markVenueStillCurrent(venueId: number): Promise<void> {
   await db
     .update(specials)
     .set({ lastVerifiedAt: new Date() })
-    .where(eq(specials.venueId, venueId));
+    .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
 }
 
+// Archives every currently-active special for the venue (so they surface in
+// "previous specials") and inserts the freshly extracted ones as current.
 export async function replaceVenueSpecials(
   venueId: number,
   sourceUrl: string,
@@ -16,7 +18,10 @@ export async function replaceVenueSpecials(
 ): Promise<void> {
   const now = new Date();
   await db.transaction(async (tx) => {
-    await tx.delete(specials).where(eq(specials.venueId, venueId));
+    await tx
+      .update(specials)
+      .set({ archivedAt: now })
+      .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
     if (extracted.length === 0) return;
     await tx.insert(specials).values(
       extracted.map((s) => ({
@@ -25,6 +30,7 @@ export async function replaceVenueSpecials(
         description: s.description,
         priceCents: s.price_cents,
         dayOfWeek: s.day_of_week,
+        isMonthly: s.is_monthly,
         startTime: s.start_time,
         endTime: s.end_time,
         category: s.category,
