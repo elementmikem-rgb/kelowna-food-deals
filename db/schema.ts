@@ -120,6 +120,20 @@ export const submissions = specialsSchema.table("submissions", {
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });
 
+export const venuePhotos = specialsSchema.table("venue_photos", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  photoData: text("photo_data").notNull(), // base64-encoded image
+  photoMimeType: text("photo_mime_type").notNull(),
+  caption: text("caption"),
+  submissionId: integer("submission_id").references(() => submissions.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const scrapeRuns = specialsSchema.table("scrape_runs", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id")

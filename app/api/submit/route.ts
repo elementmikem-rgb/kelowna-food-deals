@@ -7,6 +7,7 @@ import {
   reviewEventSubmission,
   AUTO_APPROVE_CONFIDENCE,
 } from "@/lib/submission-review";
+import { savePhotoOnApproval } from "@/lib/venue-photos";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
@@ -76,18 +77,28 @@ export async function POST(req: NextRequest) {
           })
           .returning({ id: specials.id });
 
-        await db.insert(submissions).values({
+        const [savedSubmission] = await db
+          .insert(submissions)
+          .values({
+            venueId,
+            submissionType,
+            rawText: text,
+            photoData: photoBase64,
+            photoMimeType,
+            status: "auto_approved",
+            aiExtracted: result,
+            aiConfidence: result.confidence,
+            aiNotes: result.notes,
+            resultingRowId: inserted.id,
+            reviewedAt: now,
+          })
+          .returning({ id: submissions.id });
+
+        await savePhotoOnApproval({
           venueId,
-          submissionType,
-          rawText: text,
           photoData: photoBase64,
           photoMimeType,
-          status: "auto_approved",
-          aiExtracted: result,
-          aiConfidence: result.confidence,
-          aiNotes: result.notes,
-          resultingRowId: inserted.id,
-          reviewedAt: now,
+          submissionId: savedSubmission.id,
         });
 
         return NextResponse.json({ status: "auto_approved" });
@@ -138,18 +149,28 @@ export async function POST(req: NextRequest) {
           })
           .returning({ id: events.id });
 
-        await db.insert(submissions).values({
+        const [savedSubmission] = await db
+          .insert(submissions)
+          .values({
+            venueId,
+            submissionType,
+            rawText: text,
+            photoData: photoBase64,
+            photoMimeType,
+            status: "auto_approved",
+            aiExtracted: result,
+            aiConfidence: result.confidence,
+            aiNotes: result.notes,
+            resultingRowId: inserted.id,
+            reviewedAt: now,
+          })
+          .returning({ id: submissions.id });
+
+        await savePhotoOnApproval({
           venueId,
-          submissionType,
-          rawText: text,
           photoData: photoBase64,
           photoMimeType,
-          status: "auto_approved",
-          aiExtracted: result,
-          aiConfidence: result.confidence,
-          aiNotes: result.notes,
-          resultingRowId: inserted.id,
-          reviewedAt: now,
+          submissionId: savedSubmission.id,
         });
 
         return NextResponse.json({ status: "auto_approved" });

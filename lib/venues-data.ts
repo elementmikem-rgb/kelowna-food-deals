@@ -1,4 +1,4 @@
-import { db, venues, specials, events } from "@/db";
+import { db, venues, specials, events, venuePhotos } from "@/db";
 import { and, desc, eq, isNull, isNotNull } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
@@ -84,6 +84,28 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
     .limit(15);
 
   return rows as PreviousSpecial[];
+}
+
+export interface VenuePhoto {
+  id: number;
+  photoData: string;
+  photoMimeType: string;
+  caption: string | null;
+}
+
+export async function getVenuePhotos(venueId: number): Promise<VenuePhoto[]> {
+  const rows = await db
+    .select({
+      id: venuePhotos.id,
+      photoData: venuePhotos.photoData,
+      photoMimeType: venuePhotos.photoMimeType,
+      caption: venuePhotos.caption,
+    })
+    .from(venuePhotos)
+    .where(eq(venuePhotos.venueId, venueId))
+    .orderBy(desc(venuePhotos.createdAt));
+
+  return rows;
 }
 
 export async function getVenueEvents(venueId: number): Promise<EventWithVenue[]> {

@@ -36,6 +36,13 @@
       "when": 1788582129254,
       "tag": "0004_busy_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788585192842,
+      "tag": "0005_known_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

@@ -36,23 +36,31 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
         stale ? "opacity-50" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <Link
+        href={`/venues/${special.venueId}`}
+        className="absolute inset-0 z-0 rounded-2xl"
+        aria-label={`${special.venueName} — ${special.title}, view full details`}
+      />
+
+      <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
         <h3 className="font-display text-xl leading-tight text-foreground">
-          <Link href={`/venues/${special.venueId}`} className="hover:underline">
-            {special.venueName}
-          </Link>
+          {special.venueName}
         </h3>
         <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
           {CATEGORY_LABELS[special.category]}
         </span>
       </div>
 
-      <p className="text-sm text-foreground/90">{special.title}</p>
+      <p className="relative z-10 text-sm text-foreground/90 pointer-events-none">
+        {special.title}
+      </p>
       {special.description && (
-        <p className="text-sm text-muted">{special.description}</p>
+        <p className="relative z-10 text-sm text-muted pointer-events-none">
+          {special.description}
+        </p>
       )}
 
-      <div className="flex items-baseline gap-3 mt-1">
+      <div className="relative z-10 flex items-baseline gap-3 mt-1 pointer-events-none">
         {price && (
           <span className="font-mono-tabular text-lg text-accent">{price}</span>
         )}
@@ -61,12 +69,12 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+      <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-border">
         <VerifiedBadge lastVerifiedAt={special.lastVerifiedAt} />
         <button
           onClick={handleReport}
           disabled={reportState !== "idle"}
-          className="text-xs text-muted-2 hover:text-muted disabled:cursor-default"
+          className="relative z-10 text-xs text-muted-2 hover:text-muted disabled:cursor-default"
         >
           {reportState === "idle" && "Report incorrect"}
           {reportState === "sending" && "Sending…"}

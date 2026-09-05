@@ -6,11 +6,13 @@ import {
   getVenueSpecials,
   getVenuePreviousSpecials,
   getVenueEvents,
+  getVenuePhotos,
 } from "@/lib/venues-data";
 import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
+import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 
 export const revalidate = 3600;
 
@@ -41,10 +43,11 @@ export default async function VenuePage({ params }: PageProps) {
   const venue = await getVenueById(venueId);
   if (!venue) notFound();
 
-  const [venueSpecials, venueEvents, previousSpecials] = await Promise.all([
+  const [venueSpecials, venueEvents, previousSpecials, venuePhotos] = await Promise.all([
     getVenueSpecials(venueId),
     getVenueEvents(venueId),
     getVenuePreviousSpecials(venueId),
+    getVenuePhotos(venueId),
   ]);
 
   const mapQuery = encodeURIComponent(venue.address);
@@ -136,6 +139,16 @@ export default async function VenuePage({ params }: PageProps) {
           src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
         />
       </div>
+
+      {venuePhotos.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-2xl text-foreground">Menu &amp; Photos</h2>
+          <p className="text-sm text-muted-2 -mt-1">
+            Submitted by visitors — menus, boards, and signage as spotted in the wild.
+          </p>
+          <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-2xl text-foreground">Current Specials</h2>

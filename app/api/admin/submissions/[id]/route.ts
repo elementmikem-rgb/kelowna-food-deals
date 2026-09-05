@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, submissions, specials, events } from "@/db";
 import { eq } from "drizzle-orm";
 import type { SpecialReviewResult, EventReviewResult } from "@/lib/submission-review";
+import { savePhotoOnApproval } from "@/lib/venue-photos";
 
 const actionSchema = z.object({ action: z.enum(["approve", "reject"]) });
 
@@ -100,6 +101,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .update(submissions)
     .set({ status: "approved", reviewedAt: now, resultingRowId })
     .where(eq(submissions.id, submissionId));
+
+  await savePhotoOnApproval({
+    venueId: submission.venueId,
+    photoData: submission.photoData,
+    photoMimeType: submission.photoMimeType,
+    submissionId: submission.id,
+  });
 
   return NextResponse.json({ ok: true });
 }
