@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
@@ -37,7 +38,9 @@ export function EventCard({ event }: { event: EventWithVenue }) {
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-display text-xl leading-tight text-foreground">
-          {event.venueName}
+          <Link href={`/venues/${event.venueId}`} className="hover:underline">
+            {event.venueName}
+          </Link>
         </h3>
         <span className="shrink-0 rounded-full border border-accent-dim/30 bg-accent-soft/40 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent-dim">
           {EVENT_TYPE_LABELS[event.eventType]}

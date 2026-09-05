@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "venues_name_unique" ON "specials"."venues" USING btree ("name");

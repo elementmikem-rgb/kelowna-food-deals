@@ -63,9 +63,17 @@ export function formatTimeWindow(start: string | null, end: string | null): stri
 }
 
 export function formatCheckedAt(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
+  const datePart = new Intl.DateTimeFormat("en-US", {
     timeZone: PACIFIC_TZ,
-    dateStyle: "medium",
-    timeStyle: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   }).format(date);
+  const timePart = new Intl.DateTimeFormat("en-US", {
+    timeZone: PACIFIC_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+  return `${datePart}, ${timePart}`;
 }

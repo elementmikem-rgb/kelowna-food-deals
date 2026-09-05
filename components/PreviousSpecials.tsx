@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { PreviousSpecial } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatVerifiedRelative } from "@/lib/time";
@@ -23,7 +24,10 @@ export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) 
             >
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="text-sm text-foreground/90 truncate">
-                  <span className="font-medium">{s.venueName}</span> — {s.title}
+                  <Link href={`/venues/${s.venueId}`} className="font-medium hover:underline">
+                    {s.venueName}
+                  </Link>{" "}
+                  — {s.title}
                 </span>
                 <span className="text-xs text-muted-2">
                   {CATEGORY_LABELS[s.category]} · replaced{" "}

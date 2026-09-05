@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
@@ -37,7 +38,9 @@ export function SpecialCard({ special }: { special: SpecialWithVenue }) {
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-display text-xl leading-tight text-foreground">
-          {special.venueName}
+          <Link href={`/venues/${special.venueId}`} className="hover:underline">
+            {special.venueName}
+          </Link>
         </h3>
         <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
           {CATEGORY_LABELS[special.category]}

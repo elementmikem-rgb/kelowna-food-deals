@@ -10,23 +10,29 @@ import {
   real,
   doublePrecision,
   date,
+  uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const specialsSchema = pgSchema("specials");
 
-export const venues = specialsSchema.table("venues", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  address: text("address").notNull(),
-  lat: doublePrecision("lat"),
-  lng: doublePrecision("lng"),
-  phone: text("phone"),
-  website: text("website"),
-  menuUrl: text("menu_url"),
-  instagramHandle: text("instagram_handle"),
-  sourceUrls: text("source_urls").array().notNull().default([]),
-  active: boolean("active").notNull().default(true),
-});
+export const venues = specialsSchema.table(
+  "venues",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    address: text("address").notNull(),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    phone: text("phone"),
+    website: text("website"),
+    menuUrl: text("menu_url"),
+    instagramHandle: text("instagram_handle"),
+    sourceUrls: text("source_urls").array().notNull().default([]),
+    active: boolean("active").notNull().default(true),
+  },
+  (table) => [uniqueIndex("venues_name_unique").on(table.name)]
+);
 
 export const specialCategory = [
   "happy_hour",
@@ -83,6 +89,35 @@ export const events = specialsSchema.table("events", {
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
+});
+
+export const submissionType = ["special", "event"] as const;
+export type SubmissionType = (typeof submissionType)[number];
+
+export const submissionStatus = [
+  "auto_approved",
+  "needs_review",
+  "approved",
+  "rejected",
+] as const;
+export type SubmissionStatus = (typeof submissionStatus)[number];
+
+export const submissions = specialsSchema.table("submissions", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  submissionType: text("submission_type").$type<SubmissionType>().notNull(),
+  rawText: text("raw_text"),
+  photoData: text("photo_data"), // base64-encoded image, size-capped at the API layer
+  photoMimeType: text("photo_mime_type"),
+  status: text("status").$type<SubmissionStatus>().notNull().default("needs_review"),
+  aiExtracted: jsonb("ai_extracted"), // structured special/event fields the AI proposed
+  aiConfidence: real("ai_confidence"),
+  aiNotes: text("ai_notes"),
+  resultingRowId: integer("resulting_row_id"), // id in specials/events once approved
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });
 
 export const scrapeRuns = specialsSchema.table("scrape_runs", {
