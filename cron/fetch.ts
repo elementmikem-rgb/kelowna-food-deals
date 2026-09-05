@@ -72,6 +72,13 @@ export async function fetchAndExtractText(url: string): Promise<FetchResult> {
     const html = await res.text();
     const $ = cheerio.load(html);
     $("script, style, noscript, svg, nav, footer").remove();
+    // cheerio's .text() concatenates text nodes with no separator, so
+    // adjacent block elements run together ("DRINKS" + "HOUSE BEER" becomes
+    // "drinkshouse beer") and evidence-quote verification then fails against
+    // real prices. Insert a newline after each block-level element first.
+    $("p, div, li, tr, td, th, br, h1, h2, h3, h4, h5, h6, section, article, header, ul, ol").after(
+      "\n"
+    );
     const text = $("body").text();
     return { ok: true, text };
   } catch (err) {

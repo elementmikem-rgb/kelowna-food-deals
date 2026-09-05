@@ -63,8 +63,8 @@ export type ExtractedEvent = Omit<z.infer<typeof extractedEventSchema>, "evidenc
 };
 
 const extractionResultSchema = z.object({
-  specials: z.array(extractedSpecialSchema).default([]),
-  events: z.array(extractedEventSchema).default([]),
+  specials: z.array(z.unknown()).default([]),
+  events: z.array(z.unknown()).default([]),
 });
 
 const SYSTEM_PROMPT = `You extract two kinds of listings from raw scraped page text for a Kelowna, BC venue: food/drink SPECIALS and scheduled EVENTS (live music, trivia, karaoke, sports nights). A page may contain both, either, or neither.
@@ -230,7 +230,13 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
   }
 
   const verifiedSpecials: ExtractedSpecial[] = [];
-  for (const s of parsed.data.specials) {
+  for (const raw of parsed.data.specials) {
+    const specialParsed = extractedSpecialSchema.safeParse(raw);
+    if (!specialParsed.success) {
+      console.warn(`dropped malformed special: ${specialParsed.error.message}`);
+      continue;
+    }
+    const s = specialParsed.data;
     const quote = collapseWhitespace(s.evidence_quote);
     if (!haystack.includes(quote)) {
       console.warn(
@@ -254,7 +260,13 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
   }
 
   const verifiedEvents: ExtractedEvent[] = [];
-  for (const e of parsed.data.events) {
+  for (const raw of parsed.data.events) {
+    const eventParsed = extractedEventSchema.safeParse(raw);
+    if (!eventParsed.success) {
+      console.warn(`dropped malformed event: ${eventParsed.error.message}`);
+      continue;
+    }
+    const e = eventParsed.data;
     const quote = collapseWhitespace(e.evidence_quote);
     if (!haystack.includes(quote)) {
       console.warn(`dropped event "${e.title}": evidence_quote not found verbatim in source text`);
