@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, submissions, specials, events, menuItems, venuePhotos, venues } from "@/db";
 import { eq, and, sql } from "drizzle-orm";
@@ -226,6 +227,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         submissionId,
       });
     }
+  }
+
+  if (action === "approve") {
+    revalidatePath("/");
+    revalidatePath("/events");
+    if (outcome.venueId !== null) revalidatePath(`/venues/${outcome.venueId}`);
   }
 
   return NextResponse.json({ ok: true, fullyResolved: outcome.fullyResolved });

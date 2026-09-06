@@ -22,6 +22,7 @@ export function SpecialVenueGroup({
     s.lastVerifiedAt > latest.lastVerifiedAt ? s : latest
   );
   const featured = isPromotionActive(specials[0]?.venueFeaturedUntil ?? null);
+  const isPartner = specials[0]?.venuePartnerSince != null;
   const visible = specials.slice(0, MAX_VISIBLE);
   const hiddenCount = specials.length - visible.length;
 
@@ -45,6 +46,11 @@ export function SpecialVenueGroup({
           {featured && (
             <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
               Featured
+            </span>
+          )}
+          {isPartner && (
+            <span className="shrink-0 rounded-full border border-evergreen/40 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
+              Partner
             </span>
           )}
         </div>

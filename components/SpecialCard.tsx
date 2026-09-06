@@ -23,6 +23,7 @@ export function SpecialCard({
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
   const boosted = isPromotionActive(special.boostedUntil);
+  const isPartner = special.venuePartnerSince != null;
 
   async function handleReport() {
     setReportState("sending");
@@ -61,6 +62,11 @@ export function SpecialCard({
           {boosted && (
             <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
               Featured
+            </span>
+          )}
+          {isPartner && (
+            <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
+              Partner
             </span>
           )}
         </div>

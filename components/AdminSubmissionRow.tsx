@@ -9,6 +9,7 @@ interface SubmissionRowData {
   venueName: string;
   venueAddress: string | null;
   isNewVenue: boolean;
+  isPriority: boolean;
   rawText: string | null;
   hasPhoto: boolean;
   aiExtracted: unknown;
@@ -160,6 +161,11 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="font-display text-lg text-foreground">{submission.venueName}</h3>
+          {submission.isPriority && (
+            <span className="text-[10px] uppercase tracking-wide font-medium text-gold bg-gold/10 rounded-full px-2 py-0.5">
+              Priority
+            </span>
+          )}
           {submission.isNewVenue && (
             <span className="text-[10px] uppercase tracking-wide font-medium text-accent bg-accent/10 rounded-full px-2 py-0.5">
               New venue

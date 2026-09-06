@@ -81,10 +81,26 @@ export default async function BlogPostPage({ params }: PageProps) {
 
       <article className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <span className="text-xs text-muted-2 font-mono-tabular">
-            {formatDate(post.publishedAt)}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-2 font-mono-tabular">
+              {formatDate(post.publishedAt)}
+            </span>
+            {post.sponsored && (
+              <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gold">
+                Sponsored
+              </span>
+            )}
+          </div>
           <h1 className="font-display text-3xl text-foreground">{post.title}</h1>
+          {post.sponsored && (
+            <p className="text-xs text-muted-2">
+              This post is a paid feature. See our{" "}
+              <Link href="/privacy" className="text-accent-dim underline">
+                privacy &amp; terms
+              </Link>{" "}
+              page for how sponsored content works here.
+            </p>
+          )}
         </header>
         <div
           className="prose-blog flex flex-col gap-4 text-sm text-foreground/90 [&_h2]:font-display [&_h2]:text-xl [&_h2]:text-foreground [&_h2]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1 [&_a]:text-accent-dim [&_a]:underline [&_strong]:text-foreground"

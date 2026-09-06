@@ -34,6 +34,11 @@ export default function BlogIndexPage() {
               <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
                 {post.category}
               </span>
+              {post.sponsored && (
+                <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gold">
+                  Sponsored
+                </span>
+              )}
               <span className="text-xs text-muted-2 font-mono-tabular">
                 {formatDate(post.publishedAt)}
               </span>

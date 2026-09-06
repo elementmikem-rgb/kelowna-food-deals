@@ -22,6 +22,9 @@ export interface SpecialWithVenue {
   // consumers compare against Date.now() rather than trusting these as booleans.
   venueFeaturedUntil: Date | null;
   boostedUntil: Date | null;
+  // Standing paid status -- unlike the two above, doesn't expire on its own.
+  // Non-null means "is a partner", the exact date isn't otherwise used yet.
+  venuePartnerSince: Date | null;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -45,6 +48,7 @@ const baseColumns = {
   confidence: specials.confidence,
   venueFeaturedUntil: venues.featuredUntil,
   boostedUntil: specials.boostedUntil,
+  venuePartnerSince: venues.partnerSince,
 };
 
 export async function getAllSpecialsWithVenue(): Promise<SpecialWithVenue[]> {

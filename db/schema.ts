@@ -55,6 +55,10 @@ export const venues = specialsSchema.table(
     // timestamp rather than a boolean so a lapsed placement un-features itself with
     // no cron needed to flip it back off.
     featuredUntil: timestamp("featured_until", { withTimezone: true }),
+    // Standing paid status, separate from the time-limited featuredUntil/boostedUntil
+    // placements: the date they became a partner, or null. Doesn't expire on its own --
+    // an admin clears it manually when a partnership ends. Shown as its own badge.
+    partnerSince: timestamp("partner_since", { withTimezone: true }),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );
@@ -268,3 +272,15 @@ export const rateLimits = specialsSchema.table(
   },
   (table) => [uniqueIndex("rate_limits_key_window_unique").on(table.key, table.windowStart)]
 );
+
+// One sponsor slot per specials category (e.g. "Wing Nights presented by X"). At most
+// one row per category is meaningful at a time -- a new sponsorship replaces the old
+// row rather than the app needing to pick among several. Null sponsorUntil = indefinite.
+export const categorySponsors = specialsSchema.table("category_sponsors", {
+  id: serial("id").primaryKey(),
+  category: text("category").$type<SpecialCategory>().notNull(),
+  sponsorName: text("sponsor_name").notNull(),
+  sponsorUrl: text("sponsor_url"),
+  sponsorUntil: timestamp("sponsor_until", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -64,6 +64,16 @@ export default function PrivacyPage() {
         </div>
 
         <div>
+          <h2 className="font-display text-xl text-foreground mb-2">Featured &amp; sponsored content</h2>
+          <p>
+            A venue can pay to be featured, boost a specific special, or sponsor a category — this
+            never changes whether a listing is accurate, only where it sorts on the page, and it's
+            always marked with a badge. A sponsored blog post is a paid feature and is always
+            labeled "Sponsored" — it's never presented as independent coverage.
+          </p>
+        </div>
+
+        <div>
           <h2 className="font-display text-xl text-foreground mb-2">Accuracy</h2>
           <p>
             Every special and event on this site is checked against a real source before it's

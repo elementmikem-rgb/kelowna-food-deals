@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import type { SpecialCategory } from "@/db/schema";
+import type { CategorySponsor } from "@/lib/sponsored-data";
 import { todayDowPacific, dowFullName } from "@/lib/time";
+import { CATEGORY_LABELS } from "@/lib/format";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
 import { CityFilter } from "./CityFilter";
@@ -17,7 +19,13 @@ function timeToMinutes(time: string | null): number {
   return h * 60 + m;
 }
 
-export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
+export function SpecialsBoard({
+  specials,
+  categorySponsors = [],
+}: {
+  specials: SpecialWithVenue[];
+  categorySponsors?: CategorySponsor[];
+}) {
   // The page is served from an ISR cache that can be an evening old, so the day baked
   // into the HTML is routinely yesterday. Render the baked value first (no hydration
   // mismatch), then correct it on mount and whenever the tab is refocused, so a tab
@@ -88,11 +96,27 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
     return [...featured, ...rest];
   }, [filtered]);
 
+  const activeSponsor =
+    selectedCategory !== "all" ? categorySponsors.find((s) => s.category === selectedCategory) : undefined;
+
   return (
     <div className="flex flex-col gap-4">
       <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
       <CityFilter selected={selectedCity} onSelect={setSelectedCity} />
+
+      {activeSponsor && (
+        <p className="-mt-2 text-xs text-muted-2">
+          {CATEGORY_LABELS[activeSponsor.category]} presented by{" "}
+          {activeSponsor.sponsorUrl ? (
+            <a href={activeSponsor.sponsorUrl} target="_blank" rel="noopener noreferrer" className="text-accent-dim underline">
+              {activeSponsor.sponsorName}
+            </a>
+          ) : (
+            <span className="font-medium text-foreground/80">{activeSponsor.sponsorName}</span>
+          )}
+        </p>
+      )}
 
       <p className="text-sm text-muted">
         {dowFullName(selectedDay)}

@@ -57,6 +57,7 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
       confidence: specials.confidence,
       venueFeaturedUntil: venues.featuredUntil,
       boostedUntil: specials.boostedUntil,
+      venuePartnerSince: venues.partnerSince,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
@@ -85,6 +86,7 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
       archivedAt: specials.archivedAt,
       venueFeaturedUntil: venues.featuredUntil,
       boostedUntil: specials.boostedUntil,
+      venuePartnerSince: venues.partnerSince,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))

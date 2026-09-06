@@ -134,6 +134,13 @@
       "when": 1788704247384,
       "tag": "0018_perpetual_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788718343435,
+      "tag": "0019_flat_payback",
+      "breakpoints": true
     }
   ]
 }

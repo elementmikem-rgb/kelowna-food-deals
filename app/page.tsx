@@ -1,4 +1,5 @@
 import { getAllSpecialsWithVenue, getMonthlySpecials } from "@/lib/data";
+import { getActiveCategorySponsors } from "@/lib/sponsored-data";
 import { SpecialsBoard } from "@/components/SpecialsBoard";
 import { MonthlySpecials } from "@/components/MonthlySpecials";
 import { TipJar } from "@/components/TipJar";
@@ -11,9 +12,10 @@ import { buildSpecialsJsonLd } from "@/lib/seo";
 export const revalidate = 3600; // ISR: refresh at most once an hour
 
 export default async function Home() {
-  const [specials, monthlySpecials] = await Promise.all([
+  const [specials, monthlySpecials, categorySponsors] = await Promise.all([
     getAllSpecialsWithVenue(),
     getMonthlySpecials(),
+    getActiveCategorySponsors(),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials);
@@ -32,7 +34,7 @@ export default async function Home() {
 
       <HomeIntroCallout />
 
-      <SpecialsBoard specials={specials} />
+      <SpecialsBoard specials={specials} categorySponsors={categorySponsors} />
       <MonthlySpecials specials={monthlySpecials} />
 
       <TipJar />

@@ -1,5 +1,5 @@
 import { db, submissions, venues } from "@/db";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
 import { AdminShell } from "@/components/AdminShell";
 
@@ -14,6 +14,9 @@ export default async function AdminSubmissionsPage() {
       venueName: sql<string>`coalesce(${venues.name}, ${submissions.venueName})`,
       venueAddress: submissions.venueAddress,
       isNewVenue: sql<boolean>`${submissions.venueId} is null`,
+      // A currently-featured venue's own submissions jump the queue -- sold
+      // alongside featured placement, not as a separate purchase.
+      isPriority: sql<boolean>`${venues.featuredUntil} is not null and ${venues.featuredUntil} > now()`,
       rawText: submissions.rawText,
       // Only whether a photo exists — the bytes are fetched on demand from
       // /api/admin/submission-photos/[id] instead of being inlined per row.
@@ -26,7 +29,14 @@ export default async function AdminSubmissionsPage() {
     .from(submissions)
     .leftJoin(venues, eq(submissions.venueId, venues.id))
     .where(and(eq(submissions.status, "needs_review")))
-    .orderBy(asc(submissions.createdAt));
+    // Priority submissions first, then oldest-first within each group so a rush
+    // request doesn't itself sit waiting behind other rush requests forever.
+    .orderBy(
+      desc(sql`${venues.featuredUntil} is not null and ${venues.featuredUntil} > now()`),
+      asc(submissions.createdAt)
+    );
+
+  const priorityCount = rows.filter((r) => r.isPriority).length;
 
   return (
     <AdminShell active="submissions" maxWidth="max-w-3xl">
@@ -34,6 +44,11 @@ export default async function AdminSubmissionsPage() {
         Submissions needing review
         {rows.length > 0 && <span className="text-accent"> ({rows.length})</span>}
       </h1>
+      {priorityCount > 0 && (
+        <p className="text-xs text-gold font-medium -mt-3">
+          {priorityCount} from featured venues — shown first
+        </p>
+      )}
 
       {rows.length === 0 ? (
         <p className="text-muted-2 text-sm">Nothing waiting — you&apos;re caught up.</p>

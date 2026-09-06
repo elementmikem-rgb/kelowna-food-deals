@@ -8,6 +8,10 @@ export interface BlogPost {
   excerpt: string;
   contentHtml: string;
   category: BlogCategory;
+  // Set true for a paid venue-spotlight post. Renders a visible "Sponsored" label --
+  // this is close to a legal disclosure requirement once one of these is actually
+  // sold, not just a style choice, so it's on by default rather than opt-in.
+  sponsored?: boolean;
 }
 
 export const BLOG_POSTS: BlogPost[] = [
