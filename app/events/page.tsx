@@ -6,7 +6,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 
-export const revalidate = 3600; // ISR: refresh at most once an hour
+// Short window on purpose: getUpcomingOneOffEvents() filters against "today" at render
+// time, so an hour-long cache can serve a generation built before midnight that still
+// lists a show that has already happened. Five minutes bounds that to a shrug.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Kelowna Live Music & Events Tonight",

@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { SubmissionReviewResult } from "@/lib/submission-review";
+import { reviewResultSchema } from "@/lib/submission-review";
 import { formatPrice } from "@/lib/format";
 
 interface SubmissionRowData {
   id: number;
   venueName: string;
   rawText: string | null;
-  photoData: string | null;
-  photoMimeType: string | null;
+  hasPhoto: boolean;
   aiExtracted: unknown;
   aiNotes: string | null;
   resolvedItemKeys: string[];
@@ -97,7 +96,16 @@ function ItemCard({
 
 export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
   const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
-  const extracted = submission.aiExtracted as SubmissionReviewResult | null;
+  const [showPhoto, setShowPhoto] = useState(false);
+
+  // aiExtracted is a jsonb column, so its shape is only whatever was written at
+  // extraction time — parse it rather than asserting it.
+  const parsedExtract =
+    submission.aiExtracted === null || submission.aiExtracted === undefined
+      ? null
+      : reviewResultSchema.safeParse(submission.aiExtracted);
+  const extracted = parsedExtract?.success ? parsedExtract.data : null;
+  const extractUnreadable = parsedExtract !== null && !parsedExtract.success;
 
   const specials = extracted?.specials ?? [];
   const eventsList = extracted?.events ?? [];
@@ -118,15 +126,31 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
         <p className="text-sm text-foreground/90">&ldquo;{submission.rawText}&rdquo;</p>
       )}
 
-      {submission.photoData && submission.photoMimeType && (
-        <img
-          src={`data:${submission.photoMimeType};base64,${submission.photoData}`}
-          alt="Submitted"
-          className="rounded-lg max-h-64 object-contain border border-border"
-        />
+      {submission.hasPhoto &&
+        (showPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/admin/submission-photos/${submission.id}`}
+            alt="Submitted"
+            className="rounded-lg max-h-64 object-contain border border-border"
+          />
+        ) : (
+          <button
+            onClick={() => setShowPhoto(true)}
+            className="press-pill self-start rounded-full border border-border px-3 py-1 text-xs text-muted"
+          >
+            View photo
+          </button>
+        ))}
+
+      {extractUnreadable && (
+        <p className="text-xs text-stale">
+          Unable to display extracted data — the stored AI result doesn&apos;t match the expected
+          shape.
+        </p>
       )}
 
-      {!extracted && (
+      {!extracted && !extractUnreadable && (
         <p className="text-xs text-stale">{submission.aiNotes ?? "AI review failed."}</p>
       )}
 

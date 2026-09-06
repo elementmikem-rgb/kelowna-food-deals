@@ -12,8 +12,19 @@ const sendSchema = z.object({
   body: z.string().min(1).max(10000),
 });
 
+// The composed reply is plain text typed by the admin, but it's sent as an HTML
+// email. Without escaping, literal text like "<owner@venue.com>" or "fish & chips
+// <$10" is silently swallowed by the recipient's mail client.
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function POST(req: NextRequest) {
-  if (!isAdminAuthed(req)) {
+  if (!(await isAdminAuthed(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -23,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { venueId, toEmail, subject, body } = parsed.data;
-  const htmlBody = body.replace(/\n/g, "<br>");
+  const htmlBody = escapeHtml(body).replace(/\n/g, "<br>");
 
   // Only venue-matched threads get a persisted outbound copy (outreachSends.venueId
   // is NOT NULL) — a reply to an unmatched sender still sends, just isn't archived.

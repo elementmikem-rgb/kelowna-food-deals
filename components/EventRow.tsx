@@ -12,6 +12,15 @@ export function EventRow({ event }: { event: EventWithVenue }) {
 
   const stale = isStale(event.lastVerifiedAt);
   const cover = formatPrice(event.coverChargeCents);
+  // null cover means "nobody told us", not "free" -- the extractor emits null both for
+  // genuinely-free nights and for ticketed shows whose price it couldn't read. Only an
+  // explicit 0 is a confirmed free door.
+  const coverLabel =
+    event.coverChargeCents === null
+      ? "Cover not listed"
+      : event.coverChargeCents === 0
+        ? "Free"
+        : `${cover} cover`;
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
 
   async function handleReport() {
@@ -52,7 +61,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
             <span className="font-mono-tabular text-[11px] text-muted">{timeWindow}</span>
           )}
           <span className="font-mono-tabular text-[11px] text-muted">
-            {event.coverChargeCents ? `${cover} cover` : "Free"}
+            {coverLabel}
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db, submissions, venues } from "@/db";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +11,9 @@ export default async function AdminSubmissionsPage() {
       id: submissions.id,
       venueName: venues.name,
       rawText: submissions.rawText,
-      photoData: submissions.photoData,
-      photoMimeType: submissions.photoMimeType,
+      // Only whether a photo exists — the bytes are fetched on demand from
+      // /api/admin/submission-photos/[id] instead of being inlined per row.
+      hasPhoto: sql<boolean>`${submissions.photoData} is not null and ${submissions.photoMimeType} is not null`,
       aiExtracted: submissions.aiExtracted,
       aiNotes: submissions.aiNotes,
       resolvedItemKeys: submissions.resolvedItemKeys,

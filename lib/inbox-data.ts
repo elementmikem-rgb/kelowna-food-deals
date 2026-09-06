@@ -52,6 +52,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         fromName: inboundEmails.fromName,
         subject: inboundEmails.subject,
         textBody: inboundEmails.textBody,
+        htmlBody: inboundEmails.htmlBody,
         read: inboundEmails.read,
         receivedAt: inboundEmails.receivedAt,
       })
@@ -90,7 +91,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         venueId: e.venueId,
         displayName: e.venueName ?? e.fromName ?? e.fromEmail,
         contactEmail: e.fromEmail,
-        lastSnippet: snippet(e.textBody),
+        lastSnippet: snippet(safeInboundText(e.textBody, e.htmlBody)),
         lastAt: e.receivedAt,
         unreadCount: e.read ? 0 : 1,
         messageCount: 1,
@@ -99,7 +100,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
       existing.messageCount++;
       if (!e.read) existing.unreadCount++;
       if (isNewest) {
-        existing.lastSnippet = snippet(e.textBody);
+        existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
       }
     }

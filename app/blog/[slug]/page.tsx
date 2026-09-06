@@ -67,7 +67,11 @@ export default async function BlogPostPage({ params }: PageProps) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <SiteHeader active="specials" subtitle="Guides to what's actually going on around town." />
+      <SiteHeader
+        active="blog"
+        subtitle="Guides to what's actually going on around town."
+        brandIsHeading={false}
+      />
 
       <div>
         <Link href="/blog" className="text-sm text-accent-dim hover:underline">

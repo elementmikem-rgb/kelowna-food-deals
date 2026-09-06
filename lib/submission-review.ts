@@ -58,7 +58,7 @@ const extractedMenuItemSchema = z.object({
   evidence_quote: z.string().min(1),
 });
 
-const reviewResultSchema = z.object({
+export const reviewResultSchema = z.object({
   specials: z.array(extractedSpecialSchema).default([]),
   events: z.array(extractedEventSchema).default([]),
   menu_items: z.array(extractedMenuItemSchema).default([]),

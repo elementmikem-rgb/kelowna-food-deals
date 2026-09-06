@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { trackEvent, isBotUserAgent } from "@/lib/analytics";
+import { checkRateLimit } from "@/lib/request-rate-limit";
 
 const trackSchema = z.object({
   eventType: z.string().min(1).max(50),
@@ -19,6 +20,11 @@ const trackSchema = z.object({
 // signal about whether it was detected or filtered.
 export async function POST(req: NextRequest) {
   try {
+    // Generous by design — a real visitor fires several events per page view.
+    // This only exists to cap a scripted flood, not to constrain normal browsing.
+    const { ok } = await checkRateLimit(req, "track", 60, 1);
+    if (!ok) return NextResponse.json({ ok: true });
+
     const body = await req.json().catch(() => null);
     const parsed = trackSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ ok: true });

@@ -5,6 +5,10 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SubmitForm } from "@/components/SubmitForm";
 
+// Without this the venue dropdown is baked at build time, so a venue added after the
+// last deploy is unsubmittable until the next one.
+export const revalidate = 3600;
+
 export const metadata = {
   title: "Submit an Update",
   description: "Spot a special or event we don't have? Let us know.",

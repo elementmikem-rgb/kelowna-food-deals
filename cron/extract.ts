@@ -26,7 +26,9 @@ const extractedSpecialSchema = z.object({
   category: z.enum(["happy_hour", "food_special", "wing_night", "other"]),
   confidence: z.number().min(0).max(1),
   extraction_notes: z.string().nullable(),
-  evidence_quote: z.string().min(1),
+  // min 15, not 1: a single character (or a one-word "wings") is trivially
+  // present in almost any page text, so a too-short quote proves nothing.
+  evidence_quote: z.string().min(15),
 });
 
 const extractedEventSchema = z.object({
@@ -49,7 +51,7 @@ const extractedEventSchema = z.object({
   cover_charge_cents: z.number().int().nonnegative().nullable(),
   confidence: z.number().min(0).max(1),
   extraction_notes: z.string().nullable(),
-  evidence_quote: z.string().min(1),
+  evidence_quote: z.string().min(15),
 });
 
 export type ExtractedSpecial = Omit<
@@ -110,8 +112,32 @@ function collapseWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+// A quoted price only proves anything if the quote actually contains the price
+// the model claims. Without this, a fabricated price_cents can ride along on a
+// real-but-unrelated substring ("wings") and publish as fact.
+// `quote` is already whitespace-collapsed and lowercased.
+function evidenceContainsPrice(quote: string, priceCents: number): boolean {
+  const whole = Math.floor(priceCents / 100);
+  const cents = priceCents % 100;
+  const forms = [`${whole}\\.${String(cents).padStart(2, "0")}`]; // 1250 -> "12.50"
+  if (cents === 0) forms.push(`${whole}`); // 500 -> "5" (covers "$5")
+  if (cents % 10 === 0) forms.push(`${whole}\\.${cents / 10}`); // 1250 -> "12.5"
+  // Boundaries on both sides so "$5" isn't satisfied by "$50" or "$15.00".
+  return new RegExp(`(?<![\\d.])\\$?\\s?(?:${forms.join("|")})(?![\\d])`).test(quote);
+}
+
+const MAX_PAGE_CHARS = 20000;
+
 export async function extractVenueContent(pageText: string): Promise<ExtractionOutcome> {
-  const truncated = pageText.slice(0, 20000);
+  if (pageText.length > MAX_PAGE_CHARS) {
+    // The caller archives every active special/event before inserting this
+    // extraction's results, so anything past the cutoff silently disappears
+    // from the live site as if the venue had cancelled it.
+    console.warn(
+      `page text truncated at ${MAX_PAGE_CHARS} chars: ${pageText.length - MAX_PAGE_CHARS} character(s) dropped — specials/events past the cutoff will be archived as if removed`
+    );
+  }
+  const truncated = pageText.slice(0, MAX_PAGE_CHARS);
   const haystack = collapseWhitespace(truncated);
 
   const response = await anthropic.messages.create({
@@ -245,9 +271,16 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
       );
       continue;
     }
-    if (s.price_cents === null && !DISCOUNT_SIGNAL.test(s.evidence_quote)) {
+    if (s.price_cents === null || s.price_cents === 0) {
+      if (!DISCOUNT_SIGNAL.test(s.evidence_quote)) {
+        console.warn(
+          `dropped special "${s.title}": no price and evidence_quote has no discount language ("${s.evidence_quote}")`
+        );
+        continue;
+      }
+    } else if (!evidenceContainsPrice(quote, s.price_cents)) {
       console.warn(
-        `dropped special "${s.title}": no price and evidence_quote has no discount language ("${s.evidence_quote}")`
+        `dropped special "${s.title}": claimed price ${s.price_cents} cents does not appear in evidence_quote ("${s.evidence_quote}")`
       );
       continue;
     }

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "venue_photos_submission_id_unique" ON "specials"."venue_photos" USING btree ("submission_id");

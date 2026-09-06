@@ -8,6 +8,7 @@ export interface VenueDetail {
   id: number;
   name: string;
   address: string;
+  city: string | null;
   lat: number | null;
   lng: number | null;
   phone: string | null;
@@ -22,6 +23,7 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
       id: venues.id,
       name: venues.name,
       address: venues.address,
+      city: venues.city,
       lat: venues.lat,
       lng: venues.lng,
       phone: venues.phone,
@@ -42,6 +44,7 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
       id: specials.id,
       venueId: specials.venueId,
       venueName: venues.name,
+      venueCity: venues.city,
       title: specials.title,
       description: specials.description,
       priceCents: specials.priceCents,
@@ -66,6 +69,7 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
       id: specials.id,
       venueId: specials.venueId,
       venueName: venues.name,
+      venueCity: venues.city,
       title: specials.title,
       description: specials.description,
       priceCents: specials.priceCents,

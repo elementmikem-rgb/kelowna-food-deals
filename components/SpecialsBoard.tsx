@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import type { SpecialCategory } from "@/db/schema";
 import { todayDowPacific, dowFullName } from "@/lib/time";
@@ -16,11 +16,35 @@ function timeToMinutes(time: string | null): number {
 }
 
 export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
-  const today = useMemo(() => todayDowPacific(), []);
-  const [selectedDay, setSelectedDay] = useState(today);
+  // The page is served from an ISR cache that can be an evening old, so the day baked
+  // into the HTML is routinely yesterday. Render the baked value first (no hydration
+  // mismatch), then correct it on mount and whenever the tab is refocused, so a tab
+  // left open overnight rolls itself over to the right day.
+  const initialToday = useMemo(() => todayDowPacific(), []);
+  const [today, setToday] = useState(initialToday);
+  const [selectedDay, setSelectedDay] = useState(initialToday);
   const [selectedCategory, setSelectedCategory] = useState<SpecialCategory | "all">(
     "all"
   );
+  const dayPickedByUser = useRef(false);
+
+  useEffect(() => {
+    function syncToday() {
+      const actual = todayDowPacific();
+      setToday(actual);
+      // Only follow the clock while the visitor is still on the default view --
+      // yanking them off a day they deliberately picked would be worse than stale.
+      if (!dayPickedByUser.current) setSelectedDay(actual);
+    }
+    syncToday();
+    document.addEventListener("visibilitychange", syncToday);
+    return () => document.removeEventListener("visibilitychange", syncToday);
+  }, []);
+
+  function handleSelectDay(day: number) {
+    dayPickedByUser.current = true;
+    setSelectedDay(day);
+  }
 
   const filtered = useMemo(() => {
     return specials
@@ -50,7 +74,7 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <DayTabs selected={selectedDay} today={today} onSelect={setSelectedDay} />
+      <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
       <p className="text-sm text-muted">

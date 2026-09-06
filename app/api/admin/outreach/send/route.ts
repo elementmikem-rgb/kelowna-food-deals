@@ -29,7 +29,7 @@ function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: s
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminAuthed(req)) {
+  if (!(await isAdminAuthed(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

@@ -1,7 +1,9 @@
 import * as cheerio from "cheerio";
 import { db, events, venues } from "@/db";
-import { like } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import type { EventType } from "../db/schema";
+import { isAllowedByRobots } from "./fetch";
+import { rateLimit } from "./rateLimit";
 
 const SOURCE_TAG = "source:castanet";
 const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
@@ -42,10 +44,31 @@ function classifyEventType(title: string, description: string): EventType {
   return "other";
 }
 
+// Real listings write the price on either side of the keyword ("$20 at the
+// door", "Tickets $25"), and single-decimal amounts ("$12.5") are common.
+const COVER_KEYWORDS = "cover|tickets?|admission|door|advance|presale|pre-sale|entry";
+const AMOUNT_THEN_KEYWORD = new RegExp(
+  `\\$(\\d+(?:\\.\\d{1,2})?)\\s*(?:[a-z]+\\s+){0,2}(?:${COVER_KEYWORDS})\\b`,
+  "gi"
+);
+const KEYWORD_THEN_AMOUNT = new RegExp(
+  `\\b(?:${COVER_KEYWORDS})\\b(?:\\s+[a-z]+){0,2}\\s*:?\\s*\\$(\\d+(?:\\.\\d{1,2})?)`,
+  "gi"
+);
+
 function parseCoverCharge(description: string): number | null {
-  const match = description.match(/\$(\d+(?:\.\d{2})?)\s*(cover|ticket|admission|door)/i);
-  if (!match) return null;
-  return Math.round(parseFloat(match[1]) * 100);
+  const amounts: number[] = [];
+  for (const re of [AMOUNT_THEN_KEYWORD, KEYWORD_THEN_AMOUNT]) {
+    re.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(description)) !== null) {
+      amounts.push(Math.round(parseFloat(match[1]) * 100));
+    }
+  }
+  if (amounts.length === 0) return null;
+  // Ranges like "$20 advance / $25 door": show the advance (lower) price,
+  // which is the one most attendees actually pay.
+  return Math.min(...amounts);
 }
 
 // Castanet's CMS double-encodes some entities (e.g. literal "&ndash;" text
@@ -99,6 +122,12 @@ function parseDateTime(dateLine: string): { specificDate: string | null; startTi
 }
 
 async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
+  // Same politeness path every other fetch in this codebase takes (cron/fetch.ts).
+  if (!(await isAllowedByRobots(url))) {
+    console.error(`Castanet fetch skipped for ${url}: disallowed by robots.txt`);
+    return [];
+  }
+  await rateLimit();
   const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) {
     console.error(`Castanet fetch failed for ${url}: HTTP ${res.status}`);
@@ -154,10 +183,10 @@ async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
 }
 
 export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
-  const [todayEvents, weekendEvents] = await Promise.all([
-    fetchAndParse("https://www.castanet.net/events/"),
-    fetchAndParse("https://www.castanet.net/events/weekend"),
-  ]);
+  // Sequential, not Promise.all: concurrent requests defeat rateLimit()'s
+  // serialization and every other fetch in this codebase is one-at-a-time.
+  const todayEvents = await fetchAndParse("https://www.castanet.net/events/");
+  const weekendEvents = await fetchAndParse("https://www.castanet.net/events/weekend");
 
   const seen = new Map<string, ParsedCastanetEvent>();
   for (const e of [...todayEvents, ...weekendEvents]) {
@@ -171,7 +200,13 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
   }
   const parsed = Array.from(new Set(seen.values()));
 
-  const knownVenues = await db.select({ id: venues.id, name: venues.name }).from(venues);
+  // Active only: matching to a deactivated venue attaches the event to a venue
+  // the public listings filter out, so the event silently vanishes instead of
+  // falling back to its own locationName/locationAddress.
+  const knownVenues = await db
+    .select({ id: venues.id, name: venues.name })
+    .from(venues)
+    .where(eq(venues.active, true));
   const venueByName = new Map(knownVenues.map((v) => [v.name.trim().toLowerCase(), v.id]));
 
   // Refresh strategy: this is a short rolling window (today + weekend), so

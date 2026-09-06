@@ -59,14 +59,20 @@ export default async function VenuePage({ params }: PageProps) {
   const mapQuery = encodeURIComponent(venue.address);
   const reviewsQuery = encodeURIComponent(`${venue.name} Kelowna reviews`);
 
+  const locality = venue.city ?? "Kelowna";
+  // venue.address is the full "123 Main St, Peachland, BC V0H 1X7" string, so the
+  // city/region/postal tail was being restated by the sibling PostalAddress fields
+  // -- and contradicted by them, back when addressLocality was hardcoded to Kelowna.
+  const streetAddress = venue.address.split(",")[0].trim();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FoodEstablishment",
     name: venue.name,
     address: {
       "@type": "PostalAddress",
-      streetAddress: venue.address,
-      addressLocality: "Kelowna",
+      streetAddress,
+      addressLocality: locality,
       addressRegion: "BC",
       addressCountry: "CA",
     },

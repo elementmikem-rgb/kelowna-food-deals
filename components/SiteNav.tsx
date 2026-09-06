@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-export function SiteNav({ active }: { active: "specials" | "events" }) {
+// "blog" has no nav tab of its own — it just means neither tab is the active one.
+export function SiteNav({ active }: { active: "specials" | "events" | "blog" }) {
   return (
     <nav className="flex gap-2">
       <Link

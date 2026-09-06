@@ -25,7 +25,7 @@ export default function BlogIndexPage() {
 
   return (
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-8">
-      <SiteHeader active="specials" subtitle="Guides to what's actually going on around town." />
+      <SiteHeader active="blog" subtitle="Guides to what's actually going on around town." />
 
       <div className="flex flex-col gap-6">
         {posts.map((post) => (

@@ -7,7 +7,7 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 const markReadSchema = z.object({ ids: z.array(z.number().int().positive()).min(1).max(200) });
 
 export async function POST(req: NextRequest) {
-  if (!isAdminAuthed(req)) {
+  if (!(await isAdminAuthed(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

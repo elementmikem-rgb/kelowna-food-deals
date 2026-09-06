@@ -5,10 +5,15 @@ import { ShareButton } from "./ShareButton";
 export function SiteHeader({
   active,
   subtitle,
+  brandIsHeading = true,
 }: {
-  active: "specials" | "events";
+  active: "specials" | "events" | "blog";
   subtitle: string;
+  // Pages that carry their own <h1> (e.g. a blog post title) pass false so the
+  // brand renders as plain text and the page keeps exactly one real heading.
+  brandIsHeading?: boolean;
 }) {
+  const BrandTag = brandIsHeading ? "h1" : "span";
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="flex items-center gap-4">
@@ -21,9 +26,9 @@ export function SiteHeader({
         />
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="font-display text-3xl sm:text-4xl text-foreground">
+            <BrandTag className="block font-display text-3xl sm:text-4xl text-foreground">
               <span className="hand-underline">Kelowna</span> Daily Specials
-            </h1>
+            </BrandTag>
             <span className="stamp px-2.5 py-1 text-[10px] hidden sm:inline-flex">
               Okanagan · verified
             </span>

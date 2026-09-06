@@ -10,6 +10,10 @@ const tipRequestSchema = z.object({
     .max(50000, "Max tip is $500"),
 });
 
+// Pinned rather than derived from the request's Origin header: a forged Origin
+// would otherwise come back inside a real Stripe Checkout URL's redirect targets.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = tipRequestSchema.safeParse(body);
@@ -18,8 +22,6 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
-
-  const origin = req.headers.get("origin") ?? new URL(req.url).origin;
 
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
@@ -36,8 +38,8 @@ export async function POST(req: NextRequest) {
         quantity: 1,
       },
     ],
-    success_url: `${origin}/tip/success`,
-    cancel_url: `${origin}/`,
+    success_url: `${SITE_URL}/tip/success`,
+    cancel_url: `${SITE_URL}/`,
   });
 
   if (!session.url) {

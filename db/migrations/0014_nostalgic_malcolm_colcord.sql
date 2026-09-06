@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venues" ADD COLUMN "city" text;

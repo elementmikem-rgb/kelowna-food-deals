@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db, venues, outreachSends } from "@/db";
-import { eq, isNotNull, desc } from "drizzle-orm";
+import { and, eq, isNotNull, desc } from "drizzle-orm";
 import { AdminOutreachRow } from "@/components/AdminOutreachRow";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,9 @@ export default async function AdminOutreachPage() {
   const venueRows = await db
     .select({ id: venues.id, name: venues.name, contactEmail: venues.contactEmail })
     .from(venues)
-    .where(isNotNull(venues.contactEmail));
+    // Deactivated venues 404 on /venues/[id], so outreach referencing one would send
+    // a dead link to a real business.
+    .where(and(isNotNull(venues.contactEmail), eq(venues.active, true)));
 
   const sendRows = await db
     .select({

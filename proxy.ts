@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthed } from "@/lib/admin-auth";
 
-const ADMIN_COOKIE = "kds_admin_session";
-
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith("/admin")) return NextResponse.next();
-  if (pathname === "/admin/login" || pathname === "/api/admin/login") return NextResponse.next();
+  // This matcher only ever sees /admin/:path*, never /api/admin/* -- the
+  // "/api/admin/login" case here was dead and misleadingly implied this proxy
+  // covers the API routes too. Every /api/admin/* handler must call
+  // isAdminAuthed() itself; see lib/admin-auth.ts.
+  if (pathname === "/admin/login") return NextResponse.next();
 
-  const session = req.cookies.get(ADMIN_COOKIE)?.value;
-  if (session && process.env.ADMIN_SESSION_SECRET && session === process.env.ADMIN_SESSION_SECRET) {
+  if (await isAdminAuthed(req)) {
     return NextResponse.next();
   }
 

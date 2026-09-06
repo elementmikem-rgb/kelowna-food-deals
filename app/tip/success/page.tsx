@@ -1,4 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+// A post-payment confirmation page has no business in search results.
+export const metadata: Metadata = {
+  title: "Thank you — Kelowna Daily Specials",
+  robots: { index: false, follow: false },
+};
 
 export default function TipSuccessPage() {
   return (

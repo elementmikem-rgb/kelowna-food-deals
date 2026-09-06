@@ -2,16 +2,29 @@ import { db, specials, events, scrapeRuns, venues } from "@/db";
 import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import type { ExtractedSpecial, ExtractedEvent } from "./extract";
 
+// isNotNull(sourceUrl) throughout this file: cron-written rows always carry the
+// scraped page's URL, visitor submissions (app/api/submit) always write null.
+// Without the filter, cron archives visitor-submitted specials the first night
+// the venue's own site changes, and re-stamps them "verified today" on every
+// quiet night in between — neither of which it has any evidence for.
 export async function markVenueStillCurrent(venueId: number): Promise<void> {
   const now = new Date();
   await db
     .update(specials)
     .set({ lastVerifiedAt: now })
-    .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
+    .where(
+      and(
+        eq(specials.venueId, venueId),
+        isNull(specials.archivedAt),
+        isNotNull(specials.sourceUrl)
+      )
+    );
   await db
     .update(events)
     .set({ lastVerifiedAt: now })
-    .where(and(eq(events.venueId, venueId), isNull(events.archivedAt)));
+    .where(
+      and(eq(events.venueId, venueId), isNull(events.archivedAt), isNotNull(events.sourceUrl))
+    );
 }
 
 // Archives every currently-active special for the venue (so they surface in
@@ -26,7 +39,13 @@ export async function replaceVenueSpecials(
     await tx
       .update(specials)
       .set({ archivedAt: now })
-      .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
+      .where(
+        and(
+          eq(specials.venueId, venueId),
+          isNull(specials.archivedAt),
+          isNotNull(specials.sourceUrl)
+        )
+      );
     if (extracted.length === 0) return;
     await tx.insert(specials).values(
       extracted.map((s) => ({
@@ -58,7 +77,9 @@ export async function replaceVenueEvents(
     await tx
       .update(events)
       .set({ archivedAt: now })
-      .where(and(eq(events.venueId, venueId), isNull(events.archivedAt)));
+      .where(
+        and(eq(events.venueId, venueId), isNull(events.archivedAt), isNotNull(events.sourceUrl))
+      );
     if (extracted.length === 0) return;
     await tx.insert(events).values(
       extracted.map((e) => ({

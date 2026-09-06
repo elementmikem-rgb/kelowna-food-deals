@@ -3,7 +3,9 @@ import { PDFParse } from "pdf-parse";
 import robotsParser from "robots-parser";
 import { rateLimit } from "./rateLimit";
 
-const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownaspecials.com)";
+// kelownaspecials.com is NXDOMAIN — a venue operator checking their access
+// logs needs an identifier that actually resolves.
+const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
 
 const robotsCache = new Map<string, ReturnType<typeof robotsParser> | null>();
 

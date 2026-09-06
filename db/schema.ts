@@ -22,6 +22,10 @@ export const venues = specialsSchema.table(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     address: text("address").notNull(),
+    // The town this venue is actually in (Kelowna, West Kelowna, Lake Country,
+    // Peachland). Nullable so venues seeded before this column existed keep
+    // working; consumers fall back to "Kelowna" when it's null.
+    city: text("city"),
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     phone: text("phone"),
@@ -182,19 +186,25 @@ export const menuItems = specialsSchema.table("menu_items", {
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
 
-export const venuePhotos = specialsSchema.table("venue_photos", {
-  id: serial("id").primaryKey(),
-  venueId: integer("venue_id")
-    .notNull()
-    .references(() => venues.id, { onDelete: "cascade" }),
-  photoData: text("photo_data").notNull(), // base64-encoded image
-  photoMimeType: text("photo_mime_type").notNull(),
-  caption: text("caption"),
-  submissionId: integer("submission_id").references(() => submissions.id, {
-    onDelete: "set null",
-  }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const venuePhotos = specialsSchema.table(
+  "venue_photos",
+  {
+    id: serial("id").primaryKey(),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venues.id, { onDelete: "cascade" }),
+    photoData: text("photo_data").notNull(), // base64-encoded image
+    photoMimeType: text("photo_mime_type").notNull(),
+    caption: text("caption"),
+    submissionId: integer("submission_id").references(() => submissions.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Postgres allows multiple NULLs through a unique index, so this only enforces
+  // "at most one photo per submission" -- it doesn't affect rows with no submissionId.
+  (table) => [uniqueIndex("venue_photos_submission_id_unique").on(table.submissionId)]
+);
 
 export const scrapeRuns = specialsSchema.table("scrape_runs", {
   id: serial("id").primaryKey(),

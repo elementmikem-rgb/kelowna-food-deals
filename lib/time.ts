@@ -23,6 +23,17 @@ export function todayDowPacific(now: Date = new Date()): number {
   return idx === -1 ? now.getUTCDay() : idx;
 }
 
+// 0-indexed month in Pacific time. The container runs UTC, so around month
+// boundaries new Date().getMonth() names the wrong month for hours at a time.
+export function pacificMonthIndex(now: Date = new Date()): number {
+  const month = new Intl.DateTimeFormat("en-US", {
+    timeZone: PACIFIC_TZ,
+    month: "numeric",
+  }).format(now);
+  const parsed = parseInt(month, 10);
+  return Number.isNaN(parsed) ? now.getUTCMonth() : parsed - 1;
+}
+
 export function dowShortName(dow: number): string {
   return DOW_NAMES[dow] ?? "?";
 }

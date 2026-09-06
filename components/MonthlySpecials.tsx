@@ -1,6 +1,7 @@
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
+import { pacificMonthIndex } from "@/lib/time";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -10,7 +11,7 @@ const MONTH_NAMES = [
 export function MonthlySpecials({ specials }: { specials: SpecialWithVenue[] }) {
   if (specials.length === 0) return null;
 
-  const monthName = MONTH_NAMES[new Date().getMonth()];
+  const monthName = MONTH_NAMES[pacificMonthIndex()];
   const grouped = groupByVenue(specials);
 
   return (

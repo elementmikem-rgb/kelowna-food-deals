@@ -71,8 +71,14 @@ async function processVenue(venue: {
     return { tokensUsed: 0 };
   }
 
+  // Captured outside the try: the Anthropic call can succeed (spending real
+  // tokens) and a later step in the same block still throw. Logging 0 there
+  // would hide that spend and stop TOKEN_CEILING from ever aborting a
+  // runaway night whose failures all land after the API call.
+  let tokensSpent = 0;
   try {
     const { specials, events, tokensUsed } = await extractVenueContent(normalized);
+    tokensSpent = tokensUsed;
     await replaceVenueSpecials(venue.id, url, specials);
     await replaceVenueEvents(venue.id, url, events);
     await logScrapeRun({
@@ -95,11 +101,13 @@ async function processVenue(venue: {
       // venue on a single transient failure while it still reads as "verified today".
       contentHash: null,
       changed: true,
-      tokensUsed: 0,
+      tokensUsed: tokensSpent,
       error: `extraction failed: ${message}`,
     });
-    console.error(`[${venue.name}] extraction failed: ${message}`);
-    return { tokensUsed: 0 };
+    console.error(
+      `[${venue.name}] extraction failed after ${tokensSpent} token(s): ${message}`
+    );
+    return { tokensUsed: tokensSpent };
   }
 }
 

@@ -388,6 +388,18 @@ const SEED_VENUES: SeedVenue[] = [
   },
 ];
 
+// Seed addresses are uniformly "<street>, <city>, BC[ <postal>]", so the town is the
+// second-to-last comma-separated segment. Parsing beats hand-tagging every entry and
+// stays right for new venues added in the same shape.
+function cityFromAddress(address: string): string | null {
+  const parts = address.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  // "Lake Country (Winfield)" -> "Lake Country": the parenthetical is a neighbourhood,
+  // and schema.org addressLocality wants the town on its own.
+  const city = parts[parts.length - 2].replace(/\s*\([^)]*\)\s*$/, "").trim();
+  return city || null;
+}
+
 async function main() {
   for (const v of SEED_VENUES) {
     await db
@@ -395,6 +407,7 @@ async function main() {
       .values({
         name: v.name,
         address: v.address,
+        city: cityFromAddress(v.address),
         lat: v.lat ?? null,
         lng: v.lng ?? null,
         phone: v.phone ?? null,
@@ -408,6 +421,7 @@ async function main() {
         target: venues.name,
         set: {
           address: sql`excluded.address`,
+          city: sql`excluded.city`,
           lat: sql`excluded.lat`,
           lng: sql`excluded.lng`,
           phone: sql`excluded.phone`,
