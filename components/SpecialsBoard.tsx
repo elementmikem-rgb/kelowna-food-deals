@@ -8,6 +8,7 @@ import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
+import { isPromotionActive } from "@/lib/promotion";
 
 function timeToMinutes(time: string | null): number {
   if (!time) return Number.MAX_SAFE_INTEGER; // no start time sorts last within its day
@@ -52,6 +53,11 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
       .sort((a, b) => {
+        // A paid seasonal boost outranks everything else while it's active.
+        const boostDiff =
+          Number(isPromotionActive(b.boostedUntil)) - Number(isPromotionActive(a.boostedUntil));
+        if (boostDiff !== 0) return boostDiff;
+
         const freshnessDiff =
           b.lastVerifiedAt.getTime() - a.lastVerifiedAt.getTime();
         // group by "fresh enough" bucket first (within 14 days) so a slightly
@@ -70,7 +76,14 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
       });
   }, [specials, selectedDay, selectedCategory]);
 
-  const grouped = useMemo(() => groupByVenue(filtered), [filtered]);
+  const grouped = useMemo(() => {
+    const groups = groupByVenue(filtered);
+    // Stable partition: featured venues first, in whatever order they already
+    // had, followed by everyone else in their existing order.
+    const featured = groups.filter((g) => isPromotionActive(g.items[0]?.venueFeaturedUntil ?? null));
+    const rest = groups.filter((g) => !isPromotionActive(g.items[0]?.venueFeaturedUntil ?? null));
+    return [...featured, ...rest];
+  }, [filtered]);
 
   return (
     <div className="flex flex-col gap-4">

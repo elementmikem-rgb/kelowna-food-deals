@@ -6,6 +6,7 @@ import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { isPromotionActive } from "@/lib/promotion";
 
 export function SpecialCard({
   special,
@@ -21,6 +22,7 @@ export function SpecialCard({
   const stale = isStale(special.lastVerifiedAt);
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
+  const boosted = isPromotionActive(special.boostedUntil);
 
   async function handleReport() {
     setReportState("sending");
@@ -52,9 +54,16 @@ export function SpecialCard({
         <h3 className="font-display text-xl leading-tight text-foreground">
           {special.venueName}
         </h3>
-        <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
-          {CATEGORY_LABELS[special.category]}
-        </span>
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
+            {CATEGORY_LABELS[special.category]}
+          </span>
+          {boosted && (
+            <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
+              Featured
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="relative z-10 text-sm text-foreground/90 pointer-events-none">

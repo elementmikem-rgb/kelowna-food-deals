@@ -50,6 +50,11 @@ export const venues = specialsSchema.table(
     // Set when a venue unsubscribes from outreach email via the link in that email.
     // Checked before every outreach send so a "stop" is honored, not just noted.
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    // Paid featured placement: while now() < featuredUntil, this venue's card sorts
+    // to the top of every day/category view. Null or past = not featured. A plain
+    // timestamp rather than a boolean so a lapsed placement un-features itself with
+    // no cron needed to flip it back off.
+    featuredUntil: timestamp("featured_until", { withTimezone: true }),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );
@@ -115,6 +120,10 @@ export const specials = specialsSchema.table("specials", {
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
   archivedAt: timestamp("archived_at", { withTimezone: true }), // set when superseded by a change; null = currently active
+  // Paid seasonal boost: while now() < boostedUntil, this specific special sorts
+  // first within its venue's card and gets a "Featured" badge. Same lapses-itself
+  // design as venues.featuredUntil.
+  boostedUntil: timestamp("boosted_until", { withTimezone: true }),
 });
 
 export const eventType = [

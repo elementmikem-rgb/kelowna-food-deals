@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
+import { isPromotionActive } from "@/lib/promotion";
 
 export function SpecialRow({ special }: { special: SpecialWithVenue }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
@@ -13,6 +14,7 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
   const stale = isStale(special.lastVerifiedAt);
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
+  const boosted = isPromotionActive(special.boostedUntil);
 
   async function handleReport() {
     setReportState("sending");
@@ -37,6 +39,11 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
             <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
               {CATEGORY_LABELS[special.category]}
             </span>
+            {boosted && (
+              <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
+                Featured
+              </span>
+            )}
           </div>
           {special.description && (
             <p className="text-xs text-muted">{special.description}</p>

@@ -18,6 +18,10 @@ export interface SpecialWithVenue {
   category: SpecialCategory;
   lastVerifiedAt: Date;
   confidence: number;
+  // Paid promotion timestamps -- see db/schema.ts. Null or past = not promoted;
+  // consumers compare against Date.now() rather than trusting these as booleans.
+  venueFeaturedUntil: Date | null;
+  boostedUntil: Date | null;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -39,6 +43,8 @@ const baseColumns = {
   category: specials.category,
   lastVerifiedAt: specials.lastVerifiedAt,
   confidence: specials.confidence,
+  venueFeaturedUntil: venues.featuredUntil,
+  boostedUntil: specials.boostedUntil,
 };
 
 export async function getAllSpecialsWithVenue(): Promise<SpecialWithVenue[]> {
