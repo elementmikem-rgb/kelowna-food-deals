@@ -34,7 +34,10 @@ export function TipJar() {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-surface p-5 flex flex-col items-center gap-3 text-center">
+    <section
+      id="tip-jar"
+      className="rounded-xl border border-border bg-surface p-5 flex flex-col items-center gap-3 text-center scroll-mt-4"
+    >
       <h2 className="font-display text-xl text-foreground">Enjoying this?</h2>
       <p className="text-sm text-muted max-w-sm">
         This site is a one-person project, checked and kept accurate by hand. If it

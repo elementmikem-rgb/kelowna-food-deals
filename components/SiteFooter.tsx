@@ -24,6 +24,12 @@ export async function SiteFooter() {
       <Link href="/advertise" className="text-muted-2 underline">
         Advertise with us
       </Link>
+      <Link href="/#tip-jar" className="text-muted-2 underline">
+        Tip jar
+      </Link>
+      <Link href="/privacy" className="text-muted-2 underline">
+        Privacy &amp; terms
+      </Link>
     </footer>
   );
 }

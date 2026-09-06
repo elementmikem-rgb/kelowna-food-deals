@@ -1,3 +1,5 @@
+export type BlogCategory = "Guide" | "Explainer" | "Data";
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -5,11 +7,13 @@ export interface BlogPost {
   publishedAt: string; // YYYY-MM-DD
   excerpt: string;
   contentHtml: string;
+  category: BlogCategory;
 }
 
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-we-verify-every-special",
+    category: "Explainer",
     title: "How We Actually Verify Every Special on This Site",
     metaDescription:
       "Most Kelowna deals sites are copy-pasted lists nobody's checked in years. Here's exactly how we confirm a special is real before it goes live.",
@@ -38,6 +42,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "real-kelowna-happy-hour-guide",
+    category: "Guide",
     title: "The Real Kelowna Happy Hour Guide",
     metaDescription:
       "A happy hour guide for Kelowna built from specials we've actually confirmed are still running — not a list from 2022.",
@@ -63,6 +68,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "best-wing-nights-kelowna",
+    category: "Guide",
     title: "Best Wing Nights in Kelowna Right Now",
     metaDescription:
       "Every confirmed wing night special in Kelowna, with actual prices — from $0.35 wings to $12 all-you-can-handle deals.",
@@ -94,6 +100,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "cheap-eats-kelowna-under-10",
+    category: "Guide",
     title: "Cheap Eats in Kelowna: Where $10 Still Buys You Something Real",
     metaDescription:
       "Confirmed Kelowna food and drink specials under $10 — real prices from real venues, not a generic 'budget dining' listicle.",
@@ -120,6 +127,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "kelowna-west-kelowna-peachland-deals",
+    category: "Data",
     title: "Kelowna vs. West Kelowna vs. Peachland: What We've Actually Verified So Far",
     metaDescription:
       "An honest look at food and drink special coverage across Kelowna, West Kelowna, Peachland, and Lake Country — including where the gaps still are.",

@@ -30,9 +30,14 @@ export default function BlogIndexPage() {
       <div className="flex flex-col gap-6">
         {posts.map((post) => (
           <article key={post.slug} className="flex flex-col gap-1 pb-6 border-b border-border">
-            <span className="text-xs text-muted-2 font-mono-tabular">
-              {formatDate(post.publishedAt)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
+                {post.category}
+              </span>
+              <span className="text-xs text-muted-2 font-mono-tabular">
+                {formatDate(post.publishedAt)}
+              </span>
+            </div>
             <h2 className="font-display text-2xl text-foreground">
               <Link href={`/blog/${post.slug}`} className="hover:underline">
                 {post.title}
