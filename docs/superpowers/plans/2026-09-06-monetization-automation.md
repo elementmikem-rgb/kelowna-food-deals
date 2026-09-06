@@ -766,7 +766,12 @@ import { getStripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
-const HOLD_MS = 15 * 60 * 1000;
+// Stripe requires a Checkout session's expires_at to be at least 30 minutes out, so
+// the DB-side reservation hold uses the same window rather than a shorter one that
+// would create a mismatch between "still payable" and "still reserved." This also
+// matches Task 5's verifiedToken TTL (30 min), so the whole post-verification window
+// is a consistent 30 minutes end to end.
+const HOLD_MS = 30 * 60 * 1000;
 
 const bodySchema = z.object({ verifiedToken: z.string() });
 
