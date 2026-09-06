@@ -34,6 +34,43 @@ export function pacificMonthIndex(now: Date = new Date()): number {
   return Number.isNaN(parsed) ? now.getUTCMonth() : parsed - 1;
 }
 
+// Hour-of-day (0-23) in Pacific for a given instant.
+function pacificHour(at: Date): number {
+  const hour = new Intl.DateTimeFormat("en-US", {
+    timeZone: PACIFIC_TZ,
+    hour: "numeric",
+    hourCycle: "h23",
+  }).format(at);
+  const parsed = parseInt(hour, 10);
+  return Number.isNaN(parsed) ? at.getUTCHours() : parsed;
+}
+
+// The UTC instant corresponding to 23:59:59.999 *Pacific* time on the given
+// YYYY-MM-DD calendar date. Everything user-facing in this codebase is Pacific
+// (see pacificTodayISODate), so a paid placement that runs "through 2026-10-20"
+// must stay live until the end of that Pacific day -- an end-of-day-UTC value
+// would take it dark at 16:59/17:59 Pacific, losing the whole dinner service on
+// the last paid day.
+//
+// Pacific is either UTC-7 (PDT) or UTC-8 (PST), so rather than hardcoding an
+// offset we build both candidates and keep the one that actually formats back to
+// 23:xx on `dateStr` in Pacific. On a DST-transition day exactly one candidate
+// satisfies both conditions, which is what makes this correct across the spring
+// -forward and fall-back days rather than merely usually right.
+export function endOfDayPacific(dateStr: string): Date {
+  const base = new Date(`${dateStr}T23:59:59.999Z`).getTime();
+  if (Number.isNaN(base)) return new Date(`${dateStr}T23:59:59.999Z`);
+  for (const offsetHours of [8, 7]) {
+    const candidate = new Date(base + offsetHours * 60 * 60 * 1000);
+    if (pacificTodayISODate(candidate) === dateStr && pacificHour(candidate) === 23) {
+      return candidate;
+    }
+  }
+  // Unreachable while America/Vancouver stays a -7/-8 zone; fall back to the old
+  // UTC end-of-day rather than throwing inside an activation path.
+  return new Date(base);
+}
+
 export function dowShortName(dow: number): string {
   return DOW_NAMES[dow] ?? "?";
 }

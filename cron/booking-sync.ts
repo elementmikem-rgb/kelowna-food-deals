@@ -7,7 +7,14 @@ import { activateBooking } from "@/lib/bookings-data";
 // inside [startDate, endDate]) but which hasn't been written to the live columns yet.
 // A booking approved while its range already covered today was activated immediately
 // by approveBooking() -- this only catches future-dated approvals reaching their
-// start date. Idempotent: activateBooking() is safe to call more than once.
+// start date.
+//
+// The query deliberately stays a whole-range match rather than `startDate = today`:
+// activateBooking() is read-before-write idempotent, so re-selecting a booking that
+// already activated on a prior day is a no-op, and keeping the wider range means a
+// live column an admin accidentally cleared mid-run gets repaired on the next pass.
+// The idempotency lives in activateBooking() rather than here on purpose -- it also
+// protects re-approval and any future caller, not just this job.
 export async function syncBookings(): Promise<{ activated: number }> {
   const today = pacificTodayISODate();
   const dueToday = await db

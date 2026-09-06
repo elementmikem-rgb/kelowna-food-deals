@@ -1,7 +1,7 @@
 import { db, bookings, venues, specials, categorySponsors } from "@/db";
 import { and, asc, eq } from "drizzle-orm";
 import type { SpecialCategory } from "@/db/schema";
-import { pacificTodayISODate } from "@/lib/time";
+import { endOfDayPacific, pacificTodayISODate } from "@/lib/time";
 
 export interface PendingBooking {
   id: number;
@@ -64,31 +64,71 @@ export async function getRefundsNeeded(): Promise<RefundNeeded[]> {
     .orderBy(asc(bookings.reviewedAt));
 }
 
-function endOfDayUtc(dateStr: string): Date {
-  return new Date(`${dateStr}T23:59:59.999Z`);
+// True when the live column already covers at least as long as this booking would
+// set it -- i.e. writing would either change nothing or *shorten* a window someone
+// (an admin via the manual panels, or an overlapping booking) deliberately granted.
+// Either way there is nothing for this activation to do.
+function alreadyCovered(current: Date | null, until: Date): boolean {
+  return current !== null && current.getTime() >= until.getTime();
 }
 
 // Writes an approved booking's dates into the existing "live now" columns that every
 // render path already reads. Used both when an admin approves a booking whose range
 // already covers today, and by the daily sync job (Task 11) for a future-dated
-// approved booking on the day its range starts. Idempotent -- safe to call more than
-// once for the same booking.
+// approved booking on the day its range starts.
+//
+// Every branch reads the current live value and writes only when it would actually
+// change something. That matters because the sync job re-runs this nightly for the
+// whole life of a booking, not just on its start date: without the read-before-write
+// it would churn the category_sponsors row (delete+insert) every night, destroying
+// any sponsor an admin set by hand and resetting the row's id/createdAt, and it would
+// silently truncate a longer featuredUntil/boostedUntil window an admin granted
+// manually. The spec's promise that the existing manual admin panels "keep working
+// exactly as they do today" depends on this being a genuine no-op once applied.
 export async function activateBooking(bookingId: number): Promise<void> {
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
   if (!booking) return;
-  const until = endOfDayUtc(booking.endDate);
+  const until = endOfDayPacific(booking.endDate);
 
   if (booking.productType === "featured" && booking.venueId !== null) {
+    const [venue] = await db
+      .select({ featuredUntil: venues.featuredUntil })
+      .from(venues)
+      .where(eq(venues.id, booking.venueId));
+    if (!venue || alreadyCovered(venue.featuredUntil, until)) return;
     await db.update(venues).set({ featuredUntil: until }).where(eq(venues.id, booking.venueId));
   } else if (booking.productType === "boost" && booking.specialId !== null) {
+    const [special] = await db
+      .select({ boostedUntil: specials.boostedUntil })
+      .from(specials)
+      .where(eq(specials.id, booking.specialId));
+    if (!special || alreadyCovered(special.boostedUntil, until)) return;
     await db.update(specials).set({ boostedUntil: until }).where(eq(specials.id, booking.specialId));
   } else if (booking.productType === "category_sponsor" && booking.category !== null && booking.venueId !== null) {
     const [venue] = await db.select().from(venues).where(eq(venues.id, booking.venueId));
+    const sponsorName = venue?.name ?? "Sponsor";
+    const sponsorUrl = venue?.website ?? null;
+
+    const [existing] = await db
+      .select()
+      .from(categorySponsors)
+      .where(eq(categorySponsors.category, booking.category));
+    // Already this booking's sponsor, running at least as long as this booking would
+    // set it -- leave the row (and its id/createdAt) exactly where it is.
+    if (
+      existing &&
+      existing.sponsorName === sponsorName &&
+      existing.sponsorUrl === sponsorUrl &&
+      alreadyCovered(existing.sponsorUntil, until)
+    ) {
+      return;
+    }
+
     await db.delete(categorySponsors).where(eq(categorySponsors.category, booking.category));
     await db.insert(categorySponsors).values({
       category: booking.category,
-      sponsorName: venue?.name ?? "Sponsor",
-      sponsorUrl: venue?.website ?? null,
+      sponsorName,
+      sponsorUrl,
       sponsorUntil: until,
     });
   }
