@@ -46,3 +46,6 @@ next-env.d.ts
 .uber-review-dismissed.json
 .uber-review-fix-outcomes.json
 backups/
+
+# playwright-cli skill artifacts
+.playwright-cli/

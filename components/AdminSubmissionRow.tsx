@@ -7,6 +7,8 @@ import { formatPrice } from "@/lib/format";
 interface SubmissionRowData {
   id: number;
   venueName: string;
+  venueAddress: string | null;
+  isNewVenue: boolean;
   rawText: string | null;
   hasPhoto: boolean;
   aiExtracted: unknown;
@@ -156,9 +158,20 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
   return (
     <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg text-foreground">{submission.venueName}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-display text-lg text-foreground">{submission.venueName}</h3>
+          {submission.isNewVenue && (
+            <span className="text-[10px] uppercase tracking-wide font-medium text-accent bg-accent/10 rounded-full px-2 py-0.5">
+              New venue
+            </span>
+          )}
+        </div>
         <span className="text-xs text-muted-2">{remaining} pending</span>
       </div>
+
+      {submission.isNewVenue && submission.venueAddress && (
+        <p className="text-xs text-muted-2">{submission.venueAddress}</p>
+      )}
 
       {submission.rawText && (
         <p className="text-sm text-foreground/90">&ldquo;{submission.rawText}&rdquo;</p>

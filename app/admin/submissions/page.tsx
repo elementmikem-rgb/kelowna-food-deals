@@ -9,7 +9,11 @@ export default async function AdminSubmissionsPage() {
   const rows = await db
     .select({
       id: submissions.id,
-      venueName: venues.name,
+      // A submission for a venue that doesn't exist yet has no venues row to join --
+      // fall back to the free-text name/address the submitter typed in.
+      venueName: sql<string>`coalesce(${venues.name}, ${submissions.venueName})`,
+      venueAddress: submissions.venueAddress,
+      isNewVenue: sql<boolean>`${submissions.venueId} is null`,
       rawText: submissions.rawText,
       // Only whether a photo exists — the bytes are fetched on demand from
       // /api/admin/submission-photos/[id] instead of being inlined per row.
@@ -20,7 +24,7 @@ export default async function AdminSubmissionsPage() {
       createdAt: submissions.createdAt,
     })
     .from(submissions)
-    .innerJoin(venues, eq(submissions.venueId, venues.id))
+    .leftJoin(venues, eq(submissions.venueId, venues.id))
     .where(and(eq(submissions.status, "needs_review")))
     .orderBy(asc(submissions.createdAt));
 

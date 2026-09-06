@@ -54,13 +54,19 @@ async function fileToBase64(file: File): Promise<{ data: string; mimeType: strin
   }
 }
 
+const NEW_VENUE = "__new__";
+
 export function SubmitForm({ venues }: { venues: { id: number; name: string }[] }) {
-  const [venueId, setVenueId] = useState<number | "">("");
+  const [venueId, setVenueId] = useState<number | "" | typeof NEW_VENUE>("");
+  const [newVenueName, setNewVenueName] = useState("");
+  const [newVenueAddress, setNewVenueAddress] = useState("");
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isNewVenue = venueId === NEW_VENUE;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +74,14 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
 
     if (!venueId) {
       setError("Pick a venue.");
+      return;
+    }
+    if (isNewVenue && !newVenueName.trim()) {
+      setError("Add the venue's name.");
+      return;
+    }
+    if (isNewVenue && !newVenueAddress.trim()) {
+      setError("Add the venue's address — helps us find and verify it.");
       return;
     }
     if (!text.trim() && !photo) {
@@ -89,7 +103,9 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          venueId,
+          venueId: isNewVenue ? null : venueId,
+          venueName: isNewVenue ? newVenueName.trim() : null,
+          venueAddress: isNewVenue ? newVenueAddress.trim() : null,
           text: text.trim() || null,
           photoBase64,
           photoMimeType,
@@ -124,10 +140,16 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
           Found {result.totalItems} thing{result.totalItems === 1 ? "" : "s"}
         </p>
         <p className="text-sm text-muted">
-          {result.autoApprovedCount > 0 &&
-            `${result.autoApprovedCount} published immediately. `}
-          {result.pendingCount > 0 &&
-            `${result.pendingCount} sent for a quick human check before going live.`}
+          {isNewVenue
+            ? "We'll add this venue and verify the details before anything goes live."
+            : (
+              <>
+                {result.autoApprovedCount > 0 &&
+                  `${result.autoApprovedCount} published immediately. `}
+                {result.pendingCount > 0 &&
+                  `${result.pendingCount} sent for a quick human check before going live.`}
+              </>
+            )}
         </p>
       </div>
     );
@@ -142,7 +164,9 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
         <select
           id="venue"
           value={venueId}
-          onChange={(e) => setVenueId(e.target.value ? Number(e.target.value) : "")}
+          onChange={(e) =>
+            setVenueId(e.target.value === NEW_VENUE ? NEW_VENUE : e.target.value ? Number(e.target.value) : "")
+          }
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
         >
           <option value="">Select a venue…</option>
@@ -151,8 +175,44 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
               {v.name}
             </option>
           ))}
+          <option value={NEW_VENUE}>My venue isn&apos;t listed…</option>
         </select>
       </div>
+
+      {isNewVenue && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="newVenueName">
+              Venue name
+            </label>
+            <input
+              id="newVenueName"
+              type="text"
+              value={newVenueName}
+              onChange={(e) => setNewVenueName(e.target.value)}
+              placeholder="e.g. The Whatever Pub"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="newVenueAddress">
+              Address
+            </label>
+            <input
+              id="newVenueAddress"
+              type="text"
+              value={newVenueAddress}
+              onChange={(e) => setNewVenueAddress(e.target.value)}
+              placeholder="Street address, city"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </div>
+          <p className="text-xs text-muted-2">
+            We&apos;ll verify this is a real, current venue before adding it — new venues always
+            get a human check first.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-1">
         <label className="text-sm text-muted" htmlFor="text">

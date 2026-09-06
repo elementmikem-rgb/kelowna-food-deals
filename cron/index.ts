@@ -14,7 +14,9 @@ import {
   replaceVenueEvents,
 } from "./upsert";
 
-const TOKEN_CEILING = 50_000;
+// Overridable so a one-off manual run (e.g. clearing a backlog) can raise the
+// ceiling without changing the daily scheduled cron's default budget.
+const TOKEN_CEILING = Number(process.env.CRON_TOKEN_CEILING) || 50_000;
 // Arbitrary fixed key for this cron's advisory lock -- any int works as long as it's
 // stable across runs and not reused by another job sharing the same database.
 const CRON_LOCK_KEY = 8_412_991;

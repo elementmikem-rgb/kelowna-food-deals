@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, submissions, specials, events, menuItems, venuePhotos } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { db, submissions, specials, events, menuItems, venuePhotos, venues } from "@/db";
+import { eq, and, sql } from "drizzle-orm";
 import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
 import { isAdminAuthed } from "@/lib/admin-auth";
@@ -86,12 +86,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Narrowed already: action !== "dismiss" here, so parsed.data carries itemType/itemIndex.
     const { itemType, itemIndex } = parsed.data as { itemType: "special" | "event" | "menuItem"; itemIndex: number };
 
+    // A submission for a venue that didn't exist at submit time (submission.venueId is
+    // null, venueName/venueAddress hold the submitter's free text) gets that venue
+    // created here, on the first item an admin approves -- not at submit time, so an
+    // anonymous visitor can never conjure an unverified venue into the live site on
+    // their own. Every later approve/reject on this submission reuses the same id.
+    let venueId = submission.venueId;
+    if (action === "approve" && venueId === null) {
+      if (!submission.venueName) {
+        return { error: "submission has no venueId and no venueName -- can't resolve a venue" as const, status: 400 };
+      }
+      const [existing] = await tx
+        .select({ id: venues.id })
+        .from(venues)
+        .where(sql`lower(${venues.name}) = lower(${submission.venueName})`)
+        .limit(1);
+      if (existing) {
+        venueId = existing.id;
+      } else {
+        const [created] = await tx
+          .insert(venues)
+          .values({
+            name: submission.venueName,
+            address: submission.venueAddress ?? "Address not provided",
+            active: true,
+          })
+          .returning({ id: venues.id });
+        venueId = created.id;
+      }
+      await tx.update(submissions).set({ venueId }).where(eq(submissions.id, submissionId));
+    }
+
     if (action === "approve") {
+      // Guaranteed non-null by the venue-resolution block above -- this narrows the
+      // type for TypeScript, which can't see that guarantee across the awaits above.
+      if (venueId === null) {
+        return { error: "internal: venue not resolved" as const, status: 500 };
+      }
       if (itemType === "special") {
         const s = extracted.specials[itemIndex];
         if (!s) return { error: "item not found" as const, status: 400 };
         await tx.insert(specials).values({
-          venueId: submission.venueId,
+          venueId,
           title: s.title,
           description: s.description,
           priceCents: s.price_cents,
@@ -115,7 +151,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           return { error: "event has no day or date" as const, status: 400 };
         }
         await tx.insert(events).values({
-          venueId: submission.venueId,
+          venueId,
           title: e.title,
           description: e.description,
           eventType: e.event_type,
@@ -133,7 +169,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const m = extracted.menu_items[itemIndex];
         if (!m) return { error: "item not found" as const, status: 400 };
         await tx.insert(menuItems).values({
-          venueId: submission.venueId,
+          venueId,
           name: m.name,
           description: m.description,
           priceCents: m.price_cents,
@@ -164,7 +200,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return {
       ok: true as const,
       fullyResolved: resolved,
-      venueId: submission.venueId,
+      venueId,
       photoData: submission.photoData,
       photoMimeType: submission.photoMimeType,
     };
@@ -180,7 +216,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .from(venuePhotos)
       .where(and(eq(venuePhotos.submissionId, submissionId)))
       .limit(1);
-    if (!existingPhoto) {
+    // venueId is guaranteed non-null here: the approve path above always resolves
+    // (finds or creates) a real venue before this point is reached.
+    if (!existingPhoto && outcome.venueId !== null) {
       await savePhotoOnApproval({
         venueId: outcome.venueId,
         photoData: outcome.photoData,

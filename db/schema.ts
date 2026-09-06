@@ -16,12 +16,19 @@ import {
 
 export const specialsSchema = pgSchema("specials");
 
+// The metro area a venue/special/event belongs to. Everything today is
+// "central-okanagan" (Kelowna, West Kelowna, Lake Country, Peachland) — this
+// exists so a future region (Southern Okanagan, Lower Mainland, etc.) is a
+// new value here, not a schema migration.
+export const DEFAULT_REGION = "central-okanagan";
+
 export const venues = specialsSchema.table(
   "venues",
   {
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     address: text("address").notNull(),
+    region: text("region").notNull().default(DEFAULT_REGION),
     // The town this venue is actually in (Kelowna, West Kelowna, Lake Country,
     // Peachland). Nullable so venues seeded before this column existed keep
     // working; consumers fall back to "Kelowna" when it's null.
@@ -94,6 +101,7 @@ export const specials = specialsSchema.table("specials", {
   venueId: integer("venue_id")
     .notNull()
     .references(() => venues.id, { onDelete: "cascade" }),
+  region: text("region").notNull().default(DEFAULT_REGION),
   title: text("title").notNull(),
   description: text("description"),
   priceCents: integer("price_cents"),
@@ -121,6 +129,7 @@ export type EventType = (typeof eventType)[number];
 export const events = specialsSchema.table("events", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }), // null for events at a place not in our venues table (e.g. a winery hosting a concert)
+  region: text("region").notNull().default(DEFAULT_REGION), // set directly since venueId can be null (no venue to join through)
   locationName: text("location_name"), // used when venueId is null
   locationAddress: text("location_address"), // used when venueId is null
   title: text("title").notNull(), // e.g. act/performer name or event name
@@ -151,9 +160,12 @@ export type SubmissionStatus = (typeof submissionStatus)[number];
 
 export const submissions = specialsSchema.table("submissions", {
   id: serial("id").primaryKey(),
-  venueId: integer("venue_id")
-    .notNull()
-    .references(() => venues.id, { onDelete: "cascade" }),
+  // Null when the submitter's venue isn't in our list yet -- venueName/venueAddress
+  // carry the free-text details instead, and an admin creates the real venue row
+  // (see app/api/admin/submissions/[id]/route.ts) the first time an item is approved.
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  venueName: text("venue_name"), // set only when venueId is null
+  venueAddress: text("venue_address"), // set only when venueId is null
   submissionType: text("submission_type").$type<SubmissionType>(), // legacy, unused now that a submission can yield mixed item types
   rawText: text("raw_text"),
   photoData: text("photo_data"), // base64-encoded image, size-capped at the API layer
