@@ -49,3 +49,6 @@ backups/
 
 # playwright-cli skill artifacts
 .playwright-cli/
+
+# git worktrees for isolated feature work
+.worktrees/
