@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params;
   const venue = await getVenueById(Number(id));
   if (!venue) return { title: "Venue not found" };
-  const title = `${venue.name} — Kelowna Specials & Events`;
+  const title = venue.name;
   const description = `Current food/drink specials, events, and info for ${venue.name} — ${venue.address}. Verified, not guessed.`;
   const url = `https://kelownafooddeals.shop/venues/${venue.id}`;
   return {
@@ -130,7 +130,7 @@ export default async function VenuePage({ params }: PageProps) {
           <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
           <ShareButton
             title={venue.name}
-            text={`Specials & events at ${venue.name} — Kelowna Daily Specials:`}
+            text={`Specials & events at ${venue.name} — Kelowna Food Deals:`}
             url={`https://kelownafooddeals.shop/venues/${venue.id}`}
             className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
           />

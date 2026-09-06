@@ -1,6 +1,6 @@
 {
-  "name": "Kelowna Daily Specials",
-  "short_name": "KDS",
+  "name": "Kelowna Food Deals",
+  "short_name": "KFD",
   "description": "What food and drink specials are running in Kelowna today — verified, not guessed.",
   "start_url": "/",
   "display": "standalone",

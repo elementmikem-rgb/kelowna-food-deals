@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   await db.update(venues).set({ unsubscribedAt: new Date() }).where(eq(venues.id, venueId));
 
-  return new NextResponse("You've been unsubscribed from Kelowna Daily Specials outreach emails.", {
+  return new NextResponse("You've been unsubscribed from Kelowna Food Deals outreach emails.", {
     status: 200,
     headers: { "Content-Type": "text/plain" },
   });

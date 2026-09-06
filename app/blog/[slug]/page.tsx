@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) return { title: "Post not found" };
   const url = `https://kelownafooddeals.shop/blog/${post.slug}`;
   return {
-    title: `${post.title} — Kelowna Daily Specials`,
+    title: post.title,
     description: post.metaDescription,
     alternates: { canonical: url },
     openGraph: {
@@ -55,8 +55,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     description: post.metaDescription,
     datePublished: post.publishedAt,
     image: "https://kelownafooddeals.shop/icons/icon-512.png",
-    author: { "@type": "Organization", name: "Kelowna Daily Specials" },
-    publisher: { "@type": "Organization", name: "Kelowna Daily Specials" },
+    author: { "@type": "Organization", name: "Kelowna Food Deals" },
+    publisher: { "@type": "Organization", name: "Kelowna Food Deals" },
     mainEntityOfPage: `https://kelownafooddeals.shop/blog/${post.slug}`,
   };
 

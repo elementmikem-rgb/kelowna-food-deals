@@ -22,15 +22,15 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_URL = "https://kelownafooddeals.shop";
-const SITE_TITLE = "Kelowna Daily Specials — Food & Drink Deals Today";
+const SITE_TITLE = "Kelowna Food Deals — Food & Drink Deals Today";
 const SITE_DESCRIPTION =
-  "What food and drink specials are actually running today in Kelowna, West Kelowna, Lake Country, and Peachland, BC — happy hours, wing nights, and food deals, checked and verified daily, not scraped and guessed.";
+  "Food and drink specials actually running today in Kelowna, West Kelowna, Lake Country & Peachland — happy hours and deals, checked daily, not scraped.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_TITLE,
-    template: "%s — Kelowna Daily Specials",
+    template: "%s — Kelowna Food Deals",
   },
   description: SITE_DESCRIPTION,
   keywords: [
@@ -45,18 +45,18 @@ export const metadata: Metadata = {
     "Peachland restaurants",
     "Okanagan happy hour",
   ],
-  applicationName: "Kelowna Daily Specials",
+  applicationName: "Kelowna Food Deals",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "KDS",
+    title: "KFD",
   },
   openGraph: {
     type: "website",
     locale: "en_CA",
     url: SITE_URL,
-    siteName: "Kelowna Daily Specials",
+    siteName: "Kelowna Food Deals",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },

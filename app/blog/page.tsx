@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Blog — Kelowna Daily Specials",
+  title: "Blog",
   description:
     "Guides to Kelowna food and drink specials, happy hours, and wing nights — grounded in what we've actually verified, not generic filler.",
   alternates: { canonical: "https://kelownafooddeals.shop/blog" },

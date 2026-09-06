@@ -27,7 +27,7 @@ export async function sendReportEmail({ subject, textContent }: SendEmailParams)
           "api-key": apiKey,
         },
         body: JSON.stringify({
-          sender: { email: fromEmail, name: "Kelowna Daily Specials" },
+          sender: { email: fromEmail, name: "Kelowna Food Deals" },
           to: [{ email: toEmail }],
           subject,
           textContent,

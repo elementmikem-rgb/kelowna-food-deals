@@ -34,6 +34,7 @@ export default async function EventsPage() {
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
       <SiteHeader
         active="events"
+        heading="Kelowna Live Music & Events Tonight"
         subtitle="Live music, trivia, and karaoke nights around town — verified, not guessed."
       />
 

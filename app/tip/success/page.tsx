@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 // A post-payment confirmation page has no business in search results.
 export const metadata: Metadata = {
-  title: "Thank you — Kelowna Daily Specials",
+  title: "Thank you — Kelowna Food Deals",
   robots: { index: false, follow: false },
 };
 
