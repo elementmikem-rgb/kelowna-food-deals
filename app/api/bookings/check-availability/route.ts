@@ -14,7 +14,11 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const { ok } = await checkRateLimit(req, "bookings-check-availability", 30, 60);
+  // Read-only and non-mutating: this is a courtesy check the buyer's date pickers
+  // fire while they compare ranges, so the ceiling is generous (60 per 10 minutes)
+  // rather than the 30-per-hour used for the mutating booking routes. The client
+  // debounces on top of this; the limit only exists to cap abuse.
+  const { ok } = await checkRateLimit(req, "bookings-check-availability", 60, 10);
   if (!ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));

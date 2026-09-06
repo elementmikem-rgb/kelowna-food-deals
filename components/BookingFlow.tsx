@@ -53,22 +53,41 @@ export function BookingFlow({
     }
     setAvailability("checking");
     const controller = new AbortController();
-    fetch("/api/bookings/check-availability", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productType,
-        category: productType === "category_sponsor" ? category : null,
-        startDate,
-        endDate,
-      }),
-      signal: controller.signal,
-    })
-      .then((r) => r.json())
-      .then((data) => setAvailability(data.available ? "available" : "unavailable"))
-      .catch(() => {});
-    return () => controller.abort();
+    // Debounced: the date inputs fire on every change, and without this a buyer
+    // scrubbing through dates burns one request per keystroke and trips the
+    // endpoint's rate limit on their own legitimate browsing.
+    const timer = setTimeout(() => {
+      fetch("/api/bookings/check-availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productType,
+          category: productType === "category_sponsor" ? category : null,
+          startDate,
+          endDate,
+        }),
+        signal: controller.signal,
+      })
+        .then(async (r) => {
+          // A 429 or a 5xx is not a "sold out" answer. Treating it as one used to
+          // disable the purchase button on a product that may well be available.
+          // "unknown" leaves the button live; checkout re-checks authoritatively
+          // inside its transaction anyway, so nothing can oversell.
+          if (!r.ok) return setAvailability("unknown");
+          const data = await r.json();
+          setAvailability(data.available ? "available" : "unavailable");
+        })
+        .catch(() => {});
+    }, 400);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [productType, category, startDate, endDate]);
+
+  // Courtesy hint only -- the server rejects a past startDate authoritatively in
+  // both /api/bookings/verify-email and /api/bookings/checkout.
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const venueSpecials = specials.filter((s) => s.venueId === venueId);
 
@@ -215,6 +234,7 @@ export function BookingFlow({
           Start date
           <input
             type="date"
+            min={todayISO}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
