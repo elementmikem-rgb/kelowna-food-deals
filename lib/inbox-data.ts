@@ -1,5 +1,5 @@
 import { db, outreachSends, inboundEmails, venues } from "@/db";
-import { desc, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -32,18 +32,7 @@ export interface InboxThread {
 }
 
 export async function getInboxThreads(): Promise<InboxThread[]> {
-  const [sends, inbound] = await Promise.all([
-    db
-      .select({
-        venueId: outreachSends.venueId,
-        venueName: venues.name,
-        toEmail: outreachSends.toEmail,
-        subject: outreachSends.subject,
-        htmlBody: outreachSends.htmlBody,
-        createdAt: outreachSends.createdAt,
-      })
-      .from(outreachSends)
-      .innerJoin(venues, eq(outreachSends.venueId, venues.id)),
+  const [inbound, sends] = await Promise.all([
     db
       .select({
         venueId: inboundEmails.venueId,
@@ -58,29 +47,25 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
       })
       .from(inboundEmails)
       .leftJoin(venues, eq(inboundEmails.venueId, venues.id)),
+    db
+      .select({
+        venueId: outreachSends.venueId,
+        venueName: venues.name,
+        toEmail: outreachSends.toEmail,
+        subject: outreachSends.subject,
+        htmlBody: outreachSends.htmlBody,
+        createdAt: outreachSends.createdAt,
+      })
+      .from(outreachSends)
+      .leftJoin(venues, eq(outreachSends.venueId, venues.id)),
   ]);
 
   const threads = new Map<string, InboxThread>();
 
-  for (const s of sends) {
-    const key = `v${s.venueId}`;
-    const existing = threads.get(key);
-    if (!existing || s.createdAt > existing.lastAt) {
-      threads.set(key, {
-        key,
-        venueId: s.venueId,
-        displayName: s.venueName,
-        contactEmail: s.toEmail,
-        lastSnippet: `You: ${snippet(s.htmlBody)}`,
-        lastAt: s.createdAt,
-        unreadCount: existing?.unreadCount ?? 0,
-        messageCount: (existing?.messageCount ?? 0) + 1,
-      });
-    } else {
-      existing.messageCount++;
-    }
-  }
-
+  // Inbound processed first so a real name (the venue's, or the sender's own
+  // fromName) is established before a reply/auto-reply -- which only knows a
+  // bare email address for an unmatched sender -- could become the only
+  // source of a display name for that thread.
   for (const e of inbound) {
     const key = e.venueId !== null ? `v${e.venueId}` : `u${encodeURIComponent(e.fromEmail)}`;
     const existing = threads.get(key);
@@ -103,6 +88,25 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
       }
+    }
+  }
+
+  for (const s of sends) {
+    const key = s.venueId !== null ? `v${s.venueId}` : `u${encodeURIComponent(s.toEmail)}`;
+    const existing = threads.get(key);
+    if (!existing || s.createdAt > existing.lastAt) {
+      threads.set(key, {
+        key,
+        venueId: s.venueId,
+        displayName: existing?.displayName ?? s.venueName ?? s.toEmail,
+        contactEmail: s.toEmail,
+        lastSnippet: `You: ${snippet(s.htmlBody)}`,
+        lastAt: s.createdAt,
+        unreadCount: existing?.unreadCount ?? 0,
+        messageCount: (existing?.messageCount ?? 0) + 1,
+      });
+    } else {
+      existing.messageCount++;
     }
   }
 
@@ -185,28 +189,46 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
 
   if (key.startsWith("u")) {
     const email = decodeURIComponent(key.slice(1));
-    const inbound = await db
-      .select()
-      .from(inboundEmails)
-      .where(isNull(inboundEmails.venueId))
-      .orderBy(inboundEmails.receivedAt);
-    const matching = inbound.filter((e) => e.fromEmail === email);
-    if (matching.length === 0) return null;
+    const [inbound, sends] = await Promise.all([
+      db
+        .select()
+        .from(inboundEmails)
+        .where(and(isNull(inboundEmails.venueId), eq(inboundEmails.fromEmail, email)))
+        .orderBy(inboundEmails.receivedAt),
+      db
+        .select()
+        .from(outreachSends)
+        .where(and(isNull(outreachSends.venueId), eq(outreachSends.toEmail, email)))
+        .orderBy(outreachSends.createdAt),
+    ]);
+    if (inbound.length === 0 && sends.length === 0) return null;
 
-    const messages: ThreadMessage[] = matching.map((e) => ({
-      id: `i${e.id}`,
-      direction: "inbound" as const,
-      fromLabel: e.fromName ?? e.fromEmail,
-      subject: e.subject,
-      bodyHtml: null,
-      bodyText: safeInboundText(e.textBody, e.htmlBody),
-      at: e.receivedAt,
-      inboundId: e.id,
-    }));
+    const messages: ThreadMessage[] = [
+      ...sends.map((s) => ({
+        id: `s${s.id}`,
+        direction: "outbound" as const,
+        fromLabel: "You",
+        subject: s.subject,
+        bodyHtml: s.htmlBody,
+        bodyText: null,
+        at: s.createdAt,
+        inboundId: null,
+      })),
+      ...inbound.map((e) => ({
+        id: `i${e.id}`,
+        direction: "inbound" as const,
+        fromLabel: e.fromName ?? e.fromEmail,
+        subject: e.subject,
+        bodyHtml: null,
+        bodyText: safeInboundText(e.textBody, e.htmlBody),
+        at: e.receivedAt,
+        inboundId: e.id,
+      })),
+    ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
     return {
       venueId: null,
-      displayName: matching[0].fromName ?? email,
+      displayName: inbound[0]?.fromName ?? email,
       contactEmail: email,
       messages,
     };

@@ -57,7 +57,7 @@ export async function POST(
     // (owner replies personally to a message sent to info@). Fall back to the
     // outreach send this is a reply to so the message still lands in the right
     // thread instead of an orphan one.
-    let venueId = matchedVenue?.id ?? null;
+    let venueId: number | null = matchedVenue?.id ?? null;
     const inReplyTo = item.InReplyTo ?? null;
     if (venueId === null && inReplyTo) {
       const [originalSend] = await db

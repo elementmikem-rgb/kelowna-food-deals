@@ -9,7 +9,7 @@ export async function AdminShell({
   maxWidth = "max-w-4xl",
   children,
 }: {
-  active: "submissions" | "outreach" | "inbox" | "analytics" | null;
+  active: "submissions" | "outreach" | "inbox" | "sponsored" | "analytics" | null;
   // Sub-pages (compose, a single thread) sit one level under a nav section --
   // they keep the same persistent nav but add a breadcrumb back to it.
   backHref?: string;

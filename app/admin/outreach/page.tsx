@@ -24,6 +24,9 @@ export default async function AdminOutreachPage() {
 
   const latestSendByVenue = new Map<number, (typeof sendRows)[number]>();
   for (const s of sendRows) {
+    // A reply to an unmatched sender (e.g. a sponsor inquiry auto-reply) has no
+    // venue to attribute here -- this page is specifically venue outreach status.
+    if (s.venueId === null) continue;
     if (!latestSendByVenue.has(s.venueId)) latestSendByVenue.set(s.venueId, s);
   }
 

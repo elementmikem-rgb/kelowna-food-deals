@@ -64,9 +64,10 @@ export type OutreachSendStatus = (typeof outreachSendStatus)[number];
 
 export const outreachSends = specialsSchema.table("outreach_sends", {
   id: serial("id").primaryKey(),
-  venueId: integer("venue_id")
-    .notNull()
-    .references(() => venues.id, { onDelete: "cascade" }),
+  // Null for a reply/auto-reply to a sender with no matching venue (e.g. a
+  // sponsorship inquiry) -- still logged here so it shows up in that thread's
+  // history in the admin inbox, same as a venue-matched reply does.
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),

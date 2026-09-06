@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."outreach_sends" ALTER COLUMN "venue_id" DROP NOT NULL;

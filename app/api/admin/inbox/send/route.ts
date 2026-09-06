@@ -36,34 +36,26 @@ export async function POST(req: NextRequest) {
   const { venueId, toEmail, subject, body } = parsed.data;
   const htmlBody = escapeHtml(body).replace(/\n/g, "<br>");
 
-  // Only venue-matched threads get a persisted outbound copy (outreachSends.venueId
-  // is NOT NULL) — a reply to an unmatched sender still sends, just isn't archived.
-  const sendRow = venueId
-    ? (
-        await db
-          .insert(outreachSends)
-          .values({ venueId, toEmail, subject, htmlBody, status: "queued" })
-          .returning({ id: outreachSends.id })
-      )[0]
-    : null;
+  // Every reply gets a persisted outbound copy now, venue-matched or not, so it
+  // shows up in that thread's history in the admin inbox either way.
+  const [sendRow] = await db
+    .insert(outreachSends)
+    .values({ venueId, toEmail, subject, htmlBody, status: "queued" })
+    .returning({ id: outreachSends.id });
 
   try {
     const { messageId } = await sendOutreachEmail({ to: toEmail, subject, htmlContent: htmlBody });
-    if (sendRow) {
-      await db
-        .update(outreachSends)
-        .set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() })
-        .where(eq(outreachSends.id, sendRow.id));
-    }
+    await db
+      .update(outreachSends)
+      .set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() })
+      .where(eq(outreachSends.id, sendRow.id));
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (sendRow) {
-      await db
-        .update(outreachSends)
-        .set({ status: "failed", errorMessage: message })
-        .where(eq(outreachSends.id, sendRow.id));
-    }
+    await db
+      .update(outreachSends)
+      .set({ status: "failed", errorMessage: message })
+      .where(eq(outreachSends.id, sendRow.id));
     return NextResponse.json({ error: "failed to send" }, { status: 502 });
   }
 }
