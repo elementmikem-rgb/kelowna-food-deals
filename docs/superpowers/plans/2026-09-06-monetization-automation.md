@@ -1061,7 +1061,7 @@ git commit -m "Add Stripe webhook to fulfill bookings on successful payment"
   `interface RefundNeeded { id, productType, priceCents, buyerEmail, stripePaymentIntentId: string
   | null }`; `getRefundsNeeded(): Promise<RefundNeeded[]>`; `activateBooking(bookingId: number):
   Promise<void>` (writes the live legacy columns — also used by Task 11's sync job);
-  `approveBooking(bookingId: number): Promise<void>`; `rejectBooking(bookingId: number):
+  `approveBooking(bookingId: number): Promise<{ venueId: number | null }>`; `rejectBooking(bookingId: number):
   Promise<void>`; `markRefunded(bookingId: number): Promise<void>`.
   `POST /api/admin/bookings/[id]/approve`, `POST /api/admin/bookings/[id]/reject`,
   `POST /api/admin/bookings/[id]/mark-refunded` (no body on any of the three).
@@ -1165,9 +1165,12 @@ export async function activateBooking(bookingId: number): Promise<void> {
   }
 }
 
-export async function approveBooking(bookingId: number): Promise<void> {
+// Returns the booking's venueId (or null) so the caller can revalidate that venue's
+// detail page too -- every product type sets venueId (see Task 1's schema note), so
+// this is non-null whenever the approved booking affects a real venue's page.
+export async function approveBooking(bookingId: number): Promise<{ venueId: number | null }> {
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
-  if (!booking || booking.status !== "pending_approval") return;
+  if (!booking || booking.status !== "pending_approval") return { venueId: null };
 
   await db
     .update(bookings)
@@ -1178,6 +1181,8 @@ export async function approveBooking(bookingId: number): Promise<void> {
   if (booking.startDate <= today && today <= booking.endDate) {
     await activateBooking(bookingId);
   }
+
+  return { venueId: booking.venueId };
 }
 
 export async function rejectBooking(bookingId: number): Promise<void> {
@@ -1211,10 +1216,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
-  await approveBooking(bookingId);
+  const { venueId } = await approveBooking(bookingId);
 
   revalidatePath("/");
   revalidatePath("/events");
+  if (venueId !== null) revalidatePath(`/venues/${venueId}`);
 
   return NextResponse.json({ ok: true });
 }
