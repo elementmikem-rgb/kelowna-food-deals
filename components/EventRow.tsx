@@ -15,12 +15,10 @@ export function EventRow({ event }: { event: EventWithVenue }) {
   // null cover means "nobody told us", not "free" -- the extractor emits null both for
   // genuinely-free nights and for ticketed shows whose price it couldn't read. Only an
   // explicit 0 is a confirmed free door.
+  // Unknown renders nothing rather than a "not listed" label -- with most events
+  // carrying no cover info, spelling out its absence on every row is pure noise.
   const coverLabel =
-    event.coverChargeCents === null
-      ? "Cover not listed"
-      : event.coverChargeCents === 0
-        ? "Free"
-        : `${cover} cover`;
+    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? "Free" : `${cover} cover`;
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
 
   async function handleReport() {
@@ -60,9 +58,9 @@ export function EventRow({ event }: { event: EventWithVenue }) {
           {timeWindow && (
             <span className="font-mono-tabular text-[11px] text-muted">{timeWindow}</span>
           )}
-          <span className="font-mono-tabular text-[11px] text-muted">
-            {coverLabel}
-          </span>
+          {coverLabel && (
+            <span className="font-mono-tabular text-[11px] text-muted">{coverLabel}</span>
+          )}
         </div>
       </div>
 

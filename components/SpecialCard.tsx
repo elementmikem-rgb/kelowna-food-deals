@@ -52,7 +52,7 @@ export function SpecialCard({
 
       <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
         <h3 className="font-display text-xl leading-tight text-foreground">
-          {special.venueName}
+          {special.title}
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
@@ -66,9 +66,6 @@ export function SpecialCard({
         </div>
       </div>
 
-      <p className="relative z-10 text-sm text-foreground/90 pointer-events-none">
-        {special.title}
-      </p>
       {special.description && (
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {special.description}

@@ -16,13 +16,11 @@ export function EventCard({ event }: { event: EventWithVenue }) {
   const cover = formatPrice(event.coverChargeCents);
   // null cover means "nobody told us", not "free" -- the extractor emits null both for
   // genuinely-free nights and for ticketed shows whose price it couldn't read. Only an
-  // explicit 0 is a confirmed free door.
+  // explicit 0 is a confirmed free door. Unknown renders nothing rather than a "not
+  // listed" label -- with most events carrying no cover info, spelling out its absence
+  // on every single card is pure noise.
   const coverLabel =
-    event.coverChargeCents === null
-      ? "Cover not listed"
-      : event.coverChargeCents === 0
-        ? "Free"
-        : `${cover} cover`;
+    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? "Free" : `${cover} cover`;
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
 
   async function handleReport() {
@@ -53,16 +51,13 @@ export function EventCard({ event }: { event: EventWithVenue }) {
 
       <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
         <h3 className="font-display text-xl leading-tight text-foreground">
-          {event.venueName}
+          {event.title}
         </h3>
         <span className="shrink-0 rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
           {EVENT_TYPE_LABELS[event.eventType]}
         </span>
       </div>
 
-      <p className="relative z-10 text-sm text-foreground/90 pointer-events-none">
-        {event.title}
-      </p>
       {event.description && (
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {event.description}
@@ -78,9 +73,9 @@ export function EventCard({ event }: { event: EventWithVenue }) {
         {timeWindow && (
           <span className="font-mono-tabular text-sm text-muted">{timeWindow}</span>
         )}
-        <span className="font-mono-tabular text-sm text-muted">
-          {coverLabel}
-        </span>
+        {coverLabel && (
+          <span className="font-mono-tabular text-sm text-muted">{coverLabel}</span>
+        )}
       </div>
 
       <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-border">

@@ -23,7 +23,7 @@ export default async function SubmitPage() {
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">
-      <SiteHeader active="specials" subtitle="Spot something we're missing? Tell us." />
+      <SiteHeader active="blog" subtitle="Spot something we're missing? Tell us." />
 
       <Suspense>
         <SubmitForm venues={venueList} />
