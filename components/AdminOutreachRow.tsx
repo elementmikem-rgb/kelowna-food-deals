@@ -40,9 +40,14 @@ export function AdminOutreachRow({
         <span className="text-sm font-medium text-foreground/90 truncate">{venueName}</span>
         <span className="text-xs text-muted-2 truncate">{contactEmail}</span>
         {lastSend && (
-          <span className="text-[11px] text-muted-2">
-            last sent: {lastSend.status}
-            {lastSend.sentAt ? ` on ${new Date(lastSend.sentAt).toLocaleDateString()}` : ""}
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-2">
+            <span
+              className={`inline-block w-1.5 h-1.5 rounded-full ${
+                lastSend.status === "sent" ? "bg-evergreen" : "bg-stale"
+              }`}
+            />
+            {lastSend.status}
+            {lastSend.sentAt ? ` · ${new Date(lastSend.sentAt).toLocaleDateString()}` : ""}
           </span>
         )}
       </div>

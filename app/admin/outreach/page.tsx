@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { db, venues, outreachSends } from "@/db";
 import { and, eq, isNotNull, desc } from "drizzle-orm";
 import { AdminOutreachRow } from "@/components/AdminOutreachRow";
+import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -28,20 +28,10 @@ export default async function AdminOutreachPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">
-          Venue outreach ({venueRows.length})
-        </h1>
-        <div className="flex gap-3">
-          <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
-            Analytics
-          </Link>
-          <Link href="/admin/inbox" className="text-sm text-accent-dim underline">
-            Inbox →
-          </Link>
-        </div>
-      </div>
+    <AdminShell active="outreach" maxWidth="max-w-2xl">
+      <h1 className="font-display text-2xl text-foreground">
+        Venue outreach <span className="text-muted-2 font-body text-lg">({venueRows.length})</span>
+      </h1>
 
       {venueRows.length === 0 ? (
         <p className="text-muted-2 text-sm">
@@ -67,6 +57,6 @@ export default async function AdminOutreachPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminShell>
   );
 }

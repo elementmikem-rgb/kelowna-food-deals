@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { db, submissions, venues } from "@/db";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
+import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -25,20 +25,11 @@ export default async function AdminSubmissionsPage() {
     .orderBy(asc(submissions.createdAt));
 
   return (
-    <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">
-          Submissions needing review ({rows.length})
-        </h1>
-        <div className="flex gap-3">
-          <Link href="/admin/analytics" className="text-sm text-accent-dim underline">
-            Analytics
-          </Link>
-          <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
-            Outreach
-          </Link>
-        </div>
-      </div>
+    <AdminShell active="submissions" maxWidth="max-w-3xl">
+      <h1 className="font-display text-2xl text-foreground">
+        Submissions needing review
+        {rows.length > 0 && <span className="text-accent"> ({rows.length})</span>}
+      </h1>
 
       {rows.length === 0 ? (
         <p className="text-muted-2 text-sm">Nothing waiting — you&apos;re caught up.</p>
@@ -52,6 +43,6 @@ export default async function AdminSubmissionsPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminShell>
   );
 }

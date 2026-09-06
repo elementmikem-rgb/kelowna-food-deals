@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { db, venues } from "@/db";
 import { isNotNull } from "drizzle-orm";
 import { ComposeForm } from "@/components/ComposeForm";
+import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +12,7 @@ export default async function ComposePage() {
     .where(isNotNull(venues.contactEmail));
 
   return (
-    <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
-      <div>
-        <Link href="/admin/inbox" className="text-sm text-accent-dim underline">
-          ← Inbox
-        </Link>
-      </div>
-
+    <AdminShell active="inbox" backHref="/admin/inbox" backLabel="Inbox" maxWidth="max-w-2xl">
       <h1 className="font-display text-2xl text-foreground">New message</h1>
 
       {venueRows.length === 0 ? (
@@ -28,6 +22,6 @@ export default async function ComposePage() {
           venues={venueRows.map((v) => ({ id: v.id, name: v.name, contactEmail: v.contactEmail! }))}
         />
       )}
-    </div>
+    </AdminShell>
   );
 }

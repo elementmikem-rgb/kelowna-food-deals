@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buildWindow, getAnalyticsStats } from "@/lib/analytics";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
+import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -45,31 +46,23 @@ export default async function AdminAnalyticsPage({
   const stats = await getAnalyticsStats(window);
 
   return (
-    <div className="flex flex-col flex-1 max-w-4xl mx-auto w-full px-4 py-6 gap-6">
+    <AdminShell active="analytics">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="font-display text-2xl text-foreground">Analytics</h1>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
-            {[7, 30, 90].map((d) => (
-              <Link
-                key={d}
-                href={`/admin/analytics?days=${d}`}
-                className={`press-pill rounded-full px-3 py-1 text-xs border ${
-                  d === days
-                    ? "bg-accent text-background border-accent"
-                    : "bg-transparent text-muted border-border"
-                }`}
-              >
-                {d}d
-              </Link>
-            ))}
-          </div>
-          <Link href="/admin/outreach" className="text-sm text-accent-dim underline">
-            Outreach
-          </Link>
-          <Link href="/admin/inbox" className="text-sm text-accent-dim underline">
-            Inbox
-          </Link>
+        <div className="flex gap-1">
+          {[7, 30, 90].map((d) => (
+            <Link
+              key={d}
+              href={`/admin/analytics?days=${d}`}
+              className={`press-pill rounded-full px-3 py-1 text-xs border ${
+                d === days
+                  ? "bg-accent text-background border-accent"
+                  : "bg-transparent text-muted border-border"
+              }`}
+            >
+              {d}d
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -157,6 +150,6 @@ export default async function AdminAnalyticsPage({
           </div>
         </div>
       )}
-    </div>
+    </AdminShell>
   );
 }
