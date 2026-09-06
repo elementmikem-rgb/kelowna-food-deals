@@ -27,7 +27,7 @@ A password-protected admin area handles submission review, venue outreach email 
 | Validation | Zod v4 |
 | Scraping | `fetch` + cheerio, `pdf-parse`, `robots-parser`; `playwright-core` + system Chromium for JS-rendered sites |
 | Email | Brevo (transactional send + inbound parse webhook) |
-| Payments | Stripe Checkout (tips only) |
+| Payments | Stripe Checkout (tips, plus self-serve paid placement bookings) + Stripe webhook |
 | Images | `sharp` (build-time), base64 photos stored in Postgres |
 | Runtime / deploy | Node 22 Alpine, Docker, Railway (web + cron services) |
 | Scripts | `tsx` with `scripts/env.cjs` preloading `.env.local` |
@@ -37,7 +37,7 @@ A password-protected admin area handles submission review, venue outreach email 
 Two deployable units share one repo, one Dockerfile, and one database:
 
 1. **Web service** — `npm start` (Next.js). Server components read directly from Postgres via `lib/*-data.ts` helpers; a small set of route handlers under `app/api/` handle writes (submissions, reports, tips, analytics, admin actions, the Brevo webhook).
-2. **Cron service** — `npm run cron` (`cron/index.ts`), same image, different start command. Runs the nightly scrape, then the Castanet event scrape, then analytics pruning.
+2. **Cron service** — `npm run cron` (`cron/index.ts`), same image, different start command. Runs the nightly scrape, then the Castanet event scrape, then analytics pruning, then booking activation (`cron/booking-sync.ts`).
 
 The scrape pipeline is: `getActiveVenues()` (ordered oldest-attempted-first) → fetch (plain HTTP, or headless Chromium when `venues.requires_browser`) → `normalizeText` + `hashText` → compare against the last non-null `scrape_runs.content_hash` → if unchanged, just bump `last_verified_at` and log a zero-token run; if changed, call `extractVenueContent()` and replace the venue's active rows. Every venue attempt writes a `scrape_runs` row (hash, changed flag, tokens, error), which is both the change-detection ledger and the run log.
 
@@ -52,6 +52,7 @@ Auth is deliberately split: `proxy.ts` (matcher `/admin/:path*`) redirects unaut
 - Blog (`/blog`, `/blog/[slug]`), `robots.ts` and `sitemap.ts` for SEO
 - Tip page with Stripe Checkout
 - "Report incorrect" on any special or event
+- `/advertise`: self-serve purchase of a Featured Placement, Seasonal Boost, or Category Sponsorship — pick venue, product detail, and date range, verify your email via a magic link, pay through Stripe. Nothing goes live until an admin approves it
 
 **Visitor submissions**
 - Free-text and/or photo (JPEG/PNG/WebP, 4 MB pre-base64 cap) submission per venue
@@ -64,6 +65,7 @@ Auth is deliberately split: `proxy.ts` (matcher `/admin/:path*`) redirects unaut
 - Per-run token ceiling of 50,000 with a non-zero exit code when hit
 - Headless-Chromium fallback per venue via `requires_browser`
 - Castanet event scraping and 400-day analytics retention pruning
+- Booking activation: writes every `approved` booking whose range covers today into the live placement columns, so a future-dated purchase goes live on its start date without an admin touching it
 
 **Admin**
 - Password login issuing a 30-day httpOnly cookie
@@ -71,6 +73,7 @@ Auth is deliberately split: `proxy.ts` (matcher `/admin/:path*`) redirects unaut
 - One-click outreach email to a venue's contact address
 - Inbox of inbound venue replies, matched to venues by from-address, with reply + mark-read
 - Analytics dashboard (pageviews, CTA clicks, UTM, country)
+- Pending Bookings queue in `/admin/sponsored`: approve or reject each paid placement, a "Refunds needed" list for rejections (refunded by hand in Stripe, then marked done), and a Settings panel for per-product caps, price per day, and min/max booking length. The pre-existing manual placement panels are unchanged and keep working alongside it
 
 ## API Reference
 
@@ -88,6 +91,15 @@ Auth is deliberately split: `proxy.ts` (matcher `/admin/:path*`) redirects unaut
 | GET | `/api/track/exclude` | none (public) | Set (or with `?off=1` clear) the 10-year `kds_dnt` cookie so your own browser stops being counted |
 | GET | `/api/venue-photos/[id]` | none (public) | Stream a stored base64 venue photo as its original image type, immutably cached for a year |
 | POST | `/api/webhooks/brevo-inbound/[token]` | shared secret in path | Ingest Brevo inbound-parse items into `inbound_emails`, matching the sender to a venue by contact email |
+| POST | `/api/bookings/check-availability` | none (public) | Courtesy "is this date range free?" check for a capped product; UX only, never trusted — checkout re-checks inside its transaction. Rate limited 60/10min |
+| POST | `/api/bookings/verify-email` | none (public) | Validate a booking selection (venue exists and is active; for `boost`, the special is unarchived and belongs to that venue; `startDate` not in the past) and email a 15-minute magic link carrying the selection in a signed token |
+| GET | `/api/bookings/confirm-email` | signed token in query | Magic-link landing: re-signs the selection as a 30-minute `verifiedToken` and redirects back to `/advertise` to resume at checkout |
+| POST | `/api/bookings/checkout` | `verifiedToken` | Reserve a `pending_payment` booking inside an advisory-locked transaction and return a Stripe Checkout URL. Replaying the same token returns the existing in-flight session rather than reserving more capacity |
+| POST | `/api/webhooks/stripe` | Stripe signature (`STRIPE_WEBHOOK_SECRET`) | Handle `checkout.session.completed`: flip the booking from `pending_payment` to `pending_approval`, flagging `conflict_detected` if the dates were taken in the interim. Idempotent on Stripe retries |
+| GET/POST | `/api/admin/settings` | admin cookie | Read/write `monetization_settings` (per-product cap, price per day, min/max days) |
+| POST | `/api/admin/bookings/[id]/approve` | admin cookie | Approve a `pending_approval` booking; activates immediately if its range already covers today |
+| POST | `/api/admin/bookings/[id]/reject` | admin cookie | Reject a booking and flag `refund_needed` for a manual Stripe refund |
+| POST | `/api/admin/bookings/[id]/mark-refunded` | admin cookie | Clear `refund_needed` once the admin has refunded by hand in Stripe |
 
 ## Database Schema
 
@@ -111,6 +123,10 @@ All tables live in the Postgres schema `specials`.
 
 **`inbound_emails`** — replies from venues: nullable `venue_id` (matched by lowercased from-address), `brevo_message_id`, `in_reply_to`, `from_email`/`from_name`, `subject`, text and HTML bodies, `read`.
 
+**`bookings`** — a self-serve paid placement from checkout through admin approval, and the scheduling source of truth. `product_type` (`featured` | `boost` | `category_sponsor`), `venue_id` (set for every product), `special_id` (`boost` only), `category` (`category_sponsor` only), `start_date`/`end_date`, `status` (`pending_payment` | `pending_approval` | `approved` | `rejected` | `expired`), `reserved_until` (the checkout hold's expiry, meaningful only while `pending_payment`), `price_cents` (snapshot of what was charged), `stripe_session_id`/`stripe_payment_intent_id`, `buyer_email`, `buyer_verified_at`, `refund_needed`, `conflict_detected`, `created_at`/`reviewed_at`.
+
+**`monetization_settings`** — admin-configurable per-product caps and pricing, keyed by `product_type`: `cap_count` (null = uncapped, which is `boost`), `price_cents_per_day`, `min_days`, `max_days`. Seeded with placeholder values; edited from the Settings panel in `/admin/sponsored`.
+
 **`analytics_events`** — first-party analytics: `event_type`, `event_label`, `page`, `session_id`, `visitor_id`, `referrer`, `country` (from Cloudflare's `CF-IPCountry`), UTM triple, `created_at`.
 
 ## Key Business Logic
@@ -127,6 +143,8 @@ All tables live in the Postgres schema `specials`.
 
 **Analytics hygiene.** `/api/track` returns `{ ok: true }` unconditionally — including for malformed payloads, bot user-agents, and opted-out browsers — so a scraper never learns it was filtered. Events older than `RETENTION_DAYS = 400` are pruned on each cron run.
 
+**Paid placements: bookings are the schedule, the live columns are the cache.** `venues.featured_until`, `specials.boosted_until`, and `category_sponsors` remain exactly what every render path already reads to decide what is live right now; `bookings` is the calendar behind them. Only `activateBooking()` in `lib/bookings-data.ts` writes a booking into those columns, and it reads the current value first and writes only when something would actually change — the nightly sync re-runs it for every approved booking covering today, so without that read-before-write it would delete-and-reinsert the `category_sponsors` row every night (destroying any sponsor an admin set by hand) and truncate a longer window an admin granted. Expiry timestamps are end-of-day **Pacific** (`endOfDayPacific()` in `lib/time.ts`), not UTC: an end-of-day-UTC value would take a placement dark at 16:59/17:59 Pacific on its last paid day. Capacity is enforced by counting *occupying* bookings — `approved`, `pending_approval`, or `pending_payment` with `reserved_until` still in the future — overlapping the requested range, inside a `pg_advisory_xact_lock` transaction, so two buyers can't both take the last slot.
+
 **Auth split.** `proxy.ts`'s matcher covers only `/admin/:path*`, so `/api/admin/*` handlers are not protected by it and must call `isAdminAuthed()` themselves. The session cookie's value *is* `ADMIN_SESSION_SECRET` — it is a shared static token, not a signed per-user session.
 
 ## Environment Variables
@@ -141,7 +159,9 @@ All tables live in the Postgres schema `specials`.
 | `BREVO_INBOUND_TOKEN` | yes for inbound | Shared secret in the webhook path; the route fails closed when unset |
 | `REPORT_EMAIL_FROM` | yes for email | From address on report/outreach mail |
 | `REPORT_EMAIL_TO` | yes for email | Operator inbox that receives "this listing is wrong" reports |
-| `STRIPE_SECRET_KEY` | web only | Tip Checkout sessions; `lib/stripe.ts` lazy-inits so the cron service never needs it |
+| `STRIPE_SECRET_KEY` | web only | Tip and booking Checkout sessions; `lib/stripe.ts` lazy-inits so the cron service never needs it |
+| `STRIPE_WEBHOOK_SECRET` | web only | Signing secret for `/api/webhooks/stripe`; the route fails closed with a 500 when unset, so a paid booking would never reach the approval queue |
+| `BOOKING_TOKEN_SECRET` | web only | HMAC secret for the booking magic-link and `verifiedToken`; `lib/booking-token.ts` throws if unset, so the whole self-serve purchase flow 500s without it |
 | `CHROMIUM_PATH` | cron only (set in Dockerfile to `/usr/bin/chromium-browser`) | System Chromium binary for `playwright-core`, since Playwright ships no Alpine browser build |
 
 ## Running Locally
@@ -161,8 +181,8 @@ Other scripts: `npm run cron` runs one full scrape pass locally, `npm run db:stu
 
 Railway, one repo, one `Dockerfile`, two services against the same Postgres:
 
-- **web** — default `CMD ["npm", "start"]`, serves Next.js on port 3000. Needs the full env set including `STRIPE_SECRET_KEY`, admin secrets, and Brevo keys.
-- **cron** — same image, start command overridden to `npm run cron`, scheduled nightly. Needs `DATABASE_URL` and `ANTHROPIC_API_KEY`; has no Stripe key by design.
+- **web** — default `CMD ["npm", "start"]`, serves Next.js on port 3000. Needs the full env set including `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BOOKING_TOKEN_SECRET`, admin secrets, and Brevo keys. The two booking secrets are required before the self-serve purchase flow works at all — without them the checkout routes and the Stripe webhook fail closed.
+- **cron** — same image, start command overridden to `npm run cron`, scheduled nightly. Needs `DATABASE_URL` and `ANTHROPIC_API_KEY`; has no Stripe or booking secrets by design (the booking sync step only reads `bookings` and writes the live placement columns).
 
 Build notes baked into the Dockerfile: it installs Alpine's `chromium` plus font/nss deps for the headless-fetch path; it runs a full `npm ci` (not `--production`) because `next build` needs devDependencies and the cron/seed scripts need `tsx` and `dotenv` at runtime; and it declares `ARG DATABASE_URL` because Docker builds on Railway do not get service env vars injected the way Railpack builds do, while `next build` imports every route module and therefore `db/index.ts`.
 
