@@ -284,3 +284,58 @@ export const categorySponsors = specialsSchema.table("category_sponsors", {
   sponsorUntil: timestamp("sponsor_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const bookingProductType = ["featured", "boost", "category_sponsor"] as const;
+export type BookingProductType = (typeof bookingProductType)[number];
+
+export const bookingStatus = [
+  "pending_payment",
+  "pending_approval",
+  "approved",
+  "rejected",
+  "expired",
+] as const;
+export type BookingStatus = (typeof bookingStatus)[number];
+
+// A self-serve paid placement, from the moment a buyer starts checkout through admin
+// approval. This is the source of truth for scheduling; venues.featuredUntil,
+// specials.boostedUntil, and categorySponsors stay the "what's live right now" cache
+// that all existing render code already reads -- activateBooking() (lib/bookings-data.ts)
+// is the only thing that writes into those from an approved booking.
+export const bookings = specialsSchema.table("bookings", {
+  id: serial("id").primaryKey(),
+  productType: text("product_type").$type<BookingProductType>().notNull(),
+  // Set for every product ("featured"/"category_sponsor": the sponsoring venue itself;
+  // "boost": the venue that owns specialId).
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  specialId: integer("special_id").references(() => specials.id, { onDelete: "cascade" }), // "boost" only
+  category: text("category").$type<SpecialCategory>(), // "category_sponsor" only
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  status: text("status").$type<BookingStatus>().notNull().default("pending_payment"),
+  // Only meaningful while status = "pending_payment" -- the checkout hold's expiry.
+  // A row past this point simply stops counting toward capacity (see
+  // lib/booking-availability.ts); nothing needs to actively clean it up.
+  reservedUntil: timestamp("reserved_until", { withTimezone: true }),
+  priceCents: integer("price_cents").notNull(), // snapshot of what was actually charged
+  stripeSessionId: text("stripe_session_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  buyerEmail: text("buyer_email").notNull(),
+  buyerVerifiedAt: timestamp("buyer_verified_at", { withTimezone: true }),
+  refundNeeded: boolean("refund_needed").notNull().default(false),
+  // Set by the Stripe webhook if payment succeeded but the dates now conflict with an
+  // approved booking made in the interim -- surfaced for manual admin resolution.
+  conflictDetected: boolean("conflict_detected").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+});
+
+// Admin-configurable caps/pricing per product. Seeded with placeholder values below --
+// the operator sets real numbers before this goes live.
+export const monetizationSettings = specialsSchema.table("monetization_settings", {
+  productType: text("product_type").$type<BookingProductType>().primaryKey(),
+  capCount: integer("cap_count"), // null = uncapped
+  priceCentsPerDay: integer("price_cents_per_day").notNull(),
+  minDays: integer("min_days").notNull(),
+  maxDays: integer("max_days").notNull(),
+});

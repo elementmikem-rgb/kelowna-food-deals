@@ -141,6 +141,13 @@
       "when": 1788718343435,
       "tag": "0019_flat_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788728416428,
+      "tag": "0020_curly_puppet_master",
+      "breakpoints": true
     }
   ]
 }
