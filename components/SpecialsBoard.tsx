@@ -6,6 +6,7 @@ import type { SpecialCategory } from "@/db/schema";
 import { todayDowPacific, dowFullName } from "@/lib/time";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
+import { CityFilter } from "./CityFilter";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
@@ -27,6 +28,7 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
   const [selectedCategory, setSelectedCategory] = useState<SpecialCategory | "all">(
     "all"
   );
+  const [selectedCity, setSelectedCity] = useState<string | "all">("all");
   const dayPickedByUser = useRef(false);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
       .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
+      .filter((s) => selectedCity === "all" || (s.venueCity ?? "Kelowna") === selectedCity)
       .sort((a, b) => {
         // A paid seasonal boost outranks everything else while it's active.
         const boostDiff =
@@ -74,7 +77,7 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [specials, selectedDay, selectedCategory]);
+  }, [specials, selectedDay, selectedCategory, selectedCity]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -89,12 +92,14 @@ export function SpecialsBoard({ specials }: { specials: SpecialWithVenue[] }) {
     <div className="flex flex-col gap-4">
       <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
+      <CityFilter selected={selectedCity} onSelect={setSelectedCity} />
 
       <p className="text-sm text-muted">
         {dowFullName(selectedDay)}
         {selectedDay === today ? " (today)" : ""} · {filtered.length} special
         {filtered.length === 1 ? "" : "s"} at {grouped.length} place
         {grouped.length === 1 ? "" : "s"}
+        {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
       </p>
 
       {grouped.length === 0 ? (

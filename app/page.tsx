@@ -19,7 +19,7 @@ export default async function Home() {
   const jsonLd = buildSpecialsJsonLd(specials);
 
   return (
-    <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
+    <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-4 sm:py-6 gap-5 sm:gap-10">
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger

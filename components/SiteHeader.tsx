@@ -19,29 +19,32 @@ export function SiteHeader({
 }) {
   const BrandTag = brandIsHeading ? "h1" : "span";
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
+    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <Image
           src="/icons/icon-192.png"
           alt="Kelowna Food Deals logo"
           width={56}
           height={56}
-          className="rounded-full shrink-0"
+          className="rounded-full shrink-0 w-10 h-10 sm:w-14 sm:h-14"
         />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5 sm:gap-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <BrandTag className="block font-display text-3xl sm:text-4xl text-foreground">
+            <BrandTag className="block font-display text-2xl sm:text-4xl text-foreground">
               {heading ?? (
                 <>
                   <span className="hand-underline">Kelowna</span> Food Deals
                 </>
               )}
             </BrandTag>
-            <span className="stamp px-2.5 py-1 text-[10px] hidden sm:inline-flex">
+            {/* !hidden: .stamp's plain (unlayered) CSS rule sets display:inline-flex,
+                which in Tailwind v4's cascade layers beats a layered "hidden" utility
+                regardless of source order -- !important is the reliable override. */}
+            <span className="stamp px-2.5 py-1 text-[10px] !hidden sm:!inline-flex">
               Okanagan · verified
             </span>
           </div>
-          <p className="text-muted text-sm">{subtitle}</p>
+          <p className="text-muted text-xs sm:text-sm">{subtitle}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
