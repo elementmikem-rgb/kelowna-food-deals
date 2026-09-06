@@ -4,6 +4,11 @@ import { SpecialRow } from "./SpecialRow";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { isPromotionActive } from "@/lib/promotion";
 
+// Above this many, a venue's card starts crowding out everyone else's on the
+// board (BNA Brewing and Cutwater Brewing both run past 10) -- the rest are
+// one click away on the venue's own page, which lists all of them anyway.
+const MAX_VISIBLE = 5;
+
 export function SpecialVenueGroup({
   venueId,
   venueName,
@@ -17,6 +22,8 @@ export function SpecialVenueGroup({
     s.lastVerifiedAt > latest.lastVerifiedAt ? s : latest
   );
   const featured = isPromotionActive(specials[0]?.venueFeaturedUntil ?? null);
+  const visible = specials.slice(0, MAX_VISIBLE);
+  const hiddenCount = specials.length - visible.length;
 
   return (
     <article
@@ -52,10 +59,16 @@ export function SpecialVenueGroup({
       </div>
 
       <ul className="flex flex-col divide-y divide-border">
-        {specials.map((s) => (
+        {visible.map((s) => (
           <SpecialRow key={s.id} special={s} />
         ))}
       </ul>
+
+      {hiddenCount > 0 && (
+        <p className="relative z-10 pointer-events-none mt-1 pt-2 border-t border-dashed border-border text-xs font-medium text-accent-dim">
+          + {hiddenCount} more — view all {specials.length} specials →
+        </p>
+      )}
     </article>
   );
 }

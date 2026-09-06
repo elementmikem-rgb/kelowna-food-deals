@@ -3,6 +3,9 @@ import type { EventWithVenue } from "@/lib/events-data";
 import { EventRow } from "./EventRow";
 import { VerifiedBadge } from "./VerifiedBadge";
 
+// See SpecialVenueGroup's MAX_VISIBLE comment -- same reasoning here.
+const MAX_VISIBLE = 5;
+
 export function EventVenueGroup({
   venueId,
   venueName,
@@ -17,6 +20,10 @@ export function EventVenueGroup({
   );
   const address = events.find((e) => e.locationAddress)?.locationAddress ?? null;
   const tiltSeed = venueId ?? venueName.length;
+  // Only cap when there's a venue page to send the overflow to -- a one-off event
+  // at a non-venue location (venueId null) has nowhere for "view all" to point.
+  const visible = venueId !== null ? events.slice(0, MAX_VISIBLE) : events;
+  const hiddenCount = events.length - visible.length;
 
   return (
     <article
@@ -50,10 +57,16 @@ export function EventVenueGroup({
       </div>
 
       <ul className="flex flex-col divide-y divide-border">
-        {events.map((e) => (
+        {visible.map((e) => (
           <EventRow key={e.id} event={e} />
         ))}
       </ul>
+
+      {hiddenCount > 0 && (
+        <p className="relative z-10 pointer-events-none mt-1 pt-2 border-t border-dashed border-border text-xs font-medium text-accent-dim">
+          + {hiddenCount} more — view all {events.length} events →
+        </p>
+      )}
     </article>
   );
 }
