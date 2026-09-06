@@ -203,3 +203,18 @@ h1, h2, h3, .font-display {
   transform: rotate(-3deg);
   mix-blend-mode: multiply;
 }
+
+/* Used on horizontally-scrolling filter/tab rows (day tabs, category/city/event-type
+   filters). Hides the native scrollbar and fades the right edge so a row with more
+   content than fits signals "keep scrolling" instead of just cutting off mid-pill. The
+   fade is a fixed-width mask rather than overflow-aware, so it shows even when the row
+   happens to fit exactly -- a minor, harmless cost for not needing JS to detect overflow. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
