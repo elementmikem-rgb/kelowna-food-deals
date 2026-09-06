@@ -3,6 +3,9 @@ import { FeaturedVenuesPanel } from "@/components/FeaturedVenuesPanel";
 import { BoostedSpecialsPanel } from "@/components/BoostedSpecialsPanel";
 import { PartnersPanel } from "@/components/PartnersPanel";
 import { CategorySponsorPanel } from "@/components/CategorySponsorPanel";
+import { PendingBookingsPanel } from "@/components/PendingBookingsPanel";
+import { RefundsNeededPanel } from "@/components/RefundsNeededPanel";
+import { MonetizationSettingsPanel } from "@/components/MonetizationSettingsPanel";
 import {
   getFeaturedVenues,
   getBoostedSpecials,
@@ -11,24 +14,40 @@ import {
   getPartnerVenues,
   getActiveCategorySponsors,
 } from "@/lib/sponsored-data";
+import { getPendingApprovalBookings, getRefundsNeeded } from "@/lib/bookings-data";
+import { db, monetizationSettings } from "@/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSponsoredPage() {
-  const [featuredVenues, boostedSpecials, venueOptions, specialOptions, partnerVenues, categorySponsors] =
-    await Promise.all([
-      getFeaturedVenues(),
-      getBoostedSpecials(),
-      getVenueOptions(),
-      getSpecialOptions(),
-      getPartnerVenues(),
-      getActiveCategorySponsors(),
-    ]);
+  const [
+    featuredVenues,
+    boostedSpecials,
+    venueOptions,
+    specialOptions,
+    partnerVenues,
+    categorySponsors,
+    pendingBookings,
+    refundsNeeded,
+    settingsRows,
+  ] = await Promise.all([
+    getFeaturedVenues(),
+    getBoostedSpecials(),
+    getVenueOptions(),
+    getSpecialOptions(),
+    getPartnerVenues(),
+    getActiveCategorySponsors(),
+    getPendingApprovalBookings(),
+    getRefundsNeeded(),
+    db.select().from(monetizationSettings),
+  ]);
 
   return (
     <AdminShell active="sponsored" maxWidth="max-w-2xl">
       <h1 className="font-display text-2xl text-foreground">Sponsored</h1>
 
+      <PendingBookingsPanel pending={pendingBookings} />
+      <RefundsNeededPanel refunds={refundsNeeded} />
       <FeaturedVenuesPanel active={featuredVenues} venueOptions={venueOptions} />
       <BoostedSpecialsPanel
         active={boostedSpecials}
@@ -37,6 +56,7 @@ export default async function AdminSponsoredPage() {
       />
       <PartnersPanel active={partnerVenues} venueOptions={venueOptions} />
       <CategorySponsorPanel active={categorySponsors} />
+      <MonetizationSettingsPanel initial={settingsRows} />
     </AdminShell>
   );
 }
