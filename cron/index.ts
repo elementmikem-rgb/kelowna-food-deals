@@ -2,6 +2,7 @@ import { fetchAndExtractText, fetchAndExtractTextViaBrowser } from "./fetch";
 import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { normalizeText, hashText } from "./hash";
+import { syncBookings } from "./booking-sync";
 import { extractVenueContent } from "./extract";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
@@ -166,6 +167,13 @@ async function runScrapeCycle() {
     console.log(`Analytics: pruned ${deleted} event(s) older than the retention window`);
   } catch (err) {
     console.error("Analytics pruning failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    const { activated } = await syncBookings();
+    console.log(`Bookings: activated ${activated} booking(s) starting today`);
+  } catch (err) {
+    console.error("Booking sync failed:", err instanceof Error ? err.message : err);
   }
 
   if (aborted) {
