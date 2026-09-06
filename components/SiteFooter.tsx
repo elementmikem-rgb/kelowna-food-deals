@@ -18,6 +18,9 @@ export async function SiteFooter() {
       <Link href="/blog" className="text-muted-2 underline">
         Blog
       </Link>
+      <Link href="/archive" className="text-muted-2 underline">
+        Archive
+      </Link>
     </footer>
   );
 }
