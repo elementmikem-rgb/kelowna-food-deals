@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "cron": "tsx --require ./scripts/env.cjs cron/index.ts",
     "seed": "tsx --require ./scripts/env.cjs scripts/seed-venues.ts",
     "db:generate": "drizzle-kit generate",
@@ -41,6 +42,8 @@
     "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   }
 }
