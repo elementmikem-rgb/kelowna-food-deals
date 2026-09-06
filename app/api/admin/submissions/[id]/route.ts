@@ -6,11 +6,18 @@ import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
 import { isAdminAuthed } from "@/lib/admin-auth";
 
-const actionSchema = z.object({
-  action: z.enum(["approve", "reject"]),
-  itemType: z.enum(["special", "event", "menuItem"]),
-  itemIndex: z.number().int().nonnegative(),
-});
+const actionSchema = z.union([
+  z.object({
+    action: z.enum(["approve", "reject"]),
+    itemType: z.enum(["special", "event", "menuItem"]),
+    itemIndex: z.number().int().nonnegative(),
+  }),
+  // Submissions where the AI review call itself failed have no extracted items at all
+  // (aiExtracted is null) -- there's nothing to approve/reject per-item, so without this
+  // they could never be closed out and would clog the review queue forever. "dismiss"
+  // just closes the whole submission.
+  z.object({ action: z.literal("dismiss") }),
+]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminAuthed(req))) {
@@ -28,12 +35,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid action" }, { status: 400 });
   }
-  const { action, itemType, itemIndex } = parsed.data;
-  const baseKey = `${itemType}:${itemIndex}`;
+  const action = parsed.data.action;
+  const baseKey = action === "dismiss" ? null : `${parsed.data.itemType}:${parsed.data.itemIndex}`;
   // Reject is recorded with a distinct prefix (rather than a bare "approve" always winning
   // the ambiguity) so a submission where every item was rejected doesn't read back as
   // indistinguishable from one where every item was approved.
-  const itemKey = action === "reject" ? `rejected:${baseKey}` : baseKey;
+  const itemKey = baseKey === null ? null : action === "reject" ? `rejected:${baseKey}` : baseKey;
 
   const now = new Date();
 
@@ -53,14 +60,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (submission.status !== "needs_review") {
       return { error: "submission already fully resolved" as const, status: 409 };
     }
-    if (submission.resolvedItemKeys.includes(baseKey) || submission.resolvedItemKeys.includes(`rejected:${baseKey}`)) {
+
+    if (action === "dismiss") {
+      await tx
+        .update(submissions)
+        .set({ status: "rejected", reviewedAt: now })
+        .where(eq(submissions.id, submissionId));
+      return {
+        ok: true as const,
+        fullyResolved: true,
+        venueId: submission.venueId,
+        photoData: null,
+        photoMimeType: null,
+      };
+    }
+
+    if (submission.resolvedItemKeys.includes(baseKey!) || submission.resolvedItemKeys.includes(`rejected:${baseKey}`)) {
       return { error: "item already resolved" as const, status: 409 };
     }
     if (!submission.aiExtracted) {
-      return { error: "no extracted data" as const, status: 400 };
+      return { error: "no extracted data -- use action: \"dismiss\" instead" as const, status: 400 };
     }
 
     const extracted = submission.aiExtracted as SubmissionReviewResult;
+    // Narrowed already: action !== "dismiss" here, so parsed.data carries itemType/itemIndex.
+    const { itemType, itemIndex } = parsed.data as { itemType: "special" | "event" | "menuItem"; itemIndex: number };
 
     if (action === "approve") {
       if (itemType === "special") {
@@ -123,7 +147,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const totalItems =
       extracted.specials.length + extracted.events.length + extracted.menu_items.length;
-    const updatedKeys = [...submission.resolvedItemKeys, itemKey];
+    // itemKey is guaranteed non-null here: the only path that leaves it null is
+    // action === "dismiss", which already returned above.
+    const updatedKeys = [...submission.resolvedItemKeys, itemKey!];
     const resolved = updatedKeys.length >= totalItems;
     const anyApproved = updatedKeys.some((k) => !k.startsWith("rejected:"));
     await tx

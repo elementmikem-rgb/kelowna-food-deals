@@ -94,9 +94,46 @@ function ItemCard({
   );
 }
 
+function DismissButton({ submissionId, onDismissed }: { submissionId: number; onDismissed: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function dismiss() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "dismiss" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      onDismissed();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 items-start">
+      <button
+        onClick={dismiss}
+        disabled={loading}
+        className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+      >
+        Dismiss
+      </button>
+      {error && <p className="text-xs text-stale">{error}</p>}
+    </div>
+  );
+}
+
 export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
   const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
   const [showPhoto, setShowPhoto] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   // aiExtracted is a jsonb column, so its shape is only whatever was written at
   // extraction time — parse it rather than asserting it.
@@ -113,6 +150,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
   const totalItems = specials.length + eventsList.length + menuItemsList.length;
   const remaining = totalItems - resolvedKeys.length;
 
+  if (dismissed) return null;
   if (extracted && remaining <= 0) return null;
 
   return (
@@ -151,7 +189,13 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
       )}
 
       {!extracted && !extractUnreadable && (
-        <p className="text-xs text-stale">{submission.aiNotes ?? "AI review failed."}</p>
+        <>
+          <p className="text-xs text-stale">{submission.aiNotes ?? "AI review failed."}</p>
+          <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+        </>
+      )}
+      {extractUnreadable && (
+        <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
       )}
 
       <div className="flex flex-col gap-2">
