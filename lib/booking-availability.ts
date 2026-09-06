@@ -1,6 +1,17 @@
 import { db, bookings } from "@/db";
+import type * as schema from "@/db/schema";
 import type { BookingProductType, SpecialCategory } from "@/db/schema";
 import { and, eq, gt, inArray, or } from "drizzle-orm";
+import type { PgDatabase } from "drizzle-orm/pg-core";
+import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+
+// Accepts either the plain `db` handle or the `tx` passed into a
+// `db.transaction(async (tx) => ...)` callback -- both `PostgresJsDatabase<schema>` and
+// `PgTransaction<...>` extend this common base, so a caller running inside a transaction
+// (e.g. the checkout route's advisory-lock block) can pass `tx` here and this function
+// sees the same locked snapshot as the insert that follows it, instead of a separate
+// out-of-transaction connection.
+export type BookingDbExecutor = PgDatabase<PostgresJsQueryResultHKT, typeof schema>;
 
 export interface OccupyingRange {
   startDate: string;
@@ -38,7 +49,7 @@ const OCCUPYING_STATUSES = ["approved", "pending_approval"] as const;
 // (`tx` from `db.transaction(async (tx) => ...)`) when called from the checkout path
 // so it sees the same locked snapshot as the insert that follows it.
 export async function getOccupyingBookings(
-  executor: typeof db,
+  executor: BookingDbExecutor,
   productType: BookingProductType,
   category: SpecialCategory | null,
   excludeId?: number
@@ -60,7 +71,7 @@ export async function getOccupyingBookings(
 }
 
 export async function checkAvailability(
-  executor: typeof db,
+  executor: BookingDbExecutor,
   productType: BookingProductType,
   category: SpecialCategory | null,
   capCount: number | null,
