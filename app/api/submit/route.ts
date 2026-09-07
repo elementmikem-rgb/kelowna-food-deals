@@ -64,11 +64,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let venueRegionId: number | null = null;
   if (!isNewVenue) {
     const [venue] = await db.select().from(venues).where(eq(venues.id, venueId)).limit(1);
     if (!venue) {
       return NextResponse.json({ error: "unknown venue" }, { status: 400 });
     }
+    venueRegionId = venue.regionId;
   }
 
   try {
@@ -81,6 +83,9 @@ export async function POST(req: NextRequest) {
     // to -- every item stays queued for an admin, who creates the real venue row the
     // first time they approve one (see app/api/admin/submissions/[id]/route.ts).
     if (!isNewVenue) {
+      // venueRegionId is guaranteed non-null here: it's set right after the venue lookup
+      // above, on the same `!isNewVenue` branch we're inside now.
+      const regionId = venueRegionId!;
       // Wrapped in one transaction: previously a mid-loop insert failure (e.g. a bad
       // date/time string) could leave some items already published live while the
       // submissions bookkeeping row never got written, permanently orphaning them.
@@ -90,6 +95,7 @@ export async function POST(req: NextRequest) {
           if (s.confidence >= AUTO_APPROVE_CONFIDENCE) {
             await tx.insert(specials).values({
               venueId,
+              regionId,
               title: s.title,
               description: s.description,
               priceCents: s.price_cents,
@@ -113,6 +119,7 @@ export async function POST(req: NextRequest) {
           if (e.confidence >= AUTO_APPROVE_CONFIDENCE && (e.day_of_week !== null || e.specific_date !== null)) {
             await tx.insert(events).values({
               venueId,
+              regionId,
               title: e.title,
               description: e.description,
               eventType: e.event_type,

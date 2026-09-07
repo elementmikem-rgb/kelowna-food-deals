@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db, submissions, specials, events, menuItems, venuePhotos, venues } from "@/db";
+import { db, submissions, specials, events, menuItems, venuePhotos, venues, regions } from "@/db";
 import { eq, and, sql } from "drizzle-orm";
 import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
@@ -105,11 +105,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (existing) {
         venueId = existing.id;
       } else {
+        // This submission carries no region information of its own (submissions never
+        // gets a regionId column), so a brand-new venue is assigned to "kelowna" -- the
+        // only region that exists right now. Known limitation: once a second region
+        // exists, a new-venue-from-submission needs a real way to know which region it
+        // belongs to (e.g. the admin's currently selected region), out of scope here.
+        const [kelownaRegion] = await tx
+          .select({ id: regions.id })
+          .from(regions)
+          .where(eq(regions.slug, "kelowna"))
+          .limit(1);
         const [created] = await tx
           .insert(venues)
           .values({
             name: submission.venueName,
             address: submission.venueAddress ?? "Address not provided",
+            regionId: kelownaRegion.id,
             active: true,
           })
           .returning({ id: venues.id });
@@ -124,11 +135,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (venueId === null) {
         return { error: "internal: venue not resolved" as const, status: 500 };
       }
+
+      // Fetch the venue's own region for the specials/events inserts below -- not the
+      // kelownaRegion lookup above, since this path also runs for an EXISTING venue
+      // (whose region could in principle differ once multiple regions exist).
+      const [venueRow] = await tx
+        .select({ regionId: venues.regionId })
+        .from(venues)
+        .where(eq(venues.id, venueId))
+        .limit(1);
+      const regionId = venueRow!.regionId;
+
       if (itemType === "special") {
         const s = extracted.specials[itemIndex];
         if (!s) return { error: "item not found" as const, status: 400 };
         await tx.insert(specials).values({
           venueId,
+          regionId,
           title: s.title,
           description: s.description,
           priceCents: s.price_cents,
@@ -153,6 +176,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         }
         await tx.insert(events).values({
           venueId,
+          regionId,
           title: e.title,
           description: e.description,
           eventType: e.event_type,

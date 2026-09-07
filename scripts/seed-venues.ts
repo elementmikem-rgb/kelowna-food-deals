@@ -1,5 +1,5 @@
-import { db, venues } from "@/db";
-import { sql } from "drizzle-orm";
+import { db, venues, regions } from "@/db";
+import { eq, sql } from "drizzle-orm";
 
 interface SeedVenue {
   name: string;
@@ -401,12 +401,20 @@ function cityFromAddress(address: string): string | null {
 }
 
 async function main() {
+  const [kelownaRegion] = await db
+    .select({ id: regions.id })
+    .from(regions)
+    .where(eq(regions.slug, "kelowna"))
+    .limit(1);
+  if (!kelownaRegion) throw new Error("kelowna region not found — run the platform migration first");
+
   for (const v of SEED_VENUES) {
     await db
       .insert(venues)
       .values({
         name: v.name,
         address: v.address,
+        regionId: kelownaRegion.id,
         city: cityFromAddress(v.address),
         lat: v.lat ?? null,
         lng: v.lng ?? null,
