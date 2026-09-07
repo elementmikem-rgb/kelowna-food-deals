@@ -8,27 +8,69 @@ import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 const sendSchema = z.object({ venueId: z.number().int().positive() });
 
+// Inline styles + table layout throughout -- Outlook and older webmail clients strip
+// <style> blocks and ignore modern CSS, so anything that has to render consistently
+// (brand colors, the logo band, the button) is styled inline on the element itself.
+// Colors/fonts here are pulled straight from app/globals.css's --accent/--background/
+// --foreground tokens and the Fraunces/Karla type pairing, so the email actually reads
+// as the same brand as the site instead of a bare-text fallback.
 function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: string, mailingAddress: string): string {
   const venueUrl = `https://kelownafooddeals.shop/venues/${venueId}`;
   const advertiseUrl = "https://kelownafooddeals.shop/advertise";
+  const logoUrl = "https://kelownafooddeals.shop/icons/icon-192.png";
+
+  const BG = "#f4ecd8";
+  const CARD = "#fffaf0";
+  const FG = "#2a2818";
+  const MUTED = "#6b654e";
+  const ACCENT = "#c14a1f";
+  const ACCENT_DIM = "#8f3315";
+  const BORDER = "#e4d9bb";
+
   return `
-    <p>Hey there,</p>
-    <p>I run Kelowna Food Deals — a site that tracks happy hours and food/drink deals
-    around Kelowna. I've got <strong>${venueName}</strong> listed here:</p>
-    <p><a href="${venueUrl}">${venueUrl}</a></p>
-    <p>That's built from what I could find on your site, but I'd rather double-check with you
-    than guess wrong. Does everything look right? And if you've got specials or events that
-    aren't on your website but you'd want people to know about, just reply here and I'll add
-    them.</p>
-    <p>Separately — if you'd ever want your listing to pin to the top of the homepage, or
-    push a specific special or seasonal menu, there's a paid option for that too:
-    <a href="${advertiseUrl}">${advertiseUrl}</a>. No pressure either way, just flagging it's there.</p>
-    <p>Thanks,<br>Mike</p>
-    <hr style="margin-top:24px;border:none;border-top:1px solid #ddd;">
-    <p style="font-size:12px;color:#888;">
-      ${mailingAddress}<br>
-      Don't want emails like this? <a href="${unsubscribeUrl}">Unsubscribe</a>.
-    </p>
+<div style="background:${BG};padding:32px 16px;font-family:Georgia,'Times New Roman',serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+    <tr>
+      <td style="padding-bottom:20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="vertical-align:middle;padding-right:10px;">
+              <img src="${logoUrl}" width="40" height="40" alt="Kelowna Food Deals" style="display:block;border-radius:50%;">
+            </td>
+            <td style="vertical-align:middle;">
+              <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${FG};font-weight:700;">Kelowna Food Deals</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="background:${CARD};border:1px solid ${BORDER};border-radius:16px;padding:32px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:${FG};">
+        <p style="margin:0 0 16px;">Hey there,</p>
+        <p style="margin:0 0 16px;">I run Kelowna Food Deals — a site that tracks happy hours and food/drink deals
+        around Kelowna. I've got <strong>${venueName}</strong> listed here:</p>
+        <p style="margin:0 0 20px;">
+          <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
+          padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">View your listing</a>
+        </p>
+        <p style="margin:0 0 16px;">That's built from what I could find on your site, but I'd rather double-check with you
+        than guess wrong. Does everything look right? And if you've got specials or events that
+        aren't on your website but you'd want people to know about, just reply here and I'll add
+        them.</p>
+        <p style="margin:0 0 16px;">Separately — if you'd ever want your listing to pin to the top of the homepage, or
+        push a specific special or seasonal menu, there's a paid option for that too:
+        <a href="${advertiseUrl}" style="color:${ACCENT_DIM};">${advertiseUrl}</a>. No pressure either way, just flagging it's there.</p>
+        <p style="margin:24px 0 0;">Thanks,<br>Mike</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding-top:20px;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
+        ${mailingAddress}<br>
+        Don't want emails like this? <a href="${unsubscribeUrl}" style="color:${MUTED};">Unsubscribe</a>.
+      </td>
+    </tr>
+  </table>
+</div>
   `;
 }
 
