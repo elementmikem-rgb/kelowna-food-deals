@@ -28,8 +28,8 @@ function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: s
   const BORDER = "#e4d9bb";
 
   return `
-<div style="background:${BG};padding:32px 16px;font-family:Georgia,'Times New Roman',serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+<div style="background:${BG};padding:32px 16px;font-family:Georgia,'Times New Roman',serif;white-space:normal;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;white-space:normal;">
     <tr>
       <td style="padding-bottom:20px;">
         <table role="presentation" cellpadding="0" cellspacing="0">
