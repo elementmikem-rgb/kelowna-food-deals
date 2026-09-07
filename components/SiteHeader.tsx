@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteNav } from "./SiteNav";
 import { ShareButton } from "./ShareButton";
+import { getCurrentRegion } from "@/lib/regions";
 
-export function SiteHeader({
+export async function SiteHeader({
   active,
   subtitle,
   brandIsHeading = true,
@@ -18,14 +19,16 @@ export function SiteHeader({
   // own keyword intent instead of every page sharing the literal brand name.
   heading?: string;
 }) {
+  const region = await getCurrentRegion();
   const BrandTag = brandIsHeading ? "h1" : "span";
+  const [firstWord, ...rest] = region.brandName.split(" ");
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
       <div className="flex items-center gap-3 sm:gap-4">
         <Link href="/" className="shrink-0">
           <Image
-            src="/icons/icon-192.png"
-            alt="Kelowna Food Deals logo"
+            src={region.logoUrl}
+            alt={`${region.brandName} logo`}
             width={56}
             height={56}
             className="rounded-full w-10 h-10 sm:w-14 sm:h-14"
@@ -37,7 +40,7 @@ export function SiteHeader({
               <Link href="/">
                 {heading ?? (
                   <>
-                    <span className="hand-underline">Kelowna</span> Food Deals
+                    <span className="hand-underline">{firstWord}</span> {rest.join(" ")}
                   </>
                 )}
               </Link>
