@@ -5,6 +5,7 @@ import { BookingFlow } from "@/components/BookingFlow";
 import { getVenueOptions, getSpecialOptions } from "@/lib/sponsored-data";
 import { db, monetizationSettings } from "@/db";
 import type { BookingProductType } from "@/db/schema";
+import { pacificTodayISODate } from "@/lib/time";
 
 export const metadata = {
   title: "Advertise With Us",
@@ -41,6 +42,13 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
     };
   }
 
+  // Computed server-side in Pacific time so the date picker's earliest-selectable
+  // day always agrees with the server's own authoritative check (verify-email and
+  // checkout both reject startDate < pacificTodayISODate()). A client-side
+  // `new Date()` would use the visitor's local/UTC date instead, which disagrees
+  // with Pacific for several hours every evening.
+  const todayISO = pacificTodayISODate();
+
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">
       <SiteHeader
@@ -74,6 +82,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             specials={specialOptions}
             settings={settingsFor("featured")}
             initialVerifiedToken={tokenFor("featured")}
+            todayISO={todayISO}
           />
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
@@ -90,6 +99,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             specials={specialOptions}
             settings={settingsFor("boost")}
             initialVerifiedToken={tokenFor("boost")}
+            todayISO={todayISO}
           />
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
@@ -106,6 +116,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             specials={specialOptions}
             settings={settingsFor("category_sponsor")}
             initialVerifiedToken={tokenFor("category_sponsor")}
+            todayISO={todayISO}
           />
         </div>
       </div>

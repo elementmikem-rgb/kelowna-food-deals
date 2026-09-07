@@ -27,12 +27,14 @@ export function BookingFlow({
   specials,
   settings,
   initialVerifiedToken,
+  todayISO,
 }: {
   productType: BookingProductType;
   venues: VenueOption[];
   specials: SpecialOption[];
   settings: Settings;
   initialVerifiedToken: string | null;
+  todayISO: string;
 }) {
   const [open, setOpen] = useState(initialVerifiedToken !== null);
   const [venueId, setVenueId] = useState<number | "">("");
@@ -84,10 +86,6 @@ export function BookingFlow({
       controller.abort();
     };
   }, [productType, category, startDate, endDate]);
-
-  // Courtesy hint only -- the server rejects a past startDate authoritatively in
-  // both /api/bookings/verify-email and /api/bookings/checkout.
-  const todayISO = new Date().toISOString().slice(0, 10);
 
   const venueSpecials = specials.filter((s) => s.venueId === venueId);
 
