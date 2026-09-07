@@ -22,6 +22,31 @@ export const specialsSchema = pgSchema("specials");
 // new value here, not a schema migration.
 export const DEFAULT_REGION = "central-okanagan";
 
+export const regions = specialsSchema.table("regions", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(), // "kelowna", "south-okanagan"
+  domain: text("domain").notNull().unique(), // "kelownafooddeals.shop"
+  brandName: text("brand_name").notNull(), // "Kelowna Food Deals"
+  logoUrl: text("logo_url").notNull(),
+  accentColor: text("accent_color").notNull(),
+  accentDimColor: text("accent_dim_color").notNull(),
+  accentSoftColor: text("accent_soft_color").notNull(),
+  backgroundColor: text("background_color").notNull(),
+  foregroundColor: text("foreground_color").notNull(),
+  evergreenColor: text("evergreen_color").notNull(),
+  // CASL requires a valid mailing address in every commercial email sent from
+  // this region -- see lib/outreach-email.ts and the OUTREACH_MAILING_ADDRESS
+  // history this replaces.
+  mailingAddress: text("mailing_address").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  // This region's own nightly scrape budget, separate from every other
+  // region's so a busy region can never starve a smaller one's share.
+  tokenCeiling: integer("token_ceiling").notNull().default(50000),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type Region = typeof regions.$inferSelect;
+
 export const venues = specialsSchema.table(
   "venues",
   {
@@ -29,6 +54,7 @@ export const venues = specialsSchema.table(
     name: text("name").notNull(),
     address: text("address").notNull(),
     region: text("region").notNull().default(DEFAULT_REGION),
+    regionId: integer("region_id").references(() => regions.id),
     // The town this venue is actually in (Kelowna, West Kelowna, Lake Country,
     // Peachland). Nullable so venues seeded before this column existed keep
     // working; consumers fall back to "Kelowna" when it's null.
@@ -112,6 +138,7 @@ export const specials = specialsSchema.table("specials", {
     .notNull()
     .references(() => venues.id, { onDelete: "cascade" }),
   region: text("region").notNull().default(DEFAULT_REGION),
+  regionId: integer("region_id").references(() => regions.id),
   title: text("title").notNull(),
   description: text("description"),
   priceCents: integer("price_cents"),
@@ -151,6 +178,7 @@ export const events = specialsSchema.table("events", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }), // null for events at a place not in our venues table (e.g. a winery hosting a concert)
   region: text("region").notNull().default(DEFAULT_REGION), // set directly since venueId can be null (no venue to join through)
+  regionId: integer("region_id").references(() => regions.id),
   locationName: text("location_name"), // used when venueId is null
   locationAddress: text("location_address"), // used when venueId is null
   title: text("title").notNull(), // e.g. act/performer name or event name
@@ -341,6 +369,7 @@ export const bookings = specialsSchema.table("bookings", {
 // the operator sets real numbers before this goes live.
 export const monetizationSettings = specialsSchema.table("monetization_settings", {
   productType: text("product_type").$type<BookingProductType>().primaryKey(),
+  regionId: integer("region_id").references(() => regions.id),
   capCount: integer("cap_count"), // null = uncapped
   priceCentsPerDay: integer("price_cents_per_day").notNull(),
   minDays: integer("min_days").notNull(),

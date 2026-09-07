@@ -155,6 +155,13 @@
       "when": 1788751174403,
       "tag": "0021_volatile_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788815879508,
+      "tag": "0022_worried_tag",
+      "breakpoints": true
     }
   ]
 }
