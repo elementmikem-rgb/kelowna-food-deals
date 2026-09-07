@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripe } from "@/lib/stripe";
+import { getCurrentRegion } from "@/lib/regions";
 
 const tipRequestSchema = z.object({
   amountCents: z
@@ -10,11 +11,13 @@ const tipRequestSchema = z.object({
     .max(50000, "Max tip is $500"),
 });
 
-// Pinned rather than derived from the request's Origin header: a forged Origin
-// would otherwise come back inside a real Stripe Checkout URL's redirect targets.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
-
 export async function POST(req: NextRequest) {
+  // Pinned to the requesting region's own domain rather than derived from the
+  // request's Origin header: a forged Origin would otherwise come back inside a
+  // real Stripe Checkout URL's redirect targets.
+  const region = await getCurrentRegion();
+  const SITE_URL = `https://${region.domain}`;
+
   const body = await req.json().catch(() => null);
   const parsed = tipRequestSchema.safeParse(body);
   if (!parsed.success) {

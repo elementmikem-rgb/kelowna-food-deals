@@ -7,8 +7,7 @@ import { signBookingToken, type BookingSelection } from "@/lib/booking-token";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { pacificTodayISODate } from "@/lib/time";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
+import { getCurrentRegion } from "@/lib/regions";
 
 const bodySchema = z.object({
   productType: z.enum(bookingProductType),
@@ -21,6 +20,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const region = await getCurrentRegion();
+  const SITE_URL = `https://${region.domain}`;
+
   const { ok } = await checkRateLimit(req, "bookings-verify-email", 5, 60);
   if (!ok) return NextResponse.json({ error: "Too many attempts, try again later" }, { status: 429 });
 

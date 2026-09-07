@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
+import { getRegionById } from "@/lib/regions";
 
 const sendSchema = z.object({ venueId: z.number().int().positive() });
 
@@ -14,10 +15,16 @@ const sendSchema = z.object({ venueId: z.number().int().positive() });
 // Colors/fonts here are pulled straight from app/globals.css's --accent/--background/
 // --foreground tokens and the Fraunces/Karla type pairing, so the email actually reads
 // as the same brand as the site instead of a bare-text fallback.
-function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: string, mailingAddress: string): string {
-  const venueUrl = `https://kelownafooddeals.shop/venues/${venueId}`;
-  const advertiseUrl = "https://kelownafooddeals.shop/advertise";
-  const logoUrl = "https://kelownafooddeals.shop/icons/icon-192.png";
+function buildOutreachHtml(
+  venueName: string,
+  venueId: number,
+  unsubscribeUrl: string,
+  mailingAddress: string,
+  domain: string
+): string {
+  const venueUrl = `https://${domain}/venues/${venueId}`;
+  const advertiseUrl = `https://${domain}/advertise`;
+  const logoUrl = `https://${domain}/icons/icon-192.png`;
 
   const BG = "#f4ecd8";
   const CARD = "#fffaf0";
@@ -79,16 +86,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // CASL requires a valid mailing address in every commercial email; fail closed rather
-  // than send a non-compliant message if this hasn't been configured.
-  const mailingAddress = process.env.OUTREACH_MAILING_ADDRESS;
-  if (!mailingAddress) {
-    return NextResponse.json(
-      { error: "OUTREACH_MAILING_ADDRESS is not configured -- required for CASL compliance" },
-      { status: 500 }
-    );
-  }
-
   const body = await req.json().catch(() => null);
   const parsed = sendSchema.safeParse(body);
   if (!parsed.success) {
@@ -101,6 +98,7 @@ export async function POST(req: NextRequest) {
       name: venues.name,
       contactEmail: venues.contactEmail,
       unsubscribedAt: venues.unsubscribedAt,
+      regionId: venues.regionId,
     })
     .from(venues)
     .where(eq(venues.id, parsed.data.venueId))
@@ -113,6 +111,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "venue has unsubscribed from outreach email" }, { status: 400 });
   }
 
+  const region = await getRegionById(venue.regionId);
+  if (!region) {
+    return NextResponse.json({ error: "venue has no valid region" }, { status: 500 });
+  }
+  // CASL requires a valid mailing address in every commercial email. regions.mailingAddress
+  // is NOT NULL in the schema, so every region that can exist already has one.
+  const mailingAddress = region.mailingAddress;
+
   const [alreadySent] = await db
     .select({ id: outreachSends.id })
     .from(outreachSends)
@@ -123,8 +129,8 @@ export async function POST(req: NextRequest) {
   }
 
   const subject = `Quick one about ${venue.name} on Kelowna Food Deals`;
-  const unsubscribeUrl = buildUnsubscribeUrl(venue.id);
-  const htmlBody = buildOutreachHtml(venue.name, venue.id, unsubscribeUrl, mailingAddress);
+  const unsubscribeUrl = buildUnsubscribeUrl(venue.id, region.domain);
+  const htmlBody = buildOutreachHtml(venue.name, venue.id, unsubscribeUrl, mailingAddress, region.domain);
 
   const [sendRow] = await db
     .insert(outreachSends)

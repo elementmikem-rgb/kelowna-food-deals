@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyBookingToken, signBookingToken, type BookingSelection } from "@/lib/booking-token";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
+import { getCurrentRegion } from "@/lib/regions";
 
 export async function GET(req: NextRequest) {
+  const region = await getCurrentRegion();
+  const SITE_URL = `https://${region.domain}`;
+
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
     return NextResponse.redirect(`${SITE_URL}/advertise?bookingError=expired`);

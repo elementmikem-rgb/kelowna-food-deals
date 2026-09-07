@@ -18,7 +18,7 @@ export function verifyUnsubscribeToken(venueId: number, token: string): boolean 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export function buildUnsubscribeUrl(venueId: number): string {
+export function buildUnsubscribeUrl(venueId: number, domain: string): string {
   const token = buildUnsubscribeToken(venueId);
-  return `https://kelownafooddeals.shop/api/unsubscribe?venueId=${venueId}&token=${token}`;
+  return `https://${domain}/api/unsubscribe?venueId=${venueId}&token=${token}`;
 }

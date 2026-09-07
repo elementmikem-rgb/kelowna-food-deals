@@ -8,8 +8,8 @@ import { getStripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { pacificTodayISODate, daysInclusive } from "@/lib/time";
 import { stripeFeeCents } from "@/lib/stripe-fee";
+import { getCurrentRegion } from "@/lib/regions";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
 // Stripe requires a Checkout session's expires_at to be at least 30 minutes out, so
 // the DB-side reservation hold uses the same window rather than a shorter one that
 // would create a mismatch between "still payable" and "still reserved." This also
@@ -32,6 +32,9 @@ function lockKeyFor(productType: string, category: string | null): string {
 }
 
 export async function POST(req: NextRequest) {
+  const region = await getCurrentRegion();
+  const SITE_URL = `https://${region.domain}`;
+
   const { ok } = await checkRateLimit(req, "bookings-checkout", 10, 60);
   if (!ok) return NextResponse.json({ error: "Too many attempts, try again later" }, { status: 429 });
 
