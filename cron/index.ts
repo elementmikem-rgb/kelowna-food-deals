@@ -13,6 +13,7 @@ import {
   markVenueStillCurrent,
   replaceVenueSpecials,
   replaceVenueEvents,
+  archiveExpiredMonthlySpecials,
 } from "./upsert";
 
 // Overridable so a one-off manual run (e.g. clearing a backlog) can raise the
@@ -167,6 +168,13 @@ async function runScrapeCycle() {
     console.log(`Analytics: pruned ${deleted} event(s) older than the retention window`);
   } catch (err) {
     console.error("Analytics pruning failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    const { archived } = await archiveExpiredMonthlySpecials();
+    console.log(`Monthly specials: archived ${archived} past their monthlyThroughDate`);
+  } catch (err) {
+    console.error("Monthly special archival failed:", err instanceof Error ? err.message : err);
   }
 
   try {

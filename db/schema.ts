@@ -117,6 +117,13 @@ export const specials = specialsSchema.table("specials", {
   priceCents: integer("price_cents"),
   dayOfWeek: smallint("day_of_week"), // 0-6, null = daily
   isMonthly: boolean("is_monthly").notNull().default(false), // runs all month, ignores dayOfWeek/startTime/endTime
+  // Only meaningful when isMonthly is true: the last calendar day this specific
+  // month's version of the special is valid (e.g. a venue's rotating "menu of the
+  // month" insert). Null means no known end date -- stays active until manually
+  // archived or superseded, same as any other special. When set, the nightly cron
+  // archives it automatically once past this date, so a month-limited special
+  // doesn't need to be manually removed.
+  monthlyThroughDate: date("monthly_through_date"),
   startTime: time("start_time"),
   endTime: time("end_time"),
   category: text("category").$type<SpecialCategory>().notNull(),

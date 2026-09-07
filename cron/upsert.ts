@@ -1,6 +1,7 @@
 import { db, specials, events, scrapeRuns, venues } from "@/db";
-import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { ExtractedSpecial, ExtractedEvent } from "./extract";
+import { pacificTodayISODate } from "@/lib/time";
 
 // Identity key for "is this the same special/event as before" -- deliberately
 // excludes id/lastVerifiedAt/confidence/extractionNotes/sourceUrl, which are
@@ -282,4 +283,26 @@ export async function getLastContentHash(venueId: number): Promise<string | null
     .orderBy(desc(scrapeRuns.ranAt))
     .limit(1);
   return rows[0]?.contentHash ?? null;
+}
+
+// A month-limited special (isMonthly with a known monthlyThroughDate, e.g. a venue's
+// rotating "menu of the month" insert) archives itself once past that date -- no
+// manual cleanup needed. Reuses archivedAt, the same "no longer active" signal every
+// other special already uses, so it also shows up correctly in the venue's "Previously
+// Featured" history instead of just vanishing.
+export async function archiveExpiredMonthlySpecials(): Promise<{ archived: number }> {
+  const today = pacificTodayISODate();
+  const result = await db
+    .update(specials)
+    .set({ archivedAt: new Date() })
+    .where(
+      and(
+        eq(specials.isMonthly, true),
+        isNull(specials.archivedAt),
+        isNotNull(specials.monthlyThroughDate),
+        lt(specials.monthlyThroughDate, today)
+      )
+    )
+    .returning({ id: specials.id });
+  return { archived: result.length };
 }

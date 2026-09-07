@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."specials" ADD COLUMN "monthly_through_date" date;
