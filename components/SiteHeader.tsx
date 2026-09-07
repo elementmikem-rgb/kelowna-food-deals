@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { SiteNav } from "./SiteNav";
 import { ShareButton } from "./ShareButton";
 
@@ -21,21 +22,25 @@ export function SiteHeader({
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
       <div className="flex items-center gap-3 sm:gap-4">
-        <Image
-          src="/icons/icon-192.png"
-          alt="Kelowna Food Deals logo"
-          width={56}
-          height={56}
-          className="rounded-full shrink-0 w-10 h-10 sm:w-14 sm:h-14"
-        />
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/icons/icon-192.png"
+            alt="Kelowna Food Deals logo"
+            width={56}
+            height={56}
+            className="rounded-full w-10 h-10 sm:w-14 sm:h-14"
+          />
+        </Link>
         <div className="flex flex-col gap-0.5 sm:gap-1">
           <div className="flex items-center gap-3 flex-wrap">
             <BrandTag className="block font-display text-2xl sm:text-4xl text-foreground">
-              {heading ?? (
-                <>
-                  <span className="hand-underline">Kelowna</span> Food Deals
-                </>
-              )}
+              <Link href="/">
+                {heading ?? (
+                  <>
+                    <span className="hand-underline">Kelowna</span> Food Deals
+                  </>
+                )}
+              </Link>
             </BrandTag>
             {/* !hidden: .stamp's plain (unlayered) CSS rule sets display:inline-flex,
                 which in Tailwind v4's cascade layers beats a layered "hidden" utility
