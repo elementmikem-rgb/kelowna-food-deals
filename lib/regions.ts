@@ -1,5 +1,6 @@
 import { db, regions } from "@/db";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import type { Region } from "@/db/schema";
 
 // Region config changes rarely (a human edits it, not a request), so a short
@@ -26,5 +27,17 @@ export async function getRegionById(id: number): Promise<Region | null> {
   const [row] = await db.select().from(regions).where(eq(regions.id, id)).limit(1);
   const region = row ?? null;
   byId.set(id, { region, expiresAt: Date.now() + CACHE_TTL_MS });
+  return region;
+}
+
+export async function getCurrentRegion(): Promise<Region> {
+  const regionId = (await headers()).get("x-region-id");
+  if (!regionId) {
+    throw new Error("No x-region-id header -- proxy.ts should set this on every request");
+  }
+  const region = await getRegionById(Number(regionId));
+  if (!region) {
+    throw new Error(`x-region-id header points at a region id (${regionId}) with no matching row`);
+  }
   return region;
 }
