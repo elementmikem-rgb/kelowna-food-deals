@@ -38,7 +38,12 @@ function emptyByProduct(): Record<BookingProductType, { totalCents: number; coun
   };
 }
 
-export async function getRevenueInRange(from: Date, to: Date): Promise<RevenueSummary> {
+// regionId scopes the sponsorship/booking side of revenue to one region. Tips have
+// no region concept at all -- they're read straight from Stripe checkout sessions
+// with no venue/region metadata attached -- so tip totals are always account-wide
+// regardless of the selected region. Callers that need a genuinely combined
+// cross-region total (the "All regions" admin view) pass no regionId.
+export async function getRevenueInRange(from: Date, to: Date, regionId?: number): Promise<RevenueSummary> {
   const [tipsSummary, bookingRows] = await Promise.all([
     getTipsInRange(from, to),
     db
@@ -57,7 +62,8 @@ export async function getRevenueInRange(from: Date, to: Date): Promise<RevenueSu
         and(
           inArray(bookings.status, REVENUE_STATUSES),
           gte(bookings.createdAt, from),
-          lt(bookings.createdAt, to)
+          lt(bookings.createdAt, to),
+          regionId === undefined ? undefined : eq(venues.regionId, regionId)
         )
       )
       .orderBy(sql`${bookings.createdAt} desc`),

@@ -1,11 +1,14 @@
 import { db, submissions, venues } from "@/db";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
 import { AdminShell } from "@/components/AdminShell";
+import { getSelectedAdminRegionId } from "@/lib/admin-region";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSubmissionsPage() {
+  const selectedRegionId = await getSelectedAdminRegionId();
+
   const rows = await db
     .select({
       id: submissions.id,
@@ -28,7 +31,16 @@ export default async function AdminSubmissionsPage() {
     })
     .from(submissions)
     .leftJoin(venues, eq(submissions.venueId, venues.id))
-    .where(and(eq(submissions.status, "needs_review")))
+    .where(
+      and(
+        eq(submissions.status, "needs_review"),
+        // A submission for a venue that doesn't exist yet has no region to scope by --
+        // keep it visible under any specific-region filter rather than hiding it.
+        selectedRegionId === "all"
+          ? undefined
+          : or(eq(venues.regionId, selectedRegionId), isNull(submissions.venueId))
+      )
+    )
     // Priority submissions first, then oldest-first within each group so a rush
     // request doesn't itself sit waiting behind other rush requests forever.
     .orderBy(

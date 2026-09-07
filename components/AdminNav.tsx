@@ -41,14 +41,56 @@ function LogoutButton() {
   );
 }
 
+function RegionSwitcher({
+  regions,
+  selectedRegionId,
+}: {
+  regions: { id: number; slug: string; brandName: string }[];
+  selectedRegionId: number | "all";
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handleChange(value: string) {
+    setLoading(true);
+    await fetch("/api/admin/region", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ regionId: value }),
+    });
+    router.refresh();
+    setLoading(false);
+  }
+
+  return (
+    <select
+      value={String(selectedRegionId)}
+      disabled={loading}
+      onChange={(e) => handleChange(e.target.value)}
+      className="press-pill rounded-full border border-border bg-transparent px-3 py-1.5 text-xs text-muted disabled:opacity-50"
+    >
+      <option value="all">All regions</option>
+      {regions.map((r) => (
+        <option key={r.id} value={r.id}>
+          {r.brandName}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function AdminNav({
   active,
   pendingSubmissions,
   unreadInbox,
+  regions,
+  selectedRegionId,
 }: {
   active: AdminSection | null;
   pendingSubmissions: number;
   unreadInbox: number;
+  regions: { id: number; slug: string; brandName: string }[];
+  selectedRegionId: number | "all";
 }) {
   const items: { key: AdminSection; href: string; label: string; badge?: number; tone?: "accent" | "evergreen" }[] = [
     { key: "submissions", href: "/admin/submissions", label: "Submissions", badge: pendingSubmissions, tone: "accent" },
@@ -87,7 +129,10 @@ export function AdminNav({
           ))}
         </nav>
 
-        <LogoutButton />
+        <div className="flex items-center gap-2 shrink-0">
+          <RegionSwitcher regions={regions} selectedRegionId={selectedRegionId} />
+          <LogoutButton />
+        </div>
       </div>
     </header>
   );

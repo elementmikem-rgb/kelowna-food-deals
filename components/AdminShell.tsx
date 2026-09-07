@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getAdminNavCounts } from "@/lib/admin-counts";
+import { getSelectedAdminRegionId } from "@/lib/admin-region";
+import { db, regions } from "@/db";
 import { AdminNav } from "./AdminNav";
 
 export async function AdminShell({
@@ -17,11 +19,21 @@ export async function AdminShell({
   maxWidth?: string;
   children: React.ReactNode;
 }) {
-  const { pendingSubmissions, unreadInbox } = await getAdminNavCounts();
+  const [{ pendingSubmissions, unreadInbox }, regionRows, selectedRegionId] = await Promise.all([
+    getAdminNavCounts(),
+    db.select({ id: regions.id, slug: regions.slug, brandName: regions.brandName }).from(regions),
+    getSelectedAdminRegionId(),
+  ]);
 
   return (
     <div className="flex flex-col flex-1 w-full">
-      <AdminNav active={active} pendingSubmissions={pendingSubmissions} unreadInbox={unreadInbox} />
+      <AdminNav
+        active={active}
+        pendingSubmissions={pendingSubmissions}
+        unreadInbox={unreadInbox}
+        regions={regionRows}
+        selectedRegionId={selectedRegionId}
+      />
       <div className={`flex flex-col flex-1 ${maxWidth} mx-auto w-full px-4 sm:px-6 pb-10 gap-6`}>
         {backHref && (
           <Link href={backHref} className="text-sm text-accent-dim underline self-start -mt-1">

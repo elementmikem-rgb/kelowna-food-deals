@@ -41,16 +41,22 @@ export interface SpecialOption {
   title: string;
 }
 
-export async function getFeaturedVenues(): Promise<FeaturedVenue[]> {
+export async function getFeaturedVenues(regionId?: number): Promise<FeaturedVenue[]> {
   const rows = await db
     .select({ id: venues.id, name: venues.name, featuredUntil: venues.featuredUntil })
     .from(venues)
-    .where(and(eq(venues.active, true), gt(venues.featuredUntil, new Date())))
+    .where(
+      and(
+        eq(venues.active, true),
+        gt(venues.featuredUntil, new Date()),
+        regionId === undefined ? undefined : eq(venues.regionId, regionId)
+      )
+    )
     .orderBy(asc(venues.featuredUntil));
   return rows as FeaturedVenue[];
 }
 
-export async function getBoostedSpecials(): Promise<BoostedSpecial[]> {
+export async function getBoostedSpecials(regionId?: number): Promise<BoostedSpecial[]> {
   const rows = await db
     .select({
       id: specials.id,
@@ -61,16 +67,28 @@ export async function getBoostedSpecials(): Promise<BoostedSpecial[]> {
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
-    .where(and(isNull(specials.archivedAt), gt(specials.boostedUntil, new Date())))
+    .where(
+      and(
+        isNull(specials.archivedAt),
+        gt(specials.boostedUntil, new Date()),
+        regionId === undefined ? undefined : eq(specials.regionId, regionId)
+      )
+    )
     .orderBy(asc(specials.boostedUntil));
   return rows as BoostedSpecial[];
 }
 
-export async function getPartnerVenues(): Promise<PartnerVenue[]> {
+export async function getPartnerVenues(regionId?: number): Promise<PartnerVenue[]> {
   const rows = await db
     .select({ id: venues.id, name: venues.name, partnerSince: venues.partnerSince })
     .from(venues)
-    .where(and(eq(venues.active, true), isNotNull(venues.partnerSince)))
+    .where(
+      and(
+        eq(venues.active, true),
+        isNotNull(venues.partnerSince),
+        regionId === undefined ? undefined : eq(venues.regionId, regionId)
+      )
+    )
     .orderBy(asc(venues.partnerSince));
   return rows as PartnerVenue[];
 }
@@ -93,21 +111,25 @@ export async function getActiveCategorySponsors(): Promise<CategorySponsor[]> {
   return rows.filter((r) => r.sponsorUntil === null || r.sponsorUntil.getTime() > now) as CategorySponsor[];
 }
 
-export async function getVenueOptions(): Promise<VenueOption[]> {
+export async function getVenueOptions(regionId?: number): Promise<VenueOption[]> {
   return db
     .select({ id: venues.id, name: venues.name })
     .from(venues)
-    .where(eq(venues.active, true))
+    .where(
+      and(eq(venues.active, true), regionId === undefined ? undefined : eq(venues.regionId, regionId))
+    )
     .orderBy(asc(venues.name));
 }
 
 // All active specials, not just one venue's -- cheap enough (id/venueId/title only)
 // to ship in full and let the client filter by venue as it's picked, rather than
 // adding a round trip per venue selection.
-export async function getSpecialOptions(): Promise<SpecialOption[]> {
+export async function getSpecialOptions(regionId?: number): Promise<SpecialOption[]> {
   return db
     .select({ id: specials.id, venueId: specials.venueId, title: specials.title })
     .from(specials)
-    .where(isNull(specials.archivedAt))
+    .where(
+      and(isNull(specials.archivedAt), regionId === undefined ? undefined : eq(specials.regionId, regionId))
+    )
     .orderBy(asc(specials.title));
 }
