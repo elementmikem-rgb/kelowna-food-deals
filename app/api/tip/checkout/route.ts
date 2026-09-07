@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
     ],
     success_url: `${SITE_URL}/tip/success`,
     cancel_url: `${SITE_URL}/`,
+    // Booking checkouts always carry a bookingId; this is how the admin tip
+    // calculator (lib/tips-data.ts) tells the two kinds of checkout apart.
+    metadata: { type: "tip" },
   });
 
   if (!session.url) {

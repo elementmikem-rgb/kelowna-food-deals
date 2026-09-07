@@ -71,6 +71,22 @@ export function endOfDayPacific(dateStr: string): Date {
   return new Date(base);
 }
 
+// The UTC instant corresponding to 00:00:00.000 *Pacific* time on the given
+// YYYY-MM-DD calendar date -- the start-of-day counterpart to endOfDayPacific
+// above, used to build a Pacific-calendar-day date range for the admin tip
+// calculator rather than a UTC-day one that drifts by 7-8 hours.
+export function startOfDayPacific(dateStr: string): Date {
+  const base = new Date(`${dateStr}T00:00:00.000Z`).getTime();
+  if (Number.isNaN(base)) return new Date(`${dateStr}T00:00:00.000Z`);
+  for (const offsetHours of [8, 7]) {
+    const candidate = new Date(base + offsetHours * 60 * 60 * 1000);
+    if (pacificTodayISODate(candidate) === dateStr && pacificHour(candidate) === 0) {
+      return candidate;
+    }
+  }
+  return new Date(base);
+}
+
 export function dowShortName(dow: number): string {
   return DOW_NAMES[dow] ?? "?";
 }

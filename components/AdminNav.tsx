@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type AdminSection = "submissions" | "outreach" | "inbox" | "sponsored" | "analytics";
+type AdminSection = "submissions" | "outreach" | "inbox" | "sponsored" | "tips" | "analytics";
 
 function Badge({ count, tone }: { count: number; tone: "accent" | "evergreen" }) {
   if (count <= 0) return null;
@@ -55,6 +55,7 @@ export function AdminNav({
     { key: "outreach", href: "/admin/outreach", label: "Outreach" },
     { key: "inbox", href: "/admin/inbox", label: "Inbox", badge: unreadInbox, tone: "evergreen" },
     { key: "sponsored", href: "/admin/sponsored", label: "Sponsored" },
+    { key: "tips", href: "/admin/tips", label: "Tips" },
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
   ];
 
