@@ -162,6 +162,13 @@
       "when": 1788815879508,
       "tag": "0022_worried_tag",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788816398302,
+      "tag": "0023_curvy_jubilee",
+      "breakpoints": true
     }
   ]
 }
