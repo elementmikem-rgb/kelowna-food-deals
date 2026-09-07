@@ -12,6 +12,7 @@ export async function proxy(req: NextRequest) {
   const region = await getRegionByDomain(domain);
 
   const requestHeaders = new Headers(req.headers);
+  requestHeaders.delete("x-region-id");
   if (region) requestHeaders.set("x-region-id", String(region.id));
 
   // Everything below this line is the pre-existing admin-auth gate, unchanged
