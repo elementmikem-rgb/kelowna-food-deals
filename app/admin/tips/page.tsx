@@ -53,7 +53,7 @@ export default async function AdminTipsPage({
   const summary = await getTipsInRange(from, to);
 
   return (
-    <AdminShell active="tips">
+    <AdminShell active="revenue" backHref="/admin/revenue" backLabel="Revenue">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="font-display text-2xl text-foreground">Tips</h1>
         <div className="flex items-center gap-3 flex-wrap">
