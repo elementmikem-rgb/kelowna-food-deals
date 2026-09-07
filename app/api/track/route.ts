@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { trackEvent, isBotUserAgent } from "@/lib/analytics";
 import { checkRateLimit } from "@/lib/request-rate-limit";
+import { isAdminAuthed } from "@/lib/admin-auth";
 
 const trackSchema = z.object({
   eventType: z.string().min(1).max(50),
@@ -35,6 +36,11 @@ export async function POST(req: NextRequest) {
     // Second line of defense for the kds_dnt opt-out cookie (client already
     // skips sending when set) — covers any client that bypasses track.js.
     if (req.cookies.get("kds_dnt")?.value === "1") return NextResponse.json({ ok: true });
+
+    // A signed-in admin browsing the public site (testing a feature, checking
+    // a venue page) isn't a visitor -- exclude so admin activity never
+    // inflates the analytics it's meant to measure.
+    if (await isAdminAuthed(req)) return NextResponse.json({ ok: true });
 
     const country = req.headers.get("cf-ipcountry");
 
