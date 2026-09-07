@@ -83,6 +83,7 @@ export async function markVenueStillCurrent(venueId: number): Promise<void> {
 // archived, and only genuinely new items get inserted.
 export async function replaceVenueSpecials(
   venueId: number,
+  regionId: number,
   sourceUrl: string,
   extracted: ExtractedSpecial[]
 ): Promise<void> {
@@ -142,6 +143,7 @@ export async function replaceVenueSpecials(
       await tx.insert(specials).values(
         toInsert.map((s) => ({
           venueId,
+          regionId,
           title: s.title,
           description: s.description,
           priceCents: s.price_cents,
@@ -163,6 +165,7 @@ export async function replaceVenueSpecials(
 // Same reconciliation approach as replaceVenueSpecials -- see comment there.
 export async function replaceVenueEvents(
   venueId: number,
+  regionId: number,
   sourceUrl: string,
   extracted: ExtractedEvent[]
 ): Promise<void> {
@@ -218,6 +221,7 @@ export async function replaceVenueEvents(
       await tx.insert(events).values(
         toInsert.map((e) => ({
           venueId,
+          regionId,
           title: e.title,
           description: e.description,
           eventType: e.event_type,
@@ -249,7 +253,7 @@ export async function logScrapeRun(row: {
 // Order by how long ago each venue was last attempted (never-scraped first),
 // so a token-ceiling abort mid-run starves a different tail each time instead
 // of always the same venues past whatever the fixed order used to put first.
-export async function getActiveVenues() {
+export async function getActiveVenues(regionId: number) {
   const lastRun = db
     .select({
       venueId: scrapeRuns.venueId,
@@ -269,7 +273,7 @@ export async function getActiveVenues() {
     })
     .from(venues)
     .leftJoin(lastRun, eq(venues.id, lastRun.venueId))
-    .where(eq(venues.active, true))
+    .where(and(eq(venues.active, true), eq(venues.regionId, regionId)))
     .orderBy(sql`${lastRun.ranAt} asc nulls first`);
 
   return rows;

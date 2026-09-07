@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { db, events, venues } from "@/db";
+import { db, events, regions, venues } from "@/db";
 import { eq, like } from "drizzle-orm";
 import type { EventType } from "../db/schema";
 import { isAllowedByRobots } from "./fetch";
@@ -183,6 +183,20 @@ async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
 }
 
 export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
+  // Castanet event scraping is a GLOBAL/shared step (spec Section 4), not
+  // region-scoped -- it runs once per full cron cycle, not once per region.
+  // events.regionId is NOT NULL, so every inserted row is stamped with the
+  // single active region's id below. KNOWN INTERIM LIMITATION: this isn't
+  // yet region-aware and will need real per-region logic (e.g. matching
+  // venues within their own region) once a second region actually launches
+  // with its own Castanet-equivalent event source -- intentionally out of
+  // scope for this build.
+  const [region] = await db
+    .select({ id: regions.id })
+    .from(regions)
+    .where(eq(regions.active, true))
+    .limit(1);
+
   // Sequential, not Promise.all: concurrent requests defeat rateLimit()'s
   // serialization and every other fetch in this codebase is one-at-a-time.
   const todayEvents = await fetchAndParse("https://www.castanet.net/events/");
@@ -225,6 +239,7 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
         const matchedVenueId = venueByName.get(e.locationName.toLowerCase()) ?? null;
         return {
           venueId: matchedVenueId,
+          regionId: region.id,
           locationName: matchedVenueId ? null : e.locationName,
           locationAddress: matchedVenueId ? null : e.locationAddress,
           title: e.title,

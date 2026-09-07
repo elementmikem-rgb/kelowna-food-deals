@@ -4,8 +4,8 @@ import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { normalizeText, hashText } from "./hash";
 import { syncBookings } from "./booking-sync";
 import { extractVenueContent } from "./extract";
-import { db } from "@/db";
-import { sql } from "drizzle-orm";
+import { db, regions } from "@/db";
+import { eq, sql } from "drizzle-orm";
 import {
   getActiveVenues,
   getLastContentHash,
@@ -17,19 +17,27 @@ import {
 } from "./upsert";
 
 // Overridable so a one-off manual run (e.g. clearing a backlog) can raise the
-// ceiling without changing the daily scheduled cron's default budget.
-const TOKEN_CEILING = Number(process.env.CRON_TOKEN_CEILING) || 50_000;
+// ceiling without changing the daily scheduled cron's default budget. Now a
+// global cap layered on top of each region's own configured tokenCeiling
+// (Math.min(region.tokenCeiling, envOverride ?? Infinity)), not the only
+// budget that exists -- see runScrapeCycle.
+const CRON_TOKEN_CEILING_OVERRIDE = process.env.CRON_TOKEN_CEILING
+  ? Number(process.env.CRON_TOKEN_CEILING)
+  : undefined;
 // Arbitrary fixed key for this cron's advisory lock -- any int works as long as it's
 // stable across runs and not reused by another job sharing the same database.
 const CRON_LOCK_KEY = 8_412_991;
 
-async function processVenue(venue: {
-  id: number;
-  name: string;
-  website: string | null;
-  menuUrl: string | null;
-  requiresBrowser: boolean;
-}): Promise<{ tokensUsed: number }> {
+async function processVenue(
+  venue: {
+    id: number;
+    name: string;
+    website: string | null;
+    menuUrl: string | null;
+    requiresBrowser: boolean;
+  },
+  regionId: number
+): Promise<{ tokensUsed: number }> {
   const url = venue.menuUrl ?? venue.website;
   if (!url) {
     await logScrapeRun({
@@ -83,8 +91,8 @@ async function processVenue(venue: {
   try {
     const { specials, events, tokensUsed } = await extractVenueContent(normalized);
     tokensSpent = tokensUsed;
-    await replaceVenueSpecials(venue.id, url, specials);
-    await replaceVenueEvents(venue.id, url, events);
+    await replaceVenueSpecials(venue.id, regionId, url, specials);
+    await replaceVenueEvents(venue.id, regionId, url, events);
     await logScrapeRun({
       venueId: venue.id,
       contentHash: hash,
@@ -136,25 +144,33 @@ async function main() {
 }
 
 async function runScrapeCycle() {
-  const venueList = await getActiveVenues();
-  console.log(`Starting scrape run for ${venueList.length} active venue(s)`);
+  const activeRegions = await db.select().from(regions).where(eq(regions.active, true));
 
-  let totalTokens = 0;
   let aborted = false;
 
-  for (const venue of venueList) {
-    if (totalTokens >= TOKEN_CEILING) {
-      aborted = true;
-      console.error(
-        `Token ceiling (${TOKEN_CEILING}) reached — aborting remaining venues starting at "${venue.name}"`
-      );
-      break;
-    }
-    const { tokensUsed } = await processVenue(venue);
-    totalTokens += tokensUsed;
-  }
+  for (const region of activeRegions) {
+    const tokenCeiling = Math.min(region.tokenCeiling, CRON_TOKEN_CEILING_OVERRIDE ?? Infinity);
+    const venueList = await getActiveVenues(region.id);
+    console.log(
+      `Starting scrape run for ${venueList.length} active venue(s) in region ${region.slug}`
+    );
 
-  console.log(`Run complete. Total tokens used: ${totalTokens}`);
+    let totalTokens = 0;
+
+    for (const venue of venueList) {
+      if (totalTokens >= tokenCeiling) {
+        aborted = true;
+        console.error(
+          `Token ceiling (${tokenCeiling}) reached for region ${region.slug} — aborting remaining venues starting at "${venue.name}"`
+        );
+        break;
+      }
+      const { tokensUsed } = await processVenue(venue, region.id);
+      totalTokens += tokensUsed;
+    }
+
+    console.log(`Region ${region.slug} complete. Total tokens used: ${totalTokens}`);
+  }
 
   try {
     const { inserted } = await scrapeCastanetEvents();
