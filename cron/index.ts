@@ -184,8 +184,14 @@ async function runScrapeCycle() {
     console.error("Booking sync failed:", err instanceof Error ? err.message : err);
   }
 
+  // NOT a failing exit: hitting the token ceiling is an expected, deliberate
+  // stop (the rotating "least-recently-scraped first" order in getActiveVenues
+  // means a different tail gets skipped each night, not the same venues every
+  // time), and every other step above still ran to completion. Exiting 1 here
+  // made Railway report a false "crashed" deploy -- and send a crash email --
+  // on every single ordinary night this ceiling was reached.
   if (aborted) {
-    process.exitCode = 1;
+    console.warn("Run finished with venues skipped due to the token ceiling (not a failure).");
   }
 }
 
