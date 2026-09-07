@@ -10,6 +10,7 @@ const sendSchema = z.object({ venueId: z.number().int().positive() });
 
 function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: string, mailingAddress: string): string {
   const venueUrl = `https://kelownafooddeals.shop/venues/${venueId}`;
+  const advertiseUrl = "https://kelownafooddeals.shop/advertise";
   return `
     <p>Hey there,</p>
     <p>I run Kelowna Food Deals — a site that tracks happy hours and food/drink deals
@@ -19,6 +20,9 @@ function buildOutreachHtml(venueName: string, venueId: number, unsubscribeUrl: s
     than guess wrong. Does everything look right? And if you've got specials or events that
     aren't on your website but you'd want people to know about, just reply here and I'll add
     them.</p>
+    <p>Separately — if you'd ever want your listing to pin to the top of the homepage, or
+    push a specific special or seasonal menu, there's a paid option for that too:
+    <a href="${advertiseUrl}">${advertiseUrl}</a>. No pressure either way, just flagging it's there.</p>
     <p>Thanks,<br>Mike</p>
     <hr style="margin-top:24px;border:none;border-top:1px solid #ddd;">
     <p style="font-size:12px;color:#888;">
