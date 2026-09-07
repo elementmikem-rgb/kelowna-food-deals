@@ -4,12 +4,26 @@ import { and, gte, lt, eq, sql } from "drizzle-orm";
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
 // blog/SEO content gets crawled far more than it gets actually visited, and
 // the analytics would mostly measure bot traffic instead of real people.
+// "bot" alone as a substring already catches most ...bot-named agents
+// (googlebot, bingbot, duckduckbot, adsbot-google, etc.) — the explicit
+// names below are for agents that DON'T contain "bot" in their UA string,
+// plus generic scripted-HTTP-client signatures that a real browser never sends.
 const BOT_UA_RE =
-  /bot|crawler|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegrambot|discordbot|slackbot|curl|wget|python-requests|axios|go-http-client|headlesschrome|phantomjs|puppeteer|playwright|ahrefsbot|semrushbot|mj12bot|dotbot|petalbot|gptbot|claudebot|anthropic|ccbot|bytespider|amazonbot|applebot/i;
+  /bot|crawler|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegrambot|discordbot|slackbot|curl|wget|python-requests|axios|go-http-client|headlesschrome|phantomjs|puppeteer|playwright|selenium|ahrefsbot|semrushbot|mj12bot|dotbot|petalbot|gptbot|claudebot|anthropic|ccbot|bytespider|amazonbot|applebot|mediapartners-google|google-inspectiontool|lighthouse|pagespeed|ia_archiver|w3c_validator|okhttp|node-fetch|java\/|libwww-perl|scrapy|postmanruntime|insomnia|httpclient|urllib|aiohttp|reqwest|yandex|pingdom|uptimerobot|site24x7|newrelic|gtmetrix|hetrixtools|statuscake|masscan|zgrab|censys|nmap/i;
+
+// A genuine browser's UA always carries a version-token structure like
+// "Mozilla/5.0 (...) AppleWebKit/... (KHTML, like Gecko) ...". A UA that is
+// present but skips that shape entirely (no "Mozilla" token at all) is a
+// script or library that simply didn't bother spoofing one — catches
+// generic automation the named-bot list above can't enumerate one by one.
+function looksLikeNonBrowser(userAgent: string): boolean {
+  return !/mozilla\//i.test(userAgent);
+}
 
 export function isBotUserAgent(userAgent: string | null): boolean {
   if (!userAgent) return true; // no UA at all is almost always a script, not a browser
-  return BOT_UA_RE.test(userAgent);
+  if (BOT_UA_RE.test(userAgent)) return true;
+  return looksLikeNonBrowser(userAgent);
 }
 
 interface TrackEventParams {
