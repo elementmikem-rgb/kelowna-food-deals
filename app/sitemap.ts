@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
 import { db, venues, specials } from "@/db";
-import { eq, isNull, max } from "drizzle-orm";
+import { and, eq, isNull, max } from "drizzle-orm";
+import { getCurrentRegion } from "@/lib/regions";
 import { BLOG_POSTS } from "@/lib/blog-data";
-
-const BASE_URL = "https://kelownafooddeals.shop";
 
 // Without this, Next prerenders the sitemap once at build time and it never
 // regenerates -- venues added by the nightly cron wouldn't appear until the
@@ -11,10 +10,13 @@ const BASE_URL = "https://kelownafooddeals.shop";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const region = await getCurrentRegion();
+  const BASE_URL = `https://${region.domain}`;
+
   const activeVenues = await db
     .select({ id: venues.id })
     .from(venues)
-    .where(eq(venues.active, true));
+    .where(and(eq(venues.active, true), eq(venues.regionId, region.id)));
 
   // venues has no updatedAt column, so derive a real per-venue lastModified
   // from its most recently verified special rather than always "now".
