@@ -87,6 +87,15 @@ export function startOfDayPacific(dateStr: string): Date {
   return new Date(base);
 }
 
+// Inclusive day count between two YYYY-MM-DD dates (e.g. the same day is 1 day,
+// not 0) -- shared by the booking checkout price calc and its pre-checkout
+// preview so the two can never quote a different total for the same range.
+export function daysInclusive(start: string, end: string): number {
+  const a = new Date(`${start}T00:00:00Z`).getTime();
+  const b = new Date(`${end}T00:00:00Z`).getTime();
+  return Math.round((b - a) / (1000 * 60 * 60 * 24)) + 1;
+}
+
 export function dowShortName(dow: number): string {
   return DOW_NAMES[dow] ?? "?";
 }

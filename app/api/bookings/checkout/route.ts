@@ -6,7 +6,8 @@ import { verifyBookingToken, type BookingSelection } from "@/lib/booking-token";
 import { checkAvailability } from "@/lib/booking-availability";
 import { getStripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
-import { pacificTodayISODate } from "@/lib/time";
+import { pacificTodayISODate, daysInclusive } from "@/lib/time";
+import { stripeFeeCents } from "@/lib/stripe-fee";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelownafooddeals.shop";
 // Stripe requires a Checkout session's expires_at to be at least 30 minutes out, so
@@ -23,12 +24,6 @@ const HOLD_MS = 30 * 60 * 1000;
 const STRIPE_EXPIRY_MARGIN_MS = 60_000;
 
 const bodySchema = z.object({ verifiedToken: z.string() });
-
-function daysBetween(start: string, end: string): number {
-  const a = new Date(`${start}T00:00:00Z`).getTime();
-  const b = new Date(`${end}T00:00:00Z`).getTime();
-  return Math.round((b - a) / (1000 * 60 * 60 * 24)) + 1;
-}
 
 // Deterministic per-product(+category) lock key so two concurrent checkouts for the
 // same capped slot serialize here instead of racing the availability check below.
@@ -67,7 +62,7 @@ export async function POST(req: NextRequest) {
     .where(eq(monetizationSettings.productType, selection.productType));
   if (!settings) return NextResponse.json({ error: "unknown product" }, { status: 400 });
 
-  const days = daysBetween(selection.startDate, selection.endDate);
+  const days = daysInclusive(selection.startDate, selection.endDate);
   if (days < settings.minDays || days > settings.maxDays) {
     return NextResponse.json(
       { error: `Choose between ${settings.minDays} and ${settings.maxDays} days` },
@@ -159,6 +154,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Those dates are no longer available" }, { status: 409 });
   }
 
+  // Charged as its own line item rather than folded into unit_amount so the
+  // buyer sees exactly what it is on the Stripe receipt, not just a higher
+  // placement price. bookings.priceCents stays the base amount above (what we
+  // actually keep) -- the fee is a pass-through, not part of our revenue.
+  const feeCents = stripeFeeCents(priceCents);
+
   let sessionUrl: string | null = null;
   let sessionId: string | null = null;
   try {
@@ -170,6 +171,17 @@ export async function POST(req: NextRequest) {
             currency: "cad",
             product_data: { name: `${selection.productType} placement — Kelowna Food Deals` },
             unit_amount: priceCents,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "cad",
+            product_data: {
+              name: "Card processing fee",
+              description: "Covers the payment processor's fee",
+            },
+            unit_amount: feeCents,
           },
           quantity: 1,
         },

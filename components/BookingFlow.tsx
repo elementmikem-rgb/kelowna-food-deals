@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import type { BookingProductType, SpecialCategory } from "@/db/schema";
 import { CATEGORY_LABELS, formatPrice } from "@/lib/format";
+import { stripeFeeCents } from "@/lib/stripe-fee";
+import { daysInclusive } from "@/lib/time";
 
 interface VenueOption {
   id: number;
@@ -253,12 +255,19 @@ export function BookingFlow({
       {availability === "unavailable" && (
         <p className="text-xs text-stale">Not available for those dates — try a different range.</p>
       )}
-      {availability === "available" && startDate && endDate && (
-        <p className="text-xs text-muted-2">
-          Available. Price: {formatPrice(settings.priceCentsPerDay)}/day
-          (between {settings.minDays} and {settings.maxDays} days).
-        </p>
-      )}
+      {availability === "available" && startDate && endDate && (() => {
+        const days = daysInclusive(startDate, endDate);
+        const baseCents = settings.priceCentsPerDay * days;
+        const feeCents = stripeFeeCents(baseCents);
+        return (
+          <p className="text-xs text-muted-2">
+            Available. {formatPrice(settings.priceCentsPerDay)}/day × {days} day{days === 1 ? "" : "s"} ={" "}
+            {formatPrice(baseCents)} + {formatPrice(feeCents)} card processing fee ={" "}
+            <strong className="text-foreground/80">{formatPrice(baseCents + feeCents)} total</strong>
+            {" "}(between {settings.minDays} and {settings.maxDays} days).
+          </p>
+        );
+      })()}
 
       <label className="flex flex-col gap-1 text-sm text-muted">
         Your email
