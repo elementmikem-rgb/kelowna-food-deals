@@ -21,8 +21,9 @@ import {
 // global cap layered on top of each region's own configured tokenCeiling
 // (Math.min(region.tokenCeiling, envOverride ?? Infinity)), not the only
 // budget that exists -- see runScrapeCycle.
-const CRON_TOKEN_CEILING_OVERRIDE = process.env.CRON_TOKEN_CEILING
-  ? Number(process.env.CRON_TOKEN_CEILING)
+const parsedCronTokenCeiling = Number(process.env.CRON_TOKEN_CEILING);
+const CRON_TOKEN_CEILING_OVERRIDE = Number.isFinite(parsedCronTokenCeiling)
+  ? parsedCronTokenCeiling
   : undefined;
 // Arbitrary fixed key for this cron's advisory lock -- any int works as long as it's
 // stable across runs and not reused by another job sharing the same database.

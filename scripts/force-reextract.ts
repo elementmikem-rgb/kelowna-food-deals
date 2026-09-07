@@ -21,13 +21,15 @@ async function main() {
   // since getActiveVenues is now region-scoped.
   const activeRegions = await db.select().from(regions).where(eq(regions.active, true));
 
-  let totalTokens = 0;
   let ok = 0;
   let failed = 0;
+  let grandTotalTokens = 0;
 
   for (const region of activeRegions) {
     const venueList = await getActiveVenues(region.id);
     console.log(`Force re-extracting ${venueList.length} active venue(s) in region ${region.slug}`);
+
+    let totalTokens = 0;
 
     for (const venue of venueList) {
       if (totalTokens >= TOKEN_CEILING) {
@@ -72,9 +74,11 @@ async function main() {
         failed++;
       }
     }
+
+    grandTotalTokens += totalTokens;
   }
 
-  console.log(`Done. ${ok} succeeded, ${failed} failed, ${totalTokens} tokens used.`);
+  console.log(`Done. ${ok} succeeded, ${failed} failed, ${grandTotalTokens} tokens used.`);
 }
 
 main()

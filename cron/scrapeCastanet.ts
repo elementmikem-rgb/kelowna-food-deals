@@ -197,6 +197,11 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
     .where(eq(regions.active, true))
     .limit(1);
 
+  if (!region) {
+    console.error("Castanet scrape skipped: no active region found.");
+    return { inserted: 0 };
+  }
+
   // Sequential, not Promise.all: concurrent requests defeat rateLimit()'s
   // serialization and every other fetch in this codebase is one-at-a-time.
   const todayEvents = await fetchAndParse("https://www.castanet.net/events/");
