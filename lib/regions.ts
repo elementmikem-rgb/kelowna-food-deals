@@ -30,6 +30,25 @@ export async function getRegionById(id: number): Promise<Region | null> {
   return region;
 }
 
+const PRIMARY_REGION_DOMAIN = process.env.PRIMARY_REGION_DOMAIN ?? "kelownafooddeals.shop";
+
+// Resolves the region config for static/ISR-rendered pages (layout metadata,
+// theming, sitemap, robots.txt, the site header) -- these must never call
+// headers()/cookies()/searchParams, since any Dynamic API in a route's render
+// tree forces the whole route to render live on every request, defeating
+// Next.js's static caching. getCurrentRegion() (below) is for genuinely
+// per-request contexts (API routes, admin pages) where that's already true
+// regardless. Once a second region exists behind its own domain, this needs
+// to become domain-aware via routing (not headers()) -- tracked as deferred
+// work in the multi-region spec.
+export async function getPrimaryRegion(): Promise<Region> {
+  const region = await getRegionByDomain(PRIMARY_REGION_DOMAIN);
+  if (!region) {
+    throw new Error(`getPrimaryRegion: no region found for domain "${PRIMARY_REGION_DOMAIN}"`);
+  }
+  return region;
+}
+
 export async function getCurrentRegion(): Promise<Region> {
   const regionId = (await headers()).get("x-region-id");
   if (!regionId) {

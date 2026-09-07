@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db, venues, specials } from "@/db";
 import { and, eq, isNull, max } from "drizzle-orm";
-import { getCurrentRegion } from "@/lib/regions";
+import { getPrimaryRegion } from "@/lib/regions";
 import { BLOG_POSTS } from "@/lib/blog-data";
 
 // Without this, Next prerenders the sitemap once at build time and it never
@@ -10,7 +10,7 @@ import { BLOG_POSTS } from "@/lib/blog-data";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const region = await getCurrentRegion();
+  const region = await getPrimaryRegion();
   const BASE_URL = `https://${region.domain}`;
 
   const activeVenues = await db

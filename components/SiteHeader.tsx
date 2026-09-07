@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteNav } from "./SiteNav";
 import { ShareButton } from "./ShareButton";
-import { getCurrentRegion } from "@/lib/regions";
+import { getPrimaryRegion } from "@/lib/regions";
 
 export async function SiteHeader({
   active,
@@ -19,7 +19,7 @@ export async function SiteHeader({
   // own keyword intent instead of every page sharing the literal brand name.
   heading?: string;
 }) {
-  const region = await getCurrentRegion();
+  const region = await getPrimaryRegion();
   const BrandTag = brandIsHeading ? "h1" : "span";
   const [firstWord, ...rest] = region.brandName.split(" ");
   return (

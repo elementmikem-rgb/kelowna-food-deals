@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Karla, Geist_Mono } from "next/font/google";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
-import { getCurrentRegion } from "@/lib/regions";
+import { getPrimaryRegion } from "@/lib/regions";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const region = await getCurrentRegion();
+  const region = await getPrimaryRegion();
   const siteUrl = `https://${region.domain}`;
   const title = `${region.brandName} — Food & Drink Deals Today`;
   const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} — happy hours and deals, checked daily, not scraped.`;
@@ -48,7 +48,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const region = await getCurrentRegion();
+  const region = await getPrimaryRegion();
   const themeStyle = `:root { --accent: ${region.accentColor}; --accent-dim: ${region.accentDimColor}; --accent-soft: ${region.accentSoftColor}; --background: ${region.backgroundColor}; --foreground: ${region.foregroundColor}; --evergreen: ${region.evergreenColor}; }`;
 
   return (
