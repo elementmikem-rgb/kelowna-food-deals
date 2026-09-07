@@ -80,6 +80,21 @@ export function buildWindow(days: number): AnalyticsWindow {
   return { from, to };
 }
 
+export function buildHourWindow(hours: number): AnalyticsWindow {
+  const now = new Date();
+  const from = new Date(now.getTime() - hours * 60 * 60 * 1000);
+  return { from, to: now };
+}
+
+// fromISO/toISO are plain YYYY-MM-DD dates (from a <input type="date"> picker) --
+// `to` is treated as inclusive by rolling forward to the start of the next day.
+export function buildCustomWindow(fromISO: string, toISO: string): AnalyticsWindow {
+  const from = new Date(`${fromISO}T00:00:00`);
+  const to = new Date(`${toISO}T00:00:00`);
+  to.setDate(to.getDate() + 1);
+  return { from, to };
+}
+
 export function buildPreviousWindow(window: AnalyticsWindow): AnalyticsWindow {
   const spanMs = window.to.getTime() - window.from.getTime();
   return {
@@ -180,16 +195,24 @@ export async function getAnalyticsStats(window: AnalyticsWindow): Promise<Analyt
     .groupBy(analyticsEvents.eventType)
     .orderBy(sql`count(*) desc`);
 
+  // A day-level trend is useless for a 1h/6h/12h/24h window -- everything collapses
+  // into a single bucket. Bucket by hour instead whenever the window spans a day or less.
+  const spanMs = window.to.getTime() - window.from.getTime();
+  const trendBucket =
+    spanMs <= 24 * 60 * 60 * 1000
+      ? sql`to_char(${analyticsEvents.createdAt} at time zone 'America/Vancouver', 'YYYY-MM-DD HH24:00')`
+      : sql`to_char(${analyticsEvents.createdAt} at time zone 'America/Vancouver', 'YYYY-MM-DD')`;
+
   const dailyTrendRaw = await db
     .select({
-      date: sql<string>`to_char(${analyticsEvents.createdAt} at time zone 'America/Vancouver', 'YYYY-MM-DD')`,
+      date: sql<string>`${trendBucket}`,
       pageviews: sql<number>`count(*)::int`,
       visitors: sql<number>`count(distinct ${analyticsEvents.visitorId})::int`,
     })
     .from(analyticsEvents)
     .where(and(inWindow, isPageview))
-    .groupBy(sql`to_char(${analyticsEvents.createdAt} at time zone 'America/Vancouver', 'YYYY-MM-DD')`)
-    .orderBy(sql`to_char(${analyticsEvents.createdAt} at time zone 'America/Vancouver', 'YYYY-MM-DD') asc`);
+    .groupBy(trendBucket)
+    .orderBy(sql`${trendBucket} asc`);
 
   const [prevPageviewCount] = await db
     .select({ count: sql<number>`count(*)::int` })

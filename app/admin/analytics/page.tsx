@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { buildWindow, getAnalyticsStats } from "@/lib/analytics";
+import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats } from "@/lib/analytics";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { AdminShell } from "@/components/AdminShell";
+import { pacificTodayISODate } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -35,34 +36,94 @@ function StatCard({
   );
 }
 
+const HOUR_PRESETS = [1, 6, 12, 24];
+const DAY_PRESETS = [7, 30, 90];
+
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; hours?: string; from?: string; to?: string }>;
 }) {
-  const { days: daysParam } = await searchParams;
-  const days = [7, 30, 90].includes(Number(daysParam)) ? Number(daysParam) : 30;
-  const window = buildWindow(days);
+  const { days: daysParam, hours: hoursParam, from: fromParam, to: toParam } = await searchParams;
+
+  const hours = HOUR_PRESETS.includes(Number(hoursParam)) ? Number(hoursParam) : null;
+  const isCustom = Boolean(fromParam && toParam);
+  const days = !hours && !isCustom && DAY_PRESETS.includes(Number(daysParam)) ? Number(daysParam) : 30;
+
+  const window = isCustom
+    ? buildCustomWindow(fromParam!, toParam!)
+    : hours
+      ? buildHourWindow(hours)
+      : buildWindow(days);
   const stats = await getAnalyticsStats(window);
+
+  // Defaults for the custom picker: whatever's already active, so reopening it
+  // (or tweaking one side) starts from the range currently on screen.
+  const defaultFrom = fromParam ?? window.from.toISOString().slice(0, 10);
+  const defaultTo = toParam ?? new Date(window.to.getTime() - 1).toISOString().slice(0, 10);
 
   return (
     <AdminShell active="analytics">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="font-display text-2xl text-foreground">Analytics</h1>
-        <div className="flex gap-1">
-          {[7, 30, 90].map((d) => (
-            <Link
-              key={d}
-              href={`/admin/analytics?days=${d}`}
-              className={`press-pill rounded-full px-3 py-1 text-xs border ${
-                d === days
-                  ? "bg-accent text-background border-accent"
-                  : "bg-transparent text-muted border-border"
-              }`}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex gap-1">
+            {HOUR_PRESETS.map((h) => (
+              <Link
+                key={h}
+                href={`/admin/analytics?hours=${h}`}
+                className={`press-pill rounded-full px-3 py-1 text-xs border ${
+                  h === hours && !isCustom
+                    ? "bg-accent text-background border-accent"
+                    : "bg-transparent text-muted border-border"
+                }`}
+              >
+                {h}h
+              </Link>
+            ))}
+            {DAY_PRESETS.map((d) => (
+              <Link
+                key={d}
+                href={`/admin/analytics?days=${d}`}
+                className={`press-pill rounded-full px-3 py-1 text-xs border ${
+                  d === days && !hours && !isCustom
+                    ? "bg-accent text-background border-accent"
+                    : "bg-transparent text-muted border-border"
+                }`}
+              >
+                {d}d
+              </Link>
+            ))}
+          </div>
+          <form
+            action="/admin/analytics"
+            method="get"
+            className={`flex items-center gap-1 rounded-full border px-2 py-1 text-xs ${
+              isCustom ? "border-accent" : "border-border"
+            }`}
+          >
+            <input
+              type="date"
+              name="from"
+              defaultValue={defaultFrom}
+              max={pacificTodayISODate()}
+              className="bg-transparent text-foreground text-xs w-[9.5rem] outline-none"
+            />
+            <span className="text-muted-2">–</span>
+            <input
+              type="date"
+              name="to"
+              defaultValue={defaultTo}
+              max={pacificTodayISODate()}
+              className="bg-transparent text-foreground text-xs w-[9.5rem] outline-none"
+            />
+            <button
+              type="submit"
+              className="press-pill rounded-full px-2 py-0.5 text-xs bg-accent text-background"
             >
-              {d}d
-            </Link>
-          ))}
+              Go
+            </button>
+          </form>
         </div>
       </div>
 
