@@ -84,7 +84,7 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
               // sender-supplied — see lib/inbox-data.ts for why inbound never
               // sets bodyHtml.
               <div
-                className="text-sm text-muted whitespace-pre-wrap overflow-x-auto [&_a]:text-accent-dim [&_a]:underline"
+                className="text-sm text-muted whitespace-pre-wrap overflow-x-auto w-full min-w-0 [&_a]:text-accent-dim [&_a]:underline"
                 // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{ __html: m.bodyHtml }}
               />
