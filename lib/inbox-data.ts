@@ -59,7 +59,8 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         createdAt: outreachSends.createdAt,
       })
       .from(outreachSends)
-      .leftJoin(venues, eq(outreachSends.venueId, venues.id)),
+      .leftJoin(venues, eq(outreachSends.venueId, venues.id))
+      .where(eq(outreachSends.hiddenFromInbox, false)),
   ]);
 
   const threads = new Map<string, InboxThread>();
@@ -155,7 +156,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       db
         .select()
         .from(outreachSends)
-        .where(eq(outreachSends.venueId, venueId))
+        .where(and(eq(outreachSends.venueId, venueId), eq(outreachSends.hiddenFromInbox, false)))
         .orderBy(outreachSends.createdAt),
       db
         .select()
@@ -231,7 +232,13 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       db
         .select()
         .from(outreachSends)
-        .where(and(isNull(outreachSends.venueId), eq(outreachSends.toEmail, email)))
+        .where(
+          and(
+            isNull(outreachSends.venueId),
+            eq(outreachSends.toEmail, email),
+            eq(outreachSends.hiddenFromInbox, false)
+          )
+        )
         .orderBy(outreachSends.createdAt),
     ]);
     if (inbound.length === 0 && sends.length === 0) return null;

@@ -29,7 +29,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
   const [replyText, setReplyText] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [actionBusy, setActionBusy] = useState(false);
-  const [actionResult, setActionResult] = useState<{ kind: "unsubscribe" | "block" | "forward"; ok: boolean } | null>(null);
+  const [actionResult, setActionResult] = useState<{ kind: "unsubscribe" | "block" | "forward" | "delete"; ok: boolean } | null>(null);
   const [forwardOpen, setForwardOpen] = useState(false);
   const [forwardTo, setForwardTo] = useState("");
   const [forwardNote, setForwardNote] = useState("");
@@ -77,6 +77,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
     // outreachSends rows removed, so don't bail out on an empty inboundIds --
     // only bail when there's truly nothing to delete on either side.
     if (inboundIds.length === 0 && !venueId && !contactEmail) return;
+    if (!window.confirm("Delete this conversation? This can't be undone.")) return;
     setActionBusy(true);
     try {
       const res = await fetch("/api/admin/inbox/delete", {
@@ -85,6 +86,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
         body: JSON.stringify({ ids: inboundIds, venueId, contactEmail }),
       });
       if (res.ok) router.push("/admin/inbox");
+      else setActionResult({ kind: "delete", ok: false });
     } finally {
       setActionBusy(false);
     }
@@ -214,13 +216,11 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
         </button>
         {actionResult && actionResult.kind !== "forward" && (
           <span className={`text-xs ${actionResult.ok ? "text-evergreen" : "text-stale"}`}>
-            {actionResult.kind === "unsubscribe"
-              ? actionResult.ok
-                ? "Unsubscribed."
-                : "Unsubscribe failed — try again."
-              : actionResult.ok
-                ? "Sender blocked."
-                : "Block failed — try again."}
+            {actionResult.kind === "unsubscribe" &&
+              (actionResult.ok ? "Unsubscribed." : "Unsubscribe failed — try again.")}
+            {actionResult.kind === "block" &&
+              (actionResult.ok ? "Sender blocked." : "Block failed — try again.")}
+            {actionResult.kind === "delete" && "Delete failed — try again."}
           </span>
         )}
       </div>

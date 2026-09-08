@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."outreach_sends" ADD COLUMN "hidden_from_inbox" boolean DEFAULT false NOT NULL;

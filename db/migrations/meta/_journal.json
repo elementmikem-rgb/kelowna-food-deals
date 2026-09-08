@@ -176,6 +176,20 @@
       "when": 1788832183375,
       "tag": "0024_wild_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788872797189,
+      "tag": "0025_nifty_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788880535250,
+      "tag": "0026_harsh_stark_industries",
+      "breakpoints": true
     }
   ]
 }

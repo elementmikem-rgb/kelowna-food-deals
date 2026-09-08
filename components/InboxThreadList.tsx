@@ -66,8 +66,13 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keys, action }),
       });
-      if (res.ok) window.location.reload();
-      else setBusy(false);
+      // A 207 (partial failure) is still res.ok -- check the body, not just status.
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (res.ok && data.ok) window.location.reload();
+      else {
+        window.alert("Some conversations couldn't be updated. Please try again.");
+        setBusy(false);
+      }
     } catch {
       setBusy(false);
     }
@@ -84,7 +89,8 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keys: [key], action }),
       });
-      if (res.ok) window.location.reload();
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (res.ok && data.ok) window.location.reload();
       else setBusy(false);
     } catch {
       setBusy(false);
@@ -185,13 +191,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                 <div className="flex flex-col gap-1 shrink-0">
                   <button
                     onClick={() => bulkAction2(t.key, t.archived ? "unarchive" : "archive")}
-                    className="text-[11px] text-muted hover:text-foreground px-2 py-1.5"
+                    disabled={busy}
+                    className="text-[11px] text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50"
                   >
                     {t.archived ? "Unarchive" : "Archive"}
                   </button>
                   <button
                     onClick={() => bulkAction2(t.key, "delete")}
-                    className="text-[11px] text-danger/80 hover:text-danger px-2 py-1.5"
+                    disabled={busy}
+                    className="text-[11px] text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50"
                   >
                     Delete
                   </button>

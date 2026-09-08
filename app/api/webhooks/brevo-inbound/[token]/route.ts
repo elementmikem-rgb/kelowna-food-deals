@@ -45,6 +45,12 @@ async function fetchAndStoreAttachments(inboundEmailId: number, attachments: Bre
         continue;
       }
       const buffer = Buffer.from(await res.arrayBuffer());
+      // ContentLength above is sender-declared; re-check the actual downloaded
+      // size before writing a base64 blob into the row.
+      if (buffer.length > MAX_ATTACHMENT_BYTES) {
+        console.error(`Skipping oversized attachment "${att.Name}": actual size ${buffer.length} bytes`);
+        continue;
+      }
       await db.insert(emailAttachments).values({
         inboundEmailId,
         fileName: att.Name,

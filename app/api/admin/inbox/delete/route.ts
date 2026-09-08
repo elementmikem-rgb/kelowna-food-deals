@@ -12,9 +12,12 @@ const deleteSchema = z
     // getInboxThreads() also builds a thread entry from outreachSends alone, so
     // deleting only inboundEmails leaves the thread reappearing with just the
     // outbound copies. Pass the thread's venueId/contactEmail so the matching
-    // sends get removed too, matching what "Delete" looks like it does.
+    // sends get hidden too, matching what "Delete" looks like it does.
+    // Not .email() -- this only has to match venues.contactEmail for a WHERE
+    // clause, and that column is never format-validated on write, so a
+    // legacy non-RFC value here must not 400 the whole delete.
     venueId: z.number().int().positive().nullable().optional(),
-    contactEmail: z.string().email().nullable().optional(),
+    contactEmail: z.string().nullable().optional(),
   })
   .refine((v) => v.ids.length > 0 || v.venueId || v.contactEmail, {
     message: "nothing to delete",
@@ -37,11 +40,16 @@ export async function POST(req: NextRequest) {
     await db.delete(inboundEmails).where(inArray(inboundEmails.id, ids));
   }
 
+  // Hidden, not deleted -- a hard delete here would remove the "already sent"
+  // record app/api/admin/outreach/send/route.ts's re-contact guard depends on,
+  // silently re-opening the venue for a second cold outreach email, and would
+  // also erase /admin/outreach's send history for it.
   if (venueId) {
-    await db.delete(outreachSends).where(eq(outreachSends.venueId, venueId));
+    await db.update(outreachSends).set({ hiddenFromInbox: true }).where(eq(outreachSends.venueId, venueId));
   } else if (contactEmail) {
     await db
-      .delete(outreachSends)
+      .update(outreachSends)
+      .set({ hiddenFromInbox: true })
       .where(and(isNull(outreachSends.venueId), eq(outreachSends.toEmail, contactEmail)));
   }
 

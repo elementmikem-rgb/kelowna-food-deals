@@ -103,6 +103,12 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   openedAt: timestamp("opened_at", { withTimezone: true }),
   clickedAt: timestamp("clicked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // Set by the admin inbox's "Delete" action. Hidden, not deleted -- the row
+  // must survive so app/api/admin/outreach/send/route.ts's "already sent"
+  // guard still sees it (a hard delete here would silently re-open the venue
+  // for a second cold outreach email) and so /admin/outreach's send history
+  // stays intact.
+  hiddenFromInbox: boolean("hidden_from_inbox").notNull().default(false),
 });
 
 export const inboundEmails = specialsSchema.table("inbound_emails", {
