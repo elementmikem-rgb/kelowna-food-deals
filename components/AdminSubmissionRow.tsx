@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { reviewResultSchema } from "@/lib/submission-review";
+import { reviewResultSchema } from "@/lib/submission-review-schema";
 import { formatPrice } from "@/lib/format";
 
 interface SubmissionRowData {
