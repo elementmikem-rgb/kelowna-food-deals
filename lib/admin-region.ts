@@ -62,10 +62,11 @@ export function regionScopeCondition(column: PgColumn, scope: number[] | "all"):
   return scope === "all" ? undefined : inArray(column, scope);
 }
 
-// Still used by app/admin/outreach, app/admin/revenue, app/admin/sponsored,
-// and app/admin/submissions pages, which are migrated to getSelectedAdminScope()
-// in a later task, not this one. Keep alongside the new scope-based API rather
-// than breaking those callers.
+// As of Task 5, no page in this codebase still calls this -- outreach,
+// revenue, sponsored, and submissions all migrated to getSelectedAdminScope().
+// Kept exported regardless: the parent spec's own constraint is that this
+// single-cookie API must not be deleted, only superseded, in case anything
+// outside this plan's scope still depends on it.
 export async function getSelectedAdminRegionId(): Promise<number | "all"> {
   const raw = (await cookies()).get(ADMIN_REGION_COOKIE)?.value;
   if (raw === "all") return "all";
