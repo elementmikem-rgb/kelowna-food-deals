@@ -281,7 +281,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
                 dangerouslySetInnerHTML={{ __html: m.bodyHtml }}
               />
             ) : (
-              <p className="text-sm text-muted whitespace-pre-wrap">{m.bodyText}</p>
+              <p className="text-sm text-muted whitespace-pre-wrap break-words">{m.bodyText}</p>
             )}
             {m.attachments.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-1">
