@@ -82,11 +82,15 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
             confirmCount={special.confirmCount}
           />
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          {/* Negative margin offsets the added padding so the enlarged tap target
+              doesn't push these rows further apart -- rows here are packed close
+              (py-2.5 per <li>), so a real touch target matters even more than in
+              the card view. */}
           <button
             onClick={handleConfirm}
             disabled={confirmState !== "idle"}
-            className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default"
+            className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default px-2 py-2 -my-2"
           >
             {confirmState === "idle" && "Confirm this deal"}
             {confirmState === "sending" && "Sending…"}
@@ -96,7 +100,7 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
           <button
             onClick={handleReport}
             disabled={reportState !== "idle"}
-            className="relative z-10 text-[11px] text-muted-2 hover:text-muted disabled:cursor-default"
+            className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
           >
             {reportState === "idle" && "Report incorrect"}
             {reportState === "sending" && "Sending…"}

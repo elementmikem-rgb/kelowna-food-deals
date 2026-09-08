@@ -22,6 +22,10 @@
      booking, submission, and admin forms), not just the stale-badge color
      the name suggests -- the old value made error text hard to read. */
   --stale: #776841;
+  /* A muted brick-red for destructive/flagging actions ("Report incorrect"),
+     distinct from --accent's orange lean so a report action doesn't read as
+     a primary CTA. 5.63:1 against --background. */
+  --danger: #a83232;
 }
 
 @theme inline {
@@ -38,6 +42,7 @@
   --color-gold: var(--gold);
   --color-border: var(--border);
   --color-stale: var(--stale);
+  --color-danger: var(--danger);
   --font-display: var(--font-fraunces);
   --font-body: var(--font-karla);
   --font-mono: var(--font-geist-mono);

@@ -83,7 +83,7 @@ export function EventCard({ event }: { event: EventWithVenue }) {
         <button
           onClick={handleReport}
           disabled={reportState !== "idle"}
-          className="relative z-10 text-xs text-muted-2 hover:text-muted disabled:cursor-default"
+          className="relative z-10 text-xs text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2.5 -my-2.5"
         >
           {reportState === "idle" && "Report incorrect"}
           {reportState === "sending" && "Sending…"}

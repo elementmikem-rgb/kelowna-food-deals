@@ -114,11 +114,14 @@ export function SpecialCard({
             confirmCount={special.confirmCount}
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          {/* py-2.5 gives each button a ~44px tap target (not just the text's own
+              height) -- these sit stacked closely across many specials per venue,
+              so a real touch target matters more than it looks like it should. */}
           <button
             onClick={handleConfirm}
             disabled={confirmState !== "idle"}
-            className="relative z-10 text-xs text-evergreen hover:underline disabled:cursor-default"
+            className="relative z-10 text-xs text-evergreen hover:underline disabled:cursor-default px-2 py-2.5 -my-2.5"
           >
             {confirmState === "idle" && "Confirm this deal"}
             {confirmState === "sending" && "Sending…"}
@@ -128,7 +131,7 @@ export function SpecialCard({
           <button
             onClick={handleReport}
             disabled={reportState !== "idle"}
-            className="relative z-10 text-xs text-muted-2 hover:text-muted disabled:cursor-default"
+            className="relative z-10 text-xs text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2.5 -my-2.5"
           >
             {reportState === "idle" && "Report incorrect"}
             {reportState === "sending" && "Sending…"}

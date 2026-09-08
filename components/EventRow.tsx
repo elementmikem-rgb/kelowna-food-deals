@@ -84,7 +84,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
         <button
           onClick={handleReport}
           disabled={reportState !== "idle"}
-          className="relative z-10 text-[11px] text-muted-2 hover:text-muted disabled:cursor-default"
+          className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
         >
           {reportState === "idle" && "Report incorrect"}
           {reportState === "sending" && "Sending…"}
