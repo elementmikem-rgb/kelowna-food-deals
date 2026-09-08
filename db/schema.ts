@@ -116,6 +116,7 @@ export const inboundEmails = specialsSchema.table("inbound_emails", {
   textBody: text("text_body"),
   htmlBody: text("html_body"),
   read: boolean("read").notNull().default(false),
+  archivedAt: timestamp("archived_at", { withTimezone: true }), // null = active/inbox
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -393,4 +394,27 @@ export const monetizationSettings = specialsSchema.table("monetization_settings"
   priceCentsPerDay: integer("price_cents_per_day").notNull(),
   minDays: integer("min_days").notNull(),
   maxDays: integer("max_days").notNull(),
+});
+
+// Keyed by email, not venueId -- an inboundEmails row's venueId can be null
+// (no match found; see app/api/webhooks/brevo-inbound/[token]/route.ts's
+// fallback matching), so blocking has to work by address alone.
+export const blockedSenders = specialsSchema.table("blocked_senders", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  blockedAt: timestamp("blocked_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Base64-encoded, following this project's existing pattern for stored
+// images (submissions.photoData, venuePhotos.photoData) rather than
+// introducing external blob storage for a low-volume admin inbox.
+export const emailAttachments = specialsSchema.table("email_attachments", {
+  id: serial("id").primaryKey(),
+  inboundEmailId: integer("inbound_email_id")
+    .notNull()
+    .references(() => inboundEmails.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type").notNull(),
+  fileData: text("file_data").notNull(), // base64
+  sizeBytes: integer("size_bytes").notNull(),
 });
