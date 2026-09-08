@@ -6,14 +6,22 @@
   --surface-raised: #ecdcac;
   --foreground: #2a2818;
   --muted: #6d6248;
-  --muted-2: #a3946c;
+  /* Darkened from #a3946c (2.54:1 against --background, fails WCAG AA) to
+     4.67:1 -- same hue, just enough darker to be legible for small text
+     like badges and timestamps. */
+  --muted-2: #746849;
   --accent: #c14a1f;
   --accent-dim: #8f3315;
   --accent-soft: #f0c68a;
   --evergreen: #33502c;
   --gold: #c98f1f;
   --border: #ddc98f;
-  --stale: #b3a274;
+  /* Darkened from #b3a274 (2.14:1 against --background, fails WCAG AA) to
+     4.64:1. This is also the site's form/action error-message color (see
+     every "Failed to send" / "Failed -- try again" message across the
+     booking, submission, and admin forms), not just the stale-badge color
+     the name suggests -- the old value made error text hard to read. */
+  --stale: #776841;
 }
 
 @theme inline {
