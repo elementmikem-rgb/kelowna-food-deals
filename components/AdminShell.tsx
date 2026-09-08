@@ -28,10 +28,10 @@ export async function AdminShell({
   const selectedProvinceId = rawProvinceId === "all" || !rawProvinceId ? "all" : Number(rawProvinceId);
   const selectedRegionId = rawRegionId === "all" || !rawRegionId ? "all" : Number(rawRegionId);
 
-  // `scope` isn't passed to AdminNav (the nav only needs the raw selected ids
-  // to render the dropdowns) -- it's computed here so Task 5-7's admin pages
-  // have a single already-computed AdminScope available via
-  // getSelectedAdminScope() directly, not routed through AdminShell.
+  // AdminNav only needs the raw selected ids to render the dropdowns, not a
+  // resolved AdminScope -- getSelectedAdminScope() is exported directly from
+  // lib/admin-region.ts for Task 5-7's admin pages to import themselves,
+  // rather than being computed here and threaded through AdminShell.
   const [{ pendingSubmissions, unreadInbox, flaggedCount }, countryRows, provinceRows, regionRows] =
     await Promise.all([
       getAdminNavCounts(),

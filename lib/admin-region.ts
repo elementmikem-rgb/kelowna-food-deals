@@ -13,25 +13,22 @@ export interface AdminScope {
   regionIds: number[] | "all";
 }
 
-// A single region selection always wins (most specific). Falling back through
-// province -> country -> "no selection yet" mirrors the exact fallback order
-// the old single-cookie getSelectedAdminRegionId() used, just with two more
-// levels above it.
+// A single region selection always wins (most specific), then province, then
+// country. The route resets deeper cookies to "all" whenever a broader level
+// is picked, so each level must be checked for its own real (non-"all") value
+// before falling through to the next -- an OR'd "all" check across all three
+// levels would let a province/country pick collapse straight to unfiltered.
 export async function getSelectedAdminScope(): Promise<AdminScope> {
   const jar = await cookies();
   const regionRaw = jar.get(ADMIN_REGION_COOKIE)?.value;
   const provinceRaw = jar.get(ADMIN_PROVINCE_COOKIE)?.value;
   const countryRaw = jar.get(ADMIN_COUNTRY_COOKIE)?.value;
 
-  if (regionRaw === "all" || provinceRaw === "all" || countryRaw === "all") {
-    return { regionIds: "all" };
-  }
-
-  if (regionRaw && !Number.isNaN(Number(regionRaw))) {
+  if (regionRaw && regionRaw !== "all" && !Number.isNaN(Number(regionRaw))) {
     return { regionIds: [Number(regionRaw)] };
   }
 
-  if (provinceRaw && !Number.isNaN(Number(provinceRaw))) {
+  if (provinceRaw && provinceRaw !== "all" && !Number.isNaN(Number(provinceRaw))) {
     const rows = await db
       .select({ id: regions.id })
       .from(regions)
@@ -39,13 +36,17 @@ export async function getSelectedAdminScope(): Promise<AdminScope> {
     return { regionIds: rows.map((r) => r.id) };
   }
 
-  if (countryRaw && !Number.isNaN(Number(countryRaw))) {
+  if (countryRaw && countryRaw !== "all" && !Number.isNaN(Number(countryRaw))) {
     const rows = await db
       .select({ id: regions.id })
       .from(regions)
       .innerJoin(provinces, eq(regions.provinceId, provinces.id))
       .where(eq(provinces.countryId, Number(countryRaw)));
     return { regionIds: rows.map((r) => r.id) };
+  }
+
+  if (regionRaw === "all" || provinceRaw === "all" || countryRaw === "all") {
+    return { regionIds: "all" };
   }
 
   // Nothing selected yet (fresh admin session) -- default to the current
