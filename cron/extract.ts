@@ -31,6 +31,18 @@ const extractedSpecialSchema = z.object({
   evidence_quote: z.string().min(15),
 });
 
+const extractedMenuItemSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().nullable(),
+  price_cents: z.number().int().nonnegative(),
+  confidence: z.number().min(0).max(1),
+  extraction_notes: z.string().nullable(),
+  // A named item + its own price ("Fish Tacos $16") is already a short quote,
+  // so this floor is lower than specials'/events' -- 15 chars would reject
+  // plenty of real, short menu lines.
+  evidence_quote: z.string().min(6),
+});
+
 const extractedEventSchema = z.object({
   title: z.string().min(1),
   description: z.string().nullable(),
@@ -65,12 +77,15 @@ export type ExtractedEvent = Omit<z.infer<typeof extractedEventSchema>, "evidenc
   event_type: EventType;
 };
 
+export type ExtractedMenuItem = Omit<z.infer<typeof extractedMenuItemSchema>, "evidence_quote">;
+
 const extractionResultSchema = z.object({
   specials: z.array(z.unknown()).default([]),
   events: z.array(z.unknown()).default([]),
+  menu_items: z.array(z.unknown()).default([]),
 });
 
-const SYSTEM_PROMPT = `You extract two kinds of listings from raw scraped page text for a Kelowna, BC venue: food/drink SPECIALS and scheduled EVENTS (live music, trivia, karaoke, sports nights). A page may contain both, either, or neither.
+const SYSTEM_PROMPT = `You extract three kinds of listings from raw scraped page text for a Kelowna, BC venue: food/drink SPECIALS, scheduled EVENTS (live music, trivia, karaoke, sports nights), and regular MENU ITEMS. The text may be several of the venue's own pages concatenated together (each preceded by a "=== PAGE: <url> ===" marker) -- treat it as one combined source. A page may contain any combination of these, or none.
 
 SPECIALS rules, no exceptions:
 - Extract ONLY specials that are EXPLICITLY stated with a stated price OR an explicit discount (e.g. "$5 off", "half price wings", "$8 caesars"). A time window on its own (e.g. "Happy Hour 3-6pm") is NOT a qualifying special unless a price or discount is also stated somewhere near it. Do NOT infer, guess, or invent a special that is not clearly written in the text.
@@ -91,9 +106,16 @@ EVENTS rules, no exceptions:
 - event_type: "live_music" for bands/DJs/performers, "trivia" for trivia/quiz nights, "karaoke", "sports_night" for game-watching nights, "other" for anything else that qualifies.
 - cover_charge_cents: whole cents if a cover/ticket price is explicitly stated, otherwise null (null does not disqualify the event — most local live music nights are free).
 
-Shared rules for BOTH specials and events:
-- evidence_quote: for every item you report, copy a short VERBATIM substring (exact characters, no paraphrasing) directly from the provided page text proving this item is real (the price/discount language for a special; the day/date + event-type language for an event). If you cannot find and copy such a literal substring, do not report that item at all — this is not optional.
-- If the text contains no qualifying specials and/or no qualifying events, return empty arrays for those. Empty arrays are correct, expected answers for most pages — do not force a result.
+MENU ITEMS rules, no exceptions:
+- Extract regular a-la-carte menu items: named dish/drink + its stated price. Unlike specials, a menu item does NOT need promotional framing — the venue's everyday burger, pizza, or cocktail listing counts, as long as it has a real name and a real price.
+- Do NOT extract items from a "Happy Hour"/"Specials"/"Promotions" section here — those belong in the specials array instead (extract them there, not as menu items, so the same line never appears in both arrays).
+- Do NOT extract items with no stated price (e.g. "Ask your server", "MP"/market price, or a category heading with no price of its own).
+- If the source text is a very long full menu, prioritize the most prominent/signature items rather than exhaustively transcribing every single line — extract at most 40 items per page, favoring named dishes over minor variations (e.g. skip listing every burger topping add-on as its own item).
+- description: a short one-line summary of what's included, if the text gives one (e.g. ingredients). Null if none stated.
+
+Shared rules for ALL THREE (specials, events, menu items):
+- evidence_quote: for every item you report, copy a short VERBATIM substring (exact characters, no paraphrasing) directly from the provided page text proving this item is real (the price/discount language for a special; the day/date + event-type language for an event; the name + price for a menu item). If you cannot find and copy such a literal substring, do not report that item at all — this is not optional.
+- If the text contains no qualifying specials, events, and/or menu items, return empty arrays for those. Empty arrays are correct, expected answers for most pages — do not force a result.
 - confidence: 0 to 1. Lower confidence (below 0.6) whenever the day/date or time window is ambiguous, inferred from vague wording, or the source text itself looked stale/uncertain. Use 1.0 only when everything relevant is explicitly and unambiguously stated.
 - extraction_notes: brief note on any ambiguity, or null if none.
 - Never fabricate a price, a day, a date, or a quote. When in doubt, omit the item entirely rather than guess.`;
@@ -101,6 +123,7 @@ Shared rules for BOTH specials and events:
 export interface ExtractionOutcome {
   specials: ExtractedSpecial[];
   events: ExtractedEvent[];
+  menuItems: ExtractedMenuItem[];
   tokensUsed: number;
 }
 
@@ -127,7 +150,12 @@ function evidenceContainsPrice(quote: string, priceCents: number): boolean {
   return new RegExp(`(?<![\\d.])\\$?\\s?(?:${forms.join("|")})(?![\\d])`).test(quote);
 }
 
-const MAX_PAGE_CHARS = 20000;
+// Raised from 20000 to accommodate several of a venue's pages concatenated
+// together (see index.ts's multi-page fetch) -- Haiku's context window
+// comfortably fits this, and the per-page truncation risk this guards
+// against (see the warning below) matters more now that one truncated
+// batch can silently drop a whole extra page, not just the tail of one.
+const MAX_PAGE_CHARS = 60000;
 
 export async function extractVenueContent(pageText: string): Promise<ExtractionOutcome> {
   if (pageText.length > MAX_PAGE_CHARS) {
@@ -143,19 +171,21 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 8192,
+    // Raised from 8192: menu_items can add dozens of extra items to the
+    // output on a venue with a big menu page, on top of specials/events.
+    max_tokens: 16384,
     system: SYSTEM_PROMPT,
     messages: [
       {
         role: "user",
-        content: `Today's date is ${pacificTodayISODate()} (Kelowna, BC). Here is the raw scraped page text. Extract specials and events per the rules.\n\n---\n${truncated}\n---`,
+        content: `Today's date is ${pacificTodayISODate()} (Kelowna, BC). Here is the raw scraped page text (possibly several pages concatenated, each marked with "=== PAGE: <url> ==="). Extract specials, events, and menu items per the rules.\n\n---\n${truncated}\n---`,
       },
     ],
     tools: [
       {
         name: "report_venue_content",
         description:
-          "Report the extracted specials and events, or empty arrays for whichever kind doesn't qualify.",
+          "Report the extracted specials, events, and menu items, or empty arrays for whichever kind doesn't qualify.",
         input_schema: {
           type: "object",
           properties: {
@@ -237,8 +267,33 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
                 ],
               },
             },
+            menu_items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  description: { type: ["string", "null"] },
+                  price_cents: { type: "integer" },
+                  confidence: { type: "number" },
+                  extraction_notes: { type: ["string", "null"] },
+                  evidence_quote: {
+                    type: "string",
+                    description: "Verbatim substring copied from the source text proving the name + price is real.",
+                  },
+                },
+                required: [
+                  "name",
+                  "description",
+                  "price_cents",
+                  "confidence",
+                  "extraction_notes",
+                  "evidence_quote",
+                ],
+              },
+            },
           },
-          required: ["specials", "events"],
+          required: ["specials", "events", "menu_items"],
         },
       },
     ],
@@ -320,5 +375,41 @@ export async function extractVenueContent(pageText: string): Promise<ExtractionO
     });
   }
 
-  return { specials: verifiedSpecials, events: verifiedEvents, tokensUsed };
+  const verifiedMenuItems: ExtractedMenuItem[] = [];
+  for (const raw of parsed.data.menu_items) {
+    const itemParsed = extractedMenuItemSchema.safeParse(raw);
+    if (!itemParsed.success) {
+      console.warn(`dropped malformed menu item: ${itemParsed.error.message}`);
+      continue;
+    }
+    const m = itemParsed.data;
+    const quote = collapseWhitespace(m.evidence_quote);
+    if (!haystack.includes(quote)) {
+      console.warn(`dropped menu item "${m.name}": evidence_quote not found verbatim in source text`);
+      continue;
+    }
+    // Unlike specials, a menu item always needs a real matching price -- no
+    // "discount language instead of a price" fallback, since there's no
+    // discount concept for a regular menu listing.
+    if (!evidenceContainsPrice(quote, m.price_cents)) {
+      console.warn(
+        `dropped menu item "${m.name}": claimed price ${m.price_cents} cents does not appear in evidence_quote ("${m.evidence_quote}")`
+      );
+      continue;
+    }
+    const { evidence_quote: _evidence_quote, ...rest } = m;
+    verifiedMenuItems.push({
+      ...rest,
+      extraction_notes: rest.extraction_notes
+        ? `${rest.extraction_notes} | evidence: "${m.evidence_quote}"`
+        : `evidence: "${m.evidence_quote}"`,
+    });
+  }
+
+  return {
+    specials: verifiedSpecials,
+    events: verifiedEvents,
+    menuItems: verifiedMenuItems,
+    tokensUsed,
+  };
 }

@@ -1,6 +1,6 @@
-import { db, specials, events, scrapeRuns, venues } from "@/db";
+import { db, specials, events, menuItems, scrapeRuns, venues } from "@/db";
 import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
-import type { ExtractedSpecial, ExtractedEvent } from "./extract";
+import type { ExtractedSpecial, ExtractedEvent, ExtractedMenuItem } from "./extract";
 import { pacificTodayISODate } from "@/lib/time";
 
 // Identity key for "is this the same special/event as before" -- deliberately
@@ -27,6 +27,14 @@ function specialIdentityKey(s: {
     s.endTime,
     s.category,
   ]);
+}
+
+function menuItemIdentityKey(m: {
+  name: string;
+  description: string | null;
+  priceCents: number | null;
+}): string {
+  return JSON.stringify([m.name, m.description, m.priceCents]);
 }
 
 function eventIdentityKey(e: {
@@ -73,6 +81,16 @@ export async function markVenueStillCurrent(venueId: number): Promise<void> {
     .set({ lastVerifiedAt: now })
     .where(
       and(eq(events.venueId, venueId), isNull(events.archivedAt), isNotNull(events.sourceUrl))
+    );
+  await db
+    .update(menuItems)
+    .set({ lastVerifiedAt: now })
+    .where(
+      and(
+        eq(menuItems.venueId, venueId),
+        isNull(menuItems.archivedAt),
+        isNotNull(menuItems.sourceUrl)
+      )
     );
 }
 
@@ -240,6 +258,96 @@ export async function replaceVenueEvents(
   });
 }
 
+// Same reconciliation approach as replaceVenueSpecials/replaceVenueEvents --
+// see the comment on replaceVenueSpecials. Unlike specials, a menu item
+// never needs "no price but has discount language" leniency: it's just the
+// regular a-la-carte listing, so every item always has a real price.
+export async function replaceVenueMenuItems(
+  venueId: number,
+  sourceUrl: string,
+  extracted: ExtractedMenuItem[]
+): Promise<void> {
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    const existing = await tx
+      .select()
+      .from(menuItems)
+      .where(
+        and(
+          eq(menuItems.venueId, venueId),
+          isNull(menuItems.archivedAt),
+          isNotNull(menuItems.sourceUrl)
+        )
+      );
+
+    const existingByKey = new Map<string, (typeof existing)[number][]>();
+    for (const row of existing) {
+      const key = menuItemIdentityKey(row);
+      const list = existingByKey.get(key);
+      if (list) list.push(row);
+      else existingByKey.set(key, [row]);
+    }
+
+    const keptIds = new Set<number>();
+    const toInsert: ExtractedMenuItem[] = [];
+
+    for (const m of extracted) {
+      const key = menuItemIdentityKey({
+        name: m.name,
+        description: m.description,
+        priceCents: m.price_cents,
+      });
+      const match = existingByKey.get(key)?.find((r) => !keptIds.has(r.id));
+      if (match) {
+        keptIds.add(match.id);
+        await tx
+          .update(menuItems)
+          .set({ lastVerifiedAt: now, confidence: m.confidence, extractionNotes: m.extraction_notes })
+          .where(eq(menuItems.id, match.id));
+      } else {
+        toInsert.push(m);
+      }
+    }
+
+    const toArchiveIds = existing.filter((r) => !keptIds.has(r.id)).map((r) => r.id);
+    if (toArchiveIds.length > 0) {
+      await tx.update(menuItems).set({ archivedAt: now }).where(inArray(menuItems.id, toArchiveIds));
+    }
+
+    if (toInsert.length > 0) {
+      await tx.insert(menuItems).values(
+        toInsert.map((m) => ({
+          venueId,
+          name: m.name,
+          description: m.description,
+          priceCents: m.price_cents,
+          lastVerifiedAt: now,
+          sourceUrl,
+          confidence: m.confidence,
+          extractionNotes: m.extraction_notes,
+        }))
+      );
+    }
+  });
+}
+
+// Appends newly discovered candidate pages (see discover.ts) to a venue's
+// sourceUrls, deduped -- a plain array update rather than anything
+// per-element, since this only ever grows and is small (capped by
+// discoverVenueLinks' own MAX_DISCOVERED).
+export async function mergeVenueSourceUrls(venueId: number, newUrls: string[]): Promise<void> {
+  if (newUrls.length === 0) return;
+  const [venue] = await db
+    .select({ sourceUrls: venues.sourceUrls })
+    .from(venues)
+    .where(eq(venues.id, venueId))
+    .limit(1);
+  if (!venue) return;
+  const merged = Array.from(new Set([...venue.sourceUrls, ...newUrls]));
+  if (merged.length === venue.sourceUrls.length) return;
+  await db.update(venues).set({ sourceUrls: merged }).where(eq(venues.id, venueId));
+}
+
 export async function logScrapeRun(row: {
   venueId: number;
   contentHash: string | null;
@@ -269,6 +377,7 @@ export async function getActiveVenues(regionId: number) {
       name: venues.name,
       website: venues.website,
       menuUrl: venues.menuUrl,
+      sourceUrls: venues.sourceUrls,
       requiresBrowser: venues.requiresBrowser,
     })
     .from(venues)

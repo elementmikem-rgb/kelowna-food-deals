@@ -210,6 +210,15 @@ const SEED_VENUES: SeedVenue[] = [
     website: "https://www.skinnydukes.com/",
     menuUrl: "https://www.skinnydukes.com/",
   },
+  {
+    name: "Packing House Pub",
+    address: "663 Finns Rd, Kelowna, BC V1X 5B8",
+    phone: "250-765-0667",
+    website: "https://woodsmangroup.com/packing-house-pub/",
+    menuUrl: "https://woodsmangroup.com/packing-house-pub/",
+    instagramHandle: "packinghousepub",
+    sourceUrls: ["https://www.facebook.com/packing.pub/"],
+  },
 
   // West Kelowna
   {
