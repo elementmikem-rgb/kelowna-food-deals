@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type AdminSection = "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics";
+type AdminSection = "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics" | "flagged";
 
 function Badge({ count, tone }: { count: number; tone: "accent" | "evergreen" }) {
   if (count <= 0) return null;
@@ -83,12 +83,14 @@ export function AdminNav({
   active,
   pendingSubmissions,
   unreadInbox,
+  flaggedCount,
   regions,
   selectedRegionId,
 }: {
   active: AdminSection | null;
   pendingSubmissions: number;
   unreadInbox: number;
+  flaggedCount: number;
   regions: { id: number; slug: string; brandName: string }[];
   selectedRegionId: number | "all";
 }) {
@@ -99,6 +101,7 @@ export function AdminNav({
     { key: "sponsored", href: "/admin/sponsored", label: "Sponsored" },
     { key: "revenue", href: "/admin/revenue", label: "Revenue" },
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
+    { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },
   ];
 
   return (

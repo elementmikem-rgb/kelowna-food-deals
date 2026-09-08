@@ -11,7 +11,7 @@ export async function AdminShell({
   maxWidth = "max-w-4xl",
   children,
 }: {
-  active: "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics" | null;
+  active: "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics" | "flagged" | null;
   // Sub-pages (compose, a single thread) sit one level under a nav section --
   // they keep the same persistent nav but add a breadcrumb back to it.
   backHref?: string;
@@ -19,7 +19,7 @@ export async function AdminShell({
   maxWidth?: string;
   children: React.ReactNode;
 }) {
-  const [{ pendingSubmissions, unreadInbox }, regionRows, selectedRegionId] = await Promise.all([
+  const [{ pendingSubmissions, unreadInbox, flaggedCount }, regionRows, selectedRegionId] = await Promise.all([
     getAdminNavCounts(),
     db.select({ id: regions.id, slug: regions.slug, brandName: regions.brandName }).from(regions),
     getSelectedAdminRegionId(),
@@ -31,6 +31,7 @@ export async function AdminShell({
         active={active}
         pendingSubmissions={pendingSubmissions}
         unreadInbox={unreadInbox}
+        flaggedCount={flaggedCount}
         regions={regionRows}
         selectedRegionId={selectedRegionId}
       />
