@@ -21,10 +21,11 @@ interface InboxThreadProps {
   venueId: number | null;
   displayName: string;
   contactEmail: string | null;
+  archived: boolean;
   messages: Message[];
 }
 
-export function InboxThread({ venueId, displayName, contactEmail, messages }: InboxThreadProps) {
+export function InboxThread({ venueId, displayName, contactEmail, archived, messages }: InboxThreadProps) {
   const [replyText, setReplyText] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [actionBusy, setActionBusy] = useState(false);
@@ -72,13 +73,16 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
   }
 
   async function handleDelete() {
-    if (inboundIds.length === 0) return;
+    // A thread with no inbound messages yet (outbound-only) still needs its
+    // outreachSends rows removed, so don't bail out on an empty inboundIds --
+    // only bail when there's truly nothing to delete on either side.
+    if (inboundIds.length === 0 && !venueId && !contactEmail) return;
     setActionBusy(true);
     try {
       const res = await fetch("/api/admin/inbox/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: inboundIds }),
+        body: JSON.stringify({ ids: inboundIds, venueId, contactEmail }),
       });
       if (res.ok) router.push("/admin/inbox");
     } finally {
@@ -134,6 +138,7 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
           toEmail: forwardTo.trim(),
           subject: original.subject?.startsWith("Fwd:") ? original.subject : `Fwd: ${original.subject ?? displayName}`,
           body: quoted,
+          persist: false,
         }),
       });
       setActionResult({ kind: "forward", ok: res.ok });
@@ -190,8 +195,8 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
         <button onClick={handleMarkUnread} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
           Mark unread
         </button>
-        <button onClick={() => handleArchive(true)} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
-          Archive
+        <button onClick={() => handleArchive(!archived)} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
+          {archived ? "Unarchive" : "Archive"}
         </button>
         <button onClick={handleDelete} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
           Delete

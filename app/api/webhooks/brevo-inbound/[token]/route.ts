@@ -4,6 +4,14 @@ import { eq, sql } from "drizzle-orm";
 
 const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024; // 4MB, matches app/api/submit/route.ts's MAX_PHOTO_BYTES
 
+// ContentType is sender-controlled MIME text from the reply's own email
+// headers -- it's later echoed back as the Content-Type on an admin-facing
+// route that serves it inline (app/api/admin/inbox/attachments/[id]). An
+// unfiltered value there is a stored-XSS vector (e.g. a "photo" whose real
+// type is text/html). Mirror app/api/submit/route.ts's ALLOWED_MIME, plus
+// PDF since a menu update is often one.
+const ALLOWED_ATTACHMENT_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+
 interface BrevoInboundItem {
   MessageId?: string;
   InReplyTo?: string;
@@ -23,6 +31,10 @@ async function fetchAndStoreAttachments(inboundEmailId: number, attachments: Bre
     try {
       if (att.ContentLength > MAX_ATTACHMENT_BYTES) {
         console.error(`Skipping oversized attachment "${att.Name}": ${att.ContentLength} bytes`);
+        continue;
+      }
+      if (!ALLOWED_ATTACHMENT_MIME.includes(att.ContentType)) {
+        console.error(`Skipping attachment "${att.Name}" with disallowed content type: ${att.ContentType}`);
         continue;
       }
       const res = await fetch(`https://api.brevo.com/v3/inbound/attachments/${att.DownloadToken}`, {

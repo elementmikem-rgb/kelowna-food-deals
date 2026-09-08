@@ -52,29 +52,41 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
   // via a dedicated bulk route scoped by thread key instead of raw ids.
   async function bulkAction(action: "archive" | "unarchive" | "delete") {
     if (selected.size === 0) return;
+    // Selection can include keys that filter/search has since hidden --
+    // never act on a row the admin can no longer see.
+    const keys = [...selected].filter((k) => filtered.some((t) => t.key === k));
+    if (keys.length === 0) return;
+    if (action === "delete" && !window.confirm(`Delete ${keys.length} conversation${keys.length === 1 ? "" : "s"}? This can't be undone.`)) {
+      return;
+    }
     setBusy(true);
     try {
-      await fetch("/api/admin/inbox/bulk", {
+      const res = await fetch("/api/admin/inbox/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keys: [...selected], action }),
+        body: JSON.stringify({ keys, action }),
       });
-      window.location.reload();
-    } finally {
+      if (res.ok) window.location.reload();
+      else setBusy(false);
+    } catch {
       setBusy(false);
     }
   }
 
   async function bulkAction2(key: string, action: "archive" | "unarchive" | "delete") {
+    if (action === "delete" && !window.confirm("Delete this conversation? This can't be undone.")) {
+      return;
+    }
     setBusy(true);
     try {
-      await fetch("/api/admin/inbox/bulk", {
+      const res = await fetch("/api/admin/inbox/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keys: [key], action }),
       });
-      window.location.reload();
-    } finally {
+      if (res.ok) window.location.reload();
+      else setBusy(false);
+    } catch {
       setBusy(false);
     }
   }
@@ -85,13 +97,19 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
         <input
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelected(new Set());
+          }}
           placeholder="Search conversations…"
           className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
         />
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | "unread" | "archived")}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as "all" | "unread" | "archived");
+            setSelected(new Set());
+          }}
           className="rounded-lg border border-border bg-background px-2 py-2 text-sm"
         >
           <option value="all">All</option>

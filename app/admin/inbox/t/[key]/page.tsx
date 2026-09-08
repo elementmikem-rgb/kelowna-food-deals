@@ -21,6 +21,7 @@ export default async function ThreadPage({ params }: PageProps) {
         venueId={thread.venueId}
         displayName={thread.displayName}
         contactEmail={thread.contactEmail}
+        archived={thread.archived}
         messages={thread.messages.map((m) => ({ ...m, at: m.at.toISOString() }))}
       />
     </AdminShell>

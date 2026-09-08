@@ -10,6 +10,10 @@ const sendSchema = z.object({
   toEmail: z.string().email(),
   subject: z.string().min(1).max(300),
   body: z.string().min(1).max(10000),
+  // Forwarding a thread to a third party (e.g. an accountant) reuses this route
+  // but must NOT create a new inbox thread for that recipient -- persist:false
+  // sends the email without inserting an outreachSends row.
+  persist: z.boolean().optional().default(true),
 });
 
 // The composed reply is plain text typed by the admin, but it's sent as an HTML
@@ -33,8 +37,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  const { venueId, toEmail, subject, body } = parsed.data;
+  const { venueId, toEmail, subject, body, persist } = parsed.data;
   const htmlBody = escapeHtml(body).replace(/\n/g, "<br>");
+
+  if (!persist) {
+    try {
+      await sendOutreachEmail({ to: toEmail, subject, htmlContent: htmlBody });
+      return NextResponse.json({ ok: true });
+    } catch {
+      return NextResponse.json({ error: "failed to send" }, { status: 502 });
+    }
+  }
 
   // Every reply gets a persisted outbound copy now, venue-matched or not, so it
   // shows up in that thread's history in the admin inbox either way.

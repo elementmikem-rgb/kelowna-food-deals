@@ -80,13 +80,13 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         contactEmail: e.fromEmail,
         lastSnippet: snippet(safeInboundText(e.textBody, e.htmlBody)),
         lastAt: e.receivedAt,
-        unreadCount: e.read ? 0 : 1,
+        unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
         archived: e.archivedAt !== null,
         messageCount: 1,
       });
     } else {
       existing.messageCount++;
-      if (!e.read) existing.unreadCount++;
+      if (!e.read && e.archivedAt === null) existing.unreadCount++;
       if (isNewest) {
         existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
@@ -135,6 +135,7 @@ export interface ThreadDetail {
   venueId: number | null;
   displayName: string;
   contactEmail: string | null;
+  archived: boolean;
   messages: ThreadMessage[];
 }
 
@@ -214,6 +215,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       venueId: venue.id,
       displayName: venue.name,
       contactEmail: venue.contactEmail,
+      archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };
   }
@@ -285,6 +287,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       venueId: null,
       displayName: inbound[0]?.fromName ?? email,
       contactEmail: email,
+      archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };
   }

@@ -1,5 +1,5 @@
 import { db, submissions, inboundEmails } from "@/db";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { getFlaggedSpecials, getFlaggedEvents } from "./flagged-data";
 
 // Cheap, count-only queries for the admin nav badges -- deliberately not reusing
@@ -15,7 +15,10 @@ export async function getAdminNavCounts(): Promise<{
       .select({ n: count() })
       .from(submissions)
       .where(and(eq(submissions.status, "needs_review"))),
-    db.select({ n: count() }).from(inboundEmails).where(eq(inboundEmails.read, false)),
+    db
+      .select({ n: count() })
+      .from(inboundEmails)
+      .where(and(eq(inboundEmails.read, false), isNull(inboundEmails.archivedAt))),
     // flaggedCount is computed from the same filtered queries the flagged queue
     // itself renders (rather than a third, separately-filtered count query) so the
     // badge can never drift from what the queue actually shows.
