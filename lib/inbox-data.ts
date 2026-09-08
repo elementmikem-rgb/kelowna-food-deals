@@ -1,5 +1,5 @@
-import { db, outreachSends, inboundEmails, venues } from "@/db";
-import { and, eq, isNull } from "drizzle-orm";
+import { db, outreachSends, inboundEmails, venues, emailAttachments } from "@/db";
+import { and, eq, isNull, inArray } from "drizzle-orm";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -28,6 +28,7 @@ export interface InboxThread {
   lastSnippet: string;
   lastAt: Date;
   unreadCount: number;
+  archived: boolean;
   messageCount: number;
 }
 
@@ -43,6 +44,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         textBody: inboundEmails.textBody,
         htmlBody: inboundEmails.htmlBody,
         read: inboundEmails.read,
+        archivedAt: inboundEmails.archivedAt,
         receivedAt: inboundEmails.receivedAt,
       })
       .from(inboundEmails)
@@ -79,6 +81,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         lastSnippet: snippet(safeInboundText(e.textBody, e.htmlBody)),
         lastAt: e.receivedAt,
         unreadCount: e.read ? 0 : 1,
+        archived: e.archivedAt !== null,
         messageCount: 1,
       });
     } else {
@@ -87,6 +90,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
       if (isNewest) {
         existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
+        existing.archived = e.archivedAt !== null;
       }
     }
   }
@@ -103,6 +107,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         lastSnippet: `You: ${snippet(s.htmlBody)}`,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,
+        archived: existing?.archived ?? false,
         messageCount: (existing?.messageCount ?? 0) + 1,
       });
     } else {
@@ -122,6 +127,7 @@ export interface ThreadMessage {
   bodyText: string | null;
   at: Date;
   inboundId: number | null; // set for inbound messages, used to mark-read
+  attachments: { id: number; fileName: string; contentType: string; sizeBytes: number }[];
 }
 
 export interface ThreadDetail {
@@ -156,6 +162,26 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         .orderBy(inboundEmails.receivedAt),
     ]);
 
+    const inboundIds = inbound.map((e) => e.id);
+    const attachmentRows = inboundIds.length > 0
+      ? await db
+          .select({
+            id: emailAttachments.id,
+            inboundEmailId: emailAttachments.inboundEmailId,
+            fileName: emailAttachments.fileName,
+            contentType: emailAttachments.contentType,
+            sizeBytes: emailAttachments.sizeBytes,
+          })
+          .from(emailAttachments)
+          .where(inArray(emailAttachments.inboundEmailId, inboundIds))
+      : [];
+    const attachmentsByEmail = new Map<number, typeof attachmentRows>();
+    for (const a of attachmentRows) {
+      const list = attachmentsByEmail.get(a.inboundEmailId) ?? [];
+      list.push(a);
+      attachmentsByEmail.set(a.inboundEmailId, list);
+    }
+
     const messages: ThreadMessage[] = [
       ...sends.map((s) => ({
         id: `s${s.id}`,
@@ -166,6 +192,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         bodyText: null,
         at: s.createdAt,
         inboundId: null,
+        attachments: [],
       })),
       ...inbound.map((e) => ({
         id: `i${e.id}`,
@@ -176,6 +203,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         bodyText: safeInboundText(e.textBody, e.htmlBody),
         at: e.receivedAt,
         inboundId: e.id,
+        attachments: attachmentsByEmail.get(e.id) ?? [],
       })),
     ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
@@ -203,6 +231,26 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
     ]);
     if (inbound.length === 0 && sends.length === 0) return null;
 
+    const inboundIds = inbound.map((e) => e.id);
+    const attachmentRows = inboundIds.length > 0
+      ? await db
+          .select({
+            id: emailAttachments.id,
+            inboundEmailId: emailAttachments.inboundEmailId,
+            fileName: emailAttachments.fileName,
+            contentType: emailAttachments.contentType,
+            sizeBytes: emailAttachments.sizeBytes,
+          })
+          .from(emailAttachments)
+          .where(inArray(emailAttachments.inboundEmailId, inboundIds))
+      : [];
+    const attachmentsByEmail = new Map<number, typeof attachmentRows>();
+    for (const a of attachmentRows) {
+      const list = attachmentsByEmail.get(a.inboundEmailId) ?? [];
+      list.push(a);
+      attachmentsByEmail.set(a.inboundEmailId, list);
+    }
+
     const messages: ThreadMessage[] = [
       ...sends.map((s) => ({
         id: `s${s.id}`,
@@ -213,6 +261,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         bodyText: null,
         at: s.createdAt,
         inboundId: null,
+        attachments: [],
       })),
       ...inbound.map((e) => ({
         id: `i${e.id}`,
@@ -223,6 +272,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         bodyText: safeInboundText(e.textBody, e.htmlBody),
         at: e.receivedAt,
         inboundId: e.id,
+        attachments: attachmentsByEmail.get(e.id) ?? [],
       })),
     ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
