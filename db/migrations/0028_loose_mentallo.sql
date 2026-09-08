@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."regions" ALTER COLUMN "province_id" SET NOT NULL;

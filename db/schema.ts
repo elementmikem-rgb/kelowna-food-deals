@@ -16,6 +16,40 @@ import {
 
 export const specialsSchema = pgSchema("specials");
 
+export const countries = specialsSchema.table("countries", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(), // "CA", "US" (ISO 3166-1 alpha-2)
+  name: text("name").notNull(), // "Canada"
+  currency: text("currency").notNull(), // "CAD" (ISO 4217) -- stored for future use, nothing reads it yet
+  // CASL-style default a region can inherit -- nullable because every region already
+  // has to set its own real mailing address today (a hard multi-region-spec
+  // requirement independent of this hierarchy), so a country-level default is a
+  // convenience, not a requirement.
+  mailingAddress: text("mailing_address"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type Country = typeof countries.$inferSelect;
+
+export const provinces = specialsSchema.table(
+  "provinces",
+  {
+    id: serial("id").primaryKey(),
+    countryId: integer("country_id")
+      .notNull()
+      .references(() => countries.id),
+    code: text("code").notNull(), // "BC", "AB", "WA"
+    name: text("name").notNull(), // "British Columbia"
+    // A country can span multiple timezones (BC is Pacific, Ontario is Eastern) --
+    // province is the level where timezone is actually a stable, well-defined fact.
+    // No region-level override: no real case has needed a city to differ from its
+    // own province's timezone.
+    timezone: text("timezone").notNull(), // IANA name, e.g. "America/Vancouver"
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("provinces_country_code_idx").on(table.countryId, table.code)]
+);
+export type Province = typeof provinces.$inferSelect;
+
 export const regions = specialsSchema.table("regions", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(), // "kelowna", "south-okanagan"
@@ -38,6 +72,7 @@ export const regions = specialsSchema.table("regions", {
   tokenCeiling: integer("token_ceiling").notNull().default(50000),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  provinceId: integer("province_id").notNull().references(() => provinces.id),
 });
 export type Region = typeof regions.$inferSelect;
 
