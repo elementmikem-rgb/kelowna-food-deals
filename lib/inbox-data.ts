@@ -1,5 +1,6 @@
 import { db, outreachSends, inboundEmails, venues, emailAttachments } from "@/db";
 import { and, eq, isNull, inArray } from "drizzle-orm";
+import { regionScopeCondition } from "@/lib/admin-region";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -32,7 +33,11 @@ export interface InboxThread {
   messageCount: number;
 }
 
-export async function getInboxThreads(): Promise<InboxThread[]> {
+export async function getInboxThreads(regionIds: number[] | "all"): Promise<InboxThread[]> {
+  // A left join means an unmatched sender's venues.regionId is NULL --
+  // inArray(column, [...]) evaluates NULL to unknown (excluded) under a
+  // specific scope, while regionScopeCondition returns undefined (no filter
+  // at all) under "all", so unmatched threads surface only when unscoped.
   const [inbound, sends] = await Promise.all([
     db
       .select({
@@ -48,7 +53,8 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
         receivedAt: inboundEmails.receivedAt,
       })
       .from(inboundEmails)
-      .leftJoin(venues, eq(inboundEmails.venueId, venues.id)),
+      .leftJoin(venues, eq(inboundEmails.venueId, venues.id))
+      .where(regionScopeCondition(venues.regionId, regionIds)),
     db
       .select({
         venueId: outreachSends.venueId,
@@ -60,7 +66,7 @@ export async function getInboxThreads(): Promise<InboxThread[]> {
       })
       .from(outreachSends)
       .leftJoin(venues, eq(outreachSends.venueId, venues.id))
-      .where(eq(outreachSends.hiddenFromInbox, false)),
+      .where(and(eq(outreachSends.hiddenFromInbox, false), regionScopeCondition(venues.regionId, regionIds))),
   ]);
 
   const threads = new Map<string, InboxThread>();

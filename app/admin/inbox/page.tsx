@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { getInboxThreads } from "@/lib/inbox-data";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 import { InboxThreadList } from "@/components/InboxThreadList";
 import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminInboxPage() {
-  const threads = await getInboxThreads();
+  const { regionIds } = await getSelectedAdminScope();
+  const threads = await getInboxThreads(regionIds);
   const unreadTotal = threads.reduce((sum, t) => sum + t.unreadCount, 0);
 
   return (
