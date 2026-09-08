@@ -2,6 +2,7 @@ import { db, bookings, venues, specials, categorySponsors } from "@/db";
 import { and, asc, eq } from "drizzle-orm";
 import type { SpecialCategory } from "@/db/schema";
 import { endOfDayPacific, pacificTodayISODate } from "@/lib/time";
+import { regionScopeCondition } from "@/lib/admin-region";
 
 export interface PendingBooking {
   id: number;
@@ -18,7 +19,7 @@ export interface PendingBooking {
   conflictDetected: boolean;
 }
 
-export async function getPendingApprovalBookings(regionId?: number): Promise<PendingBooking[]> {
+export async function getPendingApprovalBookings(regionIds: number[] | "all"): Promise<PendingBooking[]> {
   const rows = await db
     .select({
       id: bookings.id,
@@ -37,12 +38,7 @@ export async function getPendingApprovalBookings(regionId?: number): Promise<Pen
     .from(bookings)
     .leftJoin(venues, eq(bookings.venueId, venues.id))
     .leftJoin(specials, eq(bookings.specialId, specials.id))
-    .where(
-      and(
-        eq(bookings.status, "pending_approval"),
-        regionId === undefined ? undefined : eq(venues.regionId, regionId)
-      )
-    )
+    .where(and(eq(bookings.status, "pending_approval"), regionScopeCondition(venues.regionId, regionIds)))
     .orderBy(asc(bookings.createdAt));
   return rows;
 }
@@ -55,7 +51,7 @@ export interface RefundNeeded {
   stripePaymentIntentId: string | null;
 }
 
-export async function getRefundsNeeded(regionId?: number): Promise<RefundNeeded[]> {
+export async function getRefundsNeeded(regionIds: number[] | "all"): Promise<RefundNeeded[]> {
   return db
     .select({
       id: bookings.id,
@@ -70,7 +66,7 @@ export async function getRefundsNeeded(regionId?: number): Promise<RefundNeeded[
       and(
         eq(bookings.status, "rejected"),
         eq(bookings.refundNeeded, true),
-        regionId === undefined ? undefined : eq(venues.regionId, regionId)
+        regionScopeCondition(venues.regionId, regionIds)
       )
     )
     .orderBy(asc(bookings.reviewedAt));

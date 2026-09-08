@@ -2,6 +2,7 @@ import { db, bookings, venues, specials } from "@/db";
 import { and, eq, gte, lt, inArray, sql } from "drizzle-orm";
 import type { BookingProductType } from "@/db/schema";
 import { getTipsInRange } from "./tips-data";
+import { regionScopeCondition } from "@/lib/admin-region";
 
 export interface BookingRevenueRecord {
   id: number;
@@ -38,12 +39,16 @@ function emptyByProduct(): Record<BookingProductType, { totalCents: number; coun
   };
 }
 
-// regionId scopes the sponsorship/booking side of revenue to one region. Tips have
-// no region concept at all -- they're read straight from Stripe checkout sessions
+// regionIds scopes the sponsorship/booking side of revenue to a set of regions. Tips
+// have no region concept at all -- they're read straight from Stripe checkout sessions
 // with no venue/region metadata attached -- so tip totals are always account-wide
-// regardless of the selected region. Callers that need a genuinely combined
-// cross-region total (the "All regions" admin view) pass no regionId.
-export async function getRevenueInRange(from: Date, to: Date, regionId?: number): Promise<RevenueSummary> {
+// regardless of the selected scope. Callers that need a genuinely combined
+// cross-region total (the "All regions" admin view) pass "all".
+export async function getRevenueInRange(
+  from: Date,
+  to: Date,
+  regionIds: number[] | "all"
+): Promise<RevenueSummary> {
   const [tipsSummary, bookingRows] = await Promise.all([
     getTipsInRange(from, to),
     db
@@ -63,7 +68,7 @@ export async function getRevenueInRange(from: Date, to: Date, regionId?: number)
           inArray(bookings.status, REVENUE_STATUSES),
           gte(bookings.createdAt, from),
           lt(bookings.createdAt, to),
-          regionId === undefined ? undefined : eq(venues.regionId, regionId)
+          regionScopeCondition(venues.regionId, regionIds)
         )
       )
       .orderBy(sql`${bookings.createdAt} desc`),

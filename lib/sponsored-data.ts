@@ -1,6 +1,7 @@
 import { db, venues, specials, categorySponsors } from "@/db";
 import { and, asc, eq, gt, isNotNull, isNull } from "drizzle-orm";
 import type { SpecialCategory } from "@/db/schema";
+import { regionScopeCondition } from "@/lib/admin-region";
 
 export interface FeaturedVenue {
   id: number;
@@ -41,7 +42,7 @@ export interface SpecialOption {
   title: string;
 }
 
-export async function getFeaturedVenues(regionId?: number): Promise<FeaturedVenue[]> {
+export async function getFeaturedVenues(regionIds: number[] | "all"): Promise<FeaturedVenue[]> {
   const rows = await db
     .select({ id: venues.id, name: venues.name, featuredUntil: venues.featuredUntil })
     .from(venues)
@@ -49,14 +50,14 @@ export async function getFeaturedVenues(regionId?: number): Promise<FeaturedVenu
       and(
         eq(venues.active, true),
         gt(venues.featuredUntil, new Date()),
-        regionId === undefined ? undefined : eq(venues.regionId, regionId)
+        regionScopeCondition(venues.regionId, regionIds)
       )
     )
     .orderBy(asc(venues.featuredUntil));
   return rows as FeaturedVenue[];
 }
 
-export async function getBoostedSpecials(regionId?: number): Promise<BoostedSpecial[]> {
+export async function getBoostedSpecials(regionIds: number[] | "all"): Promise<BoostedSpecial[]> {
   const rows = await db
     .select({
       id: specials.id,
@@ -71,14 +72,14 @@ export async function getBoostedSpecials(regionId?: number): Promise<BoostedSpec
       and(
         isNull(specials.archivedAt),
         gt(specials.boostedUntil, new Date()),
-        regionId === undefined ? undefined : eq(specials.regionId, regionId)
+        regionScopeCondition(specials.regionId, regionIds)
       )
     )
     .orderBy(asc(specials.boostedUntil));
   return rows as BoostedSpecial[];
 }
 
-export async function getPartnerVenues(regionId?: number): Promise<PartnerVenue[]> {
+export async function getPartnerVenues(regionIds: number[] | "all"): Promise<PartnerVenue[]> {
   const rows = await db
     .select({ id: venues.id, name: venues.name, partnerSince: venues.partnerSince })
     .from(venues)
@@ -86,7 +87,7 @@ export async function getPartnerVenues(regionId?: number): Promise<PartnerVenue[
       and(
         eq(venues.active, true),
         isNotNull(venues.partnerSince),
-        regionId === undefined ? undefined : eq(venues.regionId, regionId)
+        regionScopeCondition(venues.regionId, regionIds)
       )
     )
     .orderBy(asc(venues.partnerSince));
@@ -111,25 +112,21 @@ export async function getActiveCategorySponsors(): Promise<CategorySponsor[]> {
   return rows.filter((r) => r.sponsorUntil === null || r.sponsorUntil.getTime() > now) as CategorySponsor[];
 }
 
-export async function getVenueOptions(regionId?: number): Promise<VenueOption[]> {
+export async function getVenueOptions(regionIds: number[] | "all"): Promise<VenueOption[]> {
   return db
     .select({ id: venues.id, name: venues.name })
     .from(venues)
-    .where(
-      and(eq(venues.active, true), regionId === undefined ? undefined : eq(venues.regionId, regionId))
-    )
+    .where(and(eq(venues.active, true), regionScopeCondition(venues.regionId, regionIds)))
     .orderBy(asc(venues.name));
 }
 
 // All active specials, not just one venue's -- cheap enough (id/venueId/title only)
 // to ship in full and let the client filter by venue as it's picked, rather than
 // adding a round trip per venue selection.
-export async function getSpecialOptions(regionId?: number): Promise<SpecialOption[]> {
+export async function getSpecialOptions(regionIds: number[] | "all"): Promise<SpecialOption[]> {
   return db
     .select({ id: specials.id, venueId: specials.venueId, title: specials.title })
     .from(specials)
-    .where(
-      and(isNull(specials.archivedAt), regionId === undefined ? undefined : eq(specials.regionId, regionId))
-    )
+    .where(and(isNull(specials.archivedAt), regionScopeCondition(specials.regionId, regionIds)))
     .orderBy(asc(specials.title));
 }

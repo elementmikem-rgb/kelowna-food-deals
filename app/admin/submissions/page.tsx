@@ -1,13 +1,13 @@
 import { db, submissions, venues } from "@/db";
-import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
 import { AdminShell } from "@/components/AdminShell";
-import { getSelectedAdminRegionId } from "@/lib/admin-region";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSubmissionsPage() {
-  const selectedRegionId = await getSelectedAdminRegionId();
+  const { regionIds } = await getSelectedAdminScope();
 
   const rows = await db
     .select({
@@ -35,10 +35,11 @@ export default async function AdminSubmissionsPage() {
       and(
         eq(submissions.status, "needs_review"),
         // A submission for a venue that doesn't exist yet has no region to scope by --
-        // keep it visible under any specific-region filter rather than hiding it.
-        selectedRegionId === "all"
+        // keep it visible under any specific scope rather than hiding it, same
+        // behavior as the old single-region version.
+        regionIds === "all"
           ? undefined
-          : or(eq(venues.regionId, selectedRegionId), isNull(submissions.venueId))
+          : or(inArray(venues.regionId, regionIds), isNull(submissions.venueId))
       )
     )
     // Priority submissions first, then oldest-first within each group so a rush

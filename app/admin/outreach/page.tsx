@@ -2,12 +2,12 @@ import { db, venues, outreachSends } from "@/db";
 import { and, eq, isNotNull, desc } from "drizzle-orm";
 import { AdminOutreachRow } from "@/components/AdminOutreachRow";
 import { AdminShell } from "@/components/AdminShell";
-import { getSelectedAdminRegionId } from "@/lib/admin-region";
+import { getSelectedAdminScope, regionScopeCondition } from "@/lib/admin-region";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOutreachPage() {
-  const selectedRegionId = await getSelectedAdminRegionId();
+  const { regionIds } = await getSelectedAdminScope();
 
   const venueRows = await db
     .select({ id: venues.id, name: venues.name, contactEmail: venues.contactEmail })
@@ -18,7 +18,7 @@ export default async function AdminOutreachPage() {
       and(
         isNotNull(venues.contactEmail),
         eq(venues.active, true),
-        selectedRegionId === "all" ? undefined : eq(venues.regionId, selectedRegionId)
+        regionScopeCondition(venues.regionId, regionIds)
       )
     );
 

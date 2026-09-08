@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getRevenueInRange } from "@/lib/revenue-data";
 import { AdminShell } from "@/components/AdminShell";
-import { getSelectedAdminRegionId } from "@/lib/admin-region";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 import { pacificTodayISODate, startOfDayPacific, endOfDayPacific } from "@/lib/time";
 import type { BookingProductType } from "@/db/schema";
 
@@ -58,10 +58,10 @@ export default async function AdminRevenuePage({
 
   const from = startOfDayPacific(fromDate);
   const to = endOfDayPacific(toDate);
-  const selectedRegionId = await getSelectedAdminRegionId();
   // "All regions" is the one place this admin section sums every region's tips
-  // and bookings together rather than scoping to one -- pass no regionId at all.
-  const summary = await getRevenueInRange(from, to, selectedRegionId === "all" ? undefined : selectedRegionId);
+  // and bookings together rather than scoping to some -- pass regionIds "all" through.
+  const { regionIds } = await getSelectedAdminScope();
+  const summary = await getRevenueInRange(from, to, regionIds);
 
   return (
     <AdminShell active="revenue">

@@ -15,14 +15,13 @@ import {
   getActiveCategorySponsors,
 } from "@/lib/sponsored-data";
 import { getPendingApprovalBookings, getRefundsNeeded } from "@/lib/bookings-data";
-import { getSelectedAdminRegionId } from "@/lib/admin-region";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 import { db, monetizationSettings } from "@/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSponsoredPage() {
-  const selectedRegionId = await getSelectedAdminRegionId();
-  const regionFilter = selectedRegionId === "all" ? undefined : selectedRegionId;
+  const { regionIds } = await getSelectedAdminScope();
 
   const [
     featuredVenues,
@@ -35,14 +34,14 @@ export default async function AdminSponsoredPage() {
     refundsNeeded,
     settingsRows,
   ] = await Promise.all([
-    getFeaturedVenues(regionFilter),
-    getBoostedSpecials(regionFilter),
-    getVenueOptions(regionFilter),
-    getSpecialOptions(regionFilter),
-    getPartnerVenues(regionFilter),
+    getFeaturedVenues(regionIds),
+    getBoostedSpecials(regionIds),
+    getVenueOptions(regionIds),
+    getSpecialOptions(regionIds),
+    getPartnerVenues(regionIds),
     getActiveCategorySponsors(),
-    getPendingApprovalBookings(regionFilter),
-    getRefundsNeeded(regionFilter),
+    getPendingApprovalBookings(regionIds),
+    getRefundsNeeded(regionIds),
     db.select().from(monetizationSettings),
   ]);
 

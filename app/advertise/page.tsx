@@ -28,8 +28,8 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
     return verifiedProduct === productType ? (verifiedToken ?? null) : null;
   }
   const [venueOptions, specialOptions, settingsRows] = await Promise.all([
-    getVenueOptions(),
-    getSpecialOptions(),
+    getVenueOptions("all"),
+    getSpecialOptions("all"),
     db.select().from(monetizationSettings),
   ]);
 
