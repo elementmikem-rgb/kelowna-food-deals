@@ -1,5 +1,6 @@
-import { db, submissions, inboundEmails, dealFeedback } from "@/db";
+import { db, submissions, inboundEmails } from "@/db";
 import { and, count, eq } from "drizzle-orm";
+import { getFlaggedSpecials, getFlaggedEvents } from "./flagged-data";
 
 // Cheap, count-only queries for the admin nav badges -- deliberately not reusing
 // getInboxThreads()/the submissions page's full row query, which both join and
@@ -9,17 +10,21 @@ export async function getAdminNavCounts(): Promise<{
   unreadInbox: number;
   flaggedCount: number;
 }> {
-  const [[submissionRow], [inboxRow], [flaggedRow]] = await Promise.all([
+  const [[submissionRow], [inboxRow], flaggedSpecials, flaggedEvents] = await Promise.all([
     db
       .select({ n: count() })
       .from(submissions)
       .where(and(eq(submissions.status, "needs_review"))),
     db.select({ n: count() }).from(inboundEmails).where(eq(inboundEmails.read, false)),
-    db.select({ n: count() }).from(dealFeedback).where(eq(dealFeedback.feedbackType, "dispute")),
+    // flaggedCount is computed from the same filtered queries the flagged queue
+    // itself renders (rather than a third, separately-filtered count query) so the
+    // badge can never drift from what the queue actually shows.
+    getFlaggedSpecials(),
+    getFlaggedEvents(),
   ]);
   return {
     pendingSubmissions: submissionRow?.n ?? 0,
     unreadInbox: inboxRow?.n ?? 0,
-    flaggedCount: flaggedRow?.n ?? 0,
+    flaggedCount: flaggedSpecials.length + flaggedEvents.length,
   };
 }

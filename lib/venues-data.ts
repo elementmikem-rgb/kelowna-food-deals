@@ -93,6 +93,12 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
       venueFeaturedUntil: venues.featuredUntil,
       boostedUntil: specials.boostedUntil,
       venuePartnerSince: venues.partnerSince,
+      venueConfirmedAt: specials.venueConfirmedAt,
+      confirmCount: sql<number>`(
+        select count(*)::int from specials.deal_feedback
+        where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
+          and created_at > now() - interval '30 days'
+      )`,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))

@@ -4,14 +4,22 @@ import { useState } from "react";
 import type { FlaggedSpecial } from "@/lib/flagged-data";
 import { useRouter } from "next/navigation";
 
-export function FlaggedSpecialsPanel({ flagged }: { flagged: FlaggedSpecial[] }) {
+export function FlaggedSpecialsPanel({
+  flagged,
+  apiBasePath = "/api/admin/flagged",
+  emptyMessage = "No flagged specials right now.",
+}: {
+  flagged: FlaggedSpecial[];
+  apiBasePath?: string;
+  emptyMessage?: string;
+}) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<number | null>(null);
 
   async function act(id: number, action: "archive" | "dismiss") {
     setBusyId(id);
     try {
-      await fetch(`/api/admin/flagged/${id}`, {
+      await fetch(`${apiBasePath}/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
@@ -23,7 +31,7 @@ export function FlaggedSpecialsPanel({ flagged }: { flagged: FlaggedSpecial[] })
   }
 
   if (flagged.length === 0) {
-    return <p className="text-sm text-muted">No flagged specials right now.</p>;
+    return <p className="text-sm text-muted">{emptyMessage}</p>;
   }
 
   return (

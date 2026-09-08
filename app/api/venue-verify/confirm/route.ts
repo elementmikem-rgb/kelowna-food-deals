@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, specials } from "@/db";
 import { eq, and } from "drizzle-orm";
@@ -35,6 +36,11 @@ export async function POST(req: NextRequest) {
   if (result.count === 0) {
     return NextResponse.json({ error: "special not found for this venue" }, { status: 404 });
   }
+
+  // Bust the ISR cache so the venue's confirm shows up on the public pages
+  // immediately, rather than up to an hour later per the revalidate = 3600 config.
+  revalidatePath("/");
+  revalidatePath(`/venues/${venueId}`);
 
   return NextResponse.json({ ok: true });
 }

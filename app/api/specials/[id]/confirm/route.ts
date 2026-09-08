@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db, specials, dealFeedback } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/request-rate-limit";
@@ -18,12 +19,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "too many confirmations, try again later" }, { status: 429 });
   }
 
-  const [row] = await db.select({ id: specials.id }).from(specials).where(eq(specials.id, specialId)).limit(1);
+  const [row] = await db.select({ id: specials.id, venueId: specials.venueId }).from(specials).where(eq(specials.id, specialId)).limit(1);
   if (!row) {
     return NextResponse.json({ error: "not found" }, { status: 400 });
   }
 
   await db.insert(dealFeedback).values({ itemId: specialId, kind: "special", feedbackType: "confirm" });
+
+  // Bust the ISR cache so the confirm shows up on the public pages immediately,
+  // rather than up to an hour later per the revalidate = 3600 config.
+  revalidatePath("/");
+  revalidatePath(`/venues/${row.venueId}`);
 
   return NextResponse.json({ ok: true });
 }

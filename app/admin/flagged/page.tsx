@@ -1,16 +1,19 @@
 import { AdminShell } from "@/components/AdminShell";
 import { FlaggedSpecialsPanel } from "@/components/FlaggedSpecialsPanel";
-import { getFlaggedSpecials } from "@/lib/flagged-data";
+import { getFlaggedSpecials, getFlaggedEvents } from "@/lib/flagged-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminFlaggedPage() {
-  const flagged = await getFlaggedSpecials();
+  const [flaggedSpecials, flaggedEvents] = await Promise.all([getFlaggedSpecials(), getFlaggedEvents()]);
 
   return (
     <AdminShell active="flagged" maxWidth="max-w-2xl">
       <h1 className="font-display text-2xl text-foreground">Flagged specials</h1>
-      <FlaggedSpecialsPanel flagged={flagged} />
+      <FlaggedSpecialsPanel flagged={flaggedSpecials} apiBasePath="/api/admin/flagged" emptyMessage="No flagged specials right now." />
+
+      <h2 className="font-display text-2xl text-foreground mt-8">Flagged events</h2>
+      <FlaggedSpecialsPanel flagged={flaggedEvents} apiBasePath="/api/admin/events/flagged" emptyMessage="No flagged events right now." />
     </AdminShell>
   );
 }
