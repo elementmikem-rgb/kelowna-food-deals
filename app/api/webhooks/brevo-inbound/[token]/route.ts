@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, inboundEmails, outreachSends, venues } from "@/db";
+import { db, inboundEmails, outreachSends, venues, blockedSenders, emailAttachments } from "@/db";
 import { eq, sql } from "drizzle-orm";
+
+const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024; // 4MB, matches app/api/submit/route.ts's MAX_PHOTO_BYTES
 
 interface BrevoInboundItem {
   MessageId?: string;
@@ -9,6 +11,39 @@ interface BrevoInboundItem {
   Subject?: string;
   RawTextBody?: string;
   RawHtmlBody?: string;
+  Attachments?: { Name: string; ContentType: string; ContentLength: number; DownloadToken: string }[];
+}
+
+async function fetchAndStoreAttachments(inboundEmailId: number, attachments: BrevoInboundItem["Attachments"]) {
+  if (!attachments || attachments.length === 0) return;
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return;
+
+  for (const att of attachments) {
+    try {
+      if (att.ContentLength > MAX_ATTACHMENT_BYTES) {
+        console.error(`Skipping oversized attachment "${att.Name}": ${att.ContentLength} bytes`);
+        continue;
+      }
+      const res = await fetch(`https://api.brevo.com/v3/inbound/attachments/${att.DownloadToken}`, {
+        headers: { "api-key": apiKey },
+      });
+      if (!res.ok) {
+        console.error(`Failed to fetch attachment "${att.Name}": HTTP ${res.status}`);
+        continue;
+      }
+      const buffer = Buffer.from(await res.arrayBuffer());
+      await db.insert(emailAttachments).values({
+        inboundEmailId,
+        fileName: att.Name,
+        contentType: att.ContentType,
+        fileData: buffer.toString("base64"),
+        sizeBytes: buffer.length,
+      });
+    } catch (err) {
+      console.error(`Error fetching attachment "${att.Name}":`, err instanceof Error ? err.message : err);
+    }
+  }
 }
 
 export async function POST(
@@ -30,6 +65,12 @@ export async function POST(
   for (const item of items) {
     const fromEmail = item.From?.Address?.toLowerCase().trim();
     if (!fromEmail) continue;
+
+    const [blocked] = await db
+      .select({ id: blockedSenders.id })
+      .from(blockedSenders)
+      .where(eq(blockedSenders.email, fromEmail))
+      .limit(1);
 
     const messageId = item.MessageId ?? null;
 
@@ -68,16 +109,22 @@ export async function POST(
       venueId = originalSend?.venueId ?? null;
     }
 
-    await db.insert(inboundEmails).values({
-      venueId,
-      brevoMessageId: messageId,
-      inReplyTo,
-      fromEmail,
-      fromName: item.From?.Name ?? null,
-      subject: item.Subject ?? null,
-      textBody: item.RawTextBody ?? null,
-      htmlBody: item.RawHtmlBody ?? null,
-    });
+    const [inserted] = await db
+      .insert(inboundEmails)
+      .values({
+        venueId,
+        brevoMessageId: messageId,
+        inReplyTo,
+        fromEmail,
+        fromName: item.From?.Name ?? null,
+        subject: item.Subject ?? null,
+        textBody: item.RawTextBody ?? null,
+        htmlBody: item.RawHtmlBody ?? null,
+        archivedAt: blocked ? new Date() : null,
+      })
+      .returning({ id: inboundEmails.id });
+
+    await fetchAndStoreAttachments(inserted.id, item.Attachments);
   }
 
   return NextResponse.json({ ok: true });
