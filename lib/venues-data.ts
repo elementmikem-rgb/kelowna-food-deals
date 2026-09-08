@@ -2,7 +2,7 @@ import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
 import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
-import { pacificTodayISODate } from "./time";
+import { regionTodayISODate } from "./time";
 
 export interface VenueDetail {
   id: number;
@@ -153,8 +153,8 @@ export async function getVenueMenuItems(venueId: number): Promise<VenueMenuItem[
   return rows;
 }
 
-export async function getVenueEvents(venueId: number): Promise<EventWithVenue[]> {
-  const today = pacificTodayISODate();
+export async function getVenueEvents(venueId: number, timezone: string): Promise<EventWithVenue[]> {
+  const today = regionTodayISODate(timezone);
   const rows = await db
     .select({
       id: events.id,

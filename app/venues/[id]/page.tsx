@@ -9,7 +9,7 @@ import {
   getVenuePhotos,
   getVenueMenuItems,
 } from "@/lib/venues-data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
@@ -55,10 +55,12 @@ export default async function VenuePage({ params }: PageProps) {
   // could still reach another region's venue page directly.
   if (!venue || venue.regionId !== region.id) notFound();
 
+  const { timezone } = await getRegionContext(region);
+
   const [venueSpecials, venueEvents, previousSpecials, venuePhotos, venueMenuItems] =
     await Promise.all([
       getVenueSpecials(venueId),
-      getVenueEvents(venueId),
+      getVenueEvents(venueId, timezone),
       getVenuePreviousSpecials(venueId),
       getVenuePhotos(venueId),
       getVenueMenuItems(venueId),

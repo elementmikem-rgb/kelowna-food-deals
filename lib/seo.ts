@@ -1,10 +1,14 @@
 import type { SpecialWithVenue } from "./data";
-import { todayDowPacific, isStale } from "./time";
+import { todayDowInRegion, isStale } from "./time";
 
 const MAX_JSONLD_ITEMS = 80;
 
-export function buildSpecialsJsonLd(specials: SpecialWithVenue[], regionName: string) {
-  const today = todayDowPacific();
+export function buildSpecialsJsonLd(
+  specials: SpecialWithVenue[],
+  regionName: string,
+  timezone: string
+) {
+  const today = todayDowInRegion(timezone);
   // The page only ever shows today's specials (SpecialsBoard filters by day), so the
   // structured data must match: publishing every day-of-week's specials as InStock every
   // day told crawlers something the rendered page didn't say, and kept advertising specials

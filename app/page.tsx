@@ -25,7 +25,7 @@ export default async function Home() {
     getActiveCategorySponsors(),
   ]);
 
-  const jsonLd = buildSpecialsJsonLd(specials, region.brandName);
+  const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone);
   const areas = Array.from(
     new Set(specials.map((s) => s.venueCity).filter((c): c is string => !!c))
   ).sort();

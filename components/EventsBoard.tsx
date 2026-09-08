@@ -33,8 +33,8 @@ export function EventsBoard({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const todayKey = useMemo(
-    () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" }),
-    []
+    () => new Date().toLocaleDateString("en-CA", { timeZone: timezone }),
+    [timezone]
   );
   const upcomingDates = useMemo(
     () => new Set(upcoming.map((e) => e.specificDate).filter((d): d is string => d !== null)),
