@@ -5,7 +5,8 @@ import { BookingFlow } from "@/components/BookingFlow";
 import { getVenueOptions, getSpecialOptions } from "@/lib/sponsored-data";
 import { db, monetizationSettings } from "@/db";
 import type { BookingProductType } from "@/db/schema";
-import { pacificTodayISODate } from "@/lib/time";
+import { regionTodayISODate } from "@/lib/time";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 
 export const metadata = {
   title: "Advertise With Us",
@@ -27,6 +28,8 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
   function tokenFor(productType: BookingProductType): string | null {
     return verifiedProduct === productType ? (verifiedToken ?? null) : null;
   }
+  const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const [venueOptions, specialOptions, settingsRows] = await Promise.all([
     getVenueOptions("all"),
     getSpecialOptions("all"),
@@ -42,12 +45,13 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
     };
   }
 
-  // Computed server-side in Pacific time so the date picker's earliest-selectable
-  // day always agrees with the server's own authoritative check (verify-email and
-  // checkout both reject startDate < pacificTodayISODate()). A client-side
-  // `new Date()` would use the visitor's local/UTC date instead, which disagrees
-  // with Pacific for several hours every evening.
-  const todayISO = pacificTodayISODate();
+  // Computed server-side in the request's own region's timezone so the date
+  // picker's earliest-selectable day always agrees with the server's own
+  // authoritative check (verify-email and checkout both reject
+  // startDate < regionTodayISODate(timezone) for that same region). A
+  // client-side `new Date()` would use the visitor's local/UTC date instead,
+  // which can disagree with the region's timezone for several hours a day.
+  const todayISO = regionTodayISODate(timezone);
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">

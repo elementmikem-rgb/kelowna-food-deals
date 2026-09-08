@@ -82,8 +82,15 @@ export async function getRevenueInRange(
 
   const bookingsTotalCents = bookingRows.reduce((sum, r) => sum + r.priceCents, 0);
 
+  // Tips carry no region at all, so they can only be honestly folded into
+  // totalCents when the scope is genuinely account-wide ("all"). Under any
+  // specific region/province/country scope, adding them in would silently
+  // inflate a scoped total with every other region's tips too -- exactly the
+  // "looks scoped but isn't" bug this whole effort exists to eliminate.
+  const totalCents = regionIds === "all" ? tipsSummary.totalCents + bookingsTotalCents : bookingsTotalCents;
+
   return {
-    totalCents: tipsSummary.totalCents + bookingsTotalCents,
+    totalCents,
     tips: { totalCents: tipsSummary.totalCents, count: tipsSummary.count },
     bookings: {
       totalCents: bookingsTotalCents,

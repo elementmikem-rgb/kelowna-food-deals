@@ -6,8 +6,8 @@ import { bookingProductType, specialCategory } from "@/db/schema";
 import { signBookingToken, type BookingSelection } from "@/lib/booking-token";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { checkRateLimit } from "@/lib/request-rate-limit";
-import { pacificTodayISODate } from "@/lib/time";
-import { getCurrentRegion } from "@/lib/regions";
+import { regionTodayISODate } from "@/lib/time";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 
 const bodySchema = z.object({
   productType: z.enum(bookingProductType),
@@ -21,6 +21,7 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const SITE_URL = `https://${region.domain}`;
 
   const { ok } = await checkRateLimit(req, "bookings-verify-email", 5, 60);
@@ -32,9 +33,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
   }
   // A fully-past range would be charged but could never deliver: the sync job and
-  // approveBooking() both only activate a booking whose range covers today. Pacific,
-  // not UTC, because every other date decision in this codebase is Pacific.
-  if (parsed.data.startDate < pacificTodayISODate()) {
+  // approveBooking() both only activate a booking whose range covers today. The
+  // region's own timezone, not UTC, since this is a per-region public endpoint.
+  if (parsed.data.startDate < regionTodayISODate(timezone)) {
     return NextResponse.json({ error: "Start date can't be in the past" }, { status: 400 });
   }
 

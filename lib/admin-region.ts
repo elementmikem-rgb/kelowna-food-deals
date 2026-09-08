@@ -50,7 +50,7 @@ export async function getSelectedAdminScope(): Promise<AdminScope> {
   }
 
   // Nothing selected yet (fresh admin session) -- default to the current
-  // domain's own region, exactly like the old getSelectedAdminRegionId() did.
+  // domain's own region.
   const current = await getCurrentRegion();
   return { regionIds: [current.id] };
 }
@@ -60,17 +60,4 @@ export async function getSelectedAdminScope(): Promise<AdminScope> {
 // an inArray on whichever column identifies that row's region.
 export function regionScopeCondition(column: PgColumn, scope: number[] | "all"): SQL | undefined {
   return scope === "all" ? undefined : inArray(column, scope);
-}
-
-// As of Task 5, no page in this codebase still calls this -- outreach,
-// revenue, sponsored, and submissions all migrated to getSelectedAdminScope().
-// Kept exported regardless: the parent spec's own constraint is that this
-// single-cookie API must not be deleted, only superseded, in case anything
-// outside this plan's scope still depends on it.
-export async function getSelectedAdminRegionId(): Promise<number | "all"> {
-  const raw = (await cookies()).get(ADMIN_REGION_COOKIE)?.value;
-  if (raw === "all") return "all";
-  if (raw && !Number.isNaN(Number(raw))) return Number(raw);
-  const current = await getCurrentRegion();
-  return current.id;
 }

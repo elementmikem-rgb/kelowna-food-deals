@@ -58,10 +58,12 @@ export default async function AdminRevenuePage({
 
   const from = startOfDayPacific(fromDate);
   const to = endOfDayPacific(toDate);
-  // "All regions" is the one place this admin section sums every region's tips
-  // and bookings together rather than scoping to some -- pass regionIds "all" through.
+  // Tips carry no region, so getRevenueInRange only folds them into totalCents
+  // when regionIds is genuinely "all" -- under any specific scope, totalCents
+  // is bookings-only and tips are shown as their own always-account-wide figure.
   const { regionIds } = await getSelectedAdminScope();
   const summary = await getRevenueInRange(from, to, regionIds);
+  const isAllScope = regionIds === "all";
 
   return (
     <AdminShell active="revenue">
@@ -126,12 +128,21 @@ export default async function AdminRevenuePage({
       </div>
 
       <div className="rounded-xl border border-accent bg-accent-soft/20 p-5 flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-wide text-muted-2">Total revenue</span>
-        <span className="font-display text-4xl text-foreground">{centsToDisplay(summary.totalCents)}</span>
-        <span className="text-xs text-muted-2">
-          {centsToDisplay(summary.tips.totalCents)} in tips + {centsToDisplay(summary.bookings.totalCents)} in
-          sponsorship
+        <span className="text-xs uppercase tracking-wide text-muted-2">
+          {isAllScope ? "Total revenue" : "Sponsorship revenue (this scope)"}
         </span>
+        <span className="font-display text-4xl text-foreground">{centsToDisplay(summary.totalCents)}</span>
+        {isAllScope ? (
+          <span className="text-xs text-muted-2">
+            {centsToDisplay(summary.tips.totalCents)} in tips + {centsToDisplay(summary.bookings.totalCents)} in
+            sponsorship
+          </span>
+        ) : (
+          <span className="text-xs text-muted-2">
+            Tips have no region and always total {centsToDisplay(summary.tips.totalCents)} account-wide -- not
+            included above since this view is scoped.
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

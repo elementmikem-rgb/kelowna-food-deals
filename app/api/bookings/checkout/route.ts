@@ -6,9 +6,9 @@ import { verifyBookingToken, type BookingSelection } from "@/lib/booking-token";
 import { checkAvailability } from "@/lib/booking-availability";
 import { getStripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
-import { pacificTodayISODate, daysInclusive } from "@/lib/time";
+import { regionTodayISODate, daysInclusive } from "@/lib/time";
 import { stripeFeeCents } from "@/lib/stripe-fee";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 
 // Stripe requires a Checkout session's expires_at to be at least 30 minutes out, so
 // the DB-side reservation hold uses the same window rather than a shorter one that
@@ -33,6 +33,7 @@ function lockKeyFor(productType: string, category: string | null): string {
 
 export async function POST(req: NextRequest) {
   const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const SITE_URL = `https://${region.domain}`;
 
   const { ok } = await checkRateLimit(req, "bookings-checkout", 10, 60);
@@ -49,10 +50,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Defence in depth against a stale-but-unexpired token: the range was validated at
-  // verify-email time, but a token signed just before midnight Pacific can be spent
-  // just after it, by which point startDate is in the past and the booking could
-  // never activate. (verify-email/route.ts runs the same check first.)
-  if (selection.startDate < pacificTodayISODate()) {
+  // verify-email time, but a token signed just before midnight in the region's own
+  // timezone can be spent just after it, by which point startDate is in the past and
+  // the booking could never activate. (verify-email/route.ts runs the same check first.)
+  if (selection.startDate < regionTodayISODate(timezone)) {
     return NextResponse.json(
       { error: "That start date has passed -- pick new dates and start again" },
       { status: 400 }
