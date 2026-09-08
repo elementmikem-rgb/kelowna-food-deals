@@ -28,7 +28,7 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
   const [replyText, setReplyText] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [actionBusy, setActionBusy] = useState(false);
-  const [actionResult, setActionResult] = useState<{ kind: "unsubscribe" | "block"; ok: boolean } | null>(null);
+  const [actionResult, setActionResult] = useState<{ kind: "unsubscribe" | "block" | "forward"; ok: boolean } | null>(null);
   const [forwardOpen, setForwardOpen] = useState(false);
   const [forwardTo, setForwardTo] = useState("");
   const [forwardNote, setForwardNote] = useState("");
@@ -126,7 +126,7 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
     setActionBusy(true);
     try {
       const quoted = `${forwardNote ? forwardNote + "\n\n" : ""}---- Forwarded message ----\nFrom: ${original.fromLabel}\n\n${original.bodyText ?? ""}`;
-      await fetch("/api/admin/inbox/send", {
+      const res = await fetch("/api/admin/inbox/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,9 +136,12 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
           body: quoted,
         }),
       });
-      setForwardOpen(false);
-      setForwardTo("");
-      setForwardNote("");
+      setActionResult({ kind: "forward", ok: res.ok });
+      if (res.ok) {
+        setForwardOpen(false);
+        setForwardTo("");
+        setForwardNote("");
+      }
     } finally {
       setActionBusy(false);
     }
@@ -204,7 +207,7 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
         <button onClick={handleBlock} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
           Block sender
         </button>
-        {actionResult && (
+        {actionResult && actionResult.kind !== "forward" && (
           <span className={`text-xs ${actionResult.ok ? "text-evergreen" : "text-stale"}`}>
             {actionResult.kind === "unsubscribe"
               ? actionResult.ok
@@ -233,13 +236,18 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
             placeholder="Optional note…"
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none"
           />
-          <button
-            onClick={handleForward}
-            disabled={actionBusy || !forwardTo.trim()}
-            className="press-pill self-start rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium disabled:opacity-50"
-          >
-            Send forward
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleForward}
+              disabled={actionBusy || !forwardTo.trim()}
+              className="press-pill self-start rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+            >
+              Send forward
+            </button>
+            {actionResult?.kind === "forward" && !actionResult.ok && (
+              <span className="text-xs text-stale">Forward failed — try again.</span>
+            )}
+          </div>
         </div>
       )}
 
