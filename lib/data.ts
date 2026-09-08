@@ -1,4 +1,4 @@
-import { db, specials, venues } from "@/db";
+import { db, specials, venues, dealFeedback } from "@/db";
 import { and, desc, eq, isNull, isNotNull, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { SpecialCategory } from "@/db/schema";
@@ -25,6 +25,11 @@ export interface SpecialWithVenue {
   // Standing paid status -- unlike the two above, doesn't expire on its own.
   // Non-null means "is a partner", the exact date isn't otherwise used yet.
   venuePartnerSince: Date | null;
+  venueConfirmedAt: Date | null;
+  // Count of visitor "confirm" feedback rows from the last 30 days -- a rolling window
+  // so an old special's count doesn't just accumulate forever and lose meaning. See
+  // docs/superpowers/specs/2026-09-07-deal-verification-design.md Section 1.
+  confirmCount: number;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -49,6 +54,12 @@ const baseColumns = {
   venueFeaturedUntil: venues.featuredUntil,
   boostedUntil: specials.boostedUntil,
   venuePartnerSince: venues.partnerSince,
+  venueConfirmedAt: specials.venueConfirmedAt,
+  confirmCount: sql<number>`(
+    select count(*)::int from specials.deal_feedback
+    where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
+      and created_at > now() - interval '30 days'
+  )`,
 };
 
 export async function getAllSpecialsWithVenue(): Promise<SpecialWithVenue[]> {
