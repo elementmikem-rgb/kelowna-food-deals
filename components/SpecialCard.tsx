@@ -6,6 +6,7 @@ import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { ConfirmedBadges } from "./ConfirmedBadges";
 import { isPromotionActive } from "@/lib/promotion";
 
 export function SpecialCard({
@@ -16,6 +17,9 @@ export function SpecialCard({
   dayLabel?: string | null;
 }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
+  const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
 
@@ -36,6 +40,16 @@ export function SpecialCard({
       setReportState(res.ok ? "sent" : "error");
     } catch {
       setReportState("error");
+    }
+  }
+
+  async function handleConfirm() {
+    setConfirmState("sending");
+    try {
+      const res = await fetch(`/api/specials/${special.id}/confirm`, { method: "POST" });
+      setConfirmState(res.ok ? "sent" : "error");
+    } catch {
+      setConfirmState("error");
     }
   }
 
@@ -93,17 +107,35 @@ export function SpecialCard({
       </div>
 
       <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-border">
-        <VerifiedBadge lastVerifiedAt={special.lastVerifiedAt} />
-        <button
-          onClick={handleReport}
-          disabled={reportState !== "idle"}
-          className="relative z-10 text-xs text-muted-2 hover:text-muted disabled:cursor-default"
-        >
-          {reportState === "idle" && "Report incorrect"}
-          {reportState === "sending" && "Sending…"}
-          {reportState === "sent" && "Reported"}
-          {reportState === "error" && "Failed — try again"}
-        </button>
+        <div className="flex flex-col gap-1">
+          <VerifiedBadge lastVerifiedAt={special.lastVerifiedAt} />
+          <ConfirmedBadges
+            venueConfirmedAt={special.venueConfirmedAt}
+            confirmCount={special.confirmCount}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleConfirm}
+            disabled={confirmState !== "idle"}
+            className="relative z-10 text-xs text-evergreen hover:underline disabled:cursor-default"
+          >
+            {confirmState === "idle" && "Confirm this deal"}
+            {confirmState === "sending" && "Sending…"}
+            {confirmState === "sent" && "Thanks!"}
+            {confirmState === "error" && "Failed — try again"}
+          </button>
+          <button
+            onClick={handleReport}
+            disabled={reportState !== "idle"}
+            className="relative z-10 text-xs text-muted-2 hover:text-muted disabled:cursor-default"
+          >
+            {reportState === "idle" && "Report incorrect"}
+            {reportState === "sending" && "Sending…"}
+            {reportState === "sent" && "Reported"}
+            {reportState === "error" && "Failed — try again"}
+          </button>
+        </div>
       </div>
     </article>
   );

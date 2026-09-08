@@ -1,5 +1,5 @@
 import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
-import { and, desc, eq, isNull, isNotNull, or, gte } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
 import { pacificTodayISODate } from "./time";
@@ -58,6 +58,12 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
       venueFeaturedUntil: venues.featuredUntil,
       boostedUntil: specials.boostedUntil,
       venuePartnerSince: venues.partnerSince,
+      venueConfirmedAt: specials.venueConfirmedAt,
+      confirmCount: sql<number>`(
+        select count(*)::int from specials.deal_feedback
+        where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
+          and created_at > now() - interval '30 days'
+      )`,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))

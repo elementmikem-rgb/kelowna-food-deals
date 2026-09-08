@@ -5,9 +5,13 @@ import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
+import { ConfirmedBadges } from "./ConfirmedBadges";
 
 export function SpecialRow({ special }: { special: SpecialWithVenue }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
+  const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
 
@@ -27,6 +31,16 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
       setReportState(res.ok ? "sent" : "error");
     } catch {
       setReportState("error");
+    }
+  }
+
+  async function handleConfirm() {
+    setConfirmState("sending");
+    try {
+      const res = await fetch(`/api/specials/${special.id}/confirm`, { method: "POST" });
+      setConfirmState(res.ok ? "sent" : "error");
+    } catch {
+      setConfirmState("error");
     }
   }
 
@@ -63,18 +77,33 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
             stale — {formatVerifiedRelative(special.lastVerifiedAt)}
           </span>
         ) : (
-          <span />
+          <ConfirmedBadges
+            venueConfirmedAt={special.venueConfirmedAt}
+            confirmCount={special.confirmCount}
+          />
         )}
-        <button
-          onClick={handleReport}
-          disabled={reportState !== "idle"}
-          className="relative z-10 text-[11px] text-muted-2 hover:text-muted disabled:cursor-default"
-        >
-          {reportState === "idle" && "Report incorrect"}
-          {reportState === "sending" && "Sending…"}
-          {reportState === "sent" && "Reported"}
-          {reportState === "error" && "Failed — try again"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleConfirm}
+            disabled={confirmState !== "idle"}
+            className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default"
+          >
+            {confirmState === "idle" && "Confirm this deal"}
+            {confirmState === "sending" && "Sending…"}
+            {confirmState === "sent" && "Thanks!"}
+            {confirmState === "error" && "Failed — try again"}
+          </button>
+          <button
+            onClick={handleReport}
+            disabled={reportState !== "idle"}
+            className="relative z-10 text-[11px] text-muted-2 hover:text-muted disabled:cursor-default"
+          >
+            {reportState === "idle" && "Report incorrect"}
+            {reportState === "sending" && "Sending…"}
+            {reportState === "sent" && "Reported"}
+            {reportState === "error" && "Failed — try again"}
+          </button>
+        </div>
       </div>
     </li>
   );
