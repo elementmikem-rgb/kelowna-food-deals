@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialRow } from "./SpecialRow";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { ConfirmedBadges } from "./ConfirmedBadges";
+import { VenueGroupActions } from "./VenueGroupActions";
 import { isPromotionActive } from "@/lib/promotion";
 
 // Above this many, a venue's card starts crowding out everyone else's on the
@@ -75,6 +77,14 @@ export function SpecialVenueGroup({
           + {hiddenCount} more — view all {specials.length} specials →
         </p>
       )}
+
+      <div className="relative z-10 flex items-center justify-between gap-3 mt-1 pt-2 border-t border-border">
+        <ConfirmedBadges
+          venueConfirmedAt={freshest.venueConfirmedAt}
+          confirmCount={freshest.confirmCount}
+        />
+        <VenueGroupActions specialId={freshest.id} venueId={venueId} />
+      </div>
     </article>
   );
 }

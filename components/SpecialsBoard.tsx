@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import type { SpecialCategory } from "@/db/schema";
 import type { CategorySponsor } from "@/lib/sponsored-data";
-import { todayDowPacific, dowFullName } from "@/lib/time";
+import { todayDowPacific, dowFullName, pacificTodayISODate } from "@/lib/time";
 import { CATEGORY_LABELS } from "@/lib/format";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
@@ -17,6 +17,22 @@ function timeToMinutes(time: string | null): number {
   if (!time) return Number.MAX_SAFE_INTEGER; // no start time sorts last within its day
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
+}
+
+// Deterministic per-(day, venue) pseudo-random value in [0, 1) -- same venue
+// gets the same value all day (no flicker on refresh), a different value
+// tomorrow (no venue permanently owns a position). Replaces "earliest special
+// start time" as the tiebreaker among unpaid, unboosted venues: that old
+// tiebreaker never changes for a given venue, so a venue with an 11am special
+// ranked above one starting at 3pm every single day forever -- a real, free,
+// permanent advantage that undercut the whole point of paying for Featured.
+function dailyRandom(venueId: number, dateStr: string): number {
+  const str = `${dateStr}:${venueId}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return (hash >>> 0) / 0xffffffff;
 }
 
 export function SpecialsBoard({
@@ -89,11 +105,21 @@ export function SpecialsBoard({
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
-    // Stable partition: featured venues first, in whatever order they already
-    // had, followed by everyone else in their existing order.
+    const today = pacificTodayISODate();
+    // Three tiers: paid Featured venues first (in their existing order --
+    // that's the guaranteed placement they paid for), then venues with an
+    // active paid Boost on any special, then everyone else shuffled by a
+    // stable daily random value so no unpaid venue can count on a permanent
+    // position (see dailyRandom's comment for why this replaced start-time
+    // ordering).
     const featured = groups.filter((g) => isPromotionActive(g.items[0]?.venueFeaturedUntil ?? null));
-    const rest = groups.filter((g) => !isPromotionActive(g.items[0]?.venueFeaturedUntil ?? null));
-    return [...featured, ...rest];
+    const notFeatured = groups.filter((g) => !isPromotionActive(g.items[0]?.venueFeaturedUntil ?? null));
+    const boosted = notFeatured.filter((g) => g.items.some((s) => isPromotionActive(s.boostedUntil)));
+    const plain = notFeatured
+      .filter((g) => !g.items.some((s) => isPromotionActive(s.boostedUntil)))
+      .slice()
+      .sort((a, b) => dailyRandom(a.venueId ?? 0, today) - dailyRandom(b.venueId ?? 0, today));
+    return [...featured, ...boosted, ...plain];
   }, [filtered]);
 
   const activeSponsor =

@@ -1,48 +1,20 @@
-"use client";
-
-import { useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
-import { ConfirmedBadges } from "./ConfirmedBadges";
 
+// Confirm/Report used to live on every row here -- up to MAX_VISIBLE (5) pairs
+// stacked in one venue card, which is both visually noisy and a real
+// accidental-tap risk on mobile. Both actions now live once per venue card
+// (see SpecialVenueGroup), applying to that venue's freshest special. This
+// component is a pure display row again, matching the shape SpecialCard.tsx
+// still needs (SpecialCard renders one venue's specials on its own dedicated
+// page, where per-special actions still make sense -- no crowding there).
 export function SpecialRow({ special }: { special: SpecialWithVenue }) {
-  const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
-  const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
-
   const stale = isStale(special.lastVerifiedAt);
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
   const boosted = isPromotionActive(special.boostedUntil);
-
-  async function handleReport() {
-    setReportState("sending");
-    try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specialId: special.id, venueId: special.venueId }),
-      });
-      setReportState(res.ok ? "sent" : "error");
-    } catch {
-      setReportState("error");
-    }
-  }
-
-  async function handleConfirm() {
-    setConfirmState("sending");
-    try {
-      const res = await fetch(`/api/specials/${special.id}/confirm`, { method: "POST" });
-      setConfirmState(res.ok ? "sent" : "error");
-    } catch {
-      setConfirmState("error");
-    }
-  }
 
   return (
     <li className={`relative z-10 py-2.5 first:pt-0 last:pb-0 ${stale ? "opacity-50" : ""}`}>
@@ -71,44 +43,11 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-1">
-        {stale ? (
-          <span className="text-[11px] text-stale">
-            stale — {formatVerifiedRelative(special.lastVerifiedAt)}
-          </span>
-        ) : (
-          <ConfirmedBadges
-            venueConfirmedAt={special.venueConfirmedAt}
-            confirmCount={special.confirmCount}
-          />
-        )}
-        <div className="flex items-center gap-1">
-          {/* Negative margin offsets the added padding so the enlarged tap target
-              doesn't push these rows further apart -- rows here are packed close
-              (py-2.5 per <li>), so a real touch target matters even more than in
-              the card view. */}
-          <button
-            onClick={handleConfirm}
-            disabled={confirmState !== "idle"}
-            className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default px-2 py-2 -my-2"
-          >
-            {confirmState === "idle" && "Confirm this deal"}
-            {confirmState === "sending" && "Sending…"}
-            {confirmState === "sent" && "Thanks!"}
-            {confirmState === "error" && "Failed — try again"}
-          </button>
-          <button
-            onClick={handleReport}
-            disabled={reportState !== "idle"}
-            className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
-          >
-            {reportState === "idle" && "Report incorrect"}
-            {reportState === "sending" && "Sending…"}
-            {reportState === "sent" && "Reported"}
-            {reportState === "error" && "Failed — try again"}
-          </button>
-        </div>
-      </div>
+      {stale && (
+        <p className="mt-1 text-[11px] text-stale">
+          stale — {formatVerifiedRelative(special.lastVerifiedAt)}
+        </p>
+      )}
     </li>
   );
 }
