@@ -1,33 +1,38 @@
 import type { Metadata } from "next";
 import { getMonthlySpecials } from "@/lib/data";
+import { getCurrentRegion } from "@/lib/regions";
 import { MonthlySpecials } from "@/components/MonthlySpecials";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 
-// Same reasoning as app/page.tsx: static + hourly ISR, not tied to a request.
-export const revalidate = 3600;
+// Per-region correctness requires the request's own domain (getCurrentRegion),
+// which forces dynamic rendering -- see app/page.tsx's comment.
+export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Kelowna Monthly Specials",
-  description:
-    "Deals running all month long at Kelowna restaurants and bars — not tied to a single day, checked and verified.",
-  alternates: { canonical: "https://kelownafooddeals.shop/monthly" },
-  openGraph: {
-    title: "Kelowna Monthly Specials",
-    description: "Deals running all month long at Kelowna restaurants and bars.",
-    url: "https://kelownafooddeals.shop/monthly",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  const areaName = region.brandName.split(" ")[0];
+  const title = `${areaName} Monthly Specials`;
+  const description = `Deals running all month long at ${areaName} restaurants and bars — not tied to a single day, checked and verified.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `https://${region.domain}/monthly` },
+    openGraph: { title, description, url: `https://${region.domain}/monthly` },
+  };
+}
 
 export default async function MonthlyPage() {
-  const specials = await getMonthlySpecials();
+  const region = await getCurrentRegion();
+  const specials = await getMonthlySpecials(region.id);
+  const areaName = region.brandName.split(" ")[0];
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
       <SiteHeader
         active="monthly"
-        heading="Kelowna Monthly Specials"
+        heading={`${areaName} Monthly Specials`}
         subtitle="Running all month — not tied to a single day."
       />
 

@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { getPrimaryRegion } from "@/lib/regions";
+import { getCurrentRegion } from "@/lib/regions";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const region = await getPrimaryRegion();
+  const region = await getCurrentRegion();
   return {
     rules: { userAgent: "*", allow: "/" },
     sitemap: `https://${region.domain}/sitemap.xml`,

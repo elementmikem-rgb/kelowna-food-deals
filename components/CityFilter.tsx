@@ -1,15 +1,17 @@
 "use client";
 
-const CITIES = ["Kelowna", "West Kelowna", "Lake Country", "Peachland"];
-
 export function CityFilter({
+  cities,
   selected,
   onSelect,
 }: {
+  // Derived from the region's own venues (SpecialsBoard), never hardcoded --
+  // a static city list here would be wrong for every region but one.
+  cities: string[];
   selected: string | "all";
   onSelect: (city: string | "all") => void;
 }) {
-  const options: (string | "all")[] = ["all", ...CITIES];
+  const options: (string | "all")[] = ["all", ...cities];
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar">
       {options.map((opt) => {

@@ -62,23 +62,30 @@ const baseColumns = {
   )`,
 };
 
-export async function getAllSpecialsWithVenue(): Promise<SpecialWithVenue[]> {
-  const rows = await db
-    .select(baseColumns)
-    .from(specials)
-    .innerJoin(venues, eq(specials.venueId, venues.id))
-    .where(and(eq(venues.active, true), isNull(specials.archivedAt)));
-
-  return rows as SpecialWithVenue[];
-}
-
-export async function getMonthlySpecials(): Promise<SpecialWithVenue[]> {
+export async function getAllSpecialsWithVenue(regionId: number): Promise<SpecialWithVenue[]> {
   const rows = await db
     .select(baseColumns)
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
     .where(
-      and(eq(venues.active, true), isNull(specials.archivedAt), eq(specials.isMonthly, true))
+      and(eq(venues.active, true), eq(venues.regionId, regionId), isNull(specials.archivedAt))
+    );
+
+  return rows as SpecialWithVenue[];
+}
+
+export async function getMonthlySpecials(regionId: number): Promise<SpecialWithVenue[]> {
+  const rows = await db
+    .select(baseColumns)
+    .from(specials)
+    .innerJoin(venues, eq(specials.venueId, venues.id))
+    .where(
+      and(
+        eq(venues.active, true),
+        eq(venues.regionId, regionId),
+        isNull(specials.archivedAt),
+        eq(specials.isMonthly, true)
+      )
     );
 
   return rows as SpecialWithVenue[];
@@ -86,7 +93,7 @@ export async function getMonthlySpecials(): Promise<SpecialWithVenue[]> {
 
 const MAX_PREVIOUS_PER_VENUE = 4;
 
-export async function getPreviousSpecials(limit = 30): Promise<PreviousSpecial[]> {
+export async function getPreviousSpecials(regionId: number, limit = 30): Promise<PreviousSpecial[]> {
   // The nightly cron re-archives and re-inserts a venue's entire special set on any
   // content-hash change, so a still-running special routinely lands in the archive
   // alongside its identical live twin. Exclude any archived row whose full identity
@@ -100,6 +107,7 @@ export async function getPreviousSpecials(limit = 30): Promise<PreviousSpecial[]
     .where(
       and(
         eq(venues.active, true),
+        eq(venues.regionId, regionId),
         isNotNull(specials.archivedAt),
         notExists(
           db

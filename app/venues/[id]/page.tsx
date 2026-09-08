@@ -9,6 +9,7 @@ import {
   getVenuePhotos,
   getVenueMenuItems,
 } from "@/lib/venues-data";
+import { getCurrentRegion } from "@/lib/regions";
 import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
@@ -18,7 +19,9 @@ import { ShareButton } from "@/components/ShareButton";
 import { formatPrice } from "@/lib/format";
 import { groupByDayRange } from "@/lib/group-days";
 
-export const revalidate = 3600;
+// Per-region correctness requires the request's own domain (getCurrentRegion),
+// which forces dynamic rendering -- see app/page.tsx's comment.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -27,10 +30,11 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const venue = await getVenueById(Number(id));
-  if (!venue) return { title: "Venue not found" };
+  const region = await getCurrentRegion();
+  if (!venue || venue.regionId !== region.id) return { title: "Venue not found" };
   const title = venue.name;
   const description = `Current food/drink specials, events, and info for ${venue.name} — ${venue.address}. Verified, not guessed.`;
-  const url = `https://kelownafooddeals.shop/venues/${venue.id}`;
+  const url = `https://${region.domain}/venues/${venue.id}`;
   return {
     title,
     description,
@@ -44,8 +48,12 @@ export default async function VenuePage({ params }: PageProps) {
   const venueId = Number(id);
   if (!Number.isInteger(venueId)) notFound();
 
+  const region = await getCurrentRegion();
   const venue = await getVenueById(venueId);
-  if (!venue) notFound();
+  // A venue that exists but belongs to a different region must 404 here too --
+  // otherwise a deep link (or a search-engine-indexed URL) from one domain
+  // could still reach another region's venue page directly.
+  if (!venue || venue.regionId !== region.id) notFound();
 
   const [venueSpecials, venueEvents, previousSpecials, venuePhotos, venueMenuItems] =
     await Promise.all([
@@ -56,10 +64,11 @@ export default async function VenuePage({ params }: PageProps) {
       getVenueMenuItems(venueId),
     ]);
 
+  const areaName = region.brandName.split(" ")[0];
   const mapQuery = encodeURIComponent(venue.address);
-  const reviewsQuery = encodeURIComponent(`${venue.name} Kelowna reviews`);
+  const reviewsQuery = encodeURIComponent(`${venue.name} ${areaName} reviews`);
 
-  const locality = venue.city ?? "Kelowna";
+  const locality = venue.city ?? areaName;
   // venue.address is the full "123 Main St, Peachland, BC V0H 1X7" string, so the
   // city/region/postal tail was being restated by the sibling PostalAddress fields
   // -- and contradicted by them, back when addressLocality was hardcoded to Kelowna.
@@ -81,7 +90,7 @@ export default async function VenuePage({ params }: PageProps) {
     menu: venue.menuUrl ?? undefined,
     image:
       venuePhotos.length > 0
-        ? `https://kelownafooddeals.shop/api/venue-photos/${venuePhotos[0].id}`
+        ? `https://${region.domain}/api/venue-photos/${venuePhotos[0].id}`
         : undefined,
     geo:
       venue.lat !== null && venue.lng !== null
@@ -130,8 +139,8 @@ export default async function VenuePage({ params }: PageProps) {
           <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
           <ShareButton
             title={venue.name}
-            text={`Specials & events at ${venue.name} — Kelowna Food Deals:`}
-            url={`https://kelownafooddeals.shop/venues/${venue.id}`}
+            text={`Specials & events at ${venue.name} — ${region.brandName}:`}
+            url={`https://${region.domain}/venues/${venue.id}`}
             className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
           />
         </div>

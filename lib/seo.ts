@@ -3,7 +3,7 @@ import { todayDowPacific, isStale } from "./time";
 
 const MAX_JSONLD_ITEMS = 80;
 
-export function buildSpecialsJsonLd(specials: SpecialWithVenue[]) {
+export function buildSpecialsJsonLd(specials: SpecialWithVenue[], regionName: string) {
   const today = todayDowPacific();
   // The page only ever shows today's specials (SpecialsBoard filters by day), so the
   // structured data must match: publishing every day-of-week's specials as InStock every
@@ -20,7 +20,7 @@ export function buildSpecialsJsonLd(specials: SpecialWithVenue[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Kelowna Food and Drink Specials",
+    name: `${regionName} Food and Drink Specials`,
     numberOfItems: runningToday.length,
     itemListElement: listed.map((s, i) => ({
       "@type": "ListItem",
@@ -37,9 +37,9 @@ export function buildSpecialsJsonLd(specials: SpecialWithVenue[]) {
           name: s.venueName,
           address: {
             "@type": "PostalAddress",
-            // This site covers four towns; hardcoding Kelowna mislabeled every
-            // West Kelowna / Lake Country / Peachland venue in local-SEO signals.
-            addressLocality: s.venueCity ?? "Kelowna",
+            // Each region covers multiple towns; hardcoding one mislabeled every
+            // venue in a different sub-area in local-SEO signals.
+            addressLocality: s.venueCity ?? regionName.split(" ")[0],
             addressRegion: "BC",
             addressCountry: "CA",
           },

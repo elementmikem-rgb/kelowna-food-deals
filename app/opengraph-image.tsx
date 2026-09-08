@@ -1,20 +1,20 @@
 import { ImageResponse } from "next/og";
-import { getPrimaryRegion } from "@/lib/regions";
+import { getCurrentRegion } from "@/lib/regions";
 
 // Auto-picked up by Next.js: generates the og:image/twitter:image meta tags for
 // every page that doesn't define its own opengraph-image, so a shared link
 // (Facebook, iMessage, Slack, etc.) shows a real branded card instead of
-// nothing. Uses getPrimaryRegion() (a plain DB read, no headers()) rather than
-// getCurrentRegion() so this stays compatible with static/ISR rendering --
-// same reasoning as app/layout.tsx's own metadata. See docs/superpowers/specs/
-// 2026-09-07-multi-region-platform-design.md's "Deferred" section: this will
-// need to become genuinely per-domain once a second region actually launches.
-export const alt = "Kelowna Food Deals";
+// nothing. Uses getCurrentRegion() (the request's own domain, via proxy.ts's
+// x-region-id header) since a second region is now genuinely live -- this
+// forces dynamic rendering, same trade-off as app/page.tsx.
+// `alt` is a static file-convention export (can't be made per-request), so
+// it stays a generic phrase rather than a specific region's brand name.
+export const alt = "Food & drink deals today";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const region = await getPrimaryRegion();
+  const region = await getCurrentRegion();
 
   return new ImageResponse(
     (

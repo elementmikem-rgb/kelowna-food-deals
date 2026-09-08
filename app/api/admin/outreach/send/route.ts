@@ -22,7 +22,8 @@ function buildOutreachHtml(
   unsubscribeUrl: string,
   mailingAddress: string,
   domain: string,
-  verifyUrl: string
+  verifyUrl: string,
+  brandName: string
 ): string {
   const venueUrl = `https://${domain}/venues/${venueId}`;
   const advertiseUrl = `https://${domain}/advertise`;
@@ -44,10 +45,10 @@ function buildOutreachHtml(
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="vertical-align:middle;padding-right:10px;">
-              <img src="${logoUrl}" width="40" height="40" alt="Kelowna Food Deals" style="display:block;border-radius:50%;">
+              <img src="${logoUrl}" width="40" height="40" alt="${brandName}" style="display:block;border-radius:50%;">
             </td>
             <td style="vertical-align:middle;">
-              <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${FG};font-weight:700;">Kelowna Food Deals</span>
+              <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${FG};font-weight:700;">${brandName}</span>
             </td>
           </tr>
         </table>
@@ -56,8 +57,8 @@ function buildOutreachHtml(
     <tr>
       <td style="background:${CARD};border:1px solid ${BORDER};border-radius:16px;padding:32px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:${FG};">
         <p style="margin:0 0 16px;">Hey there,</p>
-        <p style="margin:0 0 16px;">I run Kelowna Food Deals — a site that tracks happy hours and food/drink deals
-        around Kelowna. I've got <strong>${venueName}</strong> listed here:</p>
+        <p style="margin:0 0 16px;">I run ${brandName} — a site that tracks happy hours and food/drink deals
+        around the area. I've got <strong>${venueName}</strong> listed here:</p>
         <p style="margin:0 0 20px;">
           <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
           padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">View your listing</a>
@@ -135,10 +136,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "already sent outreach to this venue" }, { status: 409 });
   }
 
-  const subject = `Quick one about ${venue.name} on Kelowna Food Deals`;
+  const subject = `Quick one about ${venue.name} on ${region.brandName}`;
   const unsubscribeUrl = buildUnsubscribeUrl(venue.id, region.domain);
   const verifyUrl = buildVenueVerifyUrl(venue.id, region.domain);
-  const htmlBody = buildOutreachHtml(venue.name, venue.id, unsubscribeUrl, mailingAddress, region.domain, verifyUrl);
+  const htmlBody = buildOutreachHtml(
+    venue.name,
+    venue.id,
+    unsubscribeUrl,
+    mailingAddress,
+    region.domain,
+    verifyUrl,
+    region.brandName
+  );
 
   const [sendRow] = await db
     .insert(outreachSends)
@@ -156,6 +165,8 @@ export async function POST(req: NextRequest) {
       to: venue.contactEmail,
       subject,
       htmlContent: htmlBody,
+      senderName: region.brandName,
+      replyTo: `reply@reply.${region.domain}`,
       headers: {
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

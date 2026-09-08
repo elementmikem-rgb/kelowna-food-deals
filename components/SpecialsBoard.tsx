@@ -55,6 +55,15 @@ export function SpecialsBoard({
   const [selectedCity, setSelectedCity] = useState<string | "all">("all");
   const dayPickedByUser = useRef(false);
 
+  // Derived from this region's own specials rather than a hardcoded list --
+  // a static city list would be wrong for every region but the one it was
+  // written for.
+  const cities = useMemo(
+    () =>
+      Array.from(new Set(specials.map((s) => s.venueCity).filter((c): c is string => !!c))).sort(),
+    [specials]
+  );
+
   useEffect(() => {
     function syncToday() {
       const actual = todayDowPacific();
@@ -78,7 +87,7 @@ export function SpecialsBoard({
       .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
-      .filter((s) => selectedCity === "all" || (s.venueCity ?? "Kelowna") === selectedCity)
+      .filter((s) => selectedCity === "all" || s.venueCity === selectedCity)
       .sort((a, b) => {
         // A paid seasonal boost outranks everything else while it's active.
         const boostDiff =
@@ -129,7 +138,9 @@ export function SpecialsBoard({
     <div className="flex flex-col gap-4">
       <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
-      <CityFilter selected={selectedCity} onSelect={setSelectedCity} />
+      {cities.length > 0 && (
+        <CityFilter cities={cities} selected={selectedCity} onSelect={setSelectedCity} />
+      )}
 
       {activeSponsor && (
         <p className="-mt-2 text-xs text-muted-2">

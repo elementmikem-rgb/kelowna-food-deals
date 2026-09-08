@@ -1,14 +1,19 @@
-export function AboutSection() {
+export function AboutSection({ brandName, areas }: { brandName: string; areas: string[] }) {
+  const areaList =
+    areas.length === 0
+      ? ""
+      : areas.length === 1
+        ? areas[0]
+        : `${areas.slice(0, -1).join(", ")}, and ${areas[areas.length - 1]}`;
   return (
     <section className="rounded-2xl border border-border bg-surface p-5 text-sm text-muted flex flex-col gap-2">
       <h2 className="font-display text-lg text-foreground">About this site</h2>
       <p>
-        Kelowna Food Deals tracks food and drink deals, happy hours, wing nights, and live
-        music across Kelowna, West Kelowna, Lake Country (including Winfield), and Peachland.
-        Every listing is pulled directly from a venue&apos;s own website or menu, checked daily,
-        and dropped the moment it can&apos;t be backed up with an explicit price, discount, or
-        event date — no guessing, no scraping social media, no stale &quot;last updated 2020&quot;
-        pages.
+        {brandName} tracks food and drink deals, happy hours, wing nights, and live music
+        {areaList && ` across ${areaList}`}. Every listing is pulled directly from a
+        venue&apos;s own website or menu, checked daily, and dropped the moment it can&apos;t be
+        backed up with an explicit price, discount, or event date — no guessing, no scraping
+        social media, no stale &quot;last updated 2020&quot; pages.
       </p>
       <p>
         See something wrong, or a place we&apos;re missing? Use the{" "}

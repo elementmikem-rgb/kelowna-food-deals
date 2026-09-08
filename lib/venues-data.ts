@@ -6,6 +6,7 @@ import { pacificTodayISODate } from "./time";
 
 export interface VenueDetail {
   id: number;
+  regionId: number;
   name: string;
   address: string;
   city: string | null;
@@ -21,6 +22,7 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
   const rows = await db
     .select({
       id: venues.id,
+      regionId: venues.regionId,
       name: venues.name,
       address: venues.address,
       city: venues.city,

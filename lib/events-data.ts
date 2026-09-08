@@ -42,7 +42,7 @@ function pacificTodayISODate(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
 }
 
-export async function getRecurringEvents(): Promise<EventWithVenue[]> {
+export async function getRecurringEvents(regionId: number): Promise<EventWithVenue[]> {
   // Recurring weekly events always belong to one of our tracked venues.
   // Excludes rows that also carry a specificDate -- those are one-off events
   // that happen to land on a given weekday (e.g. a Saturday concert), not a
@@ -55,6 +55,7 @@ export async function getRecurringEvents(): Promise<EventWithVenue[]> {
     .where(
       and(
         eq(venues.active, true),
+        eq(events.regionId, regionId),
         isNull(events.archivedAt),
         gte(events.dayOfWeek, 0),
         isNull(events.specificDate)
@@ -64,7 +65,10 @@ export async function getRecurringEvents(): Promise<EventWithVenue[]> {
   return rows as EventWithVenue[];
 }
 
-export async function getUpcomingOneOffEvents(daysAhead = 21): Promise<EventWithVenue[]> {
+export async function getUpcomingOneOffEvents(
+  regionId: number,
+  daysAhead = 21
+): Promise<EventWithVenue[]> {
   const today = pacificTodayISODate();
   const until = new Date();
   until.setDate(until.getDate() + daysAhead);
@@ -96,6 +100,7 @@ export async function getUpcomingOneOffEvents(daysAhead = 21): Promise<EventWith
     .leftJoin(venues, eq(events.venueId, venues.id))
     .where(
       and(
+        eq(events.regionId, regionId),
         isNull(events.archivedAt),
         gte(events.specificDate, today),
         lte(events.specificDate, untilStr)

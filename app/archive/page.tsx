@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getPreviousSpecials } from "@/lib/data";
+import { getCurrentRegion } from "@/lib/regions";
 import { groupByDayRange } from "@/lib/group-days";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -13,10 +14,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export const revalidate = 3600;
+// Per-region correctness requires the request's own domain (getCurrentRegion),
+// which forces dynamic rendering -- see app/page.tsx's comment.
+export const dynamic = "force-dynamic";
 
 export default async function ArchivePage() {
-  const previous = await getPreviousSpecials(500);
+  const region = await getCurrentRegion();
+  const previous = await getPreviousSpecials(region.id, 500);
 
   const byVenue = new Map<number, { venueName: string; items: typeof previous }>();
   for (const s of previous) {
