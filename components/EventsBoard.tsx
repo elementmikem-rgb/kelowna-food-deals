@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { EventWithVenue } from "@/lib/events-data";
 import type { EventType } from "@/db/schema";
-import { todayDowPacific, dowFullName } from "@/lib/time";
+import { todayDowInRegion, dowFullName } from "@/lib/time";
 import { DayTabs } from "./DayTabs";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { EventVenueGroup } from "./EventVenueGroup";
@@ -21,11 +21,13 @@ function timeToMinutes(time: string | null): number {
 export function EventsBoard({
   recurring,
   upcoming,
+  timezone,
 }: {
   recurring: EventWithVenue[];
   upcoming: EventWithVenue[];
+  timezone: string;
 }) {
-  const today = useMemo(() => todayDowPacific(), []);
+  const today = useMemo(() => todayDowInRegion(timezone), [timezone]);
   const [selectedDay, setSelectedDay] = useState<number | "weekend">(today);
   const [selectedType, setSelectedType] = useState<EventType | "all">("all");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);

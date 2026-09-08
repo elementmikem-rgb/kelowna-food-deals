@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getRecurringEvents, getUpcomingOneOffEvents } from "@/lib/events-data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { EventsBoard } from "@/components/EventsBoard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -26,10 +26,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function EventsPage() {
   const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const areaName = region.brandName.split(" ")[0];
   const [recurring, upcoming] = await Promise.all([
     getRecurringEvents(region.id),
-    getUpcomingOneOffEvents(region.id),
+    getUpcomingOneOffEvents(region.id, timezone),
   ]);
 
   return (
@@ -42,7 +43,7 @@ export default async function EventsPage() {
 
       <SubmitEventCTA />
 
-      <EventsBoard recurring={recurring} upcoming={upcoming} />
+      <EventsBoard recurring={recurring} upcoming={upcoming} timezone={timezone} />
 
       <TipJar />
       <SiteFooter />

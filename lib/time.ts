@@ -10,24 +10,39 @@ const DOW_FULL = [
   "Saturday",
 ] as const;
 
-export function pacificTodayISODate(now: Date = new Date()): string {
-  return now.toLocaleDateString("en-CA", { timeZone: PACIFIC_TZ });
+export function regionTodayISODate(timezone: string, now: Date = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: timezone });
 }
 
-export function todayDowPacific(now: Date = new Date()): number {
+export function todayDowInRegion(timezone: string, now: Date = new Date()): number {
   const weekday = new Intl.DateTimeFormat("en-US", {
-    timeZone: PACIFIC_TZ,
+    timeZone: timezone,
     weekday: "short",
   }).format(now);
   const idx = DOW_NAMES.findIndex((d) => d === weekday);
   return idx === -1 ? now.getUTCDay() : idx;
 }
 
-// 0-indexed month in Pacific time. The container runs UTC, so around month
-// boundaries new Date().getMonth() names the wrong month for hours at a time.
-export function pacificMonthIndex(now: Date = new Date()): number {
+// Pacific-only compatibility wrappers, kept for the admin/booking/cron call
+// sites (lib/bookings-data.ts, lib/venues-data.ts, cron/*, app/admin/*,
+// app/api/bookings/*, app/advertise/page.tsx, lib/seo.ts) that are explicitly
+// out of scope for this task -- they are Pacific-only by design (single-region
+// booking/admin logic, not the public per-region "what day is it" display),
+// not a bug this task fixes, and converting them is deferred until a real
+// non-Pacific region exists (see this task's "Explicitly out of scope" note).
+export function pacificTodayISODate(now: Date = new Date()): string {
+  return regionTodayISODate(PACIFIC_TZ, now);
+}
+
+export function todayDowPacific(now: Date = new Date()): number {
+  return todayDowInRegion(PACIFIC_TZ, now);
+}
+
+// 0-indexed month in the given timezone. The container runs UTC, so around
+// month boundaries new Date().getMonth() names the wrong month for hours at a time.
+export function regionMonthIndex(timezone: string, now: Date = new Date()): number {
   const month = new Intl.DateTimeFormat("en-US", {
-    timeZone: PACIFIC_TZ,
+    timeZone: timezone,
     month: "numeric",
   }).format(now);
   const parsed = parseInt(month, 10);
@@ -47,7 +62,7 @@ function pacificHour(at: Date): number {
 
 // The UTC instant corresponding to 23:59:59.999 *Pacific* time on the given
 // YYYY-MM-DD calendar date. Everything user-facing in this codebase is Pacific
-// (see pacificTodayISODate), so a paid placement that runs "through 2026-10-20"
+// (see regionTodayISODate), so a paid placement that runs "through 2026-10-20"
 // must stay live until the end of that Pacific day -- an end-of-day-UTC value
 // would take it dark at 16:59/17:59 Pacific, losing the whole dinner service on
 // the last paid day.
@@ -62,7 +77,7 @@ export function endOfDayPacific(dateStr: string): Date {
   if (Number.isNaN(base)) return new Date(`${dateStr}T23:59:59.999Z`);
   for (const offsetHours of [8, 7]) {
     const candidate = new Date(base + offsetHours * 60 * 60 * 1000);
-    if (pacificTodayISODate(candidate) === dateStr && pacificHour(candidate) === 23) {
+    if (regionTodayISODate(PACIFIC_TZ, candidate) === dateStr && pacificHour(candidate) === 23) {
       return candidate;
     }
   }
@@ -80,7 +95,7 @@ export function startOfDayPacific(dateStr: string): Date {
   if (Number.isNaN(base)) return new Date(`${dateStr}T00:00:00.000Z`);
   for (const offsetHours of [8, 7]) {
     const candidate = new Date(base + offsetHours * 60 * 60 * 1000);
-    if (pacificTodayISODate(candidate) === dateStr && pacificHour(candidate) === 0) {
+    if (regionTodayISODate(PACIFIC_TZ, candidate) === dateStr && pacificHour(candidate) === 0) {
       return candidate;
     }
   }

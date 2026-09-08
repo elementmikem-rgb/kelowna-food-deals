@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpecialWithVenue } from "@/lib/data";
 import type { SpecialCategory } from "@/db/schema";
 import type { CategorySponsor } from "@/lib/sponsored-data";
-import { todayDowPacific, dowFullName, pacificTodayISODate } from "@/lib/time";
+import { todayDowInRegion, dowFullName, regionTodayISODate } from "@/lib/time";
 import { CATEGORY_LABELS } from "@/lib/format";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
@@ -38,15 +38,17 @@ function dailyRandom(venueId: number, dateStr: string): number {
 export function SpecialsBoard({
   specials,
   categorySponsors = [],
+  timezone,
 }: {
   specials: SpecialWithVenue[];
   categorySponsors?: CategorySponsor[];
+  timezone: string;
 }) {
   // The page is served from an ISR cache that can be an evening old, so the day baked
   // into the HTML is routinely yesterday. Render the baked value first (no hydration
   // mismatch), then correct it on mount and whenever the tab is refocused, so a tab
   // left open overnight rolls itself over to the right day.
-  const initialToday = useMemo(() => todayDowPacific(), []);
+  const initialToday = useMemo(() => todayDowInRegion(timezone), [timezone]);
   const [today, setToday] = useState(initialToday);
   const [selectedDay, setSelectedDay] = useState(initialToday);
   const [selectedCategory, setSelectedCategory] = useState<SpecialCategory | "all">(
@@ -66,7 +68,7 @@ export function SpecialsBoard({
 
   useEffect(() => {
     function syncToday() {
-      const actual = todayDowPacific();
+      const actual = todayDowInRegion(timezone);
       setToday(actual);
       // Only follow the clock while the visitor is still on the default view --
       // yanking them off a day they deliberately picked would be worse than stale.
@@ -75,7 +77,7 @@ export function SpecialsBoard({
     syncToday();
     document.addEventListener("visibilitychange", syncToday);
     return () => document.removeEventListener("visibilitychange", syncToday);
-  }, []);
+  }, [timezone]);
 
   function handleSelectDay(day: number) {
     dayPickedByUser.current = true;
@@ -114,7 +116,7 @@ export function SpecialsBoard({
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
-    const today = pacificTodayISODate();
+    const today = regionTodayISODate(timezone);
     // Three tiers: paid Featured venues first (in their existing order --
     // that's the guaranteed placement they paid for), then venues with an
     // active paid Boost on any special, then everyone else shuffled by a

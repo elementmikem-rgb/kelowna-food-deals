@@ -1,15 +1,21 @@
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
-import { pacificMonthIndex } from "@/lib/time";
+import { regionMonthIndex } from "@/lib/time";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function MonthlySpecials({ specials }: { specials: SpecialWithVenue[] }) {
-  const monthName = MONTH_NAMES[pacificMonthIndex()];
+export function MonthlySpecials({
+  specials,
+  timezone,
+}: {
+  specials: SpecialWithVenue[];
+  timezone: string;
+}) {
+  const monthName = MONTH_NAMES[regionMonthIndex(timezone)];
 
   if (specials.length === 0) {
     return (

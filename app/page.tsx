@@ -1,6 +1,6 @@
 import { getAllSpecialsWithVenue } from "@/lib/data";
 import { getActiveCategorySponsors } from "@/lib/sponsored-data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { SpecialsBoard } from "@/components/SpecialsBoard";
 import { TipJar } from "@/components/TipJar";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const [specials, categorySponsors] = await Promise.all([
     getAllSpecialsWithVenue(region.id),
     // categorySponsors has no region column yet -- sponsorships are currently
@@ -43,7 +44,7 @@ export default async function Home() {
 
       <HomeIntroCallout />
 
-      <SpecialsBoard specials={specials} categorySponsors={categorySponsors} />
+      <SpecialsBoard specials={specials} categorySponsors={categorySponsors} timezone={timezone} />
 
       <TipJar />
       <AboutSection brandName={region.brandName} areas={areas} />

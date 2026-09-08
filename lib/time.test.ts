@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { endOfDayPacific, pacificTodayISODate } from "./time";
+import { endOfDayPacific, regionTodayISODate } from "./time";
 
 // 2026 US/Canada DST transitions: PST -> PDT on Mar 8, PDT -> PST on Nov 1.
 describe("endOfDayPacific", () => {
@@ -32,8 +32,19 @@ describe("endOfDayPacific", () => {
   it("still reports the input date in Pacific, and one ms later does not", () => {
     for (const d of ["2026-01-15", "2026-03-08", "2026-07-15", "2026-11-01"]) {
       const end = endOfDayPacific(d);
-      expect(pacificTodayISODate(end)).toBe(d);
-      expect(pacificTodayISODate(new Date(end.getTime() + 1))).not.toBe(d);
+      expect(regionTodayISODate("America/Vancouver", end)).toBe(d);
+      expect(regionTodayISODate("America/Vancouver", new Date(end.getTime() + 1))).not.toBe(d);
     }
+  });
+});
+
+describe("regionTodayISODate", () => {
+  it("resolves per timezone, not hardcoded Pacific", () => {
+    // 2026-01-01 02:00 UTC is still 2025-12-31 in Vancouver (UTC-8) but already
+    // 2026-01-01 in a UTC+1 timezone -- proves the timezone argument is load-bearing,
+    // not a no-op parameter.
+    const instant = new Date("2026-01-01T02:00:00Z");
+    expect(regionTodayISODate("America/Vancouver", instant)).toBe("2025-12-31");
+    expect(regionTodayISODate("Europe/Paris", instant)).toBe("2026-01-01");
   });
 });

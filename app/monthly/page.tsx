@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getMonthlySpecials } from "@/lib/data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { MonthlySpecials } from "@/components/MonthlySpecials";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -25,6 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MonthlyPage() {
   const region = await getCurrentRegion();
+  const { timezone } = await getRegionContext(region);
   const specials = await getMonthlySpecials(region.id);
   const areaName = region.brandName.split(" ")[0];
 
@@ -36,7 +37,7 @@ export default async function MonthlyPage() {
         subtitle="Running all month — not tied to a single day."
       />
 
-      <MonthlySpecials specials={specials} />
+      <MonthlySpecials specials={specials} timezone={timezone} />
 
       <TipJar />
       <SiteFooter />

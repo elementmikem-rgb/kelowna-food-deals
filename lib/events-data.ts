@@ -1,6 +1,7 @@
 import { db, events, venues } from "@/db";
 import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
 import type { EventType } from "@/db/schema";
+import { regionTodayISODate } from "@/lib/time";
 
 export interface EventWithVenue {
   id: number;
@@ -38,10 +39,6 @@ const recurringColumns = {
   sourceUrl: events.sourceUrl,
 };
 
-function pacificTodayISODate(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
-}
-
 export async function getRecurringEvents(regionId: number): Promise<EventWithVenue[]> {
   // Recurring weekly events always belong to one of our tracked venues.
   // Excludes rows that also carry a specificDate -- those are one-off events
@@ -67,12 +64,13 @@ export async function getRecurringEvents(regionId: number): Promise<EventWithVen
 
 export async function getUpcomingOneOffEvents(
   regionId: number,
+  timezone: string,
   daysAhead = 21
 ): Promise<EventWithVenue[]> {
-  const today = pacificTodayISODate();
+  const today = regionTodayISODate(timezone);
   const until = new Date();
   until.setDate(until.getDate() + daysAhead);
-  const untilStr = until.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+  const untilStr = until.toLocaleDateString("en-CA", { timeZone: timezone });
 
   // One-off events may or may not belong to a tracked venue (e.g. a winery
   // hosting a concert), so this is a left join with a locationName fallback.
