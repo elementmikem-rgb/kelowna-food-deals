@@ -122,6 +122,7 @@ export interface ThreadMessage {
   id: string;
   direction: "outbound" | "inbound";
   fromLabel: string;
+  fromEmail: string | null; // set for inbound messages; null for outbound ("You")
   subject: string | null;
   bodyHtml: string | null;
   bodyText: string | null;
@@ -187,6 +188,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         id: `s${s.id}`,
         direction: "outbound" as const,
         fromLabel: "You",
+        fromEmail: null,
         subject: s.subject,
         bodyHtml: s.htmlBody,
         bodyText: null,
@@ -198,6 +200,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         id: `i${e.id}`,
         direction: "inbound" as const,
         fromLabel: e.fromName ?? e.fromEmail,
+        fromEmail: e.fromEmail,
         subject: e.subject,
         bodyHtml: null,
         bodyText: safeInboundText(e.textBody, e.htmlBody),
@@ -256,6 +259,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         id: `s${s.id}`,
         direction: "outbound" as const,
         fromLabel: "You",
+        fromEmail: null,
         subject: s.subject,
         bodyHtml: s.htmlBody,
         bodyText: null,
@@ -267,6 +271,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         id: `i${e.id}`,
         direction: "inbound" as const,
         fromLabel: e.fromName ?? e.fromEmail,
+        fromEmail: e.fromEmail,
         subject: e.subject,
         bodyHtml: null,
         bodyText: safeInboundText(e.textBody, e.htmlBody),

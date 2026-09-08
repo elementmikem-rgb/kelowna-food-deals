@@ -7,6 +7,7 @@ interface Message {
   id: string;
   direction: "outbound" | "inbound";
   fromLabel: string;
+  fromEmail: string | null;
   subject: string | null;
   bodyHtml: string | null;
   bodyText: string | null;
@@ -27,23 +28,29 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
   const [replyText, setReplyText] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [actionBusy, setActionBusy] = useState(false);
+  const [actionResult, setActionResult] = useState<{ kind: "unsubscribe" | "block"; ok: boolean } | null>(null);
   const [forwardOpen, setForwardOpen] = useState(false);
   const [forwardTo, setForwardTo] = useState("");
   const [forwardNote, setForwardNote] = useState("");
   const router = useRouter();
 
   const inboundIds = messages.filter((m) => m.inboundId !== null).map((m) => m.inboundId!);
+  // A thread can span more than one reply-from address for the same venue
+  // (rare, but real) -- block every distinct sender, not just contactEmail.
+  const senderEmails = Array.from(
+    new Set(messages.filter((m) => m.fromEmail).map((m) => m.fromEmail!))
+  );
 
   async function handleMarkUnread() {
     if (inboundIds.length === 0) return;
     setActionBusy(true);
     try {
-      await fetch("/api/admin/inbox/mark-read", {
+      const res = await fetch("/api/admin/inbox/mark-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: inboundIds, read: false }),
       });
-      router.push("/admin/inbox");
+      if (res.ok) router.push("/admin/inbox");
     } finally {
       setActionBusy(false);
     }
@@ -53,12 +60,12 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
     if (inboundIds.length === 0) return;
     setActionBusy(true);
     try {
-      await fetch("/api/admin/inbox/archive", {
+      const res = await fetch("/api/admin/inbox/archive", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: inboundIds, archived }),
       });
-      router.push("/admin/inbox");
+      if (res.ok) router.push("/admin/inbox");
     } finally {
       setActionBusy(false);
     }
@@ -68,12 +75,12 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
     if (inboundIds.length === 0) return;
     setActionBusy(true);
     try {
-      await fetch("/api/admin/inbox/delete", {
+      const res = await fetch("/api/admin/inbox/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: inboundIds }),
       });
-      router.push("/admin/inbox");
+      if (res.ok) router.push("/admin/inbox");
     } finally {
       setActionBusy(false);
     }
@@ -83,29 +90,30 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
     if (!venueId) return;
     setActionBusy(true);
     try {
-      await fetch("/api/admin/inbox/unsubscribe", {
+      const res = await fetch("/api/admin/inbox/unsubscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ venueId }),
       });
+      setActionResult({ kind: "unsubscribe", ok: res.ok });
     } finally {
       setActionBusy(false);
     }
   }
 
   async function handleBlock() {
-    // contactEmail (this component's own prop), not m.fromLabel -- fromLabel is
-    // e.fromName ?? e.fromEmail in lib/inbox-data.ts, so for a sender with a
-    // name on file it's a display name, not an address. contactEmail is
-    // always the real address this thread is keyed to.
-    if (!contactEmail) return;
+    // contactEmail alone misses a thread with more than one reply-from
+    // address -- send every distinct sender address seen in this thread.
+    const emails = senderEmails.length > 0 ? senderEmails : contactEmail ? [contactEmail] : [];
+    if (emails.length === 0) return;
     setActionBusy(true);
     try {
-      await fetch("/api/admin/inbox/block", {
+      const res = await fetch("/api/admin/inbox/block", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emails: [contactEmail] }),
+        body: JSON.stringify({ emails }),
       });
+      setActionResult({ kind: "block", ok: res.ok });
     } finally {
       setActionBusy(false);
     }
@@ -196,6 +204,17 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
         <button onClick={handleBlock} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
           Block sender
         </button>
+        {actionResult && (
+          <span className={`text-xs ${actionResult.ok ? "text-evergreen" : "text-stale"}`}>
+            {actionResult.kind === "unsubscribe"
+              ? actionResult.ok
+                ? "Unsubscribed."
+                : "Unsubscribe failed — try again."
+              : actionResult.ok
+                ? "Sender blocked."
+                : "Block failed — try again."}
+          </span>
+        )}
       </div>
 
       {forwardOpen && (
