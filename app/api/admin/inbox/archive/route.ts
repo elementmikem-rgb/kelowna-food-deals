@@ -4,9 +4,9 @@ import { db, inboundEmails } from "@/db";
 import { inArray } from "drizzle-orm";
 import { isAdminAuthed } from "@/lib/admin-auth";
 
-const markReadSchema = z.object({
+const archiveSchema = z.object({
   ids: z.array(z.number().int().positive()).min(1).max(200),
-  read: z.boolean().default(true),
+  archived: z.boolean(),
 });
 
 export async function POST(req: NextRequest) {
@@ -14,11 +14,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const parsed = markReadSchema.safeParse(await req.json().catch(() => null));
+  const parsed = archiveSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  await db.update(inboundEmails).set({ read: parsed.data.read }).where(inArray(inboundEmails.id, parsed.data.ids));
+  await db
+    .update(inboundEmails)
+    .set({ archivedAt: parsed.data.archived ? new Date() : null })
+    .where(inArray(inboundEmails.id, parsed.data.ids));
+
   return NextResponse.json({ ok: true });
 }
