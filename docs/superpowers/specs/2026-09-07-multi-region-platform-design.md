@@ -94,6 +94,16 @@ Once the platform above ships, adding a region is:
 3. Seed its initial venues — the one genuinely manual step per region, scaled to how many venues you want live at launch.
 4. Run the same outreach playbook already proven on Kelowna (find venue emails, send the branded-per-region template, admin approval flow — all of which already work per-region once Sections 1-4 ship).
 
+## Deferred: per-domain static rendering (decided 2026-09-07, after the initial build)
+
+The initial implementation resolved "which region" via the request's Host header, read in `app/layout.tsx` and `components/SiteHeader.tsx` via `getCurrentRegion()`. This works correctly but has a real cost: reading the request (a Next.js "Dynamic API") anywhere in a page's render tree forces that whole route to render live on every request, with no static caching or ISR. Since the root layout and site header sit in every public page's render tree, this took the entire public site from static + hourly ISR caching to a full database query per visit — a real latency/DB-load regression on a live site, discovered by the final whole-branch review, not something the original spec anticipated.
+
+Decision: fixed the immediate regression cheaply (see below) rather than doing the full correct fix now, since no second region is imminent.
+
+- **Immediate fix (shipped):** added `getPrimaryRegion()` to `lib/regions.ts` — an ordinary database lookup (no `headers()`) keyed by a `PRIMARY_REGION_DOMAIN` env var (default `kelownafooddeals.shop`). `app/layout.tsx`, `components/SiteHeader.tsx`, `app/sitemap.ts`, and `app/robots.ts` now use this instead of `getCurrentRegion()`, restoring static/ISR rendering. `getCurrentRegion()` (the header-based one) is untouched and still used correctly by API routes (checkout, outreach, submit) and the admin dashboard, which are inherently per-request anyway and lose nothing by staying header-based.
+- **Real limitation this leaves:** as written, every domain would render the SAME static content (whatever `PRIMARY_REGION_DOMAIN` points to) — there's no way for two different domains to get genuinely different cached pages with this approach. That's fine today (only one region/domain exists) but does not extend to a second region without more work.
+- **The full fix, deferred until a second region is actually close to launching:** make the domain part of Next.js's routing itself (a URL rewrite in `proxy.ts` that maps each domain to its own route segment, e.g. via `generateStaticParams()` enumerating known domains), so each domain gets pre-rendered and cached separately, with correct per-domain `<title>`/meta description/Open Graph tags baked into the actual server response (not just client-injected, which doesn't help SEO crawlers or social-share unfurls). This touches essentially every public page/layout file (~10-15 files) and needs careful URL-parity verification against production, since this project has no staging environment. Scope this as its own spec + plan when a second region is scheduled to launch, not as a quick add-on.
+
 ## Out of scope for this spec
 
 - Automating venue discovery for a new region (still manual/semi-manual research per region).
