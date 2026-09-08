@@ -1,7 +1,7 @@
-import { db, regions } from "@/db";
+import { db, regions, provinces, countries } from "@/db";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import type { Region } from "@/db/schema";
+import type { Region, Province, Country } from "@/db/schema";
 
 // Region config changes rarely (a human edits it, not a request), so a short
 // in-memory cache avoids a Postgres round trip on every single page render
@@ -9,6 +9,8 @@ import type { Region } from "@/db/schema";
 const CACHE_TTL_MS = 60_000;
 const byDomain = new Map<string, { region: Region | null; expiresAt: number }>();
 const byId = new Map<number, { region: Region | null; expiresAt: number }>();
+const provinceById = new Map<number, { province: Province | null; expiresAt: number }>();
+const countryById = new Map<number, { country: Country | null; expiresAt: number }>();
 
 export async function getRegionByDomain(domain: string): Promise<Region | null> {
   const cached = byDomain.get(domain);
@@ -28,6 +30,44 @@ export async function getRegionById(id: number): Promise<Region | null> {
   const region = row ?? null;
   byId.set(id, { region, expiresAt: Date.now() + CACHE_TTL_MS });
   return region;
+}
+
+async function getProvinceById(id: number): Promise<Province | null> {
+  const cached = provinceById.get(id);
+  if (cached && cached.expiresAt > Date.now()) return cached.province;
+  const [row] = await db.select().from(provinces).where(eq(provinces.id, id)).limit(1);
+  const province = row ?? null;
+  provinceById.set(id, { province, expiresAt: Date.now() + CACHE_TTL_MS });
+  return province;
+}
+
+async function getCountryById(id: number): Promise<Country | null> {
+  const cached = countryById.get(id);
+  if (cached && cached.expiresAt > Date.now()) return cached.country;
+  const [row] = await db.select().from(countries).where(eq(countries.id, id)).limit(1);
+  const country = row ?? null;
+  countryById.set(id, { country, expiresAt: Date.now() + CACHE_TTL_MS });
+  return country;
+}
+
+export interface RegionContext {
+  region: Region;
+  province: Province;
+  country: Country;
+  timezone: string; // province.timezone -- the only place it's stored (see Task 1)
+  currency: string; // country.currency -- the only place it's stored
+}
+
+export async function getRegionContext(region: Region): Promise<RegionContext> {
+  const province = await getProvinceById(region.provinceId);
+  if (!province) {
+    throw new Error(`getRegionContext: region ${region.id} points at province ${region.provinceId}, which does not exist`);
+  }
+  const country = await getCountryById(province.countryId);
+  if (!country) {
+    throw new Error(`getRegionContext: province ${province.id} points at country ${province.countryId}, which does not exist`);
+  }
+  return { region, province, country, timezone: province.timezone, currency: country.currency };
 }
 
 const PRIMARY_REGION_DOMAIN = process.env.PRIMARY_REGION_DOMAIN ?? "kelownafooddeals.shop";
