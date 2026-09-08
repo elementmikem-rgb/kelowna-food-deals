@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
+import { buildVenueVerifyUrl } from "@/lib/venue-verify";
 import { getRegionById } from "@/lib/regions";
 
 const sendSchema = z.object({ venueId: z.number().int().positive() });
@@ -20,7 +21,8 @@ function buildOutreachHtml(
   venueId: number,
   unsubscribeUrl: string,
   mailingAddress: string,
-  domain: string
+  domain: string,
+  verifyUrl: string
 ): string {
   const venueUrl = `https://${domain}/venues/${venueId}`;
   const advertiseUrl = `https://${domain}/advertise`;
@@ -61,7 +63,12 @@ function buildOutreachHtml(
           padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">View your listing</a>
         </p>
         <p style="margin:0 0 16px;">That's built from what I could find on your site, but I'd rather double-check with you
-        than guess wrong. Does everything look right? And if you've got specials or events that
+        than guess wrong.</p>
+        <p style="margin:0 0 20px;">
+          <a href="${verifyUrl}" style="display:inline-block;background:${ACCENT_DIM};color:#fffaf0;text-decoration:none;
+          padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">Confirm your specials are accurate</a>
+        </p>
+        <p style="margin:0 0 16px;">If you've got specials or events that
         aren't on your website but you'd want people to know about, just reply here and I'll add
         them.</p>
         <p style="margin:0 0 16px;">Separately — if you'd ever want your listing to pin to the top of the homepage, or
@@ -130,7 +137,8 @@ export async function POST(req: NextRequest) {
 
   const subject = `Quick one about ${venue.name} on Kelowna Food Deals`;
   const unsubscribeUrl = buildUnsubscribeUrl(venue.id, region.domain);
-  const htmlBody = buildOutreachHtml(venue.name, venue.id, unsubscribeUrl, mailingAddress, region.domain);
+  const verifyUrl = buildVenueVerifyUrl(venue.id, region.domain);
+  const htmlBody = buildOutreachHtml(venue.name, venue.id, unsubscribeUrl, mailingAddress, region.domain, verifyUrl);
 
   const [sendRow] = await db
     .insert(outreachSends)
