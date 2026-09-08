@@ -10,7 +10,7 @@ export async function SiteHeader({
   brandIsHeading = true,
   heading,
 }: {
-  active: "specials" | "events" | "blog";
+  active: "specials" | "events" | "monthly" | "blog";
   subtitle: string;
   // Pages that carry their own <h1> (e.g. a blog post title) pass false so the
   // brand renders as plain text and the page keeps exactly one real heading.
