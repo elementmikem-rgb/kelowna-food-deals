@@ -159,6 +159,13 @@ export const specials = specialsSchema.table("specials", {
   // first within its venue's card and gets a "Featured" badge. Same lapses-itself
   // design as venues.featuredUntil.
   boostedUntil: timestamp("boosted_until", { withTimezone: true }),
+  // Set when the venue itself clicks "Yes, this is accurate" on the /verify/[token]
+  // page reached from the outreach email -- see lib/venue-verify.ts. Null means never
+  // confirmed by the venue. Survives unchanged across cron re-scrapes (the nightly
+  // upsert only creates a new row when a special's content actually changes -- see
+  // cron/upsert.ts's replaceVenueSpecials), so a confirmation naturally resets to null
+  // only when the underlying deal itself changes, matching the spec's "no expiry" rule.
+  venueConfirmedAt: timestamp("venue_confirmed_at", { withTimezone: true }),
 });
 
 export const eventType = [
@@ -304,6 +311,21 @@ export const rateLimits = specialsSchema.table(
   },
   (table) => [uniqueIndex("rate_limits_key_window_unique").on(table.key, table.windowStart)]
 );
+
+// One row per visitor confirm/dispute click on a special or event. Counts are computed
+// at read time (count(*) grouped by itemId/kind/feedbackType) rather than stored as a
+// running total, so there's no risk of a cached count drifting from the underlying rows.
+// itemId + kind together identify the target row (specials.id or events.id) -- mirrors
+// the same kind-discriminated design app/api/report/route.ts already uses, rather than
+// adding two separate nullable foreign key columns.
+export const dealFeedback = specialsSchema.table("deal_feedback", {
+  id: serial("id").primaryKey(),
+  itemId: integer("item_id").notNull(),
+  kind: text("kind").$type<"special" | "event">().notNull(),
+  feedbackType: text("feedback_type").$type<"confirm" | "dispute">().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type DealFeedback = typeof dealFeedback.$inferSelect;
 
 // One sponsor slot per specials category (e.g. "Wing Nights presented by X"). At most
 // one row per category is meaningful at a time -- a new sponsorship replaces the old

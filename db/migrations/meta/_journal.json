@@ -169,6 +169,13 @@
       "when": 1788816398302,
       "tag": "0023_curvy_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788832183375,
+      "tag": "0024_wild_warlock",
+      "breakpoints": true
     }
   ]
 }
