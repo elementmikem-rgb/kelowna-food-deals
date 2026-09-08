@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Message {
   id: string;
@@ -11,6 +12,7 @@ interface Message {
   bodyText: string | null;
   at: string;
   inboundId: number | null;
+  attachments: { id: number; fileName: string; contentType: string; sizeBytes: number }[];
 }
 
 interface InboxThreadProps {
@@ -24,6 +26,115 @@ interface InboxThreadProps {
 export function InboxThread({ venueId, displayName, contactEmail, messages }: InboxThreadProps) {
   const [replyText, setReplyText] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [forwardOpen, setForwardOpen] = useState(false);
+  const [forwardTo, setForwardTo] = useState("");
+  const [forwardNote, setForwardNote] = useState("");
+  const router = useRouter();
+
+  const inboundIds = messages.filter((m) => m.inboundId !== null).map((m) => m.inboundId!);
+
+  async function handleMarkUnread() {
+    if (inboundIds.length === 0) return;
+    setActionBusy(true);
+    try {
+      await fetch("/api/admin/inbox/mark-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: inboundIds, read: false }),
+      });
+      router.push("/admin/inbox");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleArchive(archived: boolean) {
+    if (inboundIds.length === 0) return;
+    setActionBusy(true);
+    try {
+      await fetch("/api/admin/inbox/archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: inboundIds, archived }),
+      });
+      router.push("/admin/inbox");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (inboundIds.length === 0) return;
+    setActionBusy(true);
+    try {
+      await fetch("/api/admin/inbox/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: inboundIds }),
+      });
+      router.push("/admin/inbox");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleUnsubscribe() {
+    if (!venueId) return;
+    setActionBusy(true);
+    try {
+      await fetch("/api/admin/inbox/unsubscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId }),
+      });
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleBlock() {
+    // contactEmail (this component's own prop), not m.fromLabel -- fromLabel is
+    // e.fromName ?? e.fromEmail in lib/inbox-data.ts, so for a sender with a
+    // name on file it's a display name, not an address. contactEmail is
+    // always the real address this thread is keyed to.
+    if (!contactEmail) return;
+    setActionBusy(true);
+    try {
+      await fetch("/api/admin/inbox/block", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: [contactEmail] }),
+      });
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleForward() {
+    if (!forwardTo.trim()) return;
+    const original = [...messages].reverse().find((m) => m.direction === "inbound");
+    if (!original) return;
+    setActionBusy(true);
+    try {
+      const quoted = `${forwardNote ? forwardNote + "\n\n" : ""}---- Forwarded message ----\nFrom: ${original.fromLabel}\n\n${original.bodyText ?? ""}`;
+      await fetch("/api/admin/inbox/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId: null,
+          toEmail: forwardTo.trim(),
+          subject: original.subject?.startsWith("Fwd:") ? original.subject : `Fwd: ${original.subject ?? displayName}`,
+          body: quoted,
+        }),
+      });
+      setForwardOpen(false);
+      setForwardTo("");
+      setForwardNote("");
+    } finally {
+      setActionBusy(false);
+    }
+  }
 
   useEffect(() => {
     const unreadIds = messages.filter((m) => m.direction === "inbound" && m.inboundId).map((m) => m.inboundId!);
@@ -64,6 +175,55 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
         {contactEmail && <p className="text-sm text-muted-2">{contactEmail}</p>}
       </header>
 
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border">
+        <button onClick={handleMarkUnread} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
+          Mark unread
+        </button>
+        <button onClick={() => handleArchive(true)} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
+          Archive
+        </button>
+        <button onClick={handleDelete} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
+          Delete
+        </button>
+        <button onClick={() => setForwardOpen((v) => !v)} disabled={actionBusy} className="text-xs text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50">
+          Forward
+        </button>
+        {venueId && (
+          <button onClick={handleUnsubscribe} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
+            Unsubscribe
+          </button>
+        )}
+        <button onClick={handleBlock} disabled={actionBusy} className="text-xs text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50">
+          Block sender
+        </button>
+      </div>
+
+      {forwardOpen && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
+          <input
+            type="email"
+            value={forwardTo}
+            onChange={(e) => setForwardTo(e.target.value)}
+            placeholder="Forward to email…"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+          <textarea
+            value={forwardNote}
+            onChange={(e) => setForwardNote(e.target.value)}
+            rows={2}
+            placeholder="Optional note…"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none"
+          />
+          <button
+            onClick={handleForward}
+            disabled={actionBusy || !forwardTo.trim()}
+            className="press-pill self-start rounded-full bg-accent text-background px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+          >
+            Send forward
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {messages.map((m) => (
           <article
@@ -90,6 +250,31 @@ export function InboxThread({ venueId, displayName, contactEmail, messages }: In
               />
             ) : (
               <p className="text-sm text-muted whitespace-pre-wrap">{m.bodyText}</p>
+            )}
+            {m.attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {m.attachments.map((a) => (
+                  <a
+                    key={a.id}
+                    href={`/api/admin/inbox/attachments/${a.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-accent-dim hover:underline"
+                  >
+                    {a.contentType.startsWith("image/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/api/admin/inbox/attachments/${a.id}`}
+                        alt={a.fileName}
+                        className="w-8 h-8 rounded object-cover"
+                      />
+                    ) : null}
+                    <span>
+                      {a.fileName} ({Math.round(a.sizeBytes / 1024)}KB)
+                    </span>
+                  </a>
+                ))}
+              </div>
             )}
           </article>
         ))}
