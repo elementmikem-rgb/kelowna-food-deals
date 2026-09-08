@@ -151,7 +151,13 @@ export function formatTimeWindow(start: string | null, end: string | null): stri
   const s = formatTimeOfDay(start);
   const e = formatTimeOfDay(end);
   if (s && e) return `${s}–${e}`;
-  return s ?? e ?? null;
+  // A bare time reads as "starts at" (matches how a start-only value like a
+  // recurring event's "8PM" is already understood everywhere this is shown).
+  // An end-only value needs "Until " -- without it, "4PM" on a card whose
+  // deal actually stops at 4pm reads as if it starts then, the opposite of
+  // what's true.
+  if (e) return `Until ${e}`;
+  return s ?? null;
 }
 
 export function formatCheckedAt(date: Date): string {
