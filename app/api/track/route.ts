@@ -3,6 +3,7 @@ import { z } from "zod";
 import { trackEvent, isBotUserAgent } from "@/lib/analytics";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { isAdminAuthed } from "@/lib/admin-auth";
+import { getCurrentRegion } from "@/lib/regions";
 
 const trackSchema = z.object({
   eventType: z.string().min(1).max(50),
@@ -44,9 +45,14 @@ export async function POST(req: NextRequest) {
 
     const country = req.headers.get("cf-ipcountry");
 
+    // Never let a region-resolution failure break tracking itself -- this
+    // endpoint always returns 200 regardless of outcome by design (see above).
+    const region = await getCurrentRegion().catch(() => null);
+
     await trackEvent({
       ...parsed.data,
       country: country && country !== "XX" ? country : null,
+      regionId: region?.id ?? null,
     });
   } catch (err) {
     console.error("Analytics track failed:", err);

@@ -3,6 +3,7 @@ import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats } fr
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { AdminShell } from "@/components/AdminShell";
 import { pacificTodayISODate } from "@/lib/time";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,8 @@ export default async function AdminAnalyticsPage({
     : hours
       ? buildHourWindow(hours)
       : buildWindow(days);
-  const stats = await getAnalyticsStats(window);
+  const scope = await getSelectedAdminScope();
+  const stats = await getAnalyticsStats(window, scope.regionIds);
 
   // Defaults for the custom picker: whatever's already active, so reopening it
   // (or tweaking one side) starts from the range currently on screen.

@@ -1,5 +1,6 @@
 import { db, analyticsEvents } from "@/db";
 import { and, gte, lt, eq, sql } from "drizzle-orm";
+import { regionScopeCondition } from "@/lib/admin-region";
 
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
 // blog/SEO content gets crawled far more than it gets actually visited, and
@@ -37,6 +38,7 @@ interface TrackEventParams {
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
+  regionId?: number | null;
 }
 
 export async function trackEvent(params: TrackEventParams): Promise<void> {
@@ -51,6 +53,7 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
     utmSource: params.utmSource ?? null,
     utmMedium: params.utmMedium ?? null,
     utmCampaign: params.utmCampaign ?? null,
+    regionId: params.regionId ?? null,
   });
 }
 
@@ -120,12 +123,20 @@ export interface AnalyticsStats {
   };
 }
 
-export async function getAnalyticsStats(window: AnalyticsWindow): Promise<AnalyticsStats> {
+export async function getAnalyticsStats(
+  window: AnalyticsWindow,
+  regionIds: number[] | "all"
+): Promise<AnalyticsStats> {
   const prevWindow = buildPreviousWindow(window);
-  const inWindow = and(gte(analyticsEvents.createdAt, window.from), lt(analyticsEvents.createdAt, window.to));
+  const inWindow = and(
+    gte(analyticsEvents.createdAt, window.from),
+    lt(analyticsEvents.createdAt, window.to),
+    regionScopeCondition(analyticsEvents.regionId, regionIds)
+  );
   const inPrevWindow = and(
     gte(analyticsEvents.createdAt, prevWindow.from),
-    lt(analyticsEvents.createdAt, prevWindow.to)
+    lt(analyticsEvents.createdAt, prevWindow.to),
+    regionScopeCondition(analyticsEvents.regionId, regionIds)
   );
   const isPageview = eq(analyticsEvents.eventType, "pageview");
 

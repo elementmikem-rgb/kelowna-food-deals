@@ -338,6 +338,10 @@ export const analyticsEvents = specialsSchema.table("analytics_events", {
   utmMedium: text("utm_medium"),
   utmCampaign: text("utm_campaign"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // Nullable: rows recorded before this column existed have no way to know
+  // their region after the fact, and stay null forever rather than being
+  // backfilled with a guess (same pattern as monetizationSettings.regionId).
+  regionId: integer("region_id").references(() => regions.id),
 });
 
 // Fixed-window per-IP rate limiting for public write endpoints (submit, report) and the
