@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getAdminNavCounts } from "@/lib/admin-counts";
-import { getSelectedAdminRegionId } from "@/lib/admin-region";
-import { db, regions } from "@/db";
+import { ADMIN_COUNTRY_COOKIE, ADMIN_PROVINCE_COOKIE, ADMIN_REGION_COOKIE } from "@/lib/admin-region";
+import { db, regions, provinces, countries } from "@/db";
+import { cookies } from "next/headers";
 import { AdminNav } from "./AdminNav";
 
 export async function AdminShell({
@@ -19,11 +20,25 @@ export async function AdminShell({
   maxWidth?: string;
   children: React.ReactNode;
 }) {
-  const [{ pendingSubmissions, unreadInbox, flaggedCount }, regionRows, selectedRegionId] = await Promise.all([
-    getAdminNavCounts(),
-    db.select({ id: regions.id, slug: regions.slug, brandName: regions.brandName }).from(regions),
-    getSelectedAdminRegionId(),
-  ]);
+  const jar = await cookies();
+  const rawCountryId = jar.get(ADMIN_COUNTRY_COOKIE)?.value;
+  const rawProvinceId = jar.get(ADMIN_PROVINCE_COOKIE)?.value;
+  const rawRegionId = jar.get(ADMIN_REGION_COOKIE)?.value;
+  const selectedCountryId = rawCountryId === "all" || !rawCountryId ? "all" : Number(rawCountryId);
+  const selectedProvinceId = rawProvinceId === "all" || !rawProvinceId ? "all" : Number(rawProvinceId);
+  const selectedRegionId = rawRegionId === "all" || !rawRegionId ? "all" : Number(rawRegionId);
+
+  // `scope` isn't passed to AdminNav (the nav only needs the raw selected ids
+  // to render the dropdowns) -- it's computed here so Task 5-7's admin pages
+  // have a single already-computed AdminScope available via
+  // getSelectedAdminScope() directly, not routed through AdminShell.
+  const [{ pendingSubmissions, unreadInbox, flaggedCount }, countryRows, provinceRows, regionRows] =
+    await Promise.all([
+      getAdminNavCounts(),
+      db.select({ id: countries.id, name: countries.name }).from(countries),
+      db.select({ id: provinces.id, countryId: provinces.countryId, name: provinces.name }).from(provinces),
+      db.select({ id: regions.id, provinceId: regions.provinceId, brandName: regions.brandName }).from(regions),
+    ]);
 
   return (
     <div className="flex flex-col flex-1 w-full">
@@ -32,7 +47,11 @@ export async function AdminShell({
         pendingSubmissions={pendingSubmissions}
         unreadInbox={unreadInbox}
         flaggedCount={flaggedCount}
+        countries={countryRows}
+        provinces={provinceRows}
         regions={regionRows}
+        selectedCountryId={selectedCountryId}
+        selectedProvinceId={selectedProvinceId}
         selectedRegionId={selectedRegionId}
       />
       <div className={`flex flex-col flex-1 ${maxWidth} mx-auto w-full px-4 sm:px-6 pb-10 gap-6`}>

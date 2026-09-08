@@ -41,41 +41,89 @@ function LogoutButton() {
   );
 }
 
-function RegionSwitcher({
+function ScopeSwitcher({
+  countries,
+  provinces,
   regions,
+  selectedCountryId,
+  selectedProvinceId,
   selectedRegionId,
 }: {
-  regions: { id: number; slug: string; brandName: string }[];
+  countries: { id: number; name: string }[];
+  provinces: { id: number; countryId: number; name: string }[];
+  regions: { id: number; provinceId: number; brandName: string }[];
+  selectedCountryId: number | "all";
+  selectedProvinceId: number | "all";
   selectedRegionId: number | "all";
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  async function handleChange(value: string) {
+  async function handleChange(level: "countryId" | "provinceId" | "regionId", value: string) {
     setLoading(true);
     await fetch("/api/admin/region", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ regionId: value }),
+      body: JSON.stringify({ [level]: value }),
     });
     router.refresh();
     setLoading(false);
   }
 
+  const visibleProvinces =
+    selectedCountryId === "all" ? [] : provinces.filter((p) => p.countryId === selectedCountryId);
+  const visibleRegions =
+    selectedProvinceId === "all" ? [] : regions.filter((r) => r.provinceId === selectedProvinceId);
+
+  const selectClass =
+    "press-pill rounded-full border border-border bg-transparent px-3 py-1.5 text-xs text-muted disabled:opacity-50";
+
   return (
-    <select
-      value={String(selectedRegionId)}
-      disabled={loading}
-      onChange={(e) => handleChange(e.target.value)}
-      className="press-pill rounded-full border border-border bg-transparent px-3 py-1.5 text-xs text-muted disabled:opacity-50"
-    >
-      <option value="all">All regions</option>
-      {regions.map((r) => (
-        <option key={r.id} value={r.id}>
-          {r.brandName}
-        </option>
-      ))}
-    </select>
+    <div className="flex items-center gap-1.5">
+      <select
+        value={String(selectedCountryId)}
+        disabled={loading}
+        onChange={(e) => handleChange("countryId", e.target.value)}
+        className={selectClass}
+      >
+        <option value="all">All countries</option>
+        {countries.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      {selectedCountryId !== "all" && (
+        <select
+          value={String(selectedProvinceId)}
+          disabled={loading}
+          onChange={(e) => handleChange("provinceId", e.target.value)}
+          className={selectClass}
+        >
+          <option value="all">All provinces</option>
+          {visibleProvinces.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {selectedProvinceId !== "all" && (
+        <select
+          value={String(selectedRegionId)}
+          disabled={loading}
+          onChange={(e) => handleChange("regionId", e.target.value)}
+          className={selectClass}
+        >
+          <option value="all">All regions</option>
+          {visibleRegions.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.brandName}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
   );
 }
 
@@ -84,14 +132,22 @@ export function AdminNav({
   pendingSubmissions,
   unreadInbox,
   flaggedCount,
+  countries,
+  provinces,
   regions,
+  selectedCountryId,
+  selectedProvinceId,
   selectedRegionId,
 }: {
   active: AdminSection | null;
   pendingSubmissions: number;
   unreadInbox: number;
   flaggedCount: number;
-  regions: { id: number; slug: string; brandName: string }[];
+  countries: { id: number; name: string }[];
+  provinces: { id: number; countryId: number; name: string }[];
+  regions: { id: number; provinceId: number; brandName: string }[];
+  selectedCountryId: number | "all";
+  selectedProvinceId: number | "all";
   selectedRegionId: number | "all";
 }) {
   const items: { key: AdminSection; href: string; label: string; badge?: number; tone?: "accent" | "evergreen" }[] = [
@@ -133,7 +189,14 @@ export function AdminNav({
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <RegionSwitcher regions={regions} selectedRegionId={selectedRegionId} />
+          <ScopeSwitcher
+            countries={countries}
+            provinces={provinces}
+            regions={regions}
+            selectedCountryId={selectedCountryId}
+            selectedProvinceId={selectedProvinceId}
+            selectedRegionId={selectedRegionId}
+          />
           <LogoutButton />
         </div>
       </div>
