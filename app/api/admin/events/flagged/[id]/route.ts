@@ -24,7 +24,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   if (parsed.data.action === "archive") {
-    await db.update(events).set({ archivedAt: new Date() }).where(eq(events.id, eventId));
+    // archivedManually: true tells cron/upsert.ts's replaceVenueEvents this was a
+    // human decision, not just superseded content -- a future scrape that still finds
+    // this exact event on the venue's page should leave it archived, not reinsert it.
+    await db
+      .update(events)
+      .set({ archivedAt: new Date(), archivedManually: true })
+      .where(eq(events.id, eventId));
   }
   // Both "archive" and "dismiss" clear the dispute rows -- archiving an event
   // that's already flagged shouldn't leave it re-appearing in the queue if it's

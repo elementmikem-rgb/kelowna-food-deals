@@ -1,0 +1,2 @@
+ALTER TABLE "specials"."events" ADD COLUMN "archived_manually" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "specials"."specials" ADD COLUMN "archived_manually" boolean DEFAULT false NOT NULL;

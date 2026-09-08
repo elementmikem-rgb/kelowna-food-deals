@@ -197,6 +197,14 @@ export const specials = specialsSchema.table("specials", {
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
   archivedAt: timestamp("archived_at", { withTimezone: true }), // set when superseded by a change; null = currently active
+  // True only when an admin archived this via the flagged-review queue (a human
+  // judgment call, e.g. the venue told us directly it's wrong/discontinued) --
+  // false for every other archival (cron superseding it with a changed version,
+  // monthly expiry). cron/upsert.ts's replaceVenueSpecials treats a manually
+  // archived row as a standing "don't re-add this" decision: if a future scrape
+  // extracts content matching its identity, it stays archived instead of being
+  // silently reinserted as a new active row.
+  archivedManually: boolean("archived_manually").notNull().default(false),
   // Paid seasonal boost: while now() < boostedUntil, this specific special sorts
   // first within its venue's card and gets a "Featured" badge. Same lapses-itself
   // design as venues.featuredUntil.
@@ -240,6 +248,9 @@ export const events = specialsSchema.table("events", {
   confidence: real("confidence").notNull().default(1),
   extractionNotes: text("extraction_notes"),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
+  // See specials.archivedManually -- same meaning, same cron.upsert.ts contract,
+  // for events.
+  archivedManually: boolean("archived_manually").notNull().default(false),
 });
 
 export const submissionType = ["special", "event"] as const;

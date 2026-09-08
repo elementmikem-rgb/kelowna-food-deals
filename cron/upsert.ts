@@ -99,6 +99,14 @@ export async function markVenueStillCurrent(venueId: number): Promise<void> {
 // doesn't wrongly show up as "retired today" in the archive on a night when
 // nothing about it actually changed); only items no longer present get
 // archived, and only genuinely new items get inserted.
+//
+// A manually archived special (see db/schema.ts's archivedManually) is a
+// standing human decision, not just "not currently on the page" -- if the
+// venue's site still describes it (unchanged wording an admin already reviewed
+// and rejected, e.g. because the venue told us directly it's discontinued),
+// that content must NOT come back to life as a new active row just because
+// this scrape's extraction still finds it. Only content cron itself archived
+// (superseded by a later version) is eligible to be reinserted if it recurs.
 export async function replaceVenueSpecials(
   venueId: number,
   regionId: number,
@@ -117,6 +125,16 @@ export async function replaceVenueSpecials(
           isNotNull(specials.sourceUrl)
         )
       );
+    const suppressed = await tx
+      .select()
+      .from(specials)
+      .where(
+        and(
+          eq(specials.venueId, venueId),
+          eq(specials.archivedManually, true),
+          isNotNull(specials.sourceUrl)
+        )
+      );
 
     const existingByKey = new Map<string, (typeof existing)[number][]>();
     for (const row of existing) {
@@ -125,6 +143,7 @@ export async function replaceVenueSpecials(
       if (list) list.push(row);
       else existingByKey.set(key, [row]);
     }
+    const suppressedKeys = new Set(suppressed.map((row) => specialIdentityKey(row)));
 
     const keptIds = new Set<number>();
     const toInsert: ExtractedSpecial[] = [];
@@ -147,6 +166,9 @@ export async function replaceVenueSpecials(
           .update(specials)
           .set({ lastVerifiedAt: now, confidence: s.confidence, extractionNotes: s.extraction_notes })
           .where(eq(specials.id, match.id));
+      } else if (suppressedKeys.has(key)) {
+        // Matches a manually archived special exactly -- leave it archived.
+        continue;
       } else {
         toInsert.push(s);
       }
@@ -180,7 +202,8 @@ export async function replaceVenueSpecials(
   });
 }
 
-// Same reconciliation approach as replaceVenueSpecials -- see comment there.
+// Same reconciliation approach as replaceVenueSpecials -- see comment there,
+// including the archivedManually suppression rule.
 export async function replaceVenueEvents(
   venueId: number,
   regionId: number,
@@ -195,6 +218,16 @@ export async function replaceVenueEvents(
       .where(
         and(eq(events.venueId, venueId), isNull(events.archivedAt), isNotNull(events.sourceUrl))
       );
+    const suppressed = await tx
+      .select()
+      .from(events)
+      .where(
+        and(
+          eq(events.venueId, venueId),
+          eq(events.archivedManually, true),
+          isNotNull(events.sourceUrl)
+        )
+      );
 
     const existingByKey = new Map<string, (typeof existing)[number][]>();
     for (const row of existing) {
@@ -203,6 +236,7 @@ export async function replaceVenueEvents(
       if (list) list.push(row);
       else existingByKey.set(key, [row]);
     }
+    const suppressedKeys = new Set(suppressed.map((row) => eventIdentityKey(row)));
 
     const keptIds = new Set<number>();
     const toInsert: ExtractedEvent[] = [];
@@ -225,6 +259,9 @@ export async function replaceVenueEvents(
           .update(events)
           .set({ lastVerifiedAt: now, confidence: e.confidence, extractionNotes: e.extraction_notes })
           .where(eq(events.id, match.id));
+      } else if (suppressedKeys.has(key)) {
+        // Matches a manually archived event exactly -- leave it archived.
+        continue;
       } else {
         toInsert.push(e);
       }
