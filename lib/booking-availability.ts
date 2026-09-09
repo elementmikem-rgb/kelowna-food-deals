@@ -1,4 +1,8 @@
-import { db, bookings } from "@/db";
+// Imported from "@/db/schema" rather than "@/db" on purpose: the barrel instantiates the
+// Postgres client at import time and throws without DATABASE_URL, which would drag a live
+// database into the pure-logic unit tests below. Nothing here needs the `db` handle -- every
+// query takes an `executor` from its caller.
+import { bookings } from "@/db/schema";
 import type * as schema from "@/db/schema";
 import type { BookingProductType, SpecialCategory } from "@/db/schema";
 import { and, eq, gt, inArray, or } from "drizzle-orm";
