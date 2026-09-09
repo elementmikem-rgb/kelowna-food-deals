@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
 
   await sendOutreachEmail({
     to: selection.buyerEmail,
-    subject: "Confirm your Kelowna Food Deals booking",
+    subject: `Confirm your ${region.brandName} booking`,
+    senderName: region.brandName,
     htmlContent: `<p>Click below to confirm this email and continue your booking:</p><p><a href="${link}">Confirm and continue</a></p><p>This link expires in 15 minutes.</p>`,
   });
 

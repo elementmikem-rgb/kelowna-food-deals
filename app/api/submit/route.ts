@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { reviewSubmission, AUTO_APPROVE_CONFIDENCE } from "@/lib/submission-review";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
+import { getCurrentRegion, getRegionById, getRegionContext } from "@/lib/regions";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
@@ -66,16 +67,35 @@ export async function POST(req: NextRequest) {
   }
 
   let venueRegionId: number | null = null;
+  let venueCity: string | null = null;
   if (!isNewVenue) {
     const [venue] = await db.select().from(venues).where(eq(venues.id, venueId)).limit(1);
     if (!venue) {
       return NextResponse.json({ error: "unknown venue" }, { status: 400 });
     }
     venueRegionId = venue.regionId;
+    venueCity = venue.city;
+  }
+
+  // The extraction prompt needs to know where this venue actually is, so it does not
+  // read a Penticton menu board as a Kelowna one. The venue's own city is the most
+  // specific answer, and the venue's own region beats the request's domain; a
+  // brand-new venue has no row yet, so that case falls back to the domain. Resolving
+  // this must never cost us the submission, hence the catch: the route's whole design
+  // is that a submission is persisted even when the AI step fails.
+  let place: string | null = null;
+  try {
+    const region = venueRegionId ? await getRegionById(venueRegionId) : await getCurrentRegion();
+    if (region) {
+      const { province } = await getRegionContext(region);
+      place = venueCity ? `${venueCity}, ${province.code}` : province.name;
+    }
+  } catch (err) {
+    console.error("[submit] could not resolve the venue's place for the prompt:", err);
   }
 
   try {
-    const { result } = await reviewSubmission(text, photoBase64, photoMimeType);
+    const { result } = await reviewSubmission(text, photoBase64, photoMimeType, place);
     const now = new Date();
     const resolvedItemKeys: string[] = [];
     let autoApprovedCount = 0;

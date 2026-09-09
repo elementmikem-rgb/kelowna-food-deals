@@ -1,11 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getCurrentRegion } from "@/lib/regions";
+
+export const dynamic = "force-dynamic";
 
 // A post-payment confirmation page has no business in search results.
-export const metadata: Metadata = {
-  title: "Thank you — Kelowna Food Deals",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  return {
+    title: `Thank you — ${region.brandName}`,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default function TipSuccessPage() {
   return (

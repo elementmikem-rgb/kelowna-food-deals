@@ -1,9 +1,12 @@
 interface SendEmailParams {
   subject: string;
   textContent: string;
+  // Which region's site produced this notification. It lands in the operator's own
+  // inbox, so naming the region is how they tell two sites' mail apart.
+  senderName?: string;
 }
 
-export async function sendReportEmail({ subject, textContent }: SendEmailParams): Promise<void> {
+export async function sendReportEmail({ subject, textContent, senderName }: SendEmailParams): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   const toEmail = process.env.REPORT_EMAIL_TO;
   const fromEmail = process.env.REPORT_EMAIL_FROM;
@@ -27,7 +30,7 @@ export async function sendReportEmail({ subject, textContent }: SendEmailParams)
           "api-key": apiKey,
         },
         body: JSON.stringify({
-          sender: { email: fromEmail, name: "Kelowna Food Deals" },
+          sender: { email: fromEmail, name: senderName ?? "Food Deals" },
           to: [{ email: toEmail }],
           subject,
           textContent,

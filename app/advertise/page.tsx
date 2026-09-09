@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SponsorInquiryForm } from "@/components/SponsorInquiryForm";
@@ -8,11 +9,13 @@ import type { BookingProductType } from "@/db/schema";
 import { regionTodayISODate } from "@/lib/time";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 
-export const metadata = {
-  title: "Advertise With Us",
-  description:
-    "Feature your venue, promote a seasonal special, or sponsor a category on Kelowna Food Deals.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  return {
+    title: "Advertise With Us",
+    description: `Feature your venue, promote a seasonal special, or sponsor a category on ${region.brandName}.`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +60,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">
       <SiteHeader
         active="blog"
-        subtitle="Feature your venue or promote a seasonal special to Kelowna diners."
+        subtitle="Feature your venue or promote a seasonal special to local diners."
       />
 
       <div className="flex flex-col gap-2">

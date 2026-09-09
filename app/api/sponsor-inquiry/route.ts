@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { sendReportEmail } from "@/lib/brevo";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { checkRateLimit } from "@/lib/request-rate-limit";
+import { getCurrentRegion } from "@/lib/regions";
 
 const inquirySchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -46,13 +47,19 @@ export async function POST(req: NextRequest) {
     textBody: message,
   });
 
-  const autoReplySubject = "Thanks for reaching out — Kelowna Food Deals";
+  // The inquiry arrived on one region's domain, so the reply has to come back
+  // under that region's name -- a Penticton business asking about advertising
+  // was previously answered by, and signed off from, Kelowna.
+  const region = await getCurrentRegion();
+  const brand = region.brandName;
+
+  const autoReplySubject = `Thanks for reaching out — ${brand}`;
   const autoReplyHtml = [
     `<p>Hi ${escapeHtml(name)},</p>`,
-    "<p>Thanks for your interest in advertising with Kelowna Food Deals! We've got your message and will follow up soon.</p>",
+    `<p>Thanks for your interest in advertising with ${escapeHtml(brand)}! We've got your message and will follow up soon.</p>`,
     "<p>For reference, here's what you sent us:</p>",
     `<blockquote>${escapeHtml(message).replace(/\n/g, "<br>")}</blockquote>`,
-    "<p>Talk soon,<br>Kelowna Food Deals</p>",
+    `<p>Talk soon,<br>${escapeHtml(brand)}</p>`,
   ].join("\n");
 
   // Logged as an outbound send (venueId null, same as an admin's manual reply to
@@ -68,6 +75,7 @@ export async function POST(req: NextRequest) {
   // above, so a flaky send here is a delivery hiccup, not a lost inquiry.
   const [notifyResult, autoReplyResult] = await Promise.allSettled([
     sendReportEmail({
+      senderName: brand,
       subject: `Sponsorship inquiry: ${business}`,
       textContent: [
         `From: ${name} (${business})`,
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
         "Reply from the admin inbox to respond.",
       ].join("\n"),
     }),
-    sendOutreachEmail({ to: email, subject: autoReplySubject, htmlContent: autoReplyHtml }),
+    sendOutreachEmail({ to: email, subject: autoReplySubject, htmlContent: autoReplyHtml, senderName: brand }),
   ]);
 
   if (notifyResult.status === "rejected") {

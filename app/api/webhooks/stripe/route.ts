@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db, bookings, monetizationSettings } from "@/db";
+import { db, bookings, monetizationSettings, venues } from "@/db";
 import { getStripe } from "@/lib/stripe";
 import { checkAvailability } from "@/lib/booking-availability";
 import { sendReportEmail } from "@/lib/brevo";
+import { getRegionById } from "@/lib/regions";
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -74,8 +75,16 @@ export async function POST(req: NextRequest) {
     })
     .where(eq(bookings.id, bookingId));
 
+  // Stripe posts to a fixed webhook URL, so the request's own domain says nothing
+  // about which site the booking came from. The booking's venue does.
+  const [bookingVenue] = booking.venueId
+    ? await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, booking.venueId)).limit(1)
+    : [];
+  const bookingRegion = bookingVenue ? await getRegionById(bookingVenue.regionId) : null;
+
   try {
     await sendReportEmail({
+      senderName: bookingRegion?.brandName,
       subject: `New booking pending approval: ${booking.productType} #${booking.id}${!stillAvailable ? " (CONFLICT)" : ""}`,
       textContent: `Product: ${booking.productType}\nVenue ID: ${booking.venueId}\nDates: ${booking.startDate} to ${booking.endDate}\nBuyer: ${booking.buyerEmail}\nPrice paid: $${(booking.priceCents / 100).toFixed(2)}\n\nReview at /admin/sponsored`,
     });

@@ -3,6 +3,9 @@ interface SendParams {
   subject: string;
   htmlContent: string;
   replyTo?: string;
+  // The region brand this email is sent on behalf of, shown as the From name.
+  // Always pass it: the neutral fallback exists so a missed call site is merely
+  // vague rather than actively naming the wrong region at the recipient.
   senderName?: string;
   headers?: Record<string, string>;
 }
@@ -33,7 +36,7 @@ export async function sendOutreachEmail({
       "api-key": apiKey,
     },
     body: JSON.stringify({
-      sender: { email: fromEmail, name: senderName ?? "Kelowna Food Deals" },
+      sender: { email: fromEmail, name: senderName ?? "Food Deals" },
       to: [{ email: to }],
       replyTo: replyTo ? { email: replyTo } : { email: "reply@reply.kelownafooddeals.shop" },
       subject,

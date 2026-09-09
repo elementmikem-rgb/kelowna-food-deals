@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: "cad",
           product_data: {
-            name: "Tip for Kelowna Food Deals",
+            name: `Tip for ${region.brandName}`,
             description: "Keeps the site running — thank you!",
           },
           unit_amount: parsed.data.amountCents,

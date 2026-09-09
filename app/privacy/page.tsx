@@ -1,12 +1,20 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getCurrentRegion } from "@/lib/regions";
 
-export const metadata = {
-  title: "Privacy & Terms",
-  description: "What Kelowna Food Deals collects, why, and how it's used.",
-};
+export const dynamic = "force-dynamic";
 
-export default function PrivacyPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  return {
+    title: "Privacy & Terms",
+    description: `What ${region.brandName} collects, why, and how it's used.`,
+  };
+}
+
+export default async function PrivacyPage() {
+  const region = await getCurrentRegion();
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <SiteHeader active="blog" subtitle="What this site collects, why, and how it's used." />
@@ -15,7 +23,7 @@ export default function PrivacyPage() {
         <div>
           <h2 className="font-display text-xl text-foreground mb-2">Who runs this site</h2>
           <p>
-            Kelowna Food Deals is a one-person project. Questions about anything on this page can
+            {region.brandName} is a one-person project. Questions about anything on this page can
             go through the{" "}
             <a href="/submit" className="text-accent-dim underline">
               feedback form
@@ -130,7 +138,7 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-foreground mb-2">No warranty, limited liability</h2>
           <p>
             This site is provided as-is, run by one person as a side project, with no warranty of
-            any kind. Kelowna Food Deals isn&apos;t liable for losses connected to a listing being
+            any kind. {region.brandName} isn&apos;t liable for losses connected to a listing being
             outdated, a booking dispute with a venue, or any decision made based on information
             here. If something in this section conflicts with a law that can&apos;t be waived where you
             live, that law controls instead.
