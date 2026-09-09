@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import { db, events, regions, venues } from "@/db";
-import { eq, like } from "drizzle-orm";
+import { db, events, venues } from "@/db";
+import { eq, like, isNotNull, and } from "drizzle-orm";
 import type { EventType } from "../db/schema";
 import { isAllowedByRobots } from "./fetch";
 import { rateLimit } from "./rateLimit";
@@ -19,7 +19,52 @@ const ALLOWED_CATEGORIES = new Set([
   "dances/parties",
 ]);
 
-const TARGET_CITY = /\b(kelowna|west kelowna|peachland|lake country)\b/i;
+// One matcher per active region, built from that region's own active venues'
+// city names (e.g. Kelowna -> kelowna/west kelowna/peachland/lake country;
+// Penticton -> penticton/naramata/oliver/osoyoos/summerland) -- not a single
+// hardcoded list, so a Castanet event gets attributed to whichever region it's
+// actually in, and a newly added satellite town is picked up automatically the
+// next time this runs, with no code change needed.
+async function buildRegionCityMatchers(): Promise<Map<number, RegExp>> {
+  const rows = await db
+    .selectDistinct({ regionId: venues.regionId, city: venues.city })
+    .from(venues)
+    .where(and(eq(venues.active, true), isNotNull(venues.city)));
+
+  const citiesByRegion = new Map<number, Set<string>>();
+  for (const row of rows) {
+    if (!row.city) continue;
+    const set = citiesByRegion.get(row.regionId) ?? new Set<string>();
+    set.add(row.city.toLowerCase());
+    citiesByRegion.set(row.regionId, set);
+  }
+
+  const matchers = new Map<number, RegExp>();
+  for (const [regionId, cities] of citiesByRegion) {
+    if (cities.size === 0) continue;
+    const escaped = Array.from(cities).map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    matchers.set(regionId, new RegExp(`\\b(${escaped.join("|")})\\b`, "i"));
+  }
+  return matchers;
+}
+
+// Ambiguous (matches more than one region, which shouldn't happen given the
+// two regions' city sets don't overlap today) or unmatched (a location Castanet
+// listed that isn't any tracked region's city, e.g. Vernon) both return null --
+// skip the event rather than guess.
+function matchRegionForLocation(
+  locationLine: string,
+  matchers: Map<number, RegExp>
+): number | null {
+  let matched: number | null = null;
+  for (const [regionId, re] of matchers) {
+    if (re.test(locationLine)) {
+      if (matched !== null) return null;
+      matched = regionId;
+    }
+  }
+  return matched;
+}
 
 const MONTHS: Record<string, number> = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
@@ -163,8 +208,9 @@ async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
       cheerio.load(`<div>${s}</div>`)("div").text().replace(/\s+/g, " ").trim()
     );
 
-    if (!TARGET_CITY.test(locationLine)) continue;
-
+    // City/region matching happens later in scrapeCastanetEvents(), once for
+    // the whole parsed set, against every active region's own city list --
+    // not here against one hardcoded region.
     const { specificDate, startTime } = parseDateTime(dateLine);
     if (!specificDate) continue;
 
@@ -185,20 +231,13 @@ async function fetchAndParse(url: string): Promise<ParsedCastanetEvent[]> {
 export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
   // Castanet event scraping is a GLOBAL/shared step (spec Section 4), not
   // region-scoped -- it runs once per full cron cycle, not once per region.
-  // events.regionId is NOT NULL, so every inserted row is stamped with the
-  // single active region's id below. KNOWN INTERIM LIMITATION: this isn't
-  // yet region-aware and will need real per-region logic (e.g. matching
-  // venues within their own region) once a second region actually launches
-  // with its own Castanet-equivalent event source -- intentionally out of
-  // scope for this build.
-  const [region] = await db
-    .select({ id: regions.id })
-    .from(regions)
-    .where(eq(regions.active, true))
-    .limit(1);
-
-  if (!region) {
-    console.error("Castanet scrape skipped: no active region found.");
+  // Each parsed event is attributed to whichever active region's own city list
+  // (buildRegionCityMatchers) matches its location line; one with no match (or
+  // an ambiguous match across regions) is skipped, same as the old single-region
+  // filter's behavior for a non-matching city.
+  const regionMatchers = await buildRegionCityMatchers();
+  if (regionMatchers.size === 0) {
+    console.error("Castanet scrape skipped: no active region has any city-tagged venue.");
     return { inserted: 0 };
   }
 
@@ -217,16 +256,24 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
       seen.set(contentKey, e);
     }
   }
-  const parsed = Array.from(new Set(seen.values()));
+  const parsedAll = Array.from(new Set(seen.values()));
+
+  const parsed = parsedAll
+    .map((e) => ({ event: e, regionId: matchRegionForLocation(e.locationAddress, regionMatchers) }))
+    .filter((e): e is { event: ParsedCastanetEvent; regionId: number } => e.regionId !== null);
 
   // Active only: matching to a deactivated venue attaches the event to a venue
   // the public listings filter out, so the event silently vanishes instead of
-  // falling back to its own locationName/locationAddress.
+  // falling back to its own locationName/locationAddress. Keyed by region too --
+  // not just name -- so a franchise with locations in more than one region (e.g.
+  // a future same-named venue in both Kelowna and Penticton) can't cross-attach.
   const knownVenues = await db
-    .select({ id: venues.id, name: venues.name })
+    .select({ id: venues.id, name: venues.name, regionId: venues.regionId })
     .from(venues)
     .where(eq(venues.active, true));
-  const venueByName = new Map(knownVenues.map((v) => [v.name.trim().toLowerCase(), v.id]));
+  const venueByRegionAndName = new Map(
+    knownVenues.map((v) => [`${v.regionId}|${v.name.trim().toLowerCase()}`, v.id])
+  );
 
   // Refresh strategy: this is a short rolling window (today + weekend), so
   // wipe yesterday's castanet-sourced rows and insert the fresh set rather
@@ -240,11 +287,12 @@ export async function scrapeCastanetEvents(): Promise<{ inserted: number }> {
   await db.transaction(async (tx) => {
     await tx.delete(events).where(like(events.extractionNotes, `${SOURCE_TAG}%`));
     await tx.insert(events).values(
-      parsed.map((e) => {
-        const matchedVenueId = venueByName.get(e.locationName.toLowerCase()) ?? null;
+      parsed.map(({ event: e, regionId }) => {
+        const matchedVenueId =
+          venueByRegionAndName.get(`${regionId}|${e.locationName.toLowerCase()}`) ?? null;
         return {
           venueId: matchedVenueId,
-          regionId: region.id,
+          regionId,
           locationName: matchedVenueId ? null : e.locationName,
           locationAddress: matchedVenueId ? null : e.locationAddress,
           title: e.title,
