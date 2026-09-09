@@ -127,6 +127,34 @@ function ScopeSwitcher({
   );
 }
 
+// A short, unambiguous label for whatever's currently selected -- shown
+// prominently (not just inferred from the small dropdowns) so a page's data
+// never has to be double-checked against the picker to know what you're
+// actually looking at. Falls through country -> province -> region -> "all",
+// same precedence getSelectedAdminScope() itself resolves by.
+function scopeLabel(
+  selectedCountryId: number | "all",
+  selectedProvinceId: number | "all",
+  selectedRegionId: number | "all",
+  countries: { id: number; name: string }[],
+  provinces: { id: number; countryId: number; name: string }[],
+  regions: { id: number; provinceId: number; brandName: string }[]
+): string {
+  if (selectedRegionId !== "all") {
+    const region = regions.find((r) => r.id === selectedRegionId);
+    return region?.brandName ?? "Unknown region";
+  }
+  if (selectedProvinceId !== "all") {
+    const province = provinces.find((p) => p.id === selectedProvinceId);
+    return province ? `${province.name} (all regions)` : "Unknown province";
+  }
+  if (selectedCountryId !== "all") {
+    const country = countries.find((c) => c.id === selectedCountryId);
+    return country ? `${country.name} (all regions)` : "Unknown country";
+  }
+  return "All regions";
+}
+
 export function AdminNav({
   active,
   pendingSubmissions,
@@ -160,13 +188,22 @@ export function AdminNav({
     { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },
   ];
 
+  const currentScopeLabel = scopeLabel(
+    selectedCountryId,
+    selectedProvinceId,
+    selectedRegionId,
+    countries,
+    provinces,
+    regions
+  );
+
   return (
     <header className="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6 bg-background/95 backdrop-blur border-b border-border">
       <div className="flex items-center justify-between gap-3 flex-wrap max-w-4xl mx-auto">
         <Link href="/admin/submissions" className="flex items-center gap-2 shrink-0">
           <span className="stamp px-2 py-0.5 text-[10px]">Admin</span>
           <span className="font-display text-sm text-foreground hidden sm:inline">
-            Kelowna Food Deals
+            Food Deals
           </span>
         </Link>
 
@@ -199,6 +236,10 @@ export function AdminNav({
           />
           <LogoutButton />
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto mt-2.5 flex items-center gap-2">
+        <span className="stamp px-2.5 py-1 text-[11px] tracking-wide">Viewing: {currentScopeLabel}</span>
       </div>
     </header>
   );
