@@ -14,7 +14,7 @@ export default function NotFound() {
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-surface p-10 text-center">
         <p className="font-display text-3xl text-foreground">Page not found</p>
         <p className="text-sm text-muted max-w-sm">
-          That page doesn't exist, or the venue may have closed. Try today's specials instead.
+          That page doesn&apos;t exist, or the venue may have closed. Try today&apos;s specials instead.
         </p>
         <Link
           href="/"

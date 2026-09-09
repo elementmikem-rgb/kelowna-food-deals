@@ -25,7 +25,7 @@ export function RefundsNeededPanel({ refunds }: { refunds: RefundNeeded[] }) {
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Refunds needed</h2>
       <p className="text-sm text-muted">
-        Rejected bookings that were already paid — refund these in Stripe's dashboard directly,
+        Rejected bookings that were already paid — refund these in Stripe&apos;s dashboard directly,
         then mark done here.
       </p>
       <ul className="flex flex-col gap-2">

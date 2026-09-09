@@ -45,7 +45,7 @@ export function CategorySponsorPanel({ active }: { active: CategorySponsor[] }) 
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Category sponsorship</h2>
       <p className="text-sm text-muted">
-        "Wing Nights presented by X" — a sponsor name shown under a category's filter pill.
+        &quot;Wing Nights presented by X&quot; — a sponsor name shown under a category&apos;s filter pill.
       </p>
 
       {active.length === 0 ? (

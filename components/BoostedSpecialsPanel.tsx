@@ -54,7 +54,7 @@ export function BoostedSpecialsPanel({
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Boosted specials</h2>
       <p className="text-sm text-muted">
-        A boosted special sorts first within its venue's card and gets a "Featured" badge until
+        A boosted special sorts first within its venue&apos;s card and gets a &quot;Featured&quot; badge until
         its window ends.
       </p>
 

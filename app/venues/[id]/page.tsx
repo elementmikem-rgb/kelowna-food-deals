@@ -127,7 +127,7 @@ export default async function VenuePage({ params }: PageProps) {
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-8">
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+        // Trusted input: JSON we build ourselves, with `<` escaped.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <div>

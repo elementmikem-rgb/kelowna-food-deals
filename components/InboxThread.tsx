@@ -277,7 +277,6 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
               // sets bodyHtml.
               <div
                 className="text-sm text-muted whitespace-pre-wrap overflow-x-auto w-full min-w-0 [&_a]:text-accent-dim [&_a]:underline"
-                // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{ __html: m.bodyHtml }}
               />
             ) : (

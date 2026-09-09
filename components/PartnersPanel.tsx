@@ -40,7 +40,7 @@ export function PartnersPanel({
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Verified partners</h2>
       <p className="text-sm text-muted">
-        A standing status, separate from featured placement — doesn't expire on its own.
+        A standing status, separate from featured placement — doesn&apos;t expire on its own.
       </p>
 
       {active.length === 0 ? (

@@ -57,8 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${fraunces.variable} ${karla.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* eslint-disable-next-line react/no-danger -- static string built entirely
-            from our own regions table, never from request-supplied input */}
+        {/* Trusted input: a static string built entirely from our own regions
+            table, never from request-supplied input. */}
         <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">

@@ -29,9 +29,9 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
 
   return (
     <main className="min-h-full flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-display text-2xl text-foreground">Confirm {venue.name}'s specials</h1>
+      <h1 className="font-display text-2xl text-foreground">Confirm {venue.name}&apos;s specials</h1>
       <p className="text-sm text-muted max-w-md text-center">
-        These are the specials currently listed for your venue. Click confirm on each one that's still accurate.
+        These are the specials currently listed for your venue. Click confirm on each one that&apos;s still accurate.
       </p>
       <VenueVerifyList venueId={venueId} token={token} specials={venueSpecials} />
     </main>

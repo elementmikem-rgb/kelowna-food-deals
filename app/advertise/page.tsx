@@ -76,7 +76,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
           <div className="flex flex-col gap-1">
             <h3 className="font-display text-lg text-foreground">Featured placement</h3>
             <p className="text-sm text-muted">
-              Your venue's card pins to the top of the homepage board — every day, every category —
+              Your venue&apos;s card pins to the top of the homepage board — every day, every category —
               for as long as the placement runs. Comes with a gold &ldquo;Featured&rdquo; badge.
             </p>
           </div>

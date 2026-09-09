@@ -64,7 +64,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+        // Trusted input: JSON we build ourselves, with `<` escaped.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <SiteHeader
@@ -104,7 +104,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         </header>
         <div
           className="prose-blog flex flex-col gap-4 text-sm text-foreground/90 [&_h2]:font-display [&_h2]:text-xl [&_h2]:text-foreground [&_h2]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1 [&_a]:text-accent-dim [&_a]:underline [&_strong]:text-foreground"
-          // eslint-disable-next-line react/no-danger
+          // Trusted input: blog post HTML authored in this repo, not user-supplied.
           dangerouslySetInnerHTML={{ __html: post.contentHtml }}
         />
       </article>

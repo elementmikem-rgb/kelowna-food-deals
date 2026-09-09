@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           <p>
             Page views are logged with a randomly generated session ID and visitor ID (not tied to
             your name or email), the page you visited, the referring site, UTM campaign
-            parameters if present, and a country code (from Cloudflare's edge network, not your
+            parameters if present, and a country code (from Cloudflare&apos;s edge network, not your
             exact location). This is used only to understand which pages get used and where
             traffic comes from — never sold or shared with advertisers.
           </p>
@@ -41,16 +41,16 @@ export default function PrivacyPage() {
           </h2>
           <p>
             A submitted photo or description is stored so it can be reviewed and published. A
-            sponsorship inquiry's name, business, and email are stored so we can follow up, and
+            sponsorship inquiry&apos;s name, business, and email are stored so we can follow up, and
             trigger one automatic confirmation email back to you. None of this is sold or shared
-            beyond what's needed to respond to you.
+            beyond what&apos;s needed to respond to you.
           </p>
         </div>
 
         <div>
           <h2 className="font-display text-xl text-foreground mb-2">Tips</h2>
           <p>
-            The tip jar redirects to Stripe's own checkout page — this site never sees or stores
+            The tip jar redirects to Stripe&apos;s own checkout page — this site never sees or stores
             your card details.
           </p>
         </div>
@@ -67,19 +67,19 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-foreground mb-2">Featured &amp; sponsored content</h2>
           <p>
             A venue can pay to be featured, boost a specific special, or sponsor a category — this
-            never changes whether a listing is accurate, only where it sorts on the page, and it's
+            never changes whether a listing is accurate, only where it sorts on the page, and it&apos;s
             always marked with a badge. A sponsored blog post is a paid feature and is always
-            labeled "Sponsored" — it's never presented as independent coverage.
+            labeled &quot;Sponsored&quot; — it&apos;s never presented as independent coverage.
           </p>
         </div>
 
         <div>
           <h2 className="font-display text-xl text-foreground mb-2">Accuracy</h2>
           <p>
-            Every special and event on this site is checked against a real source before it's
+            Every special and event on this site is checked against a real source before it&apos;s
             published, but venues change things without notice. Prices, hours, and availability
             are not guaranteed — call ahead if it matters. If you spot something wrong, use the
-            "Report incorrect" link on any listing.
+            &quot;Report incorrect&quot; link on any listing.
           </p>
         </div>
 
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             <a href="/advertise" className="text-accent-dim underline">
               advertise page
             </a>
-            . Browsing the site to see what's on doesn't require agreeing to anything below.
+            . Browsing the site to see what&apos;s on doesn&apos;t require agreeing to anything below.
           </p>
         </div>
 
@@ -99,10 +99,10 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-foreground mb-2">Paid placements &amp; review</h2>
           <p>
             Payment is collected up front through Stripe at checkout, but every booking is
-            reviewed by hand before it goes live — this isn't automatic. If a booking is rejected
-            during review, it's refunded in full and never goes live. Approved placements run for
-            the exact date range you paid for; there's no partial refund for ending a placement
-            early once it's live.
+            reviewed by hand before it goes live — this isn&apos;t automatic. If a booking is rejected
+            during review, it&apos;s refunded in full and never goes live. Approved placements run for
+            the exact date range you paid for; there&apos;s no partial refund for ending a placement
+            early once it&apos;s live.
           </p>
         </div>
 
@@ -130,9 +130,9 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-foreground mb-2">No warranty, limited liability</h2>
           <p>
             This site is provided as-is, run by one person as a side project, with no warranty of
-            any kind. Kelowna Food Deals isn't liable for losses connected to a listing being
+            any kind. Kelowna Food Deals isn&apos;t liable for losses connected to a listing being
             outdated, a booking dispute with a venue, or any decision made based on information
-            here. If something in this section conflicts with a law that can't be waived where you
+            here. If something in this section conflicts with a law that can&apos;t be waived where you
             live, that law controls instead.
           </p>
         </div>
