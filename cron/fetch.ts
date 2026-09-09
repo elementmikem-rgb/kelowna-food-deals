@@ -149,3 +149,77 @@ export async function fetchAndExtractTextViaBrowser(url: string): Promise<FetchR
     await browser?.close().catch(() => {});
   }
 }
+
+// Same browser-launch path as fetchAndExtractTextViaBrowser, but returns the
+// rendered page's raw HTML instead of extracted text -- for a scraper that
+// needs real markup (links, structured label/value pairs) to parse with
+// cheerio, not a flattened text blob. Used for sites that 403 a plain
+// server-side fetch (bot-protection keyed on browser fingerprint/TLS) but
+// load fine for a real browser.
+export async function fetchHtmlViaBrowser(
+  url: string
+): Promise<{ ok: true; html: string } | { ok: false; error: string }> {
+  const session = await openBrowserSession();
+  try {
+    return await session.fetchHtml(url);
+  } finally {
+    await session.close();
+  }
+}
+
+export interface BrowserSession {
+  fetchHtml(url: string): Promise<{ ok: true; html: string } | { ok: false; error: string }>;
+  close(): Promise<void>;
+}
+
+// One browser + one persistent context reused across many sequential
+// requests to the SAME site, instead of a fresh browser per page. A site
+// behind Cloudflare's bot-check clears its JS challenge once and sets a
+// clearance cookie for the session -- a brand-new browser (no cookies, no
+// history) on every single request looks exactly like the repeated-anonymous-
+// visitor pattern that challenge exists to catch, so a scraper making many
+// requests to one site in a short window (e.g. one listing page plus a dozen
+// event detail pages) needs this, not fetchHtmlViaBrowser's one-shot version.
+export async function openBrowserSession(): Promise<BrowserSession> {
+  const { chromium } = await import("playwright-core");
+  const executablePath = resolveChromiumPath();
+  const launchArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-http2"];
+  const browser = await chromium.launch(executablePath ? { executablePath, args: launchArgs } : { args: launchArgs });
+  const context = await browser.newContext({ userAgent: USER_AGENT });
+
+  return {
+    async fetchHtml(url: string) {
+      const allowed = await isAllowedByRobots(url);
+      if (!allowed) {
+        return { ok: false, error: "disallowed by robots.txt" };
+      }
+      try {
+        await rateLimit();
+        const page = await context.newPage();
+        try {
+          await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+          // A Cloudflare/bot-check interstitial ("Just a moment...") clears
+          // itself client-side a few seconds after load; a plain fixed wait
+          // isn't enough to tell "real page" from "still on the challenge",
+          // so wait specifically for the interstitial's own title to change
+          // instead of guessing a duration long enough for every case.
+          if ((await page.title()) === "Just a moment...") {
+            await page.waitForFunction(() => document.title !== "Just a moment...", { timeout: 8000 }).catch(() => {});
+          } else {
+            await page.waitForTimeout(1500);
+          }
+          const html = await page.content();
+          return { ok: true, html } as const;
+        } finally {
+          await page.close().catch(() => {});
+        }
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+    async close() {
+      await context.close().catch(() => {});
+      await browser.close().catch(() => {});
+    },
+  };
+}
