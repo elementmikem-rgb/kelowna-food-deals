@@ -7,7 +7,7 @@
         storage.setItem(key, v);
       }
       return v;
-    } catch (e) {
+    } catch {
       return gen();
     }
   }
@@ -19,7 +19,7 @@
   function getParam(name) {
     try {
       return new URLSearchParams(window.location.search).get(name);
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -55,7 +55,7 @@
       } else {
         fetch("/api/track", { method: "POST", body: payload, headers: { "Content-Type": "application/json" }, keepalive: true });
       }
-    } catch (e) {
+    } catch {
       // never let tracking break the page
     }
   }

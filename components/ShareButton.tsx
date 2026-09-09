@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 
 interface ShareButtonProps {
   title: string;
@@ -9,18 +9,28 @@ interface ShareButtonProps {
   className?: string;
 }
 
+// navigator.share is a fixed capability of the browser, so there is nothing to
+// subscribe to -- this returns an unsubscribe that does nothing. Defined at module
+// scope because a fresh closure on every render would make React tear the
+// subscription down and set it up again each time.
+const subscribeToNothing = () => () => {};
+
 // Web Share API covers the OS share sheet (Messages/SMS, WhatsApp, Instagram,
 // Snapchat, Mail, etc.) on mobile in one call. Desktop browsers mostly don't
 // support it, so we fall back to a small menu with direct share links.
 export function ShareButton({ title, text, url, className }: ShareButtonProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [canNativeShare, setCanNativeShare] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share);
-  }, []);
+  // navigator.share only exists in the browser, so the server snapshot is always
+  // false and the first client render matches it -- no hydration mismatch, and no
+  // setState-in-an-effect just to read a capability that never changes.
+  const canNativeShare = useSyncExternalStore(
+    subscribeToNothing,
+    () => typeof navigator !== "undefined" && !!navigator.share,
+    () => false
+  );
 
   useEffect(() => {
     if (!menuOpen) return;

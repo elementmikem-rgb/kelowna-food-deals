@@ -26,7 +26,7 @@ export function TipJar() {
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? "Something went wrong");
       }
-      window.location.href = data.url;
+      window.location.assign(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoadingCents(null);

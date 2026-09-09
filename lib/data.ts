@@ -1,4 +1,4 @@
-import { db, specials, venues, dealFeedback } from "@/db";
+import { db, specials, venues } from "@/db";
 import { and, desc, eq, isNull, isNotNull, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { SpecialCategory } from "@/db/schema";

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
@@ -22,9 +23,9 @@ export function MonthlySpecials({
       <section className="flex flex-col gap-3">
         <p className="text-muted-2 text-sm py-8 text-center">
           No {monthName.toLowerCase()} specials listed yet — check back soon, or see{" "}
-          <a href="/" className="text-accent-dim underline">
+          <Link href="/" className="text-accent-dim underline">
             today&apos;s specials
-          </a>{" "}
+          </Link>{" "}
           instead.
         </p>
       </section>

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import * as cheerio from "cheerio";
 import { PDFParse } from "pdf-parse";
 import robotsParser from "robots-parser";
@@ -99,13 +100,12 @@ export async function fetchAndExtractText(url: string): Promise<FetchResult> {
 // Alpine's own `chromium` package via an explicit executablePath instead.
 // Same pattern already proven in Photaro's utils/leadSiteScraper.js.
 function resolveChromiumPath(): string | undefined {
-  const fs = require("fs") as typeof import("fs");
   const candidates = [process.env.CHROMIUM_PATH, "/usr/bin/chromium-browser", "/usr/bin/chromium"].filter(
     (p): p is string => !!p
   );
   return candidates.find((p) => {
     try {
-      return fs.existsSync(p);
+      return existsSync(p);
     } catch {
       return false;
     }

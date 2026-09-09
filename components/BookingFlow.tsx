@@ -45,17 +45,33 @@ export function BookingFlow({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [email, setEmail] = useState("");
-  const [availability, setAvailability] = useState<"unknown" | "checking" | "available" | "unavailable">("unknown");
+  // Only the *fetched* answer is state, tagged with the request it answers. The
+  // displayed availability is derived below, so nothing has to be set synchronously
+  // while the effect runs -- a stale answer for an older date range simply stops
+  // matching `requestKey` and reads as "checking" again.
+  const [fetched, setFetched] = useState<{
+    key: string;
+    value: "unknown" | "available" | "unavailable";
+  } | null>(null);
   const [step, setStep] = useState<"form" | "sent" | "checkout">(initialVerifiedToken ? "checkout" : "form");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const datesValid = Boolean(startDate && endDate && endDate >= startDate);
+  const requestKey = [
+    productType,
+    productType === "category_sponsor" ? category : "",
+    startDate,
+    endDate,
+  ].join("|");
+  const availability: "unknown" | "checking" | "available" | "unavailable" = !datesValid
+    ? "unknown"
+    : fetched?.key === requestKey
+      ? fetched.value
+      : "checking";
+
   useEffect(() => {
-    if (!startDate || !endDate || endDate < startDate) {
-      setAvailability("unknown");
-      return;
-    }
-    setAvailability("checking");
+    if (!datesValid) return;
     const controller = new AbortController();
     // Debounced: the date inputs fire on every change, and without this a buyer
     // scrubbing through dates burns one request per keystroke and trips the
@@ -77,9 +93,9 @@ export function BookingFlow({
           // disable the purchase button on a product that may well be available.
           // "unknown" leaves the button live; checkout re-checks authoritatively
           // inside its transaction anyway, so nothing can oversell.
-          if (!r.ok) return setAvailability("unknown");
+          if (!r.ok) return setFetched({ key: requestKey, value: "unknown" });
           const data = await r.json();
-          setAvailability(data.available ? "available" : "unavailable");
+          setFetched({ key: requestKey, value: data.available ? "available" : "unavailable" });
         })
         .catch(() => {});
     }, 400);
@@ -87,7 +103,7 @@ export function BookingFlow({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [productType, category, startDate, endDate]);
+  }, [datesValid, requestKey, productType, category, startDate, endDate]);
 
   const venueSpecials = specials.filter((s) => s.venueId === venueId);
 

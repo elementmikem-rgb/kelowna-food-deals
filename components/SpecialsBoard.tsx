@@ -39,10 +39,17 @@ export function SpecialsBoard({
   specials,
   categorySponsors = [],
   timezone,
+  nowMs,
 }: {
   specials: SpecialWithVenue[];
   categorySponsors?: CategorySponsor[];
   timezone: string;
+  // Reference "now" for the freshness buckets in the sort below, taken on the server
+  // so this component never reads the clock during render: an unstable read makes the
+  // same inputs sort differently across re-renders, and can order the server HTML
+  // differently from hydration. The buckets are 14 days wide, so any drift between
+  // the server's snapshot and the moment the visitor reads the page is immaterial.
+  nowMs: number;
 }) {
   // The page is served from an ISR cache that can be an evening old, so the day baked
   // into the HTML is routinely yesterday. Render the baked value first (no hydration
@@ -102,17 +109,17 @@ export function SpecialsBoard({
         // older-but-still-fresh entry doesn't get buried by seconds-level diffs,
         // then order by start time within that.
         const aBucket = Math.floor(
-          (Date.now() - a.lastVerifiedAt.getTime()) / (1000 * 60 * 60 * 24 * 14)
+          (nowMs - a.lastVerifiedAt.getTime()) / (1000 * 60 * 60 * 24 * 14)
         );
         const bBucket = Math.floor(
-          (Date.now() - b.lastVerifiedAt.getTime()) / (1000 * 60 * 60 * 24 * 14)
+          (nowMs - b.lastVerifiedAt.getTime()) / (1000 * 60 * 60 * 24 * 14)
         );
         if (aBucket !== bBucket) return aBucket - bBucket;
         const timeDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [specials, selectedDay, selectedCategory, selectedCity]);
+  }, [specials, selectedDay, selectedCategory, selectedCity, nowMs]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -131,7 +138,7 @@ export function SpecialsBoard({
       .slice()
       .sort((a, b) => dailyRandom(a.venueId ?? 0, today) - dailyRandom(b.venueId ?? 0, today));
     return [...featured, ...boosted, ...plain];
-  }, [filtered]);
+  }, [filtered, timezone]);
 
   const activeSponsor =
     selectedCategory !== "all" ? categorySponsors.find((s) => s.category === selectedCategory) : undefined;

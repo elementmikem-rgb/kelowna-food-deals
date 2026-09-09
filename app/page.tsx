@@ -34,7 +34,7 @@ export default async function Home() {
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-4 sm:py-6 gap-5 sm:gap-10">
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+        // Trusted input: JSON we build ourselves, with `<` escaped.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <SiteHeader
@@ -44,7 +44,18 @@ export default async function Home() {
 
       <HomeIntroCallout />
 
-      <SpecialsBoard specials={specials} categorySponsors={categorySponsors} timezone={timezone} />
+      <SpecialsBoard
+        specials={specials}
+        categorySponsors={categorySponsors}
+        timezone={timezone}
+        // react-hooks/purity flags any Date.now() in a component body. This page is
+        // force-dynamic, so it renders exactly once per request and reading the clock
+        // here is no less deterministic than the database reads above it. The point of
+        // passing it down is precisely to keep the clock out of the client component's
+        // render, where the rule does apply.
+        // eslint-disable-next-line react-hooks/purity
+        nowMs={Date.now()}
+      />
 
       <TipJar />
       <AboutSection brandName={region.brandName} areas={areas} />
