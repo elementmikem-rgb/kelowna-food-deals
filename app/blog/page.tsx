@@ -1,15 +1,22 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BLOG_POSTS } from "@/lib/blog-data";
+import { getBlogPostsForRegion } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getCurrentRegion } from "@/lib/regions";
 
-export const metadata: Metadata = {
-  title: "Blog",
-  description:
-    "Guides to Kelowna food and drink specials, happy hours, and wing nights — grounded in what we've actually verified, not generic filler.",
-  alternates: { canonical: "https://kelownafooddeals.shop/blog" },
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  return {
+    title: "Blog",
+    description: `Guides to ${region.brandName} listings — food and drink specials, happy hours, and wing nights, grounded in what we've actually verified, not generic filler.`,
+    // Canonical follows the serving domain. Hardcoding one region's URL told search
+    // engines every other region's blog was a duplicate of it.
+    alternates: { canonical: `https://${region.domain}/blog` },
+  };
+}
 
 function formatDate(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -20,8 +27,11 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function BlogIndexPage() {
-  const posts = [...BLOG_POSTS].sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+export default async function BlogIndexPage() {
+  const region = await getCurrentRegion();
+  const posts = getBlogPostsForRegion(region.slug).sort((a, b) =>
+    a.publishedAt < b.publishedAt ? 1 : -1
+  );
 
   return (
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-8">

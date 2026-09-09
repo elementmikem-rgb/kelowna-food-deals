@@ -12,6 +12,11 @@ export interface BlogPost {
   // this is close to a legal disclosure requirement once one of these is actually
   // sold, not just a style choice, so it's on by default rather than opt-in.
   sponsored?: boolean;
+  // Which regions this post belongs to, by `regions.slug`. Omit for a post that is
+  // genuinely about the site rather than a place, and it shows everywhere. A post
+  // naming specific venues and prices must be tagged: publishing Kelowna's happy
+  // hour guide on the Penticton site is worse than publishing nothing there.
+  regionSlugs?: string[];
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -20,12 +25,12 @@ export const BLOG_POSTS: BlogPost[] = [
     category: "Explainer",
     title: "How We Actually Verify Every Special on This Site",
     metaDescription:
-      "Most Kelowna deals sites are copy-pasted lists nobody's checked in years. Here's exactly how we confirm a special is real before it goes live.",
+      "Most local deals sites are copy-pasted lists nobody's checked in years. Here's exactly how we confirm a special is real before it goes live.",
     publishedAt: "2026-06-12",
     excerpt:
       "Every special on this site has to survive one rule: if we can't point to where it came from, it doesn't get published. Here's how that actually works.",
     contentHtml: `
-<p>There are a handful of Kelowna food-deals sites out there, and most of them share the same problem: someone built a list once, maybe two years ago, and nobody's touched it since. Restaurants close, happy hours get cancelled, prices go up — the list doesn't know. You show up for $5 wings and pay $9.</p>
+<p>There are a handful of local food-deals sites out there, and most of them share the same problem: someone built a list once, maybe two years ago, and nobody's touched it since. Restaurants close, happy hours get cancelled, prices go up — the list doesn't know. You show up for $5 wings and pay $9.</p>
 <p>We built this site around one non-negotiable rule: <strong>a special only gets published if we can point to the exact place it came from.</strong> Not "we're pretty sure," not "it was probably still running." An actual source.</p>
 <h2>Where the data comes from</h2>
 <p>Every listing on this site traces back to one of three sources:</p>
@@ -46,6 +51,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "real-kelowna-happy-hour-guide",
+    regionSlugs: ["kelowna"],
     category: "Guide",
     title: "The Real Kelowna Happy Hour Guide",
     metaDescription:
@@ -72,6 +78,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "best-wing-nights-kelowna",
+    regionSlugs: ["kelowna"],
     category: "Guide",
     title: "Best Wing Nights in Kelowna Right Now",
     metaDescription:
@@ -104,6 +111,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "cheap-eats-kelowna-under-10",
+    regionSlugs: ["kelowna"],
     category: "Guide",
     title: "Cheap Eats in Kelowna: Where $10 Still Buys You Something Real",
     metaDescription:
@@ -131,6 +139,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "kelowna-west-kelowna-peachland-deals",
+    regionSlugs: ["kelowna"],
     category: "Data",
     title: "Kelowna vs. West Kelowna vs. Peachland: What We've Actually Verified So Far",
     metaDescription:
@@ -153,8 +162,46 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>If you're in West Kelowna, Peachland, or Lake Country and you know a spot with a standing deal that isn't on here yet, <a href="/submit">tell us</a> — that's genuinely the fastest way this list gets more even.</p>
 `,
   },
+  {
+    slug: "penticton-food-deals-launch",
+    category: "Explainer",
+    regionSlugs: ["penticton"],
+    title: "We're Now Tracking Penticton Food Deals Too",
+    metaDescription:
+      "The same verification rules, now for Penticton and the South Okanagan. What's covered so far, what isn't yet, and how to help fill the gaps.",
+    publishedAt: "2026-09-09",
+    excerpt:
+      "Same site, same rule about evidence, new town. Here's what's actually tracked in Penticton right now — and an honest account of what isn't yet.",
+    contentHtml: `
+<p>This site started by tracking food and drink specials in one town. It now tracks Penticton and the surrounding South Okanagan the same way, on its own site, with its own listings.</p>
+<p>Nothing about the method changed, and that is the point.</p>
+<h2>The rule is the same</h2>
+<p>A special only goes live here if we can point to the exact place it came from — the venue's own site, a photo somebody took of a menu board, or a public event listing. Whatever the source, the words proving the deal have to actually be there. If they aren't, the listing gets dropped rather than published with a shrug. That is described in full in <a href="/blog/how-we-verify-every-special">how we verify every special</a>, and it applies here exactly as written.</p>
+<h2>What that means for a new town</h2>
+<p>Being honest about this: a brand-new region starts thin. Coverage is built one venue at a time, and a venue only appears once there is something real to show for it. So the Penticton listings will be shorter than you might expect at first, and they will grow week over week rather than arriving complete.</p>
+<p>We would rather show you a short list that is right than a long one padded with deals that ended last year. Every card shows when it was last checked, so you are never guessing how fresh a listing is.</p>
+<h2>The surrounding towns count too</h2>
+<p>Coverage is not drawn at the city limits. Venues in the smaller communities around Penticton are tracked on the same footing as ones downtown, and the area grows as venues get added. If a place you like is missing, that is usually the reason — not a judgement about the place.</p>
+<h2>How to speed this up</h2>
+<p>The fastest way to get a venue listed is to <a href="/submit">submit it</a>. A photo of a chalkboard or a printed menu is enough. It runs through the same checks as everything else, so a submission does not skip the queue on accuracy, but it does put a venue on the map that we might not have found on our own.</p>
+<p>If you spot something already listed that is wrong — a price that changed, a happy hour that ended — there is a "Report incorrect" link on every card. Those go straight to a person.</p>
+<p>Start with <a href="/">what's on today</a>, or browse the <a href="/events">events listings</a> for live music, trivia, and the rest.</p>
+`,
+  },
 ];
 
-export function getBlogPost(slug: string): BlogPost | undefined {
-  return BLOG_POSTS.find((p) => p.slug === slug);
+// An untagged post is site-wide; a tagged one belongs only to the regions it names.
+export function postIsForRegion(post: BlogPost, regionSlug: string): boolean {
+  return post.regionSlugs === undefined || post.regionSlugs.includes(regionSlug);
+}
+
+export function getBlogPostsForRegion(regionSlug: string): BlogPost[] {
+  return BLOG_POSTS.filter((p) => postIsForRegion(p, regionSlug));
+}
+
+// `regionSlug` is required: a caller that omits it would silently serve one region's
+// venue guide on another region's domain, which is the bug this field exists to stop.
+export function getBlogPost(slug: string, regionSlug: string): BlogPost | undefined {
+  const post = BLOG_POSTS.find((p) => p.slug === slug);
+  return post && postIsForRegion(post, regionSlug) ? post : undefined;
 }

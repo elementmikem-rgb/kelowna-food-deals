@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BLOG_POSTS, getBlogPost } from "@/lib/blog-data";
+import { getBlogPost } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getCurrentRegion } from "@/lib/regions";
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return BLOG_POSTS.map((p) => ({ slug: p.slug }));
-}
+// Which posts exist depends on which region's domain is being served, so these
+// pages cannot be baked at build time any more. Same trade the homepage already
+// made when the second region went live.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -17,9 +17,10 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPost(slug);
+  const region = await getCurrentRegion();
+  const post = getBlogPost(slug, region.slug);
   if (!post) return { title: "Post not found" };
-  const url = `https://kelownafooddeals.shop/blog/${post.slug}`;
+  const url = `https://${region.domain}/blog/${post.slug}`;
   return {
     title: post.title,
     description: post.metaDescription,
@@ -45,7 +46,10 @@ function formatDate(dateStr: string): string {
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
-  const post = getBlogPost(slug);
+  const region = await getCurrentRegion();
+  // A post belonging to another region 404s here rather than rendering: a direct
+  // link to Kelowna's happy hour guide must not resolve on the Penticton domain.
+  const post = getBlogPost(slug, region.slug);
   if (!post) notFound();
 
   const jsonLd = {
@@ -54,10 +58,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: post.title,
     description: post.metaDescription,
     datePublished: post.publishedAt,
-    image: "https://kelownafooddeals.shop/icons/icon-512.png",
-    author: { "@type": "Organization", name: "Kelowna Food Deals" },
-    publisher: { "@type": "Organization", name: "Kelowna Food Deals" },
-    mainEntityOfPage: `https://kelownafooddeals.shop/blog/${post.slug}`,
+    image: `https://${region.domain}/icons/icon-512.png`,
+    author: { "@type": "Organization", name: region.brandName },
+    publisher: { "@type": "Organization", name: region.brandName },
+    mainEntityOfPage: `https://${region.domain}/blog/${post.slug}`,
   };
 
   return (

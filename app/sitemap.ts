@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { db, venues, specials } from "@/db";
 import { and, eq, isNull, max } from "drizzle-orm";
 import { getCurrentRegion } from "@/lib/regions";
-import { BLOG_POSTS } from "@/lib/blog-data";
+import { getBlogPostsForRegion } from "@/lib/blog-data";
 
 // Without this, Next prerenders the sitemap once at build time and it never
 // regenerates -- venues added by the nightly cron wouldn't appear until the
@@ -36,7 +36,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+  // Only this region's own posts: listing another region's slugs here submits URLs
+  // that now 404 on this domain.
+  const blogPages: MetadataRoute.Sitemap = getBlogPostsForRegion(region.slug).map((p) => ({
     url: `${BASE_URL}/blog/${p.slug}`,
     lastModified: new Date(p.publishedAt),
     changeFrequency: "monthly",
