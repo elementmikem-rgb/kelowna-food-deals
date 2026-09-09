@@ -2,32 +2,7 @@ import { db, specials, events, menuItems, scrapeRuns, venues } from "@/db";
 import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { ExtractedSpecial, ExtractedEvent, ExtractedMenuItem } from "./extract";
 import { pacificTodayISODate } from "@/lib/time";
-
-// Identity key for "is this the same special/event as before" -- deliberately
-// excludes id/lastVerifiedAt/confidence/extractionNotes/sourceUrl, which are
-// bookkeeping, not identity. Matches the dedup comparison lib/data.ts's
-// getPreviousSpecials already uses for "is this archived row still live".
-function specialIdentityKey(s: {
-  title: string;
-  description: string | null;
-  priceCents: number | null;
-  dayOfWeek: number | null;
-  isMonthly: boolean;
-  startTime: string | null;
-  endTime: string | null;
-  category: string;
-}): string {
-  return JSON.stringify([
-    s.title,
-    s.description,
-    s.priceCents,
-    s.dayOfWeek,
-    s.isMonthly,
-    s.startTime,
-    s.endTime,
-    s.category,
-  ]);
-}
+import { specialIdentityKey, eventIdentityKey } from "@/lib/archived-match";
 
 function menuItemIdentityKey(m: {
   name: string;
@@ -35,28 +10,6 @@ function menuItemIdentityKey(m: {
   priceCents: number | null;
 }): string {
   return JSON.stringify([m.name, m.description, m.priceCents]);
-}
-
-function eventIdentityKey(e: {
-  title: string;
-  description: string | null;
-  eventType: string;
-  dayOfWeek: number | null;
-  specificDate: string | null;
-  startTime: string | null;
-  endTime: string | null;
-  coverChargeCents: number | null;
-}): string {
-  return JSON.stringify([
-    e.title,
-    e.description,
-    e.eventType,
-    e.dayOfWeek,
-    e.specificDate,
-    e.startTime,
-    e.endTime,
-    e.coverChargeCents,
-  ]);
 }
 
 // isNotNull(sourceUrl) throughout this file: cron-written rows always carry the

@@ -6,6 +6,7 @@ import { eq, and, sql } from "drizzle-orm";
 import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
 import { isAdminAuthed } from "@/lib/admin-auth";
+import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
 
 const actionSchema = z.union([
   z.object({
@@ -149,6 +150,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (itemType === "special") {
         const s = extracted.specials[itemIndex];
         if (!s) return { error: "item not found" as const, status: 400 };
+        // Guards against re-approving something a human already reviewed and
+        // rejected for this venue via the flagged-review queue (e.g. a stale
+        // Facebook/Instagram post the venue never took down) -- the same
+        // protection cron/upsert.ts's automated reconciliation already has.
+        if (
+          await specialMatchesArchived(venueId, {
+            title: s.title,
+            description: s.description,
+            priceCents: s.price_cents,
+            dayOfWeek: s.day_of_week,
+            isMonthly: s.is_monthly,
+            startTime: s.start_time,
+            endTime: s.end_time,
+            category: s.category,
+          })
+        ) {
+          return {
+            error: "this matches a special already archived for this venue via the flagged-review queue -- reject this item instead, or check the archive before overriding" as const,
+            status: 409,
+          };
+        }
         await tx.insert(specials).values({
           venueId,
           regionId,
@@ -173,6 +195,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           // without it, an admin-approved event could publish with neither a recurring day
           // nor a one-off date, which every renderer assumes can't happen.
           return { error: "event has no day or date" as const, status: 400 };
+        }
+        // See the matching guard on the special branch above.
+        if (
+          await eventMatchesArchived(venueId, {
+            title: e.title,
+            description: e.description,
+            eventType: e.event_type,
+            dayOfWeek: e.day_of_week,
+            specificDate: e.specific_date,
+            startTime: e.start_time,
+            endTime: e.end_time,
+            coverChargeCents: e.cover_charge_cents,
+          })
+        ) {
+          return {
+            error: "this matches an event already archived for this venue via the flagged-review queue -- reject this item instead, or check the archive before overriding" as const,
+            status: 409,
+          };
         }
         await tx.insert(events).values({
           venueId,

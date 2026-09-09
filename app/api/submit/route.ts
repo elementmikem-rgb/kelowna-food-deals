@@ -4,6 +4,7 @@ import { db, venues, specials, events, menuItems, submissions } from "@/db";
 import { eq } from "drizzle-orm";
 import { reviewSubmission, AUTO_APPROVE_CONFIDENCE } from "@/lib/submission-review";
 import { checkRateLimit } from "@/lib/request-rate-limit";
+import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const resolvedItemKeys: string[] = [];
     let autoApprovedCount = 0;
+    let autoRejectedCount = 0;
 
     // A venue that doesn't exist yet has nothing to attach specials/events/menu items
     // to -- every item stays queued for an admin, who creates the real venue row the
@@ -86,13 +88,65 @@ export async function POST(req: NextRequest) {
       // venueRegionId is guaranteed non-null here: it's set right after the venue lookup
       // above, on the same `!isNewVenue` branch we're inside now.
       const regionId = venueRegionId!;
+
+      // Checked before the transaction below (a plain read, not part of it -- this
+      // only ever reads rows a human already committed via the flagged-review queue,
+      // so a read outside the transaction can't race with anything this request
+      // itself writes). A visitor's photo/text can independently rediscover the same
+      // stale claim a manually archived row was already rejected for (e.g. an old
+      // Facebook/Instagram post the venue never took down) -- auto-approving it here
+      // would recreate exactly what an admin already reviewed and rejected, the same
+      // failure cron/upsert.ts's replaceVenueSpecials/replaceVenueEvents guard against.
+      const suppressedSpecialIndices = new Set<number>();
+      for (let i = 0; i < result.specials.length; i++) {
+        const s = result.specials[i];
+        if (
+          s.confidence >= AUTO_APPROVE_CONFIDENCE &&
+          (await specialMatchesArchived(venueId!, {
+            title: s.title,
+            description: s.description,
+            priceCents: s.price_cents,
+            dayOfWeek: s.day_of_week,
+            isMonthly: s.is_monthly,
+            startTime: validTimeOrNull(s.start_time),
+            endTime: validTimeOrNull(s.end_time),
+            category: s.category,
+          }))
+        ) {
+          suppressedSpecialIndices.add(i);
+        }
+      }
+      const suppressedEventIndices = new Set<number>();
+      for (let i = 0; i < result.events.length; i++) {
+        const e = result.events[i];
+        if (
+          e.confidence >= AUTO_APPROVE_CONFIDENCE &&
+          (e.day_of_week !== null || e.specific_date !== null) &&
+          (await eventMatchesArchived(venueId!, {
+            title: e.title,
+            description: e.description,
+            eventType: e.event_type,
+            dayOfWeek: e.day_of_week,
+            specificDate: validDateOrNull(e.specific_date),
+            startTime: validTimeOrNull(e.start_time),
+            endTime: validTimeOrNull(e.end_time),
+            coverChargeCents: e.cover_charge_cents,
+          }))
+        ) {
+          suppressedEventIndices.add(i);
+        }
+      }
+
       // Wrapped in one transaction: previously a mid-loop insert failure (e.g. a bad
       // date/time string) could leave some items already published live while the
       // submissions bookkeeping row never got written, permanently orphaning them.
       await db.transaction(async (tx) => {
         for (let i = 0; i < result.specials.length; i++) {
           const s = result.specials[i];
-          if (s.confidence >= AUTO_APPROVE_CONFIDENCE) {
+          if (suppressedSpecialIndices.has(i)) {
+            resolvedItemKeys.push(`rejected:special:${i}`);
+            autoRejectedCount++;
+          } else if (s.confidence >= AUTO_APPROVE_CONFIDENCE) {
             await tx.insert(specials).values({
               venueId,
               regionId,
@@ -116,7 +170,13 @@ export async function POST(req: NextRequest) {
 
         for (let i = 0; i < result.events.length; i++) {
           const e = result.events[i];
-          if (e.confidence >= AUTO_APPROVE_CONFIDENCE && (e.day_of_week !== null || e.specific_date !== null)) {
+          if (suppressedEventIndices.has(i)) {
+            resolvedItemKeys.push(`rejected:event:${i}`);
+            autoRejectedCount++;
+          } else if (
+            e.confidence >= AUTO_APPROVE_CONFIDENCE &&
+            (e.day_of_week !== null || e.specific_date !== null)
+          ) {
             await tx.insert(events).values({
               venueId,
               regionId,
@@ -159,7 +219,7 @@ export async function POST(req: NextRequest) {
     }
 
     const totalItems = result.specials.length + result.events.length + result.menu_items.length;
-    const pendingCount = totalItems - autoApprovedCount;
+    const pendingCount = totalItems - autoApprovedCount - autoRejectedCount;
     const hasPhoto = !!(photoBase64 && photoMimeType);
     // A photo is never auto-published here regardless of text confidence -- it only goes
     // live via the admin approve action (app/api/admin/submissions/[id]/route.ts), so any
