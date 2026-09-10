@@ -221,14 +221,22 @@ export async function POST(req: NextRequest) {
     const totalItems = result.specials.length + result.events.length + result.menu_items.length;
     const pendingCount = totalItems - autoApprovedCount - autoRejectedCount;
     const hasPhoto = !!(photoBase64 && photoMimeType);
-    // A photo is never auto-published here regardless of text confidence -- it only goes
-    // live via the admin approve action (app/api/admin/submissions/[id]/route.ts), so any
-    // submission carrying a photo stays in the review queue even if its text auto-approved.
+    // A photo is never auto-published as a venue photo here regardless of text confidence --
+    // it only gets attached via the admin approve action (app/api/admin/submissions/[id]/route.ts).
+    // But that's a reason to hold back the PHOTO, not the whole submission: when every extracted
+    // item already resolved (auto-approved or auto-rejected) there's nothing left an admin can
+    // act on via the per-item approve/reject buttons, so forcing needs_review here left the
+    // submission permanently stuck open with no way to close it (AdminSubmissionRow already
+    // hides it once `remaining <= 0`, so the photo was never actually getting reviewed anyway --
+    // this just left the badge/count wrong forever). Only fall back to needs_review for the
+    // photo's sake when there are no structured items at all for a human to fall back on.
     // A new venue is never auto-published either -- there's no venue row yet to attach to.
     const status =
-      totalItems === 0 && !hasPhoto
-        ? "rejected"
-        : isNewVenue || pendingCount > 0 || hasPhoto
+      totalItems === 0
+        ? hasPhoto
+          ? "needs_review"
+          : "rejected"
+        : isNewVenue || pendingCount > 0
           ? "needs_review"
           : "auto_approved";
 
