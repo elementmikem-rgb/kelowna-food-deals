@@ -30,7 +30,13 @@ const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 // app/[region]/layout.tsx instead, which runs for every actual region page.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "TodaysTab — Local Food & Drink Deals", template: "%s — TodaysTab" },
+  // Deliberately a plain string, not a {default, template} object -- a
+  // template here would keep wrapping around app/[region]/layout.tsx's own
+  // already-complete title ("Kelowna Food Deals — ...") since Next.js applies
+  // an ancestor template to a descendant's resolved title too, not just to
+  // page-level strings. Only the region layout owns a template, for its own
+  // subtree's plain-string page titles (Advertise, Archive, etc.).
+  title: "TodaysTab — Local Food & Drink Deals",
   description: "Real food and drink specials, checked daily -- pick your city to see what's on today.",
   manifest: "/manifest.json",
   openGraph: { type: "website", locale: "en_CA", url: SITE_URL, siteName: "TodaysTab" },
