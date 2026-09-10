@@ -42,13 +42,13 @@ export default function AdminLoginPage() {
         <div className="flex flex-col items-center gap-2 text-center">
           <Image
             src="/icons/icon-192.png"
-            alt="Kelowna Food Deals logo"
+            alt="TodaysTab logo"
             width={48}
             height={48}
             className="rounded-full"
           />
           <div>
-            <p className="font-display text-lg text-foreground leading-tight">Kelowna Food Deals</p>
+            <p className="font-display text-lg text-foreground leading-tight">TodaysTab</p>
             <p className="text-xs uppercase tracking-wide text-muted-2">Admin</p>
           </div>
         </div>
