@@ -1,32 +1,38 @@
-# Adding a new region
+# Adding a new region — speed-run playbook
 
-This is the exact, minimal procedure for adding a new city/region to
-TodaysTab. It assumes the platform is already on the consolidated
-path-based architecture (todaystab.com/{slug}) documented in
-`docs/superpowers/specs/2026-09-07-multi-region-platform-design.md` and
-`docs/superpowers/specs/2026-09-08-country-province-hierarchy-design.md`.
+This is the exact procedure for launching a brand-new city/region on
+TodaysTab end-to-end: database setup, venues, getting real deals/events
+live, admin review, SEO, and outreach emailing. It assumes the platform is
+already on the consolidated path-based architecture (todaystab.com/{slug})
+documented in `docs/superpowers/specs/2026-09-07-multi-region-platform-design.md`
+and `docs/superpowers/specs/2026-09-08-country-province-hierarchy-design.md`.
 
 Read this whole file before starting. It is written so a Claude session with
-no other context on this project can follow it mechanically.
+no other context on this project can follow it mechanically, phase by phase.
 
 ## The one-line summary
 
 A new region under an existing country/province needs **zero infrastructure
 work and zero code changes**. It needs: one `regions` row, some `venues`
-rows, and (optionally) a couple of DNS-free integrations. Everything else —
-routing, sitemap, robots.txt, admin scope switcher, nightly scrape cron,
-analytics — is already generic and picks up any `active` region automatically.
+rows, one forced cron run to get content live, and a manual SEO/outreach
+pass. Everything else — routing, sitemap, robots.txt, admin scope switcher,
+nightly scrape cron, analytics, pricing/monetization — is already generic
+and picks up any `active` region automatically.
 
-If you find yourself about to touch Cloudflare, Railway, or DNS for a new
-region, stop — that almost certainly means you're doing something this
-process doesn't require. The only reason to touch infra is a genuinely new
-country/timezone/currency, covered in "Expanding outside BC, Canada" below.
+If you find yourself about to touch Cloudflare, Railway DNS, a new Google
+Search Console property, or a new Brevo sender for this region, stop — that
+almost certainly means you're doing something this process doesn't require.
+Everything under todaystab.com shares one verified domain, one Brevo sender,
+and one deploy. The only reason to touch real infra is a genuinely new
+country/timezone, covered in "Expanding outside BC, Canada" below.
 
-## Step 1 — Confirm the province exists (skip if it does)
+---
+
+## Phase 1 — Database: region + province
 
 Regions hang off `provinces`, which hang off `countries`. For a new city in
-an existing province (e.g. adding Vernon or Penticton-adjacent towns in BC),
-this step is already done — check first:
+an existing province (e.g. another BC town), this step is already done —
+check first:
 
 ```sql
 select p.id, p.code, p.name, p.timezone, c.code as country
@@ -34,93 +40,183 @@ from specials.provinces p
 join specials.countries c on c.id = p.country_id;
 ```
 
-If the province is missing, insert it (see "Expanding outside BC, Canada"
-below for the full country+province case). For BC specifically it already
-exists.
+If the province is missing, see "Expanding outside BC, Canada" below. For BC
+specifically it already exists.
 
-## Step 2 — Insert the `regions` row
+## Phase 2 — Database: the `regions` row
 
-There is no admin UI or script for this yet — do it directly against
-production via a one-off Node script (same `db` import pattern as
-`scripts/seed-venues.ts`), or a direct SQL insert if you're comfortable with
-that. Every column on `regions` (see `db/schema.ts`) that is `NOT NULL` must
-be filled in:
+There is no admin UI or script for this — do it directly against production
+via a one-off Node script (same `db` import pattern as
+`scripts/seed-venues.ts`), or a direct SQL insert. Every `NOT NULL` column on
+`regions` (see `db/schema.ts`) must be filled in:
 
 | Column | What it is | Example |
 |---|---|---|
 | `slug` | URL path segment, lowercase, hyphenated | `"vernon"` |
 | `domain` | **Leave `null`** for any region added after the todaystab.com migration — it lives entirely at `todaystab.com/{slug}` and needs no domain of its own | `null` |
-| `brandName` | Shown in titles, emails, city-picker | `"Vernon Food Deals"` (or whatever fits — doesn't have to match "TodaysTab" branding) |
+| `brandName` | Shown in titles, emails, city-picker | `"Vernon Food Deals"` (doesn't have to match "TodaysTab" branding) |
 | `logoUrl` | Path under `/public` or a full URL | `"/icons/icon-192.png"` (reuse the shared one unless you have a real per-region logo) |
 | `accentColor`, `accentDimColor`, `accentSoftColor`, `backgroundColor`, `foregroundColor`, `evergreenColor` | Theme CSS custom properties, hex strings | Copy Kelowna's or Penticton's values as a starting point, tweak later |
-| `mailingAddress` | **Real physical address, required for CASL** (Canada's anti-spam law) — every outreach email includes this | A real mailing address you control |
-| `contactEmail` | Reply-to / contact address for this region | `element.mikem@gmail.com` or a per-region address |
-| `tokenCeiling` | Nightly Haiku extraction budget for this region alone, defaults to 50000 if omitted | `50000` to start |
-| `active` | Must be `true` for the region to show up anywhere (city picker, cron, sitemap, admin scope) | `true` |
-| `provinceId` | FK from Step 1 | the BC province's id |
+| `mailingAddress` | **Real physical address, required for CASL** — every outreach email includes this | A real mailing address you control |
+| `contactEmail` | Contact address for this region | `element.mikem@gmail.com` or a per-region address |
+| `tokenCeiling` | Nightly Haiku extraction budget for this region alone | `50000` to start |
+| `active` | Must be `true` for the region to show up anywhere | `true` |
+| `provinceId` | FK from Phase 1 | the BC province's id |
 
-**Do not skip `mailingAddress`.** It's a legal requirement (CASL), not a
-nice-to-have, and `app/api/admin/outreach/send/route.ts` will fail outreach
-sends for a region without one (the column is `NOT NULL` in the schema, so
-you can't actually skip it, but don't put a placeholder).
+**Do not skip `mailingAddress`** — it's a legal requirement (CASL), not a
+nice-to-have.
 
-Once inserted, `/{slug}` works immediately — the city picker
-(`app/page.tsx`), sitemap/robots (`app/sitemap.ts`, `app/robots.ts`), the
-`app/[region]/layout.tsx` metadata/theme injection, and the admin scope
-switcher (`lib/admin-region.ts`) all query `regions` live and require no
-code change to notice a new row.
+Once inserted, `/{slug}` works immediately — city picker (`app/page.tsx`),
+sitemap/robots, `app/[region]/layout.tsx`'s metadata/theme injection, and the
+admin scope switcher (`lib/admin-region.ts`) all query `regions` live.
 
-## Step 3 — Seed venues
+## Phase 3 — Seed venues
 
-There's no generic "add venues for a region" tool. `scripts/seed-venues.ts`
-is a one-off script hardcoded to Kelowna (`regions.slug === "kelowna"`) —
-it's a **pattern to copy**, not a tool to reuse directly. For a new region:
+There's no generic "add venues" tool. `scripts/seed-venues.ts` is a one-off
+script hardcoded to Kelowna — it's a **pattern to copy**, not a tool to
+reuse directly.
 
-1. Research real venues (name, address, website, menu URL) — verify via
-   WebSearch/WebFetch, never guess. Check
-   `feedback_docs_poison_reviews`-style care: wrong venue data poisons every
-   downstream feature.
-2. **Check for confirmed-closed venues first** if this region overlaps
-   anything previously researched (unlikely for a brand-new city, but if
-   you're re-adding a previously-deactivated region like the Vancouver
-   Island venue, check `project_kelowna_specials_west_coast_grill_deactivated.md`
-   in the brain memory first — some "wrong region" venues are parked, not
-   gone, and reactivating them is different from re-seeding from scratch).
-3. Write a short one-off script modeled on `scripts/seed-venues.ts`
-   (`db` import, a `SEED_VENUES` array, upsert-by-name against the new
-   region's id) and run it once. Don't try to make it generic — a per-region
-   throwaway script is the established pattern here.
+1. Research real venues (name, address, website, menu URL) via
+   WebSearch/WebFetch — verify, never guess. Wrong venue data poisons every
+   downstream feature (extraction, SEO, outreach).
+2. If this region overlaps anything previously researched (e.g. reactivating
+   a parked venue for Vancouver Island), check brain memory for a
+   deactivation note first — some "wrong region" venues are parked, not
+   gone, and reactivating differs from re-seeding from scratch.
+3. Write a short one-off script modeled on `scripts/seed-venues.ts` (`db`
+   import, a `SEED_VENUES` array, upsert-by-name against the new region's
+   id) and run it once. Don't make it generic — a per-region throwaway
+   script is the established pattern.
 4. Each seeded venue needs `regionId` set to the new region's id,
-   `active: true`, and a real `address` at minimum. `website`/`menuUrl` are
-   what the nightly cron scrapes — a venue with neither is skipped every
-   night (`cron/index.ts`'s `processVenue` logs "no website or menu_url
-   configured" and moves on, harmlessly).
+   `active: true`, a real `address`, and — critically for Phase 4 —
+   `website` and/or `menuUrl` set. A venue with neither is silently skipped
+   by the scraper every night (logged, not an error), so it will never get
+   real specials/events without one.
 
-## Step 4 — Verify, don't assume
+## Phase 4 — Get real deals/events live (don't wait for the nightly schedule)
+
+Deals/events only reach the site through two paths, and there is **no admin
+form to hand-type a special or event** — every row is written by one of these:
+
+- **The nightly scrape cron** (`cron/index.ts` → `cron/upsert.ts`): reads
+  each active venue's `website`/`menuUrl`, extracts specials/events/menu
+  items via Haiku, and replaces that venue's active rows.
+- **The public submission flow** (`/submit` → admin approval) — visitor- or
+  operator-submitted, reviewed in `/admin/submissions`.
+
+To speed-run a launch, don't wait for the schedule — force a run right now:
+
+```bash
+npm run cron
+```
+
+This runs the full nightly cycle (`runScrapeCycle()`) across **all** active
+regions, not just the new one — that's fine, it's cheap for regions with no
+content changes (content-hash skip). Watch the log for
+`Starting scrape run for N active venue(s) in region {slug}` to confirm the
+new region was picked up, then check each venue for real extracted specials.
+A venue that logs "no website or menu_url configured" needs that field
+filled in (back to Phase 3) before it will ever produce content.
+
+If you want faster/cleaner coverage than a generic homepage scrape, this is
+also where you'd research and manually add each venue's specific
+specials/happy-hour page URL to `sourceUrls` — the weekly link-discovery
+pass (`runLinkDiscovery`, Sundays only) finds these automatically over time,
+but a manual seed gets you there on day one.
+
+## Phase 5 — Admin walkthrough for the new region
+
+In `/admin`, use the country/province/region scope switcher
+(`lib/admin-region.ts`) to select the new region — every list below then
+narrows to just this region's rows automatically, no config needed:
+
+- **`/admin/submissions`** — review/approve anything the cron or a visitor
+  submitted. Region-scoped, correct out of the box.
+- **`/admin/outreach`** — send the "hey, we've got you listed" email to
+  each venue with a `contactEmail` on file. Region-scoped, correct out of
+  the box. **Sending is strictly manual, one venue at a time** — there is
+  no bulk-send button and no built-in pacing. If you're sending to many
+  venues, pace them out yourself (send each at ~9:30am in the recipient's
+  own local time — this is an operator discipline, not something the code
+  enforces).
+- **`/admin/revenue`**, **`/admin/sponsored`** — region-scoped, correct out
+  of the box. No monetization setup is required for a new region:
+  `monetizationSettings` is keyed globally by product type (not by region),
+  so a new region automatically inherits the same tip/advertise pricing as
+  every other region. Don't create a region-specific pricing row —
+  it wouldn't be read anywhere, and changing actual prices needs Mike's
+  explicit sign-off regardless (see CLAUDE.md pricing guardrail).
+- **`/admin/flagged`** and **`/admin/tips`** — known limitation: these two
+  pages are **not region-scoped**, they always show every region's rows
+  combined. Not something to fix as part of a region launch; just be aware
+  the counts there aren't filtered.
+
+## Phase 6 — SEO
+
+Because every region lives under the same already-verified `todaystab.com`
+domain, a new region needs **no new Google Search Console property and no
+new sitemap submission** — GSC verification is per-domain, and the existing
+todaystab.com property already covers every path under it.
+
+- `app/sitemap.ts` loops every `active` region and its active venues
+  automatically (1-hour revalidate) — the new region's URLs appear in the
+  existing sitemap within an hour of `active: true` being set. Nothing to
+  submit by hand.
+- `app/robots.ts` is domain-level and already correct.
+- Per-page metadata (title/description/canonical/OG) is fully generic —
+  `app/[region]/layout.tsx`'s `generateMetadata` and each venue page
+  (`app/[region]/venues/[id]/page.tsx`) build canonical URLs and titles off
+  `region.slug`/`region.brandName` automatically. Nothing to configure.
+- The only real SEO work for a new region is content quality, same as any
+  region: make sure seeded venues have real addresses/websites (thin/wrong
+  data is a genuine on-page SEO problem, not just a data problem), and once
+  live, spot-check a venue page's rendered title/canonical in the browser to
+  confirm it reads correctly for the new brand name.
+
+## Phase 7 — Outreach emailer setup
+
+There is **one shared Brevo account and one shared sender** for the whole
+platform (`BREVO_API_KEY`, `REPORT_EMAIL_FROM` env vars) — not per-region.
+A new region needs no new Brevo setup, no new verified sender domain, and no
+new API key. What matters per-region:
+
+- `regions.mailingAddress` (Phase 2) is what actually appears in the CASL
+  footer of every outreach email this region sends — get it right at
+  insert time, not as an afterthought.
+- Reply-to resolves per-region in `app/api/admin/outreach/send/route.ts`: a
+  legacy region with its own domain uses `reply@reply.{domain}` (a real
+  Brevo inbound webhook, only wired up for the original two regions); a
+  domain-less region (i.e. every new one) falls back to
+  `REPORT_EMAIL_TO`/`element.mikem@gmail.com`. This works today — replies
+  land in a real inbox — no setup required to launch. Only worth revisiting
+  (wiring a shared `reply.todaystab.com` inbound webhook in Brevo) if
+  outreach volume for the new region grows enough that routing precision
+  starts to matter.
+- Sends only happen from `/admin/outreach`, one venue at a time, with no
+  automatic pacing (see Phase 5) — plan the actual send schedule yourself.
+
+## Phase 8 — Verify, don't assume
 
 Before calling it done:
 
 - Visit `todaystab.com/{slug}` — homepage, an events page, a venue detail
   page, `/submit`, `/advertise`. Confirm branding/colors/logo look right and
   no links 404.
-- Confirm `/{slug}/submit`'s venue dropdown shows only this region's venues
-  (it's filtered by `regionId` — if you see venues from another region, that
-  filter broke).
-- In `/admin`, confirm the new region appears in the country/province/region
-  scope switcher and that switching to it correctly narrows every admin
-  list (submissions, specials, events, outreach) to just this region's rows.
-- `curl -I` a URL under the old flow isn't relevant here (no domain to
-  redirect from) — skip that check for a domain-less region.
-- Wait for (or manually trigger) one nightly cron run and confirm
-  `cron/index.ts`'s log output shows `Starting scrape run for N active
-  venue(s) in region {slug}` — this is your proof the cron picked the region
-  up with zero code changes.
+- Confirm `/{slug}/submit`'s venue dropdown shows only this region's venues.
+- In `/admin`, confirm the new region appears in the scope switcher and
+  narrows `/admin/submissions`, `/admin/outreach`, `/admin/revenue`,
+  `/admin/sponsored` correctly (remember `/admin/flagged` and `/admin/tips`
+  won't narrow — that's expected).
+- After `npm run cron`, confirm at least one seeded venue has real
+  specials/events showing on its live page — not just "no data yet".
+- Check the rendered `<title>`/canonical on a venue page in-browser to
+  confirm SEO metadata reads correctly for the new brand.
 
 ## What genuinely does NOT need touching
 
-Confirmed by grep across the codebase at the time this doc was written — if
-any of these turn out to have grown a hardcoded region reference since,
-that's a regression, not something this doc got wrong:
+Confirmed by reading the code at the time this doc was written — if any of
+these turn out to have grown a hardcoded region reference since, that's a
+regression, not something this doc got wrong:
 
 - `proxy.ts` — resolves every region by slug or domain generically.
 - `app/sitemap.ts`, `app/robots.ts` — loop over every `active` region.
@@ -129,38 +225,33 @@ that's a regression, not something this doc got wrong:
 - `lib/admin-region.ts` — the admin scope switcher is fully data-driven off
   `regions`/`provinces`/`countries`.
 - `cron/index.ts` — `runScrapeCycle()` loops `where(regions.active, true)`.
+- `monetizationSettings` — global by product type, not region — no new row
+  needed.
 - Stripe checkout, booking, tip, outreach-email, unsubscribe, and
   venue-verify URL builders — all take a `regionSlug`/`region` param and
   build off `PATH_BASED_DOMAIN`, not a hardcoded domain.
+- Brevo/GSC — one shared account/property for the whole platform.
 
 ## Optional integrations (skip unless you want them)
 
 - **NowMedia event scraping** (`cron/scrapeNowMedia.ts`): a hardcoded array
   mapping `regionSlug` to a third-party local-events site
   (`kelownanow.com`, `pentictonnow.com`). Only add an entry if the new
-  region has an equivalent local news/events site worth scraping — most
-  regions won't, and it's fine to leave unset.
-- **Reply-to inbox**: outreach emails for a domain-less region fall back to
-  `process.env.REPORT_EMAIL_TO` (or `element.mikem@gmail.com`) as the
-  reply-to address, since there's no `reply@reply.{domain}` Brevo webhook
-  for a region with no domain of its own. This works fine — replies land in
-  a real inbox — but if outreach volume for the new region grows, consider
-  wiring a shared `reply.todaystab.com` inbound webhook in Brevo (same
-  pattern as the existing per-domain ones) so replies route more precisely.
+  region has an equivalent local news/events site worth scraping.
+- **Reply-to inbox** — see Phase 7. Not needed to launch.
 
 ## Expanding outside BC, Canada
 
 Everything above assumes a new city in an already-seeded province. If the
 new region is in a different province or country:
 
-1. Insert the `countries` row first if the country doesn't exist yet
-   (`code`, `name`, `currency` — `mailingAddress` optional, it's just a
-   default new regions can inherit).
+1. Insert the `countries` row first if it doesn't exist (`code`, `name`,
+   `currency` — `mailingAddress` optional, just a default new regions can
+   inherit).
 2. Insert the `provinces`/`state` row (`countryId`, `code`, `name`, and
    `timezone` as a real IANA name like `"America/Denver"` — this is the
-   level cron scheduling and any "today" logic reads for that region's
-   local time, so get it right).
-3. Then follow Steps 2-4 above as normal.
+   level any "today" logic reads for that region's local time).
+3. Then follow Phases 2-8 above as normal.
 
 Currency (`countries.currency`) is stored but nothing reads it yet — don't
 build currency-aware logic speculatively; that's a real future feature, not
