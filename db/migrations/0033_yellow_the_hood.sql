@@ -1,0 +1,2 @@
+ALTER TABLE "specials"."submissions" ADD COLUMN "region_id" integer;--> statement-breakpoint
+ALTER TABLE "specials"."submissions" ADD CONSTRAINT "submissions_region_id_regions_id_fk" FOREIGN KEY ("region_id") REFERENCES "specials"."regions"("id") ON DELETE no action ON UPDATE no action;

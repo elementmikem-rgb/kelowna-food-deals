@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { reviewSubmission, AUTO_APPROVE_CONFIDENCE } from "@/lib/submission-review";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
+import { getRegionBySlug } from "@/lib/regions";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
@@ -26,6 +27,10 @@ const submitSchema = z
     text: z.string().max(2000).nullable(),
     photoBase64: z.string().nullable(),
     photoMimeType: z.string().nullable(),
+    // The region the submitter's /submit page belongs to. Only load-bearing for a
+    // brand-new venue (an existing venue's own regionId is used instead), but every
+    // submission stores it so the row is never ambiguous about where it came from.
+    regionSlug: z.string().trim().min(1).max(100),
   })
   .refine((v) => (v.venueId !== null) !== (v.venueName !== null), {
     message: "provide either an existing venueId or a new venueName, not both or neither",
@@ -49,8 +54,13 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
-  const { venueId, venueName, venueAddress, text, photoBase64, photoMimeType } = parsed.data;
+  const { venueId, venueName, venueAddress, text, photoBase64, photoMimeType, regionSlug } = parsed.data;
   const isNewVenue = venueId === null;
+
+  const submittedRegion = await getRegionBySlug(regionSlug);
+  if (!submittedRegion) {
+    return NextResponse.json({ error: "unknown region" }, { status: 400 });
+  }
 
   if (!text && !photoBase64) {
     return NextResponse.json({ error: "provide a description or a photo" }, { status: 400 });
@@ -244,6 +254,7 @@ export async function POST(req: NextRequest) {
       venueId,
       venueName: isNewVenue ? venueName : null,
       venueAddress: isNewVenue ? venueAddress : null,
+      regionId: submittedRegion.id,
       rawText: text,
       photoData: photoBase64,
       photoMimeType,
@@ -272,6 +283,7 @@ export async function POST(req: NextRequest) {
       venueId,
       venueName: isNewVenue ? venueName : null,
       venueAddress: isNewVenue ? venueAddress : null,
+      regionId: submittedRegion.id,
       rawText: text,
       photoData: photoBase64,
       photoMimeType,

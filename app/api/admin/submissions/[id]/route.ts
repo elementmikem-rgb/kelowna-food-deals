@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db, submissions, specials, events, menuItems, venuePhotos, venues, regions } from "@/db";
+import { db, submissions, specials, events, menuItems, venuePhotos, venues } from "@/db";
 import { eq, and, sql } from "drizzle-orm";
 import type { SubmissionReviewResult } from "@/lib/submission-review";
 import { savePhotoOnApproval } from "@/lib/venue-photos";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
+import { getPrimaryRegion } from "@/lib/regions";
 
 const actionSchema = z.union([
   z.object({
@@ -111,22 +112,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (existing) {
         venueId = existing.id;
       } else {
-        // This submission carries no region information of its own (submissions never
-        // gets a regionId column), so a brand-new venue is assigned to "kelowna" -- the
-        // only region that exists right now. Known limitation: once a second region
-        // exists, a new-venue-from-submission needs a real way to know which region it
-        // belongs to (e.g. the admin's currently selected region), out of scope here.
-        const [kelownaRegion] = await tx
-          .select({ id: regions.id })
-          .from(regions)
-          .where(eq(regions.slug, "kelowna"))
-          .limit(1);
+        // submission.regionId is set from the region-aware /submit page for every
+        // submission going forward. Only null on rows predating that column -- fall
+        // back to the primary region for those rather than failing the approval outright.
+        const newVenueRegionId =
+          submission.regionId ?? (await getPrimaryRegion()).id;
         const [created] = await tx
           .insert(venues)
           .values({
             name: submission.venueName,
             address: submission.venueAddress ?? "Address not provided",
-            regionId: kelownaRegion.id,
+            regionId: newVenueRegionId,
             active: true,
           })
           .returning({ id: venues.id });

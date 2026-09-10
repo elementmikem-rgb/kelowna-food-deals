@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { db, venues } from "@/db";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SubmitForm } from "@/components/SubmitForm";
@@ -26,11 +26,19 @@ export async function generateMetadata({
   };
 }
 
-export default async function SubmitPage() {
+export default async function SubmitPage({
+  params,
+}: {
+  params: Promise<{ region: string }>;
+}) {
+  const { region: slug } = await params;
+  const region = await getRegionBySlug(slug);
+  if (!region) return null;
+
   const venueList = await db
     .select({ id: venues.id, name: venues.name })
     .from(venues)
-    .where(eq(venues.active, true))
+    .where(and(eq(venues.active, true), eq(venues.regionId, region.id)))
     .orderBy(asc(venues.name));
 
   return (
@@ -38,7 +46,7 @@ export default async function SubmitPage() {
       <SiteHeader active="blog" subtitle="Spot something we're missing? Tell us." />
 
       <Suspense>
-        <SubmitForm venues={venueList} />
+        <SubmitForm venues={venueList} regionSlug={region.slug} />
       </Suspense>
 
       <SiteFooter />

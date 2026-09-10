@@ -56,7 +56,13 @@ async function fileToBase64(file: File): Promise<{ data: string; mimeType: strin
 
 const NEW_VENUE = "__new__";
 
-export function SubmitForm({ venues }: { venues: { id: number; name: string }[] }) {
+export function SubmitForm({
+  venues,
+  regionSlug,
+}: {
+  venues: { id: number; name: string }[];
+  regionSlug: string;
+}) {
   const [venueId, setVenueId] = useState<number | "" | typeof NEW_VENUE>("");
   const [newVenueName, setNewVenueName] = useState("");
   const [newVenueAddress, setNewVenueAddress] = useState("");
@@ -109,6 +115,7 @@ export function SubmitForm({ venues }: { venues: { id: number; name: string }[] 
           text: text.trim() || null,
           photoBase64,
           photoMimeType,
+          regionSlug,
         }),
       });
       const data = await res.json();

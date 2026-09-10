@@ -232,6 +232,13 @@
       "when": 1789051746856,
       "tag": "0032_fat_ultimatum",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789052827774,
+      "tag": "0033_yellow_the_hood",
+      "breakpoints": true
     }
   ]
 }

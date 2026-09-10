@@ -290,6 +290,10 @@ export const submissions = specialsSchema.table("submissions", {
     .array()
     .notNull()
     .default([]), // e.g. "special:0", "event:1" — items already approved/rejected by an admin
+  // Null on rows predating this column -- approval falls back to getPrimaryRegion() for those.
+  // Set from the region-aware /submit page for every new submission going forward, so a
+  // new-venue-from-submission is assigned to the region the submitter actually used.
+  regionId: integer("region_id").references(() => regions.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });
