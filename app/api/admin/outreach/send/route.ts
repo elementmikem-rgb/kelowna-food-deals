@@ -167,14 +167,10 @@ export async function POST(req: NextRequest) {
       subject,
       htmlContent: htmlBody,
       senderName: region.brandName,
-      // Only the legacy regions have a real reply.{domain} inbound-email
-      // webhook wired up in Brevo (see project memory: Photaro/Kelowna
-      // Specials Brevo webhook setup). A region with no domain of its own
-      // has no such inbox yet -- replies fall back to a real mailbox
-      // instead of silently pointing at a Brevo address nothing monitors.
-      // Wiring a shared reply.todaystab.com inbox is a real follow-up, not
-      // something to invent a working address for here.
-      replyTo: region.domain ? `reply@reply.${region.domain}` : (process.env.REPORT_EMAIL_TO ?? "element.mikem@gmail.com"),
+      // Legacy regions keep their own reply.{domain} inbound webhook. Every
+      // other region (and todaystab.com itself) routes through the shared
+      // admin@todaystab.com inbound MX -> the same Brevo webhook -> /admin/inbox.
+      replyTo: region.domain ? `reply@reply.${region.domain}` : "admin@todaystab.com",
       headers: {
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

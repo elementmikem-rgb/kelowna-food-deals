@@ -33,9 +33,9 @@ export async function sendOutreachEmail({
       "api-key": apiKey,
     },
     body: JSON.stringify({
-      sender: { email: fromEmail, name: senderName ?? "Kelowna Food Deals" },
+      sender: { email: fromEmail, name: senderName ?? "TodaysTab" },
       to: [{ email: to }],
-      replyTo: replyTo ? { email: replyTo } : { email: "reply@reply.kelownafooddeals.shop" },
+      replyTo: replyTo ? { email: replyTo } : { email: fromEmail },
       subject,
       htmlContent,
       headers,
