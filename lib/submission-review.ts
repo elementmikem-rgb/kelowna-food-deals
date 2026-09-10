@@ -57,7 +57,7 @@ MENU ITEMS (regular, non-discounted menu entries — this is NOT a deal, just in
 
 Shared rules, no exceptions:
 - Never invent details not clearly visible in the photo or stated in the text. If something is illegible, ambiguous, or ambiguous which bucket it belongs to, leave it out entirely rather than guess.
-- evidence_quote: for every item, copy a short VERBATIM substring (exact characters, no paraphrasing) from the submitted text proving this item is real. If there is no text (photo only), instead describe in a few words exactly where in the photo you read it (e.g. "chalkboard, third line from top"). If you cannot point to a real basis for an item, do not report it at all.
+- evidence_quote: if a photo was submitted, ALWAYS describe in a few words exactly where in the photo you read this item (e.g. "chalkboard, third line from top", "framed sign labeled Friday") -- do this even if some text was also submitted alongside the photo, since that text is often just a venue name or short note, not a transcription of what's in the photo. Only use a verbatim text quote when there is NO photo at all (text-only submission). If you cannot point to a real basis for an item, do not report it at all.
 - confidence: 0 to 1 per item, reflecting how certain you are this is accurate and ready to publish without human review. Use below 0.85 for anything even slightly ambiguous, illegible, or inferred.
 - notes: brief reasoning for anything below full confidence, or null.
 - Prices/covers in whole cents (e.g. "$8.50" -> 850).
@@ -199,12 +199,17 @@ export async function reviewSubmission(
   const parsed = reviewResultSchema.safeParse(toolUse.input);
   if (!parsed.success) throw new Error(`malformed review output: ${parsed.error.message}`);
 
-  // When submitted as text, verify each evidence_quote is an actual verbatim substring of
-  // what the user wrote -- this doesn't stop a determined forger (the "source" is the
-  // submitter's own text), but it does catch the model inventing a detail the user never
-  // wrote at all. Photo-only submissions have no text to check the quote against, so this
-  // step is skipped for them (evidence_quote there is a photo-location description instead).
-  const haystack = text ? collapseWhitespace(text) : null;
+  // Verify each evidence_quote is an actual verbatim substring of what the user wrote --
+  // this doesn't stop a determined forger (the "source" is the submitter's own text), but
+  // it does catch the model inventing a detail the user never wrote at all. Keyed off
+  // whether a PHOTO was submitted, not whether any text was submitted: a submitter often
+  // types just the venue name or a short note alongside a photo, and that trivial text
+  // was never meant to be a transcription of the photo's contents. Verifying photo-derived
+  // evidence_quote strings against unrelated short text would fail every single item and
+  // silently drop the whole submission (see submission-review-schema's evidence_quote
+  // format for the photo-location alternative the prompt asks for in that case).
+  const hasPhoto = !!(photoBase64 && photoMimeType);
+  const haystack = !hasPhoto && text ? collapseWhitespace(text) : null;
   function verify(quote: string): boolean {
     if (!haystack) return true;
     return haystack.includes(collapseWhitespace(quote));
