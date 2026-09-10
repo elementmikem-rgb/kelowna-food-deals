@@ -10,6 +10,11 @@ and `docs/superpowers/specs/2026-09-08-country-province-hierarchy-design.md`.
 Read this whole file before starting. It is written so a Claude session with
 no other context on this project can follow it mechanically, phase by phase.
 
+Test-run end-to-end on 2026-09-10 launching North Okanagan (Vernon, BC) as a
+real region — took under an hour including venue research. One real gap was
+found and fixed in this doc (Phase 4's original `npm run cron` advice was
+too slow); everything else in the playbook worked as written.
+
 ## The one-line summary
 
 A new region under an existing country/province needs **zero infrastructure
@@ -104,19 +109,41 @@ form to hand-type a special or event** — every row is written by one of these:
 - **The public submission flow** (`/submit` → admin approval) — visitor- or
   operator-submitted, reviewed in `/admin/submissions`.
 
-To speed-run a launch, don't wait for the schedule — force a run right now:
+To speed-run a launch, don't wait for the schedule. **Do not just run
+`npm run cron`** — confirmed by testing this playbook end-to-end (see the
+North Okanagan launch, 2026-09-10): that command runs `runScrapeCycle()`
+across **every** active region in the platform, oldest first, and it does
+not skip a region just because it has no changes — it still has to walk
+every one of that region's existing venues to check their content hash
+before moving on. With Kelowna alone at 80+ active venues, this means
+waiting through the entire existing platform's queue before the brand-new
+region's venues are even reached — many minutes, for zero benefit.
 
-```bash
-npm run cron
+Instead, write a tiny one-off script (same "throwaway per-launch tool"
+pattern as the venue seed script in Phase 3) that scrapes only the new
+region:
+
+```ts
+import { db, regions } from "@/db";
+import { eq } from "drizzle-orm";
+import { processVenue } from "../cron/index";
+import { getActiveVenues } from "../cron/upsert";
+
+const [region] = await db.select().from(regions).where(eq(regions.slug, "SLUG_HERE")).limit(1);
+const venueList = await getActiveVenues(region!.id);
+for (const venue of venueList) {
+  await processVenue(venue, region!.id);
+}
 ```
 
-This runs the full nightly cycle (`runScrapeCycle()`) across **all** active
-regions, not just the new one — that's fine, it's cheap for regions with no
-content changes (content-hash skip). Watch the log for
-`Starting scrape run for N active venue(s) in region {slug}` to confirm the
-new region was picked up, then check each venue for real extracted specials.
-A venue that logs "no website or menu_url configured" needs that field
-filled in (back to Phase 3) before it will ever produce content.
+Run it once with `npx tsx --require ./scripts/env.cjs <path>.ts`, watch the
+log for each venue's `changed, extracted N special(s)...` line, then delete
+the script — it isn't meant to be committed. A venue that logs "no website
+or menu_url configured" needs that field filled in (back to Phase 3) before
+it will ever produce content. A venue whose fetch fails (e.g. "fetch
+failed") is a real per-venue issue (bot protection, a slow/broken site) —
+not a sign the platform or the launch process is broken; leave it and move
+on, it'll just have no specials until fixed individually.
 
 If you want faster/cleaner coverage than a generic homepage scrape, this is
 also where you'd research and manually add each venue's specific
