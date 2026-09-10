@@ -10,10 +10,12 @@ export function EventVenueGroup({
   venueId,
   venueName,
   events,
+  regionSlug,
 }: {
   venueId: number | null;
   venueName: string;
   events: EventWithVenue[];
+  regionSlug: string;
 }) {
   const freshest = events.reduce((latest, e) =>
     e.lastVerifiedAt > latest.lastVerifiedAt ? e : latest
@@ -33,7 +35,7 @@ export function EventVenueGroup({
     >
       {venueId !== null && (
         <Link
-          href={`/venues/${venueId}`}
+          href={`/${regionSlug}/venues/${venueId}`}
           className="absolute inset-0 z-0 rounded-2xl"
           aria-label={`${venueName} — full menu, hours, and details`}
         />

@@ -8,6 +8,7 @@ import type { Region, Province, Country } from "@/db/schema";
 // without risking a stale region surviving more than a minute after an edit.
 const CACHE_TTL_MS = 60_000;
 const byDomain = new Map<string, { region: Region | null; expiresAt: number }>();
+const bySlug = new Map<string, { region: Region | null; expiresAt: number }>();
 const byId = new Map<number, { region: Region | null; expiresAt: number }>();
 const provinceById = new Map<number, { province: Province | null; expiresAt: number }>();
 const countryById = new Map<number, { country: Country | null; expiresAt: number }>();
@@ -19,6 +20,21 @@ export async function getRegionByDomain(domain: string): Promise<Region | null> 
   const [row] = await db.select().from(regions).where(eq(regions.domain, domain)).limit(1);
   const region = row ?? null;
   byDomain.set(domain, { region, expiresAt: Date.now() + CACHE_TTL_MS });
+  return region;
+}
+
+// Used for path-based region resolution (todaystab.com/kelowna, /penticton) --
+// proxy.ts resolves the first URL segment against this and sets x-region-id
+// exactly as it already does from the Host header for the legacy per-region
+// domains, so every existing getCurrentRegion() call site keeps working
+// unchanged regardless of which resolution path produced the header.
+export async function getRegionBySlug(slug: string): Promise<Region | null> {
+  const cached = bySlug.get(slug);
+  if (cached && cached.expiresAt > Date.now()) return cached.region;
+
+  const [row] = await db.select().from(regions).where(eq(regions.slug, slug)).limit(1);
+  const region = row ?? null;
+  bySlug.set(slug, { region, expiresAt: Date.now() + CACHE_TTL_MS });
   return region;
 }
 

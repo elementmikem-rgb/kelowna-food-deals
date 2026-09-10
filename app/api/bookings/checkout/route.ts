@@ -8,7 +8,7 @@ import { getStripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { regionTodayISODate, daysInclusive } from "@/lib/time";
 import { stripeFeeCents } from "@/lib/stripe-fee";
-import { getCurrentRegion, getRegionContext } from "@/lib/regions";
+import { getRegionBySlug, getRegionContext } from "@/lib/regions";
 
 // Stripe requires a Checkout session's expires_at to be at least 30 minutes out, so
 // the DB-side reservation hold uses the same window rather than a shorter one that
@@ -23,7 +23,12 @@ const HOLD_MS = 30 * 60 * 1000;
 // 30 minutes; only the Stripe-side expiry carries the slack.
 const STRIPE_EXPIRY_MARGIN_MS = 60_000;
 
-const bodySchema = z.object({ verifiedToken: z.string() });
+const bodySchema = z.object({
+  verifiedToken: z.string(),
+  // See tip/checkout/route.ts's comment -- an API route has no path segment
+  // of its own to resolve region from under path-based routing.
+  regionSlug: z.string().min(1),
+});
 
 // Deterministic per-product(+category) lock key so two concurrent checkouts for the
 // same capped slot serialize here instead of racing the availability check below.
@@ -32,15 +37,16 @@ function lockKeyFor(productType: string, category: string | null): string {
 }
 
 export async function POST(req: NextRequest) {
-  const region = await getCurrentRegion();
-  const { timezone } = await getRegionContext(region);
-  const SITE_URL = `https://${region.domain}`;
-
   const { ok } = await checkRateLimit(req, "bookings-checkout", 10, 60);
   if (!ok) return NextResponse.json({ error: "Too many attempts, try again later" }, { status: 429 });
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid payload" }, { status: 400 });
+
+  const region = await getRegionBySlug(parsed.data.regionSlug);
+  if (!region) return NextResponse.json({ error: "unknown region" }, { status: 400 });
+  const { timezone } = await getRegionContext(region);
+  const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`;
 
   const selection = await verifyBookingToken<BookingSelection & { verifiedAt: number }>(
     parsed.data.verifiedToken
@@ -173,7 +179,7 @@ export async function POST(req: NextRequest) {
         {
           price_data: {
             currency: "cad",
-            product_data: { name: `${selection.productType} placement — Kelowna Food Deals` },
+            product_data: { name: `${selection.productType} placement — ${region.brandName}` },
             unit_amount: priceCents,
           },
           quantity: 1,

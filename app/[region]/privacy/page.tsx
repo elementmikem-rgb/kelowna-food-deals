@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Privacy & Terms",
     description: `What ${region.brandName} collects, why, and how it's used.`,
-    alternates: { canonical: "/privacy" },
+    alternates: { canonical: `/${region.slug}/privacy` },
   };
 }
 
@@ -24,7 +24,7 @@ export default async function PrivacyPage() {
           <p>
             {region.brandName} is a one-person project. Questions about anything on this page can
             go through the{" "}
-            <a href="/submit" className="text-accent-dim underline">
+            <a href={`/${region.slug}/submit`} className="text-accent-dim underline">
               feedback form
             </a>
             .
@@ -95,7 +95,7 @@ export default async function PrivacyPage() {
           <p>
             These terms apply if you book a Featured Placement, Seasonal Boost, or Category
             Sponsorship through the{" "}
-            <a href="/advertise" className="text-accent-dim underline">
+            <a href={`/${region.slug}/advertise`} className="text-accent-dim underline">
               advertise page
             </a>
             . Browsing the site to see what's on doesn't require agreeing to anything below.

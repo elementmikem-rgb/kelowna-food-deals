@@ -8,7 +8,7 @@ const AMOUNTS = [
   { label: "$10", cents: 1000 },
 ];
 
-export function TipJar() {
+export function TipJar({ regionSlug }: { regionSlug: string }) {
   const [loadingCents, setLoadingCents] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,7 @@ export function TipJar() {
       const res = await fetch("/api/tip/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountCents }),
+        body: JSON.stringify({ amountCents, regionSlug }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {

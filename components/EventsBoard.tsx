@@ -22,10 +22,12 @@ export function EventsBoard({
   recurring,
   upcoming,
   timezone,
+  regionSlug,
 }: {
   recurring: EventWithVenue[];
   upcoming: EventWithVenue[];
   timezone: string;
+  regionSlug: string;
 }) {
   const today = useMemo(() => todayDowInRegion(timezone), [timezone]);
   const [selectedDay, setSelectedDay] = useState<number | "weekend">(today);
@@ -108,6 +110,7 @@ export function EventsBoard({
                 venueId={g.venueId}
                 venueName={g.venueName}
                 events={g.items}
+                regionSlug={regionSlug}
               />
             ))}
           </div>
@@ -142,6 +145,7 @@ export function EventsBoard({
                       venueId={g.venueId}
                       venueName={g.venueName}
                       events={g.items}
+                      regionSlug={regionSlug}
                     />
                   ))}
                 </div>

@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Advertise With Us",
     description: `Feature your venue, promote a seasonal special, or sponsor a category on ${region.brandName}.`,
-    alternates: { canonical: "/advertise" },
+    alternates: { canonical: `/${region.slug}/advertise` },
   };
 }
 
@@ -61,7 +61,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">
       <SiteHeader
         active="blog"
-        subtitle="Feature your venue or promote a seasonal special to Kelowna diners."
+        subtitle={`Feature your venue or promote a seasonal special to ${region.brandName.split(" ")[0]} diners.`}
       />
 
       <div className="flex flex-col gap-2">
@@ -91,6 +91,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             settings={settingsFor("featured")}
             initialVerifiedToken={tokenFor("featured")}
             todayISO={todayISO}
+            regionSlug={region.slug}
           />
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
@@ -108,6 +109,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             settings={settingsFor("boost")}
             initialVerifiedToken={tokenFor("boost")}
             todayISO={todayISO}
+            regionSlug={region.slug}
           />
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
@@ -125,6 +127,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             settings={settingsFor("category_sponsor")}
             initialVerifiedToken={tokenFor("category_sponsor")}
             todayISO={todayISO}
+            regionSlug={region.slug}
           />
         </div>
       </div>

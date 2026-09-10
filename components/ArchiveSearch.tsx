@@ -21,7 +21,7 @@ export interface ArchiveVenue {
   items: ArchiveItem[];
 }
 
-export function ArchiveSearch({ venues }: { venues: ArchiveVenue[] }) {
+export function ArchiveSearch({ venues, regionSlug }: { venues: ArchiveVenue[]; regionSlug: string }) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -47,7 +47,7 @@ export function ArchiveSearch({ venues }: { venues: ArchiveVenue[] }) {
           {filtered.map((v) => (
             <section key={v.venueId} className="flex flex-col gap-2">
               <h2 className="font-display text-lg text-foreground">
-                <Link href={`/venues/${v.venueId}`} className="hover:underline">
+                <Link href={`/${regionSlug}/venues/${v.venueId}`} className="hover:underline">
                   {v.venueName}
                 </Link>
               </h2>

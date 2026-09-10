@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Karla, Geist_Mono } from "next/font/google";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
-import { getCurrentRegion } from "@/lib/regions";
+import { getPrimaryRegion } from "@/lib/regions";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -22,24 +22,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const region = await getCurrentRegion();
-  const siteUrl = `https://${region.domain}`;
-  const title = `${region.brandName} — Food & Drink Deals Today`;
-  const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} — happy hours and deals, checked daily, not scraped.`;
+const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 
-  return {
-    metadataBase: new URL(siteUrl),
-    title: { default: title, template: `%s — ${region.brandName}` },
-    description,
-    applicationName: region.brandName,
-    manifest: "/manifest.json",
-    appleWebApp: { capable: true, statusBarStyle: "default", title: region.brandName },
-    openGraph: { type: "website", locale: "en_CA", url: siteUrl, siteName: region.brandName, title, description },
-    twitter: { card: "summary", title, description },
-    alternates: { canonical: siteUrl },
-  };
-}
+// This top-level layout can't call getCurrentRegion() -- it also renders the
+// bare "/" city-picker page, which has no single region to be. Per-region
+// metadata (title, description, canonical, etc.) lives one level down in
+// app/[region]/layout.tsx instead, which runs for every actual region page.
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: { default: "TodaysTab — Local Food & Drink Deals", template: "%s — TodaysTab" },
+  description: "Real food and drink specials, checked daily -- pick your city to see what's on today.",
+  manifest: "/manifest.json",
+  openGraph: { type: "website", locale: "en_CA", url: SITE_URL, siteName: "TodaysTab" },
+  twitter: { card: "summary" },
+  alternates: { canonical: SITE_URL },
+};
 
 export const viewport: Viewport = {
   themeColor: "#b5502c",
@@ -48,8 +45,12 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const region = await getCurrentRegion();
-  const themeStyle = `:root { --accent: ${region.accentColor}; --accent-dim: ${region.accentDimColor}; --accent-soft: ${region.accentSoftColor}; --background: ${region.backgroundColor}; --foreground: ${region.foregroundColor}; --evergreen: ${region.evergreenColor}; }`;
+  // Only a default/fallback theme for the picker page and anywhere else
+  // rendered outside a real region path -- app/[region]/layout.tsx overrides
+  // these same CSS variables with the actual region's colors via its own
+  // nested <style> tag for every real region page.
+  const fallbackRegion = await getPrimaryRegion();
+  const themeStyle = `:root { --accent: ${fallbackRegion.accentColor}; --accent-dim: ${fallbackRegion.accentDimColor}; --accent-soft: ${fallbackRegion.accentSoftColor}; --background: ${fallbackRegion.backgroundColor}; --foreground: ${fallbackRegion.foregroundColor}; --evergreen: ${fallbackRegion.evergreenColor}; }`;
 
   return (
     <html

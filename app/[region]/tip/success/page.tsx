@@ -11,14 +11,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function TipSuccessPage() {
+export default async function TipSuccessPage() {
+  const region = await getCurrentRegion();
   return (
     <div className="flex flex-col flex-1 items-center justify-center gap-3 px-4 py-16 text-center">
       <h1 className="font-display text-3xl text-foreground">Thank you!</h1>
       <p className="text-muted max-w-sm">
         Your tip genuinely helps keep this site running and accurate. Appreciate it.
       </p>
-      <Link href="/" className="text-accent text-sm underline">
+      <Link href={`/${region.slug}`} className="text-accent text-sm underline">
         Back to today&apos;s specials
       </Link>
     </div>

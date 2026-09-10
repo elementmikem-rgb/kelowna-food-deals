@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!venue || venue.regionId !== region.id) return { title: "Venue not found" };
   const title = venue.name;
   const description = `Current food/drink specials, events, and info for ${venue.name} — ${venue.address}. Verified, not guessed.`;
-  const url = `https://${region.domain}/venues/${venue.id}`;
+  const url = `/${region.slug}/venues/${venue.id}`;
   return {
     title,
     description,
@@ -92,7 +92,7 @@ export default async function VenuePage({ params }: PageProps) {
     menu: venue.menuUrl ?? undefined,
     image:
       venuePhotos.length > 0
-        ? `https://${region.domain}/api/venue-photos/${venuePhotos[0].id}`
+        ? `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/api/venue-photos/${venuePhotos[0].id}`
         : undefined,
     geo:
       venue.lat !== null && venue.lng !== null
@@ -131,7 +131,7 @@ export default async function VenuePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <div>
-        <Link href="/" className="text-sm text-accent-dim hover:underline">
+        <Link href={`/${region.slug}`} className="text-sm text-accent-dim hover:underline">
           ← All specials
         </Link>
       </div>
@@ -142,7 +142,7 @@ export default async function VenuePage({ params }: PageProps) {
           <ShareButton
             title={venue.name}
             text={`Specials & events at ${venue.name} — ${region.brandName}:`}
-            url={`https://${region.domain}/venues/${venue.id}`}
+            url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/venues/${venue.id}`}
             className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
           />
         </div>
@@ -215,7 +215,7 @@ export default async function VenuePage({ params }: PageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {groupByDayRange(venueSpecials).map((s) => (
-              <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} />
+              <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} regionSlug={region.slug} />
             ))}
           </div>
         )}
@@ -226,7 +226,7 @@ export default async function VenuePage({ params }: PageProps) {
           <h2 className="font-display text-2xl text-foreground">Events</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {venueEvents.map((e) => (
-              <EventCard key={e.id} event={e} />
+              <EventCard key={e.id} event={e} regionSlug={region.slug} />
             ))}
           </div>
         </section>
@@ -259,7 +259,7 @@ export default async function VenuePage({ params }: PageProps) {
         </section>
       )}
 
-      <PreviousSpecials specials={previousSpecials} />
+      <PreviousSpecials specials={previousSpecials} regionSlug={region.slug} />
 
       <SiteFooter />
     </div>

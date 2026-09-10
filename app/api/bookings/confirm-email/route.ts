@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyBookingToken, signBookingToken, type BookingSelection } from "@/lib/booking-token";
-import { getCurrentRegion } from "@/lib/regions";
+import { getRegionBySlug } from "@/lib/regions";
+
+const FALLBACK_SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 
 export async function GET(req: NextRequest) {
-  const region = await getCurrentRegion();
-  const SITE_URL = `https://${region.domain}`;
+  // A fresh GET from an email link has no page/header context of its own --
+  // the region slug rides in the link's own query param (set by
+  // verify-email/route.ts) instead of coming from getCurrentRegion().
+  const regionSlug = req.nextUrl.searchParams.get("region");
+  const region = regionSlug ? await getRegionBySlug(regionSlug) : null;
+  // No region resolved (missing/unknown slug) -- there's no region-scoped
+  // /advertise page to safely redirect to, so land on the bare domain rather
+  // than guessing a region.
+  const SITE_URL = region ? `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}` : FALLBACK_SITE_URL;
 
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {

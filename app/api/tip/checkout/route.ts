@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripe } from "@/lib/stripe";
-import { getCurrentRegion } from "@/lib/regions";
+import { getRegionBySlug } from "@/lib/regions";
 
 const tipRequestSchema = z.object({
   amountCents: z
@@ -9,15 +9,14 @@ const tipRequestSchema = z.object({
     .int()
     .min(100, "Minimum tip is $1")
     .max(50000, "Max tip is $500"),
+  // Region has no path segment of its own on an API route under path-based
+  // routing (todaystab.com/kelowna/... has no equivalent /api/tip/checkout
+  // prefix) -- the calling page passes its own region explicitly instead of
+  // this route inferring it from the request the way getCurrentRegion() used to.
+  regionSlug: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
-  // Pinned to the requesting region's own domain rather than derived from the
-  // request's Origin header: a forged Origin would otherwise come back inside a
-  // real Stripe Checkout URL's redirect targets.
-  const region = await getCurrentRegion();
-  const SITE_URL = `https://${region.domain}`;
-
   const body = await req.json().catch(() => null);
   const parsed = tipRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -25,6 +24,10 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
+
+  const region = await getRegionBySlug(parsed.data.regionSlug);
+  if (!region) return NextResponse.json({ error: "unknown region" }, { status: 400 });
+  const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`;
 
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",

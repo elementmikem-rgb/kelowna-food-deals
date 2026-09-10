@@ -4,7 +4,13 @@ import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
 import { formatVerifiedRelative } from "@/lib/time";
 import { groupByDayRange } from "@/lib/group-days";
 
-export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) {
+export function PreviousSpecials({
+  specials,
+  regionSlug,
+}: {
+  specials: PreviousSpecial[];
+  regionSlug: string;
+}) {
   if (specials.length === 0) return null;
   const grouped = groupByDayRange(specials);
 
@@ -26,7 +32,7 @@ export function PreviousSpecials({ specials }: { specials: PreviousSpecial[] }) 
             >
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="text-sm text-foreground/90 truncate">
-                  <Link href={`/venues/${s.venueId}`} className="font-medium hover:underline">
+                  <Link href={`/${regionSlug}/venues/${s.venueId}`} className="font-medium hover:underline">
                     {s.venueName}
                   </Link>{" "}
                   — {s.title}

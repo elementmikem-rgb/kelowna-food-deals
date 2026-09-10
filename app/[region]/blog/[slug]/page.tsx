@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogPost(slug);
   if (!post) return { title: "Post not found" };
   const region = await getCurrentRegion();
-  const url = `https://${region.domain}/blog/${post.slug}`;
+  const url = `/${region.slug}/blog/${post.slug}`;
   return {
     title: post.title,
     description: post.metaDescription,
@@ -57,10 +57,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: post.title,
     description: post.metaDescription,
     datePublished: post.publishedAt,
-    image: `https://${region.domain}/icons/icon-512.png`,
+    image: `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/icons/icon-512.png`,
     author: { "@type": "Organization", name: region.brandName },
     publisher: { "@type": "Organization", name: region.brandName },
-    mainEntityOfPage: `https://${region.domain}/blog/${post.slug}`,
+    mainEntityOfPage: `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/blog/${post.slug}`,
   };
 
   return (
@@ -77,7 +77,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       />
 
       <div>
-        <Link href="/blog" className="text-sm text-accent-dim hover:underline">
+        <Link href={`/${region.slug}/blog`} className="text-sm text-accent-dim hover:underline">
           ← All posts
         </Link>
       </div>
@@ -98,7 +98,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           {post.sponsored && (
             <p className="text-xs text-muted-2">
               This post is a paid feature. See our{" "}
-              <Link href="/privacy" className="text-accent-dim underline">
+              <Link href={`/${region.slug}/privacy`} className="text-accent-dim underline">
                 privacy &amp; terms
               </Link>{" "}
               page for how sponsored content works here.

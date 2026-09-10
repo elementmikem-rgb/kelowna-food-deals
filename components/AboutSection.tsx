@@ -1,4 +1,12 @@
-export function AboutSection({ brandName, areas }: { brandName: string; areas: string[] }) {
+export function AboutSection({
+  brandName,
+  areas,
+  regionSlug,
+}: {
+  brandName: string;
+  areas: string[];
+  regionSlug: string;
+}) {
   const areaList =
     areas.length === 0
       ? ""
@@ -17,7 +25,7 @@ export function AboutSection({ brandName, areas }: { brandName: string; areas: s
       </p>
       <p>
         See something wrong, or a place we&apos;re missing? Use the{" "}
-        <a href="/submit" className="text-accent-dim underline">
+        <a href={`/${regionSlug}/submit`} className="text-accent-dim underline">
           submit an update
         </a>{" "}
         page — every tip gets checked before it goes live.

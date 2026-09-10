@@ -30,6 +30,7 @@ export function BookingFlow({
   settings,
   initialVerifiedToken,
   todayISO,
+  regionSlug,
 }: {
   productType: BookingProductType;
   venues: VenueOption[];
@@ -37,6 +38,7 @@ export function BookingFlow({
   settings: Settings;
   initialVerifiedToken: string | null;
   todayISO: string;
+  regionSlug: string;
 }) {
   const [open, setOpen] = useState(initialVerifiedToken !== null);
   const [venueId, setVenueId] = useState<number | "">("");
@@ -111,6 +113,7 @@ export function BookingFlow({
           startDate,
           endDate,
           buyerEmail: email,
+          regionSlug,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed");
@@ -130,7 +133,7 @@ export function BookingFlow({
       const res = await fetch("/api/bookings/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verifiedToken: initialVerifiedToken }),
+        body: JSON.stringify({ verifiedToken: initialVerifiedToken, regionSlug }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");

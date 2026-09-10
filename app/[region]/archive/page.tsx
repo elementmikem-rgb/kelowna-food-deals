@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPreviousSpecials } from "@/lib/data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionBySlug } from "@/lib/regions";
 import { groupByDayRange } from "@/lib/group-days";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -8,15 +8,24 @@ import { ArchiveSearch } from "@/components/ArchiveSearch";
 
 // Retired specials are thin, near-duplicate content next to the live board --
 // useful for a curious visitor, not something worth ranking on its own.
-export const metadata: Metadata = {
-  title: "Archive",
-  description: "Specials that used to run before venues changed them up.",
-  robots: { index: false, follow: true },
-  alternates: { canonical: "/archive" },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ region: string }>;
+}): Promise<Metadata> {
+  const { region: slug } = await params;
+  const region = await getRegionBySlug(slug);
+  if (!region) return {};
+  return {
+    title: "Archive",
+    description: "Specials that used to run before venues changed them up.",
+    robots: { index: false, follow: true },
+    alternates: { canonical: `/${region.slug}/archive` },
+  };
+}
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
-// which forces dynamic rendering -- see app/page.tsx's comment.
+// which forces dynamic rendering -- see app/[region]/page.tsx's comment.
 export const dynamic = "force-dynamic";
 
 export default async function ArchivePage() {
@@ -47,7 +56,7 @@ export default async function ArchivePage() {
       {venues.length === 0 ? (
         <p className="text-muted-2 text-sm">Nothing archived yet.</p>
       ) : (
-        <ArchiveSearch venues={venues} />
+        <ArchiveSearch venues={venues} regionSlug={region.slug} />
       )}
 
       <SiteFooter />

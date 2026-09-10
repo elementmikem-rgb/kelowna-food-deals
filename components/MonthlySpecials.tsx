@@ -11,9 +11,11 @@ const MONTH_NAMES = [
 export function MonthlySpecials({
   specials,
   timezone,
+  regionSlug,
 }: {
   specials: SpecialWithVenue[];
   timezone: string;
+  regionSlug: string;
 }) {
   const monthName = MONTH_NAMES[regionMonthIndex(timezone)];
 
@@ -22,7 +24,7 @@ export function MonthlySpecials({
       <section className="flex flex-col gap-3">
         <p className="text-muted-2 text-sm py-8 text-center">
           No {monthName.toLowerCase()} specials listed yet — check back soon, or see{" "}
-          <a href="/" className="text-accent-dim underline">
+          <a href={`/${regionSlug}`} className="text-accent-dim underline">
             today&apos;s specials
           </a>{" "}
           instead.
@@ -46,6 +48,7 @@ export function MonthlySpecials({
             venueId={g.venueId!}
             venueName={g.venueName}
             specials={g.items}
+            regionSlug={regionSlug}
           />
         ))}
       </div>

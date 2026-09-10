@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
-import { getCurrentRegion } from "@/lib/regions";
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  const region = await getCurrentRegion();
+const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
+
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: `https://${region.domain}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

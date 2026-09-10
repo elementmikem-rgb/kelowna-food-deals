@@ -39,10 +39,12 @@ export function SpecialsBoard({
   specials,
   categorySponsors = [],
   timezone,
+  regionSlug,
 }: {
   specials: SpecialWithVenue[];
   categorySponsors?: CategorySponsor[];
   timezone: string;
+  regionSlug: string;
 }) {
   // The page is served from an ISR cache that can be an evening old, so the day baked
   // into the HTML is routinely yesterday. Render the baked value first (no hydration
@@ -177,6 +179,7 @@ export function SpecialsBoard({
               venueId={g.venueId!}
               venueName={g.venueName}
               specials={g.items}
+              regionSlug={regionSlug}
             />
           ))}
         </div>

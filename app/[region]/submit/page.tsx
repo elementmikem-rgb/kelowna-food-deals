@@ -1,19 +1,30 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { db, venues } from "@/db";
 import { asc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SubmitForm } from "@/components/SubmitForm";
+import { getRegionBySlug } from "@/lib/regions";
 
 // Without this the venue dropdown is baked at build time, so a venue added after the
 // last deploy is unsubmittable until the next one.
 export const revalidate = 3600;
 
-export const metadata = {
-  title: "Submit an Update",
-  description: "Spot a special or event we don't have? Let us know.",
-  alternates: { canonical: "/submit" },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ region: string }>;
+}): Promise<Metadata> {
+  const { region: slug } = await params;
+  const region = await getRegionBySlug(slug);
+  if (!region) return {};
+  return {
+    title: "Submit an Update",
+    description: "Spot a special or event we don't have? Let us know.",
+    alternates: { canonical: `/${region.slug}/submit` },
+  };
+}
 
 export default async function SubmitPage() {
   const venueList = await db

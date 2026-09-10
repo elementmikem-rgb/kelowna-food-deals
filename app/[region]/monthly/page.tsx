@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: `https://${region.domain}/monthly` },
-    openGraph: { title, description, url: `https://${region.domain}/monthly` },
+    alternates: { canonical: `/${region.slug}/monthly` },
+    openGraph: { title, description, url: `/${region.slug}/monthly` },
   };
 }
 
@@ -37,9 +37,9 @@ export default async function MonthlyPage() {
         subtitle="Running all month — not tied to a single day."
       />
 
-      <MonthlySpecials specials={specials} timezone={timezone} />
+      <MonthlySpecials specials={specials} timezone={timezone} regionSlug={region.slug} />
 
-      <TipJar />
+      <TipJar regionSlug={region.slug} />
       <SiteFooter />
     </div>
   );

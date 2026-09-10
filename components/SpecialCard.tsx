@@ -12,9 +12,11 @@ import { isPromotionActive } from "@/lib/promotion";
 export function SpecialCard({
   special,
   dayLabel,
+  regionSlug,
 }: {
   special: SpecialWithVenue;
   dayLabel?: string | null;
+  regionSlug: string;
 }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
@@ -60,7 +62,7 @@ export function SpecialCard({
       }`}
     >
       <Link
-        href={`/venues/${special.venueId}`}
+        href={`/${regionSlug}/venues/${special.venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${special.venueName} — ${special.title}, view full details`}
       />

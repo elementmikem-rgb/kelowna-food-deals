@@ -7,7 +7,7 @@ import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
 
-export function EventCard({ event }: { event: EventWithVenue }) {
+export function EventCard({ event, regionSlug }: { event: EventWithVenue; regionSlug: string }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -44,7 +44,7 @@ export function EventCard({ event }: { event: EventWithVenue }) {
       }`}
     >
       <Link
-        href={`/venues/${event.venueId}`}
+        href={`/${regionSlug}/venues/${event.venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${event.venueName} — ${event.title}, view full details`}
       />

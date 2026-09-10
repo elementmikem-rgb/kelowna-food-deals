@@ -15,10 +15,12 @@ export function SpecialVenueGroup({
   venueId,
   venueName,
   specials,
+  regionSlug,
 }: {
   venueId: number;
   venueName: string;
   specials: SpecialWithVenue[];
+  regionSlug: string;
 }) {
   const freshest = specials.reduce((latest, s) =>
     s.lastVerifiedAt > latest.lastVerifiedAt ? s : latest
@@ -37,7 +39,7 @@ export function SpecialVenueGroup({
       } bg-surface p-4 pt-5 flex flex-col gap-1 shadow-[0_2px_10px_rgba(42,40,24,0.06)]`}
     >
       <Link
-        href={`/venues/${venueId}`}
+        href={`/${regionSlug}/venues/${venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${venueName} — full menu, hours, and details`}
       />

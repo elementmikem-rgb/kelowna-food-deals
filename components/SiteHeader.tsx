@@ -25,7 +25,7 @@ export async function SiteHeader({
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
       <div className="flex items-center gap-3 sm:gap-4">
-        <Link href="/" className="shrink-0">
+        <Link href={`/${region.slug}`} className="shrink-0">
           <Image
             src={region.logoUrl}
             alt={`${region.brandName} logo`}
@@ -37,7 +37,7 @@ export async function SiteHeader({
         <div className="flex flex-col gap-0.5 sm:gap-1">
           <div className="flex items-center gap-3 flex-wrap">
             <BrandTag className="block font-display text-2xl sm:text-4xl text-foreground">
-              <Link href="/">
+              <Link href={`/${region.slug}`}>
                 {heading ?? (
                   <>
                     <span className="hand-underline">{firstWord}</span> {rest.join(" ")}
@@ -60,7 +60,7 @@ export async function SiteHeader({
         <ShareButton
           title={region.brandName}
           text={`Verified food & drink specials happening today around ${firstWord}:`}
-          url={`https://${region.domain}/`}
+          url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`}
         />
       </div>
     </header>

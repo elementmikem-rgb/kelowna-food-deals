@@ -19,8 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: `https://${region.domain}/events` },
-    openGraph: { title, description, url: `https://${region.domain}/events` },
+    alternates: { canonical: `/${region.slug}/events` },
+    openGraph: { title, description, url: `/${region.slug}/events` },
   };
 }
 
@@ -41,11 +41,16 @@ export default async function EventsPage() {
         subtitle="Live music, trivia, and karaoke nights around town — verified, not guessed."
       />
 
-      <SubmitEventCTA />
+      <SubmitEventCTA regionSlug={region.slug} />
 
-      <EventsBoard recurring={recurring} upcoming={upcoming} timezone={timezone} />
+      <EventsBoard
+        recurring={recurring}
+        upcoming={upcoming}
+        timezone={timezone}
+        regionSlug={region.slug}
+      />
 
-      <TipJar />
+      <TipJar regionSlug={region.slug} />
       <SiteFooter />
     </div>
   );

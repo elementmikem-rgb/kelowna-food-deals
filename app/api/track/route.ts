@@ -3,7 +3,7 @@ import { z } from "zod";
 import { trackEvent, isBotUserAgent } from "@/lib/analytics";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { isAdminAuthed } from "@/lib/admin-auth";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionBySlug } from "@/lib/regions";
 
 const trackSchema = z.object({
   eventType: z.string().min(1).max(50),
@@ -45,9 +45,17 @@ export async function POST(req: NextRequest) {
 
     const country = req.headers.get("cf-ipcountry");
 
-    // Never let a region-resolution failure break tracking itself -- this
-    // endpoint always returns 200 regardless of outcome by design (see above).
-    const region = await getCurrentRegion().catch(() => null);
+    // getCurrentRegion() (the x-region-id header) covers the legacy per-region
+    // domains unchanged -- an API route has no path segment of its own on the
+    // consolidated domain, so it always misses there. Falling back to the
+    // first segment of the tracked page's own path (already "/kelowna/..."
+    // in the payload) recovers region tagging for that domain without any
+    // client-side change to track.js. Never let a region-resolution failure
+    // break tracking itself -- this endpoint always returns 200 regardless
+    // of outcome by design (see above).
+    const region =
+      (await getCurrentRegion().catch(() => null)) ??
+      (await getRegionBySlug(parsed.data.page.split("/")[1] ?? "").catch(() => null));
 
     await trackEvent({
       ...parsed.data,

@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { getCurrentRegion } from "@/lib/regions";
 
 // "blog" has no nav tab of its own — it just means neither tab is the active one.
-export function SiteNav({ active }: { active: "specials" | "events" | "monthly" | "blog" }) {
+export async function SiteNav({ active }: { active: "specials" | "events" | "monthly" | "blog" }) {
+  const region = await getCurrentRegion();
+  const base = `/${region.slug}`;
   return (
     <nav className="flex gap-2">
       <Link
-        href="/"
+        href={base}
         data-selected={active === "specials"}
         className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
           active === "specials"
@@ -16,7 +19,7 @@ export function SiteNav({ active }: { active: "specials" | "events" | "monthly" 
         Specials
       </Link>
       <Link
-        href="/events"
+        href={`${base}/events`}
         data-selected={active === "events"}
         className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
           active === "events"
@@ -27,7 +30,7 @@ export function SiteNav({ active }: { active: "specials" | "events" | "monthly" 
         Events
       </Link>
       <Link
-        href="/monthly"
+        href={`${base}/monthly`}
         data-selected={active === "monthly"}
         className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
           active === "monthly"
