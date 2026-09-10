@@ -6,6 +6,7 @@ import {
   type ExtractedSubmissionMenuItem,
   type SubmissionReviewResult,
 } from "./submission-review-schema";
+import { pacificTodayISODate } from "./time";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -49,7 +50,7 @@ SPECIALS (food/drink deals) — qualifies only if it has an explicit price OR ex
 
 EVENTS (live music, trivia, karaoke, sports nights, etc) — qualifies only if it has an explicit day/date AND a stated event type. A vague "check our events page" does not qualify.
 - day_of_week: for a RECURRING weekly event, else null.
-- specific_date: "YYYY-MM-DD" for a ONE-OFF event on an exact date, else null. Never guess a date.
+- specific_date: "YYYY-MM-DD" for a ONE-OFF event tied to an exact calendar date, else null. If the source gives a day-of-month but no year (e.g. a chalkboard listing "11th", "18th", "19th"), resolve the year yourself using the current date given below: pick the soonest occurrence of that month/day that is on or after today (rolling into next year only if that month/day has already passed this year). Never default to a year the source doesn't support, and never guess a year using anything other than today's actual date below.
 - Must have day_of_week OR specific_date set to qualify.
 - event_type: "live_music" | "trivia" | "karaoke" | "sports_night" | "other"
 
@@ -80,9 +81,11 @@ export async function reviewSubmission(
   }
   content.push({
     type: "text",
-    text: text
-      ? `SUBMITTED_TEXT_START\n${text}\nSUBMITTED_TEXT_END`
-      : "No text description was provided — rely on the photo only.",
+    text: `Today's date is ${pacificTodayISODate()} (Kelowna, BC).\n\n${
+      text
+        ? `SUBMITTED_TEXT_START\n${text}\nSUBMITTED_TEXT_END`
+        : "No text description was provided — rely on the photo only."
+    }`,
   });
 
   const itemBase = {
