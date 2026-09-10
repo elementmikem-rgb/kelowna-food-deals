@@ -21,7 +21,9 @@ export function verifyVenueVerifyToken(venueId: number, token: string): boolean 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export function buildVenueVerifyUrl(venueId: number, domain: string): string {
+// /verify/[token] lives under app/[region]/verify/..., unlike an API route --
+// this needs the venue's own region slug in the path, not just the bare domain.
+export function buildVenueVerifyUrl(venueId: number, regionSlug: string): string {
   const token = buildVenueVerifyToken(venueId);
-  return `https://${domain}/verify/${venueId}-${token}`;
+  return `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${regionSlug}/verify/${venueId}-${token}`;
 }

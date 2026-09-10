@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."regions" ALTER COLUMN "domain" DROP NOT NULL;

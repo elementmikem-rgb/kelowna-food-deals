@@ -53,7 +53,12 @@ export type Province = typeof provinces.$inferSelect;
 export const regions = specialsSchema.table("regions", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(), // "kelowna", "south-okanagan"
-  domain: text("domain").notNull().unique(), // "kelownafooddeals.shop"
+  // Nullable: only the two legacy regions (Kelowna, Penticton) have one -- their
+  // old per-region domains still 301-redirect into the consolidated
+  // todaystab.com/{slug} path (see proxy.ts). A region added after that
+  // migration lives entirely under todaystab.com/{slug} and needs no domain
+  // of its own at all.
+  domain: text("domain").unique(),
   brandName: text("brand_name").notNull(), // "Kelowna Food Deals"
   logoUrl: text("logo_url").notNull(),
   accentColor: text("accent_color").notNull(),

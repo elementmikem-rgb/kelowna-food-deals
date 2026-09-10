@@ -225,6 +225,13 @@
       "when": 1789014382947,
       "tag": "0031_abnormal_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789051746856,
+      "tag": "0032_fat_ultimatum",
+      "breakpoints": true
     }
   ]
 }

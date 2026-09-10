@@ -18,7 +18,11 @@ export function verifyUnsubscribeToken(venueId: number, token: string): boolean 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export function buildUnsubscribeUrl(venueId: number, domain: string): string {
+// /api/unsubscribe is a top-level route with no region segment of its own
+// (like every API route under path-based routing -- see proxy.ts), so this
+// always points at the bare consolidated domain regardless of which region
+// the venue belongs to.
+export function buildUnsubscribeUrl(venueId: number): string {
   const token = buildUnsubscribeToken(venueId);
-  return `https://${domain}/api/unsubscribe?venueId=${venueId}&token=${token}`;
+  return `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/api/unsubscribe?venueId=${venueId}&token=${token}`;
 }

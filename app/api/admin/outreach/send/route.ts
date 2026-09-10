@@ -21,13 +21,14 @@ function buildOutreachHtml(
   venueId: number,
   unsubscribeUrl: string,
   mailingAddress: string,
-  domain: string,
+  regionSlug: string,
   verifyUrl: string,
   brandName: string
 ): string {
-  const venueUrl = `https://${domain}/venues/${venueId}`;
-  const advertiseUrl = `https://${domain}/advertise`;
-  const logoUrl = `https://${domain}/icons/icon-192.png`;
+  const siteUrl = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
+  const venueUrl = `${siteUrl}/${regionSlug}/venues/${venueId}`;
+  const advertiseUrl = `${siteUrl}/${regionSlug}/advertise`;
+  const logoUrl = `${siteUrl}/icons/icon-192.png`;
 
   const BG = "#f4ecd8";
   const CARD = "#fffaf0";
@@ -137,14 +138,14 @@ export async function POST(req: NextRequest) {
   }
 
   const subject = `Quick one about ${venue.name} on ${region.brandName}`;
-  const unsubscribeUrl = buildUnsubscribeUrl(venue.id, region.domain);
-  const verifyUrl = buildVenueVerifyUrl(venue.id, region.domain);
+  const unsubscribeUrl = buildUnsubscribeUrl(venue.id);
+  const verifyUrl = buildVenueVerifyUrl(venue.id, region.slug);
   const htmlBody = buildOutreachHtml(
     venue.name,
     venue.id,
     unsubscribeUrl,
     mailingAddress,
-    region.domain,
+    region.slug,
     verifyUrl,
     region.brandName
   );
@@ -166,7 +167,14 @@ export async function POST(req: NextRequest) {
       subject,
       htmlContent: htmlBody,
       senderName: region.brandName,
-      replyTo: `reply@reply.${region.domain}`,
+      // Only the legacy regions have a real reply.{domain} inbound-email
+      // webhook wired up in Brevo (see project memory: Photaro/Kelowna
+      // Specials Brevo webhook setup). A region with no domain of its own
+      // has no such inbox yet -- replies fall back to a real mailbox
+      // instead of silently pointing at a Brevo address nothing monitors.
+      // Wiring a shared reply.todaystab.com inbox is a real follow-up, not
+      // something to invent a working address for here.
+      replyTo: region.domain ? `reply@reply.${region.domain}` : (process.env.REPORT_EMAIL_TO ?? "element.mikem@gmail.com"),
       headers: {
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
