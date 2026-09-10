@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "Archive",
   description: "Specials that used to run before venues changed them up.",
   robots: { index: false, follow: true },
+  alternates: { canonical: "/archive" },
 };
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),

@@ -12,6 +12,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: "Submit an Update",
   description: "Spot a special or event we don't have? Let us know.",
+  alternates: { canonical: "/submit" },
 };
 
 export default async function SubmitPage() {

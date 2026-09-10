@@ -7,12 +7,16 @@ import { db, monetizationSettings } from "@/db";
 import type { BookingProductType } from "@/db/schema";
 import { regionTodayISODate } from "@/lib/time";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Advertise With Us",
-  description:
-    "Feature your venue, promote a seasonal special, or sponsor a category on Kelowna Food Deals.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getCurrentRegion();
+  return {
+    title: "Advertise With Us",
+    description: `Feature your venue, promote a seasonal special, or sponsor a category on ${region.brandName}.`,
+    alternates: { canonical: "/advertise" },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

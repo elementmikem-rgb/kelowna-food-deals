@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { BLOG_POSTS, getBlogPost } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getCurrentRegion } from "@/lib/regions";
 
 export const dynamicParams = false;
 
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const post = getBlogPost(slug);
   if (!post) return { title: "Post not found" };
-  const url = `https://kelownafooddeals.shop/blog/${post.slug}`;
+  const region = await getCurrentRegion();
+  const url = `https://${region.domain}/blog/${post.slug}`;
   return {
     title: post.title,
     description: post.metaDescription,
@@ -47,6 +49,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   const post = getBlogPost(slug);
   if (!post) notFound();
+  const region = await getCurrentRegion();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -54,10 +57,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: post.title,
     description: post.metaDescription,
     datePublished: post.publishedAt,
-    image: "https://kelownafooddeals.shop/icons/icon-512.png",
-    author: { "@type": "Organization", name: "Kelowna Food Deals" },
-    publisher: { "@type": "Organization", name: "Kelowna Food Deals" },
-    mainEntityOfPage: `https://kelownafooddeals.shop/blog/${post.slug}`,
+    image: `https://${region.domain}/icons/icon-512.png`,
+    author: { "@type": "Organization", name: region.brandName },
+    publisher: { "@type": "Organization", name: region.brandName },
+    mainEntityOfPage: `https://${region.domain}/blog/${post.slug}`,
   };
 
   return (
