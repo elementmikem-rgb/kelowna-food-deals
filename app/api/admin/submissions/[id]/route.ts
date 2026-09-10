@@ -64,9 +64,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     if (action === "dismiss") {
+      // Not always "rejected": a submission can reach here with every item already
+      // approved (e.g. auto-approved at submit time) and nothing left for the per-item
+      // approve/reject buttons to act on -- dismissing that should record what actually
+      // happened, not silently relabel an approved, already-published item as rejected.
+      const anyApproved = submission.resolvedItemKeys.some((k) => !k.startsWith("rejected:"));
       await tx
         .update(submissions)
-        .set({ status: "rejected", reviewedAt: now })
+        .set({ status: anyApproved ? "approved" : "rejected", reviewedAt: now })
         .where(eq(submissions.id, submissionId));
       return {
         ok: true as const,

@@ -154,7 +154,12 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
   const remaining = totalItems - resolvedKeys.length;
 
   if (dismissed) return null;
-  if (extracted && remaining <= 0) return null;
+  // Only hide once there WERE items and every one got resolved (auto-approved/rejected or
+  // resolved here). A submission with zero extracted items also computes remaining <= 0
+  // (0 total - 0 resolved), but that means nothing was ever auto-resolved -- it still needs
+  // a human to look at the raw text/photo, so it must stay visible, not disappear silently.
+  const allItemsResolved = totalItems > 0 && remaining <= 0;
+  if (allItemsResolved) return null;
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
@@ -215,6 +220,14 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
       )}
       {extractUnreadable && (
         <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+      )}
+      {extracted && totalItems === 0 && (
+        <>
+          <p className="text-xs text-stale">
+            {submission.aiNotes ?? "AI found nothing to auto-extract — check the raw text/photo yourself."}
+          </p>
+          <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+        </>
       )}
 
       <div className="flex flex-col gap-2">
