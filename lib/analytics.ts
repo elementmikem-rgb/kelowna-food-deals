@@ -35,6 +35,7 @@ interface TrackEventParams {
   visitorId: string;
   referrer?: string | null;
   country?: string | null;
+  userAgent?: string | null;
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
@@ -50,6 +51,7 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
     visitorId: params.visitorId,
     referrer: params.referrer ?? null,
     country: params.country ?? null,
+    userAgent: params.userAgent ?? null,
     utmSource: params.utmSource ?? null,
     utmMedium: params.utmMedium ?? null,
     utmCampaign: params.utmCampaign ?? null,
@@ -111,6 +113,15 @@ export interface AnalyticsStats {
   uniqueVisitors: number;
   sessions: number;
   bounceRate: number; // % of sessions with exactly one pageview
+  // Sessions with exactly one pageview and no referrer at all -- the signature of a
+  // domain-scanning bot (real browser UA, so isBotUserAgent() lets it through, but it
+  // never arrives via a link and never comes back). Not a hard proof for any single
+  // session, but a region with near-zero real promotion showing mostly this pattern,
+  // scattered across unrelated countries, is a strong tell that traffic isn't real --
+  // this surfaced from a real incident where a freshly-launched, unpromoted region
+  // showed nonzero traffic that turned out to be ~all bot noise. See userAgent on
+  // analyticsEvents for the forensic detail this count alone can't show.
+  likelyBotSessions: number;
   topPages: { page: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
   topCountries: { country: string; count: number }[];
@@ -159,10 +170,15 @@ export async function getAnalyticsStats(
     .select({
       sessionId: analyticsEvents.sessionId,
       count: sql<number>`count(*)::int`,
+      allNullReferrer: sql<boolean>`bool_and(${analyticsEvents.referrer} is null)`,
     })
     .from(analyticsEvents)
     .where(and(inWindow, isPageview))
     .groupBy(analyticsEvents.sessionId);
+
+  const likelyBotSessions = sessionPageviewCounts.filter(
+    (s) => s.count === 1 && s.allNullReferrer
+  ).length;
 
   const bounceRate =
     sessionPageviewCounts.length > 0
@@ -243,6 +259,7 @@ export async function getAnalyticsStats(
     uniqueVisitors: uniqueVisitorCount.count,
     sessions: sessionCount.count,
     bounceRate,
+    likelyBotSessions,
     topPages,
     topReferrers,
     topCountries,

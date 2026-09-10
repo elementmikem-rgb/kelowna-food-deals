@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     await trackEvent({
       ...parsed.data,
       country: country && country !== "XX" ? country : null,
+      userAgent,
       regionId: region?.id ?? null,
     });
   } catch (err) {

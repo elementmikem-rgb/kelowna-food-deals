@@ -345,6 +345,11 @@ export const analyticsEvents = specialsSchema.table("analytics_events", {
   visitorId: text("visitor_id").notNull(),
   referrer: text("referrer"),
   country: text("country"), // from Cloudflare's CF-IPCountry header
+  // Kept purely for after-the-fact forensics -- e.g. a scattered-geography,
+  // no-referrer, one-pageview-per-session burst (a classic domain-scanner
+  // signature) previously couldn't be confirmed as bot traffic at all, since
+  // the UA used to pass isBotUserAgent() was discarded right after the check.
+  userAgent: text("user_agent"),
   utmSource: text("utm_source"),
   utmMedium: text("utm_medium"),
   utmCampaign: text("utm_campaign"),

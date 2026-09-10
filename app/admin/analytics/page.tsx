@@ -140,6 +140,16 @@ export default async function AdminAnalyticsPage({
         <StatCard label="Bounce rate" value={`${stats.bounceRate.toFixed(0)}%`} />
       </div>
 
+      {stats.likelyBotSessions > 0 && (
+        <p className="text-xs text-stale -mt-2">
+          {stats.likelyBotSessions} of {stats.sessions} session{stats.sessions === 1 ? "" : "s"} look
+          like bot traffic (single pageview, no referrer at all) -- a common signature for
+          domain-scanning bots that use a real browser user-agent to slip past filtering. Worth
+          discounting before trusting these numbers as real visitors, especially for a region with
+          little or no active promotion.
+        </p>
+      )}
+
       <div className="rounded-xl border border-border bg-surface p-4">
         <div className="flex items-center gap-4 mb-2 text-xs text-muted-2">
           <span className="flex items-center gap-1">

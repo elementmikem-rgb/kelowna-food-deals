@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."analytics_events" ADD COLUMN "user_agent" text;
