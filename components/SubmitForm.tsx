@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { parse as exifrParse } from "exifr";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -21,6 +22,26 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 const MAX_DIMENSION = 1600;
+
+// Must run on the ORIGINAL file, before fileToBase64's canvas resize below --
+// re-encoding through a canvas strips all EXIF metadata, including this.
+// A chalkboard/menu photo's own capture date is a far more reliable "today"
+// for resolving a day-only date (e.g. "the 18th") than the moment the
+// request happens to reach the server, since a submitter can attach an
+// older photo from their camera roll days after actually taking it.
+async function getPhotoCapturedDate(file: File): Promise<string | null> {
+  try {
+    const tags = await exifrParse(file, { pick: ["DateTimeOriginal"] });
+    const dt: Date | undefined = tags?.DateTimeOriginal;
+    if (!dt || Number.isNaN(dt.getTime())) return null;
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const d = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  } catch {
+    return null;
+  }
+}
 
 // Phone camera photos are routinely well over the server's 4MB limit, so
 // downscale through a canvas before base64-encoding rather than letting the
@@ -99,7 +120,9 @@ export function SubmitForm({
     try {
       let photoBase64: string | null = null;
       let photoMimeType: string | null = null;
+      let photoCapturedDate: string | null = null;
       if (photo) {
+        photoCapturedDate = await getPhotoCapturedDate(photo);
         const { data, mimeType } = await fileToBase64(photo);
         photoBase64 = data;
         photoMimeType = mimeType;
@@ -114,6 +137,7 @@ export function SubmitForm({
           venueAddress: isNewVenue ? newVenueAddress.trim() : null,
           text: text.trim() || null,
           photoBase64,
+          photoCapturedDate,
           photoMimeType,
           regionSlug,
         }),

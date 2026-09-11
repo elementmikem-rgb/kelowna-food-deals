@@ -27,6 +27,17 @@ const submitSchema = z
     text: z.string().max(2000).nullable(),
     photoBase64: z.string().nullable(),
     photoMimeType: z.string().nullable(),
+    // The photo's own EXIF capture date (client-extracted, before the canvas resize
+    // strips it) -- a far more reliable "today" for resolving a day-only date on the
+    // photo (e.g. a chalkboard's "the 18th") than the moment this request happens to
+    // reach the server, since a submitter can attach an older photo from their camera
+    // roll days after actually taking it. Optional: many phones/screenshots have no
+    // EXIF at all, and there's no photo to have one when this is a text-only submission.
+    photoCapturedDate: z
+      .string()
+      .regex(DATE_RE)
+      .nullable()
+      .optional(),
     // The region the submitter's /submit page belongs to. Only load-bearing for a
     // brand-new venue (an existing venue's own regionId is used instead), but every
     // submission stores it so the row is never ambiguous about where it came from.
@@ -54,7 +65,8 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
-  const { venueId, venueName, venueAddress, text, photoBase64, photoMimeType, regionSlug } = parsed.data;
+  const { venueId, venueName, venueAddress, text, photoBase64, photoMimeType, photoCapturedDate, regionSlug } =
+    parsed.data;
   const isNewVenue = venueId === null;
 
   const submittedRegion = await getRegionBySlug(regionSlug);
@@ -85,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { result } = await reviewSubmission(text, photoBase64, photoMimeType);
+    const { result } = await reviewSubmission(text, photoBase64, photoMimeType, photoCapturedDate ?? null);
     const now = new Date();
     const resolvedItemKeys: string[] = [];
     let autoApprovedCount = 0;
