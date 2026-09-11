@@ -21,8 +21,19 @@ export function DayTabs({
   // once) -- without this, the selected day (usually today) can land
   // partially or fully off-screen with no visible sign there's more to
   // scroll to, so a visitor can't tell today's filter is even active.
+  //
+  // Deliberately NOT Element.scrollIntoView(): it can bubble past this row's
+  // own overflow-x-auto container and scroll ancestor scroll containers too
+  // (including the document itself), which shifted the whole page ~27px
+  // horizontally on load -- a real, reproducible bug caught in a live SEO/
+  // mobile audit. Setting scrollLeft directly touches only this row.
   useEffect(() => {
-    selectedRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+    const scroller = scrollerRef.current;
+    const button = selectedRef.current;
+    if (!scroller || !button) return;
+    const target =
+      button.offsetLeft - scroller.clientWidth / 2 + button.offsetWidth / 2;
+    scroller.scrollLeft = Math.max(0, target);
   }, [selected]);
 
   return (
