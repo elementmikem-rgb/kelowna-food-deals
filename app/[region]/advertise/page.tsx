@@ -35,8 +35,8 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
   const region = await getCurrentRegion();
   const { timezone } = await getRegionContext(region);
   const [venueOptions, specialOptions, settingsRows] = await Promise.all([
-    getVenueOptions("all"),
-    getSpecialOptions("all"),
+    getVenueOptions([region.id]),
+    getSpecialOptions([region.id]),
     db.select().from(monetizationSettings),
   ]);
 
