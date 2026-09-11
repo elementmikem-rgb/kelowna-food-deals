@@ -188,26 +188,6 @@ export default async function VenuePage({ params }: PageProps) {
         </div>
       </header>
 
-      <div className="rounded-2xl overflow-hidden border border-border h-64">
-        <iframe
-          title={`Map of ${venue.name}`}
-          className="w-full h-full"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
-        />
-      </div>
-
-      {venuePhotos.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">Photos</h2>
-          <p className="text-sm text-muted-2 -mt-1">
-            Submitted by visitors — menus, boards, and signage as spotted in the wild.
-          </p>
-          <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
-        </section>
-      )}
-
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-2xl text-foreground">Current Specials</h2>
         {venueSpecials.length === 0 ? (
@@ -231,6 +211,38 @@ export default async function VenuePage({ params }: PageProps) {
           </div>
         </section>
       )}
+
+      {/* Specials/events lead, so the reason someone opened this page is never
+          pushed below a fixed-height map embed on mobile. */}
+      <div className="rounded-2xl overflow-hidden border border-border h-64">
+        <iframe
+          title={`Map of ${venue.name}`}
+          className="w-full h-full"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+        />
+      </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-2xl text-foreground">Photos</h2>
+        {venuePhotos.length > 0 ? (
+          <>
+            <p className="text-sm text-muted-2 -mt-1">
+              Submitted by visitors — menus, boards, and signage as spotted in the wild.
+            </p>
+            <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
+          </>
+        ) : (
+          <p className="text-sm text-muted-2 -mt-1">
+            No photos yet — been here recently?{" "}
+            <Link href={`/${region.slug}/submit`} className="text-accent-dim underline">
+              Add one
+            </Link>{" "}
+            and help other visitors picture the place.
+          </p>
+        )}
+      </section>
 
       {venueMenuItems.length > 0 && (
         <section className="flex flex-col gap-3">

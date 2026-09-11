@@ -6,6 +6,9 @@ import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 
 export function EventRow({ event }: { event: EventWithVenue }) {
+  const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -20,6 +23,16 @@ export function EventRow({ event }: { event: EventWithVenue }) {
   const coverLabel =
     event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? "Free" : `${cover} cover`;
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
+
+  async function handleConfirm() {
+    setConfirmState("sending");
+    try {
+      const res = await fetch(`/api/events/${event.id}/confirm`, { method: "POST" });
+      setConfirmState(res.ok ? "sent" : "error");
+    } catch {
+      setConfirmState("error");
+    }
+  }
 
   async function handleReport() {
     setReportState("sending");
@@ -81,16 +94,28 @@ export function EventRow({ event }: { event: EventWithVenue }) {
         ) : (
           <span />
         )}
-        <button
-          onClick={handleReport}
-          disabled={reportState !== "idle"}
-          className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
-        >
-          {reportState === "idle" && "Report incorrect"}
-          {reportState === "sending" && "Sending…"}
-          {reportState === "sent" && "Reported"}
-          {reportState === "error" && "Failed — try again"}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleConfirm}
+            disabled={confirmState !== "idle"}
+            className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default px-2 py-2 -my-2"
+          >
+            {confirmState === "idle" && "Confirm this event"}
+            {confirmState === "sending" && "Sending…"}
+            {confirmState === "sent" && "Thanks!"}
+            {confirmState === "error" && "Failed — try again"}
+          </button>
+          <button
+            onClick={handleReport}
+            disabled={reportState !== "idle"}
+            className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
+          >
+            {reportState === "idle" && "Report incorrect"}
+            {reportState === "sending" && "Sending…"}
+            {reportState === "sent" && "Reported"}
+            {reportState === "error" && "Failed — try again"}
+          </button>
+        </div>
       </div>
     </li>
   );

@@ -146,12 +146,17 @@ export function BookingFlow({
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="press-pill rounded-full bg-accent text-background px-4 py-2 text-sm font-medium self-start"
-      >
-        Get started
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setOpen(true)}
+          className="press-pill rounded-full bg-accent text-background px-4 py-2 text-sm font-medium"
+        >
+          Get started
+        </button>
+        <span className="text-xs text-muted-2">
+          from {formatPrice(settings.priceCentsPerDay)}/day &middot; {settings.minDays}&ndash;{settings.maxDays} days
+        </span>
+      </div>
     );
   }
 
@@ -181,6 +186,10 @@ export function BookingFlow({
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-3">
+      <p className="text-xs text-muted-2 -mb-1">
+        {formatPrice(settings.priceCentsPerDay)}/day &middot; {settings.minDays}&ndash;{settings.maxDays}{" "}
+        days &middot; exact total shown once you pick dates below.
+      </p>
       <label className="flex flex-col gap-1 text-sm text-muted">
         Venue
         <select

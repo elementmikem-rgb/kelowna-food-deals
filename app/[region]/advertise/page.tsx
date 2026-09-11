@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SponsorInquiryForm } from "@/components/SponsorInquiryForm";
 import { BookingFlow } from "@/components/BookingFlow";
 import { getVenueOptions, getSpecialOptions } from "@/lib/sponsored-data";
+import { formatPrice } from "@/lib/format";
 import { db, monetizationSettings } from "@/db";
 import type { BookingProductType } from "@/db/schema";
 import { regionTodayISODate } from "@/lib/time";
@@ -67,8 +68,8 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
       <div className="flex flex-col gap-2">
         <h2 className="font-display text-2xl text-foreground">Three ways to get more visibility</h2>
         <p className="text-sm text-muted">
-          Pick a venue, choose your dates, and pay securely — every booking is reviewed before it
-          goes live.
+          Pick a venue and dates, see the price up front, pay securely — every booking is
+          reviewed before it goes live.
         </p>
         {bookingError === "expired" && (
           <p className="text-sm text-stale">That link expired — please start again below.</p>
@@ -78,7 +79,12 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
       <div className="flex flex-col gap-4">
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <h3 className="font-display text-lg text-foreground">Featured placement</h3>
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="font-display text-lg text-foreground">Featured placement</h3>
+              <span className="font-mono-tabular text-sm text-accent-dim shrink-0">
+                {formatPrice(settingsFor("featured").priceCentsPerDay)}/day
+              </span>
+            </div>
             <p className="text-sm text-muted">
               Your venue's card pins to the top of the homepage board — every day, every category —
               for as long as the placement runs. Comes with a gold &ldquo;Featured&rdquo; badge.
@@ -96,7 +102,12 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <h3 className="font-display text-lg text-foreground">Seasonal boost</h3>
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="font-display text-lg text-foreground">Seasonal boost</h3>
+              <span className="font-mono-tabular text-sm text-accent-dim shrink-0">
+                {formatPrice(settingsFor("boost").priceCentsPerDay)}/day
+              </span>
+            </div>
             <p className="text-sm text-muted">
               One specific special — a holiday menu, a game-day deal, a one-off event — gets top
               billing for its exact date window. A one-time push instead of an ongoing commitment.
@@ -114,7 +125,12 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         </div>
         <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <h3 className="font-display text-lg text-foreground">Category sponsorship</h3>
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="font-display text-lg text-foreground">Category sponsorship</h3>
+              <span className="font-mono-tabular text-sm text-accent-dim shrink-0">
+                {formatPrice(settingsFor("category_sponsor").priceCentsPerDay)}/day
+              </span>
+            </div>
             <p className="text-sm text-muted">
               Your brand attached to a specific category sitewide (Wing Nights, Happy Hour) —
               shown right under the filter whenever a diner picks that category.
@@ -132,6 +148,13 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      <div className="flex flex-col gap-2 pt-2 border-t border-border">
+        <h2 className="font-display text-xl text-foreground">Not sure which one fits?</h2>
+        <p className="text-sm text-muted">
+          Send us a quick note instead — tell us what you're trying to promote and we'll suggest
+          the right option, or something custom if none of the three above fit.
+        </p>
+      </div>
       <SponsorInquiryForm />
 
       <SiteFooter />

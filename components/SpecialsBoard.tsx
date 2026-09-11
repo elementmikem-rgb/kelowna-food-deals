@@ -159,12 +159,20 @@ export function SpecialsBoard({
         </p>
       )}
 
-      <p className="text-sm text-muted">
-        {dowFullName(selectedDay)}
-        {selectedDay === today ? " (today)" : ""} · {filtered.length} special
-        {filtered.length === 1 ? "" : "s"} at {grouped.length} place
-        {grouped.length === 1 ? "" : "s"}
-        {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
+      <p className="text-sm text-muted flex items-center justify-between gap-3 flex-wrap">
+        <span>
+          {dowFullName(selectedDay)}
+          {selectedDay === today ? " (today)" : ""} · {filtered.length} special
+          {filtered.length === 1 ? "" : "s"} at {grouped.length} place
+          {grouped.length === 1 ? "" : "s"}
+          {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
+        </span>
+        {/* A condensed nudge here so the tip jar isn't only reachable by
+            scrolling past the entire feed -- the full ask still lives at
+            the bottom for anyone who reads that far. */}
+        <a href="#tip-jar" className="text-xs text-accent-dim hover:underline shrink-0">
+          Found this useful? Leave a tip →
+        </a>
       </p>
 
       {grouped.length === 0 ? (

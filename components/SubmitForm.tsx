@@ -188,6 +188,10 @@ export function SubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <p className="text-xs text-muted-2 -mt-1">
+        No account needed. Takes 30 seconds — a person checks every submission before it goes
+        live.
+      </p>
       <div className="flex flex-col gap-1">
         <label className="text-sm text-muted" htmlFor="venue">
           Venue
@@ -263,13 +267,24 @@ export function SubmitForm({
         <label className="text-sm text-muted" htmlFor="photo">
           Or add a photo — a menu board, chalkboard, flyer, even a whole bulletin board
         </label>
-        <input
-          id="photo"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-          className="text-sm text-muted"
-        />
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="photo"
+            className="press-pill cursor-pointer shrink-0 rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-muted hover:border-muted-2"
+          >
+            Choose photo
+          </label>
+          <span className="text-xs text-muted-2 truncate">
+            {photo ? photo.name : "No photo selected"}
+          </span>
+          <input
+            id="photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+            className="sr-only"
+          />
+        </div>
         <p className="text-xs text-muted-2">
           We&apos;ll pull out every special, event, and menu item we can clearly see — no need to
           pick a type, and no need to crop to just one thing.
