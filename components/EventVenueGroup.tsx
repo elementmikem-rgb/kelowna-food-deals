@@ -42,8 +42,8 @@ export function EventVenueGroup({
       )}
 
       <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none pb-2 border-b border-border">
-        <div className="flex flex-col gap-0.5">
-          <h3 className="font-display text-xl leading-tight text-foreground">{venueName}</h3>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
           {venueId === null && address && (
             <p className="text-xs text-muted-2">{address}</p>
           )}

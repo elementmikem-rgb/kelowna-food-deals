@@ -45,8 +45,8 @@ export function SpecialVenueGroup({
       />
 
       <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none pb-2 border-b border-border">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-display text-xl leading-tight text-foreground">{venueName}</h3>
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
           {featured && (
             <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
               Featured
