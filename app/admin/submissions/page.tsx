@@ -34,12 +34,18 @@ export default async function AdminSubmissionsPage() {
     .where(
       and(
         eq(submissions.status, "needs_review"),
-        // A submission for a venue that doesn't exist yet has no region to scope by --
-        // keep it visible under any specific scope rather than hiding it, same
-        // behavior as the old single-region version.
+        // A submission for an existing venue scopes by that venue's own region.
+        // A new-venue submission (no venues row to join through) scopes by
+        // submissions.regionId, set from the region-aware /submit page for every
+        // submission going forward -- only fall back to showing it under any
+        // scope for rows that predate that column (regionId still null there).
         regionIds === "all"
           ? undefined
-          : or(inArray(venues.regionId, regionIds), isNull(submissions.venueId))
+          : or(
+              inArray(venues.regionId, regionIds),
+              and(isNull(submissions.venueId), isNull(submissions.regionId)),
+              and(isNull(submissions.venueId), inArray(submissions.regionId, regionIds))
+            )
       )
     )
     // Priority submissions first, then oldest-first within each group so a rush

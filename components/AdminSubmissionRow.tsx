@@ -153,6 +153,17 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
   const totalItems = specials.length + eventsList.length + menuItemsList.length;
   const remaining = totalItems - resolvedKeys.length;
 
+  // An item auto-rejected at submit time (a duplicate of something already
+  // archived -- see app/api/submit/route.ts's suppressedSpecialIndices/
+  // suppressedEventIndices) is recorded as "rejected:special:0", not
+  // "special:0". Checking only the bare key here would keep showing that
+  // item as an actionable card even though the server already resolved it
+  // (and would 409 if approved again) -- match both forms, same as the
+  // server's own resolved-check.
+  function isResolved(key: string): boolean {
+    return resolvedKeys.includes(key) || resolvedKeys.includes(`rejected:${key}`);
+  }
+
   if (dismissed) return null;
   // Only hide once there WERE items and every one got resolved (auto-approved/rejected or
   // resolved here). A submission with zero extracted items also computes remaining <= 0
@@ -232,7 +243,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
 
       <div className="flex flex-col gap-2">
         {specials.map((s, i) =>
-          resolvedKeys.includes(`special:${i}`) ? null : (
+          isResolved(`special:${i}`) ? null : (
             <ItemCard
               key={`special:${i}`}
               submissionId={submission.id}
@@ -254,7 +265,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
           )
         )}
         {eventsList.map((e, i) =>
-          resolvedKeys.includes(`event:${i}`) ? null : (
+          isResolved(`event:${i}`) ? null : (
             <ItemCard
               key={`event:${i}`}
               submissionId={submission.id}
@@ -272,7 +283,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
           )
         )}
         {menuItemsList.map((m, i) =>
-          resolvedKeys.includes(`menuItem:${i}`) ? null : (
+          isResolved(`menuItem:${i}`) ? null : (
             <ItemCard
               key={`menuItem:${i}`}
               submissionId={submission.id}
