@@ -33,7 +33,14 @@ export async function proxy(req: NextRequest) {
   // would 404 the old domain's entire live site immediately. /admin and /api
   // stay served from wherever they're hit (no region segment to redirect to).
   if (domain !== PATH_BASED_DOMAIN && region && !pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
-    const target = new URL(`/${region.slug}${pathname}`, `https://${PATH_BASED_DOMAIN}`);
+    // pathname === "/" would otherwise concatenate to "/kelowna/" -- a trailing
+    // slash Next.js then 308s away on its own (trailingSlash defaults to
+    // false), turning one redirect into a two-hop chain for every legacy-
+    // domain visitor landing on the homepage. Only the root case needs this:
+    // every other pathname already starts with its own "/", so concatenation
+    // never introduces a second trailing slash.
+    const targetPath = pathname === "/" ? `/${region.slug}` : `/${region.slug}${pathname}`;
+    const target = new URL(targetPath, `https://${PATH_BASED_DOMAIN}`);
     target.search = req.nextUrl.search;
     return NextResponse.redirect(target, 301);
   }
