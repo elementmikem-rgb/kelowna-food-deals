@@ -35,7 +35,8 @@ export default async function CityPickerPage() {
       <div className="flex flex-col gap-3 max-w-md">
         <h1 className="font-display text-3xl sm:text-4xl text-foreground">TodaysTab</h1>
         <p className="text-muted">
-          Every deal checked by hand, every day — no scraped listings, no guesswork. Pick your city.
+          Every listing pulled straight from the venue&apos;s own site, checked daily — no stale
+          social posts, no guessing. Pick your city.
         </p>
         {specialCount > 0 && (
           <p className="text-xs uppercase tracking-wide text-muted-2 font-medium">
@@ -72,9 +73,10 @@ export default async function CityPickerPage() {
 
       <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 max-w-2xl text-left pt-4 border-t border-border/70">
         <div className="flex-1 flex flex-col gap-1">
-          <span className="font-display text-lg text-foreground">1. We check, not scrape</span>
+          <span className="font-display text-lg text-foreground">1. Straight from the source</span>
           <span className="text-sm text-muted">
-            A real person reads every menu and happy-hour board — no stale social posts, no guessed hours.
+            Every listing comes from the venue&apos;s own website or menu, checked daily — never
+            copied from an old social post or a stale directory.
           </span>
         </div>
         <div className="flex-1 flex flex-col gap-1">
