@@ -33,26 +33,30 @@ export default async function CityPickerPage() {
   return (
     <div className="flex flex-col flex-1 items-center px-4 py-14 sm:py-20 gap-10 text-center">
       <div className="flex flex-col gap-3 max-w-md">
-        <h1 className="font-display text-3xl sm:text-4xl text-foreground">TodaysTab</h1>
+        <h1 className="font-display text-4xl sm:text-5xl text-foreground">
+          <span className="hand-underline">Todays</span>Tab
+        </h1>
         <p className="text-muted">
           Every listing pulled straight from the venue&apos;s own site, checked daily — no stale
           social posts, no guessing. Pick your city.
         </p>
         {specialCount > 0 && (
-          <p className="text-xs uppercase tracking-wide text-muted-2 font-medium">
-            {specialCount} special{specialCount === 1 ? "" : "s"} across {venueCount} venue
-            {venueCount === 1 ? "" : "s"} in {activeRegions.length} cit
-            {activeRegions.length === 1 ? "y" : "ies"} right now
-          </p>
+          <div className="flex justify-center">
+            <span className="stamp px-3 py-1.5 text-[11px]">
+              {specialCount} special{specialCount === 1 ? "" : "s"} · {venueCount} venue
+              {venueCount === 1 ? "" : "s"} · {activeRegions.length} cit
+              {activeRegions.length === 1 ? "y" : "ies"} right now
+            </span>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        {activeRegions.map((region) => (
+      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 pt-2">
+        {activeRegions.map((region, i) => (
           <Link
             key={region.slug}
             href={`/${region.slug}`}
-            className="press-pill flex items-center gap-3 rounded-2xl border border-border bg-surface px-6 py-4 hover:border-muted transition-colors"
+            className={`pin-card ${i % 2 === 0 ? "tilt-a" : "tilt-b"} press-pill flex items-center gap-3 rounded-2xl border border-border bg-surface px-6 py-4 hover:border-muted`}
           >
             <span
               className="flex items-center justify-center rounded-full p-0.5"
