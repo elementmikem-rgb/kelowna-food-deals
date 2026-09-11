@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { approveBooking } from "@/lib/bookings-data";
 
@@ -13,11 +12,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
-  const { venueId } = await approveBooking(bookingId);
-
-  revalidatePath("/");
-  revalidatePath("/events");
-  if (venueId !== null) revalidatePath(`/venues/${venueId}`);
+  // No revalidatePath here: every public page these paths would target
+  // (app/[region]/*) is already `dynamic = "force-dynamic"`, so there's no
+  // Next.js cache for it to invalidate -- the pre-migration "/", "/events",
+  // "/venues/[id]" paths below were dead code left over from before the
+  // todaystab.com path-based routing migration.
+  await approveBooking(bookingId);
 
   return NextResponse.json({ ok: true });
 }

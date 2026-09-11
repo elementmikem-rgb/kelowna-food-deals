@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { db, events, dealFeedback } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/request-rate-limit";
@@ -20,18 +19,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "too many confirmations, try again later" }, { status: 429 });
   }
 
-  const [row] = await db
-    .select({ id: events.id, venueId: events.venueId })
-    .from(events)
-    .where(eq(events.id, eventId))
-    .limit(1);
+  const [row] = await db.select({ id: events.id }).from(events).where(eq(events.id, eventId)).limit(1);
   if (!row) {
     return NextResponse.json({ error: "not found" }, { status: 400 });
   }
 
   await db.insert(dealFeedback).values({ itemId: eventId, kind: "event", feedbackType: "confirm" });
-
-  if (row.venueId !== null) revalidatePath(`/venues/${row.venueId}`);
 
   return NextResponse.json({ ok: true });
 }

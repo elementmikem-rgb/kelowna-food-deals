@@ -203,7 +203,7 @@ export function AdminNav({
         <Link href="/admin/submissions" className="flex items-center gap-2 shrink-0">
           <span className="stamp px-2 py-0.5 text-[10px]">Admin</span>
           <span className="font-display text-sm text-foreground hidden sm:inline">
-            Food Deals
+            TodaysTab
           </span>
         </Link>
 

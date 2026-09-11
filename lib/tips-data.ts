@@ -21,7 +21,17 @@ function isTipSession(session: { payment_status: string; metadata: Record<string
   return session.payment_status === "paid" && !session.metadata?.bookingId;
 }
 
-export async function getTipsInRange(from: Date, to: Date): Promise<TipsSummary> {
+export async function getTipsInRange(
+  from: Date,
+  to: Date,
+  // "all" (the default admin scope) skips filtering entirely. A specific set
+  // of slugs excludes anything checked out for a different region -- and,
+  // since tips predate the regionSlug metadata tag added alongside this
+  // filter, a tip with no tag at all is treated as Kelowna's: this site had
+  // only one region until the todaystab.com migration, so every tip that old
+  // is genuinely a Kelowna tip, not an unknown one.
+  regionSlugs: string[] | "all" = "all"
+): Promise<TipsSummary> {
   const stripe = getStripe();
   const tips: TipRecord[] = [];
   let startingAfter: string | undefined;
@@ -39,6 +49,7 @@ export async function getTipsInRange(from: Date, to: Date): Promise<TipsSummary>
 
     for (const session of page.data) {
       if (!isTipSession(session)) continue;
+      if (regionSlugs !== "all" && !regionSlugs.includes(session.metadata?.regionSlug ?? "kelowna")) continue;
       tips.push({
         id: session.id,
         amountCents: session.amount_total ?? 0,

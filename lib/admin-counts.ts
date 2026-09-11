@@ -33,8 +33,8 @@ export async function getAdminNavCounts(regionIds: number[] | "all"): Promise<{
     // flaggedCount is computed from the same filtered queries the flagged queue
     // itself renders (rather than a third, separately-filtered count query) so the
     // badge can never drift from what the queue actually shows.
-    getFlaggedSpecials(),
-    getFlaggedEvents(),
+    getFlaggedSpecials(regionIds),
+    getFlaggedEvents(regionIds),
   ]);
   return {
     pendingSubmissions: submissionRow?.n ?? 0,

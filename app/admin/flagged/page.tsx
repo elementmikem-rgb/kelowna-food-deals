@@ -1,11 +1,16 @@
 import { AdminShell } from "@/components/AdminShell";
 import { FlaggedSpecialsPanel } from "@/components/FlaggedSpecialsPanel";
 import { getFlaggedSpecials, getFlaggedEvents } from "@/lib/flagged-data";
+import { getSelectedAdminScope } from "@/lib/admin-region";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminFlaggedPage() {
-  const [flaggedSpecials, flaggedEvents] = await Promise.all([getFlaggedSpecials(), getFlaggedEvents()]);
+  const { regionIds } = await getSelectedAdminScope();
+  const [flaggedSpecials, flaggedEvents] = await Promise.all([
+    getFlaggedSpecials(regionIds),
+    getFlaggedEvents(regionIds),
+  ]);
 
   return (
     <AdminShell active="flagged" maxWidth="max-w-2xl">

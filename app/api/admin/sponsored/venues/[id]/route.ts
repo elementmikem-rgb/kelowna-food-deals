@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, venues } from "@/db";
 import { eq } from "drizzle-orm";
@@ -38,10 +37,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!updated) {
     return NextResponse.json({ error: "venue not found" }, { status: 404 });
   }
-
-  revalidatePath("/");
-  revalidatePath("/events");
-  revalidatePath(`/venues/${venueId}`);
 
   return NextResponse.json({ ok: true, featuredUntil });
 }

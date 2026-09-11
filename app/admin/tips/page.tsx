@@ -2,6 +2,9 @@ import Link from "next/link";
 import { getTipsInRange } from "@/lib/tips-data";
 import { AdminShell } from "@/components/AdminShell";
 import { pacificTodayISODate, startOfDayPacific, endOfDayPacific } from "@/lib/time";
+import { getSelectedAdminScope } from "@/lib/admin-region";
+import { db, regions } from "@/db";
+import { inArray } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +53,14 @@ export default async function AdminTipsPage({
 
   const from = startOfDayPacific(fromDate);
   const to = endOfDayPacific(toDate);
-  const summary = await getTipsInRange(from, to);
+  const { regionIds } = await getSelectedAdminScope();
+  const regionSlugs =
+    regionIds === "all"
+      ? ("all" as const)
+      : (await db.select({ slug: regions.slug }).from(regions).where(inArray(regions.id, regionIds))).map(
+          (r) => r.slug
+        );
+  const summary = await getTipsInRange(from, to, regionSlugs);
 
   return (
     <AdminShell active="revenue" backHref="/admin/revenue" backLabel="Revenue">

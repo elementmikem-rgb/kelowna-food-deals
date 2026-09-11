@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, categorySponsors } from "@/db";
 import { specialCategory, type SpecialCategory } from "@/db/schema";
@@ -38,7 +37,6 @@ export async function POST(
   await db.delete(categorySponsors).where(eq(categorySponsors.category, category));
 
   if (sponsorName === null) {
-    revalidatePath("/");
     return NextResponse.json({ ok: true, cleared: true });
   }
 
@@ -47,8 +45,6 @@ export async function POST(
     .insert(categorySponsors)
     .values({ category, sponsorName, sponsorUrl: sponsorUrl ?? null, sponsorUntil })
     .returning();
-
-  revalidatePath("/");
 
   return NextResponse.json({ ok: true, sponsor: created });
 }

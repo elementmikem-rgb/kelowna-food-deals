@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, specials } from "@/db";
 import { eq } from "drizzle-orm";
@@ -38,9 +37,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!updated) {
     return NextResponse.json({ error: "special not found" }, { status: 404 });
   }
-
-  revalidatePath("/");
-  revalidatePath("/events");
 
   return NextResponse.json({ ok: true, boostedUntil });
 }
