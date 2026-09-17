@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, monetizationSettings } from "@/db";
-import { bookingProductType, specialCategory } from "@/db/schema";
+import { bookingProductType, specialCategory, eventType, sponsorCategoryKind } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { checkAvailability } from "@/lib/booking-availability";
 import { checkRateLimit } from "@/lib/request-rate-limit";
+import { getRegionBySlug } from "@/lib/regions";
 
 const bodySchema = z.object({
   productType: z.enum(bookingProductType),
-  category: z.enum(specialCategory).nullable(),
+  category: z.union([z.enum(specialCategory), z.enum(eventType)]).nullable(),
+  categoryKind: z.enum(sponsorCategoryKind).nullable(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  // See checkout/route.ts's comment on regionSlug -- an API route has no path segment
+  // of its own to resolve region from under path-based routing.
+  regionSlug: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
@@ -23,11 +28,14 @@ export async function POST(req: NextRequest) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  const { productType, category, startDate, endDate } = parsed.data;
+  const { productType, category, categoryKind, startDate, endDate, regionSlug } = parsed.data;
 
   if (endDate < startDate) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
   }
+
+  const region = await getRegionBySlug(regionSlug);
+  if (!region) return NextResponse.json({ error: "unknown region" }, { status: 400 });
 
   const [settings] = await db
     .select()
@@ -39,7 +47,9 @@ export async function POST(req: NextRequest) {
     db,
     productType,
     productType === "category_sponsor" ? category : null,
+    productType === "category_sponsor" ? categoryKind : null,
     settings.capCount,
+    region.id,
     startDate,
     endDate
   );

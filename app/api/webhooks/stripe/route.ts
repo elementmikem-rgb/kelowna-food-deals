@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db, bookings, monetizationSettings } from "@/db";
+import { db, bookings, monetizationSettings, venues } from "@/db";
 import { getStripe } from "@/lib/stripe";
 import { checkAvailability } from "@/lib/booking-availability";
 import { sendReportEmail } from "@/lib/brevo";
@@ -50,15 +50,24 @@ export async function POST(req: NextRequest) {
     .from(monetizationSettings)
     .where(eq(monetizationSettings.productType, booking.productType));
 
+  // Capacity is scoped per region (see booking-availability.ts), and the webhook has no
+  // regionSlug of its own to resolve from -- the booking's own venue is the source of
+  // truth for which region it belongs to.
+  const [venue] = booking.venueId
+    ? await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, booking.venueId))
+    : [];
+
   // Re-check for a conflict introduced between checkout and payment completion (e.g.
   // another booking for the same slot was approved in the meantime). Payment already
   // succeeded, so this can't be silently dropped -- it's flagged for the admin instead.
-  const stillAvailable = settings
+  const stillAvailable = settings && venue
     ? await checkAvailability(
         db,
         booking.productType,
         booking.category,
+        booking.categoryKind,
         settings.capCount,
+        venue.regionId,
         booking.startDate,
         booking.endDate,
         booking.id
@@ -77,7 +86,7 @@ export async function POST(req: NextRequest) {
   try {
     await sendReportEmail({
       subject: `New booking pending approval: ${booking.productType} #${booking.id}${!stillAvailable ? " (CONFLICT)" : ""}`,
-      textContent: `Product: ${booking.productType}\nVenue ID: ${booking.venueId}\nDates: ${booking.startDate} to ${booking.endDate}\nBuyer: ${booking.buyerEmail}\nPrice paid: $${(booking.priceCents / 100).toFixed(2)}\n\nReview at /admin/sponsored`,
+      textContent: `Product: ${booking.productType}\nVenue ID: ${booking.venueId}${booking.eventId ? `\nEvent ID: ${booking.eventId}` : ""}\nDates: ${booking.startDate} to ${booking.endDate}\nBuyer: ${booking.buyerEmail}\nPrice paid: $${(booking.priceCents / 100).toFixed(2)}\n\nReview at /admin/sponsored`,
     });
   } catch (err) {
     console.error("Failed to send booking notification email:", err);

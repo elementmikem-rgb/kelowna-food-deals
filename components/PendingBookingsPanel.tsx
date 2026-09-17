@@ -41,7 +41,10 @@ export function PendingBookingsPanel({ pending }: { pending: PendingBooking[] })
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-foreground/90">
-                    {b.productType} — {b.venueName ?? b.specialTitle ?? b.category}
+                    {b.productType} — {b.venueName ?? "unknown venue"}
+                    {b.specialTitle ? ` (${b.specialTitle})` : ""}
+                    {b.eventTitle ? ` (${b.eventTitle})` : ""}
+                    {b.category ? ` (${b.category})` : ""}
                   </span>
                   <span className="text-xs text-muted-2">
                     {b.startDate} to {b.endDate} · {formatPrice(b.priceCents)} · {b.buyerEmail}

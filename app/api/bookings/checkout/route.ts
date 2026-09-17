@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sql, eq, and, gt, isNull, desc } from "drizzle-orm";
-import { db, bookings, monetizationSettings } from "@/db";
+import { db, bookings, monetizationSettings, addOnSettings, pendingBookingPhotos } from "@/db";
 import { verifyBookingToken, type BookingSelection } from "@/lib/booking-token";
 import { checkAvailability } from "@/lib/booking-availability";
 import { getStripe } from "@/lib/stripe";
@@ -30,10 +30,20 @@ const bodySchema = z.object({
   regionSlug: z.string().min(1),
 });
 
-// Deterministic per-product(+category) lock key so two concurrent checkouts for the
-// same capped slot serialize here instead of racing the availability check below.
-function lockKeyFor(productType: string, category: string | null): string {
-  return category ? `booking:${productType}:${category}` : `booking:${productType}`;
+// Deterministic per-region-product(+category+kind) lock key so two concurrent checkouts
+// for the same capped slot in the same region serialize here instead of racing the
+// availability check below. Region-scoped so two regions selling the same product
+// concurrently don't needlessly contend for the same lock. categoryKind disambiguates
+// "other" (shared by SpecialCategory and EventType) the same way it does everywhere else.
+function lockKeyFor(
+  regionId: number,
+  productType: string,
+  category: string | null,
+  categoryKind: string | null
+): string {
+  return category
+    ? `booking:${regionId}:${productType}:${categoryKind}:${category}`
+    : `booking:${regionId}:${productType}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,8 +89,31 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  const priceCents = settings.priceCentsPerDay * days;
   const category = selection.productType === "category_sponsor" ? selection.category : null;
+  const categoryKind = selection.productType === "category_sponsor" ? selection.categoryKind : null;
+
+  // Photo add-on only ever rides along with "boost" -- see verify-email/route.ts's same
+  // guard. Re-checked here too since checkout trusts the signed token, not the client.
+  const hasPhotoAddOn = selection.productType === "boost" && selection.hasPhotoAddOn;
+  let stagedPhoto: { photoData: string; photoMimeType: string } | null = null;
+  let addOnPriceCentsPerDay = 0;
+  if (hasPhotoAddOn) {
+    if (selection.photoStagingId === null) {
+      return NextResponse.json({ error: "Photo add-on selected but nothing was uploaded" }, { status: 400 });
+    }
+    const [staged] = await db
+      .select({ photoData: pendingBookingPhotos.photoData, photoMimeType: pendingBookingPhotos.photoMimeType })
+      .from(pendingBookingPhotos)
+      .where(eq(pendingBookingPhotos.id, selection.photoStagingId));
+    if (!staged) {
+      return NextResponse.json({ error: "That photo upload has expired -- start again" }, { status: 400 });
+    }
+    stagedPhoto = staged;
+    const [addOn] = await db.select().from(addOnSettings).where(eq(addOnSettings.addOnType, "photo"));
+    addOnPriceCentsPerDay = addOn?.priceCentsPerDay ?? 0;
+  }
+
+  const priceCents = (settings.priceCentsPerDay + addOnPriceCentsPerDay) * days;
 
   // One clock reading drives both the DB hold and Stripe's expiry, so they can't
   // drift apart by however long the queries in between take.
@@ -102,6 +135,7 @@ export async function POST(req: NextRequest) {
         eq(bookings.startDate, selection.startDate),
         eq(bookings.endDate, selection.endDate),
         category ? eq(bookings.category, category) : isNull(bookings.category),
+        categoryKind ? eq(bookings.categoryKind, categoryKind) : isNull(bookings.categoryKind),
         eq(bookings.status, "pending_payment"),
         gt(bookings.reservedUntil, new Date(now))
       )
@@ -129,13 +163,17 @@ export async function POST(req: NextRequest) {
   }
 
   const booking = await db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${lockKeyFor(selection.productType, category)}))`);
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${lockKeyFor(region.id, selection.productType, category, categoryKind)}))`
+    );
 
     const available = await checkAvailability(
       tx,
       selection.productType,
       category,
+      categoryKind,
       settings.capCount,
+      region.id,
       selection.startDate,
       selection.endDate
     );
@@ -147,7 +185,9 @@ export async function POST(req: NextRequest) {
         productType: selection.productType,
         venueId: selection.venueId,
         specialId: selection.specialId,
+        eventId: selection.eventId,
         category,
+        categoryKind,
         startDate: selection.startDate,
         endDate: selection.endDate,
         status: "pending_payment",
@@ -155,6 +195,9 @@ export async function POST(req: NextRequest) {
         priceCents,
         buyerEmail: selection.buyerEmail,
         buyerVerifiedAt: new Date(selection.verifiedAt),
+        hasPhotoAddOn,
+        photoData: stagedPhoto?.photoData ?? null,
+        photoMimeType: stagedPhoto?.photoMimeType ?? null,
       })
       .returning();
     return created;
@@ -162,6 +205,14 @@ export async function POST(req: NextRequest) {
 
   if (!booking) {
     return NextResponse.json({ error: "Those dates are no longer available" }, { status: 409 });
+  }
+
+  // The photo now lives on the booking row itself -- the staging row (kept small and
+  // separate purely so the signed token never had to carry the photo bytes) has served
+  // its purpose. Best-effort: if this fails, an orphaned staging row is harmless clutter,
+  // not a correctness issue.
+  if (selection.photoStagingId !== null) {
+    await db.delete(pendingBookingPhotos).where(eq(pendingBookingPhotos.id, selection.photoStagingId)).catch(() => {});
   }
 
   // Charged as its own line item rather than folded into unit_amount so the

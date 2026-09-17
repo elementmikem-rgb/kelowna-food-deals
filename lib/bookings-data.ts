@@ -1,6 +1,6 @@
-import { db, bookings, venues, specials, categorySponsors } from "@/db";
+import { db, bookings, venues, specials, events, categorySponsors } from "@/db";
 import { and, asc, eq } from "drizzle-orm";
-import type { SpecialCategory } from "@/db/schema";
+import type { SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
 import { endOfDayPacific, pacificTodayISODate } from "@/lib/time";
 import { regionScopeCondition } from "@/lib/admin-region";
 
@@ -11,7 +11,10 @@ export interface PendingBooking {
   venueName: string | null;
   specialId: number | null;
   specialTitle: string | null;
-  category: SpecialCategory | null;
+  eventId: number | null;
+  eventTitle: string | null;
+  category: SpecialCategory | EventType | null;
+  categoryKind: SponsorCategoryKind | null;
   startDate: string;
   endDate: string;
   priceCents: number;
@@ -28,7 +31,10 @@ export async function getPendingApprovalBookings(regionIds: number[] | "all"): P
       venueName: venues.name,
       specialId: bookings.specialId,
       specialTitle: specials.title,
+      eventId: bookings.eventId,
+      eventTitle: events.title,
       category: bookings.category,
+      categoryKind: bookings.categoryKind,
       startDate: bookings.startDate,
       endDate: bookings.endDate,
       priceCents: bookings.priceCents,
@@ -38,6 +44,7 @@ export async function getPendingApprovalBookings(regionIds: number[] | "all"): P
     .from(bookings)
     .leftJoin(venues, eq(bookings.venueId, venues.id))
     .leftJoin(specials, eq(bookings.specialId, specials.id))
+    .leftJoin(events, eq(bookings.eventId, events.id))
     .where(and(eq(bookings.status, "pending_approval"), regionScopeCondition(venues.regionId, regionIds)))
     .orderBy(asc(bookings.createdAt));
   return rows;
@@ -111,16 +118,54 @@ export async function activateBooking(bookingId: number): Promise<void> {
       .from(specials)
       .where(eq(specials.id, booking.specialId));
     if (!special || alreadyCovered(special.boostedUntil, until)) return;
-    await db.update(specials).set({ boostedUntil: until }).where(eq(specials.id, booking.specialId));
-  } else if (booking.productType === "category_sponsor" && booking.category !== null && booking.venueId !== null) {
+    await db
+      .update(specials)
+      .set({
+        boostedUntil: until,
+        // Only overwritten when this booking actually paid for the photo add-on --
+        // an admin-granted plain boost (no add-on) must not clear a photo a *previous*
+        // paid add-on already set.
+        ...(booking.hasPhotoAddOn
+          ? { photoData: booking.photoData, photoMimeType: booking.photoMimeType }
+          : {}),
+      })
+      .where(eq(specials.id, booking.specialId));
+  } else if (booking.productType === "boost" && booking.eventId !== null) {
+    const [event] = await db
+      .select({ boostedUntil: events.boostedUntil })
+      .from(events)
+      .where(eq(events.id, booking.eventId));
+    if (!event || alreadyCovered(event.boostedUntil, until)) return;
+    await db
+      .update(events)
+      .set({
+        boostedUntil: until,
+        ...(booking.hasPhotoAddOn
+          ? { photoData: booking.photoData, photoMimeType: booking.photoMimeType }
+          : {}),
+      })
+      .where(eq(events.id, booking.eventId));
+  } else if (
+    booking.productType === "category_sponsor" &&
+    booking.category !== null &&
+    booking.categoryKind !== null &&
+    booking.venueId !== null
+  ) {
     const [venue] = await db.select().from(venues).where(eq(venues.id, booking.venueId));
-    const sponsorName = venue?.name ?? "Sponsor";
-    const sponsorUrl = venue?.website ?? null;
+    if (!venue) return;
+    const sponsorName = venue.name;
+    const sponsorUrl = venue.website ?? null;
 
-    const [existing] = await db
-      .select()
-      .from(categorySponsors)
-      .where(eq(categorySponsors.category, booking.category));
+    // Scoped by regionId too -- see categorySponsors' schema comment: capacity is
+    // per-region, so the stored sponsor row must be too, or two regions' bookings for
+    // the same category would clobber each other's sponsor.
+    const scope = and(
+      eq(categorySponsors.regionId, venue.regionId),
+      eq(categorySponsors.category, booking.category),
+      eq(categorySponsors.kind, booking.categoryKind)
+    );
+
+    const [existing] = await db.select().from(categorySponsors).where(scope);
     // Already this booking's sponsor, running at least as long as this booking would
     // set it -- leave the row (and its id/createdAt) exactly where it is.
     if (
@@ -132,8 +177,10 @@ export async function activateBooking(bookingId: number): Promise<void> {
       return;
     }
 
-    await db.delete(categorySponsors).where(eq(categorySponsors.category, booking.category));
+    await db.delete(categorySponsors).where(scope);
     await db.insert(categorySponsors).values({
+      regionId: venue.regionId,
+      kind: booking.categoryKind,
       category: booking.category,
       sponsorName,
       sponsorUrl,

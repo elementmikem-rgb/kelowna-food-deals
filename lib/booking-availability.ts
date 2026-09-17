@@ -1,6 +1,6 @@
-import { db, bookings } from "@/db";
+import { db, bookings, venues } from "@/db";
 import type * as schema from "@/db/schema";
-import type { BookingProductType, SpecialCategory } from "@/db/schema";
+import type { BookingProductType, SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
 import { and, eq, gt, inArray, or } from "drizzle-orm";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
@@ -42,25 +42,41 @@ export function isRangeAvailable(
 
 const OCCUPYING_STATUSES = ["approved", "pending_approval"] as const;
 
-// Every booking that currently counts against capacity for this productType/category:
-// approved, pending_approval, or a still-live checkout hold (pending_payment with
-// reservedUntil in the future -- an expired hold is filtered out here, not by any
-// cleanup job). `executor` is `db` for the read-only courtesy check, or a transaction
-// (`tx` from `db.transaction(async (tx) => ...)`) when called from the checkout path
-// so it sees the same locked snapshot as the insert that follows it.
+// Every booking that currently counts against capacity for this productType/category
+// *within one region*: approved, pending_approval, or a still-live checkout hold
+// (pending_payment with reservedUntil in the future -- an expired hold is filtered out
+// here, not by any cleanup job). `executor` is `db` for the read-only courtesy check, or
+// a transaction (`tx` from `db.transaction(async (tx) => ...)`) when called from the
+// checkout path so it sees the same locked snapshot as the insert that follows it.
+//
+// Scoped by joining through venues.regionId (every capped product -- "featured" and
+// "category_sponsor" -- always sets bookings.venueId to the sponsoring venue itself, per
+// its comment on the bookings table) rather than adding a redundant regionId column to
+// bookings. Caps are meant to be a per-region slot count (4 featured placements *per
+// region*, 1 sponsor *per category per region*), not one shared pool across every region
+// on the platform -- without this join, one region selling out a cap would make that
+// product unavailable everywhere else too.
 export async function getOccupyingBookings(
   executor: BookingDbExecutor,
   productType: BookingProductType,
-  category: SpecialCategory | null,
+  category: SpecialCategory | EventType | null,
+  // Only meaningful when category is non-null -- disambiguates "other" (which exists
+  // in both SpecialCategory and EventType) so a special-category sponsorship and an
+  // event-type sponsorship never compete for the same cap slot.
+  categoryKind: SponsorCategoryKind | null,
+  regionId: number,
   excludeId?: number
 ): Promise<OccupyingRange[]> {
   const rows = await executor
     .select({ id: bookings.id, startDate: bookings.startDate, endDate: bookings.endDate })
     .from(bookings)
+    .innerJoin(venues, eq(venues.id, bookings.venueId))
     .where(
       and(
         eq(bookings.productType, productType),
+        eq(venues.regionId, regionId),
         category !== null ? eq(bookings.category, category) : undefined,
+        categoryKind !== null ? eq(bookings.categoryKind, categoryKind) : undefined,
         or(
           inArray(bookings.status, OCCUPYING_STATUSES),
           and(eq(bookings.status, "pending_payment"), gt(bookings.reservedUntil, new Date()))
@@ -73,13 +89,15 @@ export async function getOccupyingBookings(
 export async function checkAvailability(
   executor: BookingDbExecutor,
   productType: BookingProductType,
-  category: SpecialCategory | null,
+  category: SpecialCategory | EventType | null,
+  categoryKind: SponsorCategoryKind | null,
   capCount: number | null,
+  regionId: number,
   startDate: string,
   endDate: string,
   excludeId?: number
 ): Promise<boolean> {
   if (capCount === null) return true;
-  const occupying = await getOccupyingBookings(executor, productType, category, excludeId);
+  const occupying = await getOccupyingBookings(executor, productType, category, categoryKind, regionId, excludeId);
   return isRangeAvailable(occupying, startDate, endDate, capCount);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t, type Language } from "@/lib/i18n";
 
 const AMOUNTS = [
   { label: "$3", cents: 300 },
@@ -8,7 +9,8 @@ const AMOUNTS = [
   { label: "$10", cents: 1000 },
 ];
 
-export function TipJar({ regionSlug }: { regionSlug: string }) {
+export function TipJar({ regionSlug, lang = "en" }: { regionSlug: string; lang?: Language }) {
+  const tip = t(lang).tip;
   const [loadingCents, setLoadingCents] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +40,9 @@ export function TipJar({ regionSlug }: { regionSlug: string }) {
       id="tip-jar"
       className="rounded-xl border border-border bg-surface p-5 flex flex-col items-center gap-3 text-center scroll-mt-4"
     >
-      <h2 className="font-display text-xl text-foreground">Enjoying this?</h2>
+      <h2 className="font-display text-xl text-foreground">{tip.heading}</h2>
       <p className="text-sm text-muted max-w-sm">
-        This site is a one-person project, checked and kept accurate by hand. If it
-        saved you a trip across town, a tip helps keep it running.
+        {tip.body}
       </p>
       <div className="flex gap-2">
         {AMOUNTS.map((a) => (

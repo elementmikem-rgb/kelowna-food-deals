@@ -72,7 +72,13 @@ export interface BookingSelection {
   productType: import("@/db/schema").BookingProductType;
   venueId: number;
   specialId: number | null;
-  category: import("@/db/schema").SpecialCategory | null;
+  eventId: number | null;
+  category: import("@/db/schema").SpecialCategory | import("@/db/schema").EventType | null;
+  categoryKind: import("@/db/schema").SponsorCategoryKind | null;
+  // "boost" only -- see db/schema.ts's pendingBookingPhotos comment for why this is a
+  // staging-row id rather than the photo bytes themselves (token size).
+  hasPhotoAddOn: boolean;
+  photoStagingId: number | null;
   startDate: string;
   endDate: string;
   buyerEmail: string;

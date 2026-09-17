@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { BookingProductType, SpecialCategory } from "@/db/schema";
-import { CATEGORY_LABELS, formatPrice } from "@/lib/format";
+import type { BookingProductType, SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
+import { CATEGORY_LABELS, EVENT_TYPE_LABELS, formatPrice } from "@/lib/format";
 import { stripeFeeCents } from "@/lib/stripe-fee";
 import { daysInclusive } from "@/lib/time";
+import { fileToBase64 } from "@/lib/client-image";
 
 interface VenueOption {
   id: number;
@@ -15,19 +16,31 @@ interface SpecialOption {
   venueId: number;
   title: string;
 }
+interface EventOption {
+  id: number;
+  venueId: number;
+  title: string;
+}
 interface Settings {
   priceCentsPerDay: number;
   minDays: number;
   maxDays: number;
 }
+interface PhotoAddOn {
+  priceCentsPerDay: number;
+}
 
-const CATEGORIES: SpecialCategory[] = ["happy_hour", "food_special", "wing_night", "other"];
+const SPECIAL_CATEGORIES: SpecialCategory[] = ["happy_hour", "food_special", "wing_night", "other"];
+const EVENT_TYPES: EventType[] = ["live_music", "trivia", "karaoke", "sports_night", "other"];
+
 
 export function BookingFlow({
   productType,
   venues,
   specials,
+  events,
   settings,
+  photoAddOn,
   initialVerifiedToken,
   todayISO,
   regionSlug,
@@ -35,15 +48,22 @@ export function BookingFlow({
   productType: BookingProductType;
   venues: VenueOption[];
   specials: SpecialOption[];
+  events: EventOption[];
   settings: Settings;
+  // "boost" only -- absent/undefined means the add-on isn't offered (e.g. not yet
+  // configured server-side), not just $0.
+  photoAddOn?: PhotoAddOn;
   initialVerifiedToken: string | null;
   todayISO: string;
   regionSlug: string;
 }) {
   const [open, setOpen] = useState(initialVerifiedToken !== null);
   const [venueId, setVenueId] = useState<number | "">("");
-  const [specialId, setSpecialId] = useState<number | "">("");
-  const [category, setCategory] = useState<SpecialCategory>("happy_hour");
+  const [boostTargetKey, setBoostTargetKey] = useState<string>(""); // "special:12" or "event:34"
+  const [categoryKind, setCategoryKind] = useState<SponsorCategoryKind>("special");
+  const [category, setCategory] = useState<SpecialCategory | EventType>("happy_hour");
+  const [wantsPhotoAddOn, setWantsPhotoAddOn] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [email, setEmail] = useState("");
@@ -51,6 +71,8 @@ export function BookingFlow({
   const [step, setStep] = useState<"form" | "sent" | "checkout">(initialVerifiedToken ? "checkout" : "form");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const perDayCents = settings.priceCentsPerDay + (wantsPhotoAddOn && photoAddOn ? photoAddOn.priceCentsPerDay : 0);
 
   useEffect(() => {
     if (!startDate || !endDate || endDate < startDate) {
@@ -69,8 +91,10 @@ export function BookingFlow({
         body: JSON.stringify({
           productType,
           category: productType === "category_sponsor" ? category : null,
+          categoryKind: productType === "category_sponsor" ? categoryKind : null,
           startDate,
           endDate,
+          regionSlug,
         }),
         signal: controller.signal,
       })
@@ -89,27 +113,38 @@ export function BookingFlow({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [productType, category, startDate, endDate]);
+  }, [productType, category, categoryKind, startDate, endDate, regionSlug]);
 
   const venueSpecials = specials.filter((s) => s.venueId === venueId);
+  const venueEvents = events.filter((e) => e.venueId === venueId);
+  const [boostKind, boostIdStr] = boostTargetKey.split(":");
+  const boostId = boostIdStr ? Number(boostIdStr) : null;
 
   async function requestVerification() {
     setError(null);
     if (!venueId) return setError("Pick your venue.");
-    if (productType === "boost" && !specialId) return setError("Pick which special to boost.");
+    if (productType === "boost" && !boostTargetKey) return setError("Pick a special or event to boost.");
+    if (wantsPhotoAddOn && !photoFile) return setError("Choose a photo, or uncheck the photo add-on.");
     if (!startDate || !endDate || endDate < startDate) return setError("Pick valid dates.");
     if (!email) return setError("Enter your email.");
 
     setBusy(true);
     try {
+      const hasPhotoAddOn = productType === "boost" && wantsPhotoAddOn;
+      const photo = hasPhotoAddOn && photoFile ? await fileToBase64(photoFile) : null;
       const res = await fetch("/api/bookings/verify-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productType,
           venueId,
-          specialId: productType === "boost" ? specialId : null,
+          specialId: productType === "boost" && boostKind === "special" ? boostId : null,
+          eventId: productType === "boost" && boostKind === "event" ? boostId : null,
           category: productType === "category_sponsor" ? category : null,
+          categoryKind: productType === "category_sponsor" ? categoryKind : null,
+          hasPhotoAddOn,
+          photoData: photo?.data ?? null,
+          photoMimeType: photo?.mimeType ?? null,
           startDate,
           endDate,
           buyerEmail: email,
@@ -208,35 +243,85 @@ export function BookingFlow({
 
       {productType === "boost" && (
         <label className="flex flex-col gap-1 text-sm text-muted">
-          Which special?
+          Which special or event?
           <select
-            value={specialId}
-            onChange={(e) => setSpecialId(e.target.value ? Number(e.target.value) : "")}
+            value={boostTargetKey}
+            onChange={(e) => setBoostTargetKey(e.target.value)}
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
           >
-            <option value="">Select a special…</option>
-            {venueSpecials.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
+            <option value="">Select a special or event…</option>
+            {venueSpecials.length > 0 && (
+              <optgroup label="Specials">
+                {venueSpecials.map((s) => (
+                  <option key={`special:${s.id}`} value={`special:${s.id}`}>
+                    {s.title}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {venueEvents.length > 0 && (
+              <optgroup label="Events">
+                {venueEvents.map((e) => (
+                  <option key={`event:${e.id}`} value={`event:${e.id}`}>
+                    {e.title}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
+      )}
+
+      {productType === "boost" && photoAddOn && (
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              checked={wantsPhotoAddOn}
+              onChange={(e) => {
+                setWantsPhotoAddOn(e.target.checked);
+                if (!e.target.checked) setPhotoFile(null);
+              }}
+            />
+            Add a photo or poster (+{formatPrice(photoAddOn.priceCentsPerDay)}/day)
+          </label>
+          {wantsPhotoAddOn && (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-muted"
+            />
+          )}
+        </div>
       )}
 
       {productType === "category_sponsor" && (
         <label className="flex flex-col gap-1 text-sm text-muted">
           Category
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as SpecialCategory)}
+            value={`${categoryKind}:${category}`}
+            onChange={(e) => {
+              const [kind, cat] = e.target.value.split(":");
+              setCategoryKind(kind as SponsorCategoryKind);
+              setCategory(cat as SpecialCategory | EventType);
+            }}
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
-              </option>
-            ))}
+            <optgroup label="Specials">
+              {SPECIAL_CATEGORIES.map((c) => (
+                <option key={`special:${c}`} value={`special:${c}`}>
+                  {CATEGORY_LABELS[c]}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Events">
+              {EVENT_TYPES.map((t) => (
+                <option key={`event:${t}`} value={`event:${t}`}>
+                  {EVENT_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
       )}
@@ -269,11 +354,11 @@ export function BookingFlow({
       )}
       {availability === "available" && startDate && endDate && (() => {
         const days = daysInclusive(startDate, endDate);
-        const baseCents = settings.priceCentsPerDay * days;
+        const baseCents = perDayCents * days;
         const feeCents = stripeFeeCents(baseCents);
         return (
           <p className="text-xs text-muted-2">
-            Available. {formatPrice(settings.priceCentsPerDay)}/day × {days} day{days === 1 ? "" : "s"} ={" "}
+            Available. {formatPrice(perDayCents)}/day × {days} day{days === 1 ? "" : "s"} ={" "}
             {formatPrice(baseCents)} + {formatPrice(feeCents)} card processing fee ={" "}
             <strong className="text-foreground/80">{formatPrice(baseCents + feeCents)} total</strong>
             {" "}(between {settings.minDays} and {settings.maxDays} days).
