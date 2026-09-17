@@ -1,6 +1,7 @@
 import { AdminShell } from "@/components/AdminShell";
 import { FeaturedVenuesPanel } from "@/components/FeaturedVenuesPanel";
 import { BoostedSpecialsPanel } from "@/components/BoostedSpecialsPanel";
+import { BoostedEventsPanel } from "@/components/BoostedEventsPanel";
 import { PartnersPanel } from "@/components/PartnersPanel";
 import { CategorySponsorPanel } from "@/components/CategorySponsorPanel";
 import { PendingBookingsPanel } from "@/components/PendingBookingsPanel";
@@ -9,10 +10,13 @@ import { MonetizationSettingsPanel } from "@/components/MonetizationSettingsPane
 import {
   getFeaturedVenues,
   getBoostedSpecials,
+  getBoostedEvents,
   getVenueOptions,
   getSpecialOptions,
+  getEventOptions,
   getPartnerVenues,
   getActiveCategorySponsors,
+  getRegionOptions,
 } from "@/lib/sponsored-data";
 import { getPendingApprovalBookings, getRefundsNeeded } from "@/lib/bookings-data";
 import { getSelectedAdminScope } from "@/lib/admin-region";
@@ -26,20 +30,26 @@ export default async function AdminSponsoredPage() {
   const [
     featuredVenues,
     boostedSpecials,
+    boostedEvents,
     venueOptions,
     specialOptions,
+    eventOptions,
     partnerVenues,
     categorySponsors,
+    regionOptions,
     pendingBookings,
     refundsNeeded,
     settingsRows,
   ] = await Promise.all([
     getFeaturedVenues(regionIds),
     getBoostedSpecials(regionIds),
+    getBoostedEvents(regionIds),
     getVenueOptions(regionIds),
     getSpecialOptions(regionIds),
+    getEventOptions(regionIds),
     getPartnerVenues(regionIds),
-    getActiveCategorySponsors(),
+    getActiveCategorySponsors(regionIds),
+    getRegionOptions(regionIds),
     getPendingApprovalBookings(regionIds),
     getRefundsNeeded(regionIds),
     db.select().from(monetizationSettings),
@@ -57,8 +67,13 @@ export default async function AdminSponsoredPage() {
         venueOptions={venueOptions}
         specialOptions={specialOptions}
       />
+      <BoostedEventsPanel
+        active={boostedEvents}
+        venueOptions={venueOptions}
+        eventOptions={eventOptions}
+      />
       <PartnersPanel active={partnerVenues} venueOptions={venueOptions} />
-      <CategorySponsorPanel active={categorySponsors} />
+      <CategorySponsorPanel active={categorySponsors} regionOptions={regionOptions} />
       <MonetizationSettingsPanel initial={settingsRows} />
     </AdminShell>
   );
