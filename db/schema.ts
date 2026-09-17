@@ -86,6 +86,18 @@ export const regions = specialsSchema.table("regions", {
 });
 export type Region = typeof regions.$inferSelect;
 
+// Groups same-brand venue rows (Boston Pizza, Earls, etc.) purely for the admin claims
+// queue's "this chain has N other claimed locations" suggestion -- see the moat-layer-3
+// plan. Deliberately NOT a source of automatic trust: claiming one location never grants
+// access to another just because they share a chainId, since real chains are very often
+// independently franchised per location. Seeded by a one-time script, not a migration --
+// adding a new chain later is a data change, not a deploy.
+export const venueChains = specialsSchema.table("venue_chains", {
+  id: serial("id").primaryKey(),
+  canonicalName: text("canonical_name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const venues = specialsSchema.table(
   "venues",
   {
@@ -95,6 +107,7 @@ export const venues = specialsSchema.table(
     regionId: integer("region_id")
       .notNull()
       .references(() => regions.id),
+    chainId: integer("chain_id").references(() => venueChains.id),
     // The town this venue is actually in (Kelowna, West Kelowna, Lake Country,
     // Peachland). Nullable so venues seeded before this column existed keep
     // working; consumers fall back to "Kelowna" when it's null.
@@ -164,27 +177,40 @@ export const venueClaimRequests = specialsSchema.table("venue_claim_requests", {
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });
 
-// One row per approved claim -- the actual owner identity a venueOwnerSessions token
-// resolves to. A venue has at most one owner in this first phase (no multi-user/
-// multi-location accounts yet -- see the moat-layer-3 note in the plan this shipped from).
-export const venueOwners = specialsSchema.table(
-  "venue_owners",
+// A pure owner identity -- the actual account a venueOwnerSessions token resolves to.
+// Deliberately holds no venueId of its own (see venueOwnerVenues below): one owner can
+// manage several venues (moat layer 3), so venue linkage lives in its own join table
+// instead of being baked into the identity row itself.
+export const venueOwners = specialsSchema.table("venue_owners", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  // Separate from venues.unsubscribedAt, which gates cold outreach email -- an owner
+  // who already claimed their listing opting out of the weekly stats digest shouldn't
+  // silently also suppress a different email stream they never asked to stop.
+  weeklyDigestOptOut: boolean("weekly_digest_opt_out").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// One row per venue an owner account manages. A venue still has at most one owner (the
+// unique index on venueId is unchanged in spirit from the old venueOwners constraint),
+// but an owner can now have many venues -- linked either by an automatic email/phone
+// match or an admin's manual "link to existing owner" choice at claim-approval time
+// (app/api/admin/claims/[id]/route.ts), never automatically from sharing a chainId.
+export const venueOwnerVenues = specialsSchema.table(
+  "venue_owner_venues",
   {
     id: serial("id").primaryKey(),
+    venueOwnerId: integer("venue_owner_id")
+      .notNull()
+      .references(() => venueOwners.id, { onDelete: "cascade" }),
     venueId: integer("venue_id")
       .notNull()
       .references(() => venues.id, { onDelete: "cascade" }),
-    email: text("email").notNull(),
-    name: text("name").notNull(),
-    phone: text("phone"),
-    // Separate from venues.unsubscribedAt, which gates cold outreach email -- an owner
-    // who already claimed their listing opting out of the weekly stats digest shouldn't
-    // silently also suppress a different email stream they never asked to stop.
-    weeklyDigestOptOut: boolean("weekly_digest_opt_out").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  // One owner per venue in this first phase -- no multi-location/multi-user accounts yet.
-  (table) => [uniqueIndex("venue_owners_venue_id_unique").on(table.venueId)]
+  (table) => [uniqueIndex("venue_owner_venues_venue_id_unique").on(table.venueId)]
 );
 
 // Magic-link session for an owner -- deliberately a DB-backed token lookup, not a stateless

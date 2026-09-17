@@ -1,4 +1,4 @@
-import { db, venues, venueOwners, regions } from "@/db";
+import { db, venues, venueOwners, venueOwnerVenues, regions } from "@/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { getRegionVenueWeeklyViews } from "@/lib/analytics";
 import { sendOutreachEmail } from "@/lib/outreach-email";
@@ -130,7 +130,8 @@ export async function sendWeeklyDigests(): Promise<void> {
         venueOwnerId: venueOwners.id,
       })
       .from(venues)
-      .innerJoin(venueOwners, eq(venueOwners.venueId, venues.id))
+      .innerJoin(venueOwnerVenues, eq(venueOwnerVenues.venueId, venues.id))
+      .innerJoin(venueOwners, eq(venueOwners.id, venueOwnerVenues.venueOwnerId))
       .where(
         and(
           eq(venues.regionId, region.id),

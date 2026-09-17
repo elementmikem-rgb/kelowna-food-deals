@@ -643,11 +643,13 @@ function DigestPreferenceToggle({ initialOptOut }: { initialOptOut: boolean }) {
 }
 
 export function OwnerDashboard({
+  venueId,
   specials,
   events,
   menuItems,
   weeklyDigestOptOut,
 }: {
+  venueId: number;
   specials: SpecialData[];
   events: EventData[];
   menuItems: MenuItemData[];
@@ -669,7 +671,7 @@ export function OwnerDashboard({
               const res = await fetch("/api/owner/specials", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ venueId, ...data }),
               });
               const body = await res.json();
               if (!res.ok) throw new Error(body.error ?? "Failed");
@@ -701,7 +703,7 @@ export function OwnerDashboard({
               const res = await fetch("/api/owner/events", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ venueId, ...data }),
               });
               const body = await res.json();
               if (!res.ok) throw new Error(body.error ?? "Failed");
@@ -733,7 +735,7 @@ export function OwnerDashboard({
               const res = await fetch("/api/owner/menu-items", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ venueId, ...data }),
               });
               const body = await res.json();
               if (!res.ok) throw new Error(body.error ?? "Failed");

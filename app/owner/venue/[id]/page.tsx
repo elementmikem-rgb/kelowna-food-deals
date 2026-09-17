@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db, venues, specials, events, menuItems, venueOwners } from "@/db";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
 
@@ -14,12 +15,16 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   if (!Number.isInteger(venueId)) notFound();
 
   const session = await getOwnerSessionFromCookies();
-  if (!session) redirect("/owner/login/expired");
-  // A logged-in owner only ever sees their own venue -- never trust the URL's id over
-  // the session's, same posture as every /api/owner/* route.
-  if (session.venueId !== venueId) redirect(`/owner/venue/${session.venueId}`);
+  if (!session || session.venueIds.length === 0) redirect("/owner/login/expired");
+  // A logged-in owner only ever sees venues in their own session's list -- never trust
+  // the URL's id alone, same posture as every /api/owner/* route.
+  if (!session.venueIds.includes(venueId)) redirect(`/owner/venue/${session.venueIds[0]}`);
 
-  const [venue] = await db.select({ id: venues.id, name: venues.name }).from(venues).where(eq(venues.id, venueId)).limit(1);
+  const ownedVenues = await db
+    .select({ id: venues.id, name: venues.name })
+    .from(venues)
+    .where(inArray(venues.id, session.venueIds));
+  const venue = ownedVenues.find((v) => v.id === venueId);
   if (!venue) notFound();
 
   const [owner] = await db
@@ -47,11 +52,29 @@ export default async function OwnerVenuePage({ params }: PageProps) {
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <header className="flex flex-col gap-1">
         <span className="stamp px-2 py-0.5 text-[10px] self-start">Owner</span>
+        {ownedVenues.length > 1 && (
+          <nav className="flex flex-wrap gap-1.5 -mt-1 mb-1">
+            {ownedVenues.map((v) => (
+              <Link
+                key={v.id}
+                href={`/owner/venue/${v.id}`}
+                className={`press-pill rounded-full border px-3 py-1 text-xs ${
+                  v.id === venueId
+                    ? "bg-accent text-background border-accent"
+                    : "border-border text-muted hover:border-muted hover:text-foreground"
+                }`}
+              >
+                {v.name}
+              </Link>
+            ))}
+          </nav>
+        )}
         <h1 className="font-display text-2xl sm:text-3xl text-foreground">{venue.name}</h1>
         <p className="text-sm text-muted">Manage your specials, events, and menu.</p>
       </header>
 
       <OwnerDashboard
+        venueId={venueId}
         specials={venueSpecials.map((s) => ({
           id: s.id,
           title: s.title,

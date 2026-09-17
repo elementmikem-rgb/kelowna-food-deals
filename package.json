@@ -14,6 +14,7 @@
     "test": "vitest run",
     "cron": "tsx --require ./scripts/env.cjs cron/index.ts",
     "seed": "tsx --require ./scripts/env.cjs scripts/seed-venues.ts",
+    "seed:chains": "tsx --require ./scripts/env.cjs scripts/seed-venue-chains.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, specials, specialCategory } from "@/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 
 const updateSchema = z.object({
@@ -34,12 +34,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   // venueId condition on the update itself is the ownership check -- never trust the
-  // id alone. A mismatched venueId means zero rows affected, not an error leaking
-  // whether the id exists at all.
+  // id alone. A venueId outside the session's owned list means zero rows affected, not
+  // an error leaking whether the id exists at all.
   const [updated] = await db
     .update(specials)
     .set({ ...parsed.data, lastVerifiedAt: new Date() })
-    .where(and(eq(specials.id, specialId), eq(specials.venueId, session.venueId)))
+    .where(and(eq(specials.id, specialId), inArray(specials.venueId, session.venueIds)))
     .returning({ id: specials.id });
 
   if (!updated) {
@@ -64,7 +64,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const [archived] = await db
     .update(specials)
     .set({ archivedAt: new Date() })
-    .where(and(eq(specials.id, specialId), eq(specials.venueId, session.venueId)))
+    .where(and(eq(specials.id, specialId), inArray(specials.venueId, session.venueIds)))
     .returning({ id: specials.id });
 
   if (!archived) {

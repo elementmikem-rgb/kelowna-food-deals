@@ -23,13 +23,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   }
 
   const session = await resolveOwnerToken(newToken);
-  if (!session) {
-    // Can't happen in practice (the token was just minted with a fresh expiry), but
-    // fail closed rather than redirect somewhere a cookie won't actually work.
+  if (!session || session.venueIds.length === 0) {
+    // Can't happen in practice (the token was just minted with a fresh expiry, tied to
+    // an owner that always has at least one linked venue), but fail closed rather than
+    // redirect somewhere a cookie won't actually work.
     return NextResponse.redirect(new URL("/owner/login/expired", SITE_URL));
   }
 
-  const res = NextResponse.redirect(new URL(`/owner/venue/${session.venueId}`, SITE_URL));
+  const res = NextResponse.redirect(new URL(`/owner/venue/${session.venueIds[0]}`, SITE_URL));
   // The redemption redirect itself still carries the (now-dead) URL token in its
   // Referer header on the next hop -- suppress it so it never leaves this response.
   res.headers.set("Referrer-Policy", "no-referrer");

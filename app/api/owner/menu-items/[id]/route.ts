@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, menuItems } from "@/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 
 const updateSchema = z.object({
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const [updated] = await db
     .update(menuItems)
     .set({ ...parsed.data, lastVerifiedAt: new Date() })
-    .where(and(eq(menuItems.id, itemId), eq(menuItems.venueId, session.venueId)))
+    .where(and(eq(menuItems.id, itemId), inArray(menuItems.venueId, session.venueIds)))
     .returning({ id: menuItems.id });
 
   if (!updated) {
@@ -57,7 +57,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const [archived] = await db
     .update(menuItems)
     .set({ archivedAt: new Date() })
-    .where(and(eq(menuItems.id, itemId), eq(menuItems.venueId, session.venueId)))
+    .where(and(eq(menuItems.id, itemId), inArray(menuItems.venueId, session.venueIds)))
     .returning({ id: menuItems.id });
 
   if (!archived) {

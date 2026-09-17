@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 
 const createSchema = z.object({
+  venueId: z.number().int().positive(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(1000).nullable(),
   eventType: z.enum(eventType),
@@ -27,8 +28,12 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
+  const { venueId, ...data } = parsed.data;
+  if (!session.venueIds.includes(venueId)) {
+    return NextResponse.json({ error: "not your venue" }, { status: 403 });
+  }
 
-  const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, session.venueId)).limit(1);
+  const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, venueId)).limit(1);
   if (!venue) {
     return NextResponse.json({ error: "venue not found" }, { status: 400 });
   }
@@ -36,9 +41,9 @@ export async function POST(req: NextRequest) {
   const [created] = await db
     .insert(events)
     .values({
-      venueId: session.venueId,
+      venueId,
       regionId: venue.regionId,
-      ...parsed.data,
+      ...data,
       sourceUrl: null,
       lastVerifiedAt: new Date(),
     })

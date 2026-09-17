@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 
 const createSchema = z.object({
+  venueId: z.number().int().positive(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(1000).nullable(),
   priceCents: z.number().int().nonnegative().nullable(),
@@ -14,8 +15,10 @@ const createSchema = z.object({
   category: z.enum(specialCategory),
 });
 
-// Every owner-created row is scoped to the session's own venueId, never a venueId from
-// the request body, and always written with sourceUrl: null -- the exact convention
+// Every owner-created row is scoped to a venueId the session actually owns -- never
+// trusted from the request body alone (moat layer 3: an owner can have several venues,
+// so the body must say which one, but membership in session.venueIds is what actually
+// authorizes it) -- and always written with sourceUrl: null, the exact convention
 // cron/upsert.ts's replaceVenueSpecials already treats as protected from the nightly
 // scrape overwrite (see the plan this shipped from: "Why sourceUrl: null is enough").
 export async function POST(req: NextRequest) {
@@ -30,8 +33,12 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
+  const { venueId, ...data } = parsed.data;
+  if (!session.venueIds.includes(venueId)) {
+    return NextResponse.json({ error: "not your venue" }, { status: 403 });
+  }
 
-  const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, session.venueId)).limit(1);
+  const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, venueId)).limit(1);
   if (!venue) {
     return NextResponse.json({ error: "venue not found" }, { status: 400 });
   }
@@ -39,9 +46,9 @@ export async function POST(req: NextRequest) {
   const [created] = await db
     .insert(specials)
     .values({
-      venueId: session.venueId,
+      venueId,
       regionId: venue.regionId,
-      ...parsed.data,
+      ...data,
       sourceUrl: null,
       lastVerifiedAt: new Date(),
     })

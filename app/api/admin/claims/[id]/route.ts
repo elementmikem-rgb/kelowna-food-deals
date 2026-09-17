@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, venueClaimRequests, venueOwners, venues } from "@/db";
-import { eq } from "drizzle-orm";
+import { db, venueClaimRequests, venueOwners, venueOwnerVenues, venues } from "@/db";
+import { eq, and, or, sql, isNotNull } from "drizzle-orm";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { createOwnerSession } from "@/lib/venue-owner-auth";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { wrapOutreachHtml } from "@/lib/outreach-send";
 import { getRegionById } from "@/lib/regions";
 
-const actionSchema = z.object({ action: z.enum(["approve", "reject"]) });
+// linkToOwnerId is the admin's manual "I know this is the same person" override (moat
+// layer 3) -- used for exactly the case an automatic email/phone match can't catch, e.g.
+// the same real owner running two unrelated-named venues with different contact details
+// on file. When present it skips the auto-match entirely.
+const actionSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+  linkToOwnerId: z.number().int().positive().optional(),
+});
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminAuthed(req))) {
@@ -51,6 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return {
         ok: true as const,
         venueOwnerId: null,
+        isNewOwner: false,
         venueId: claim.venueId,
         regionId: null,
         email: null,
@@ -66,11 +74,50 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return { ok: false as const, status: 409, error: "venue already claimed" };
     }
 
-    const [owner] = await tx
-      .insert(venueOwners)
-      .values({ venueId: claim.venueId, email: claim.email, name: claim.name, phone: claim.phone })
-      .returning({ id: venueOwners.id });
+    let ownerId: number;
+    let isNewOwner: boolean;
 
+    if (parsed.data.linkToOwnerId) {
+      const [existing] = await tx
+        .select({ id: venueOwners.id })
+        .from(venueOwners)
+        .where(eq(venueOwners.id, parsed.data.linkToOwnerId))
+        .limit(1);
+      if (!existing) return { ok: false as const, status: 400, error: "linkToOwnerId not found" };
+      ownerId = existing.id;
+      isNewOwner = false;
+    } else {
+      // Automatic match: same email (case-insensitive) or same phone -- a real
+      // independent owner often reuses one business phone across ventures even when
+      // the contact email differs per location. Never matches on phone alone when
+      // either side's phone is null, so two phoneless claims never collide.
+      const [matched] = await tx
+        .select({ id: venueOwners.id })
+        .from(venueOwners)
+        .where(
+          or(
+            sql`lower(${venueOwners.email}) = lower(${claim.email})`,
+            claim.phone
+              ? and(isNotNull(venueOwners.phone), eq(venueOwners.phone, claim.phone))
+              : sql`false`
+          )
+        )
+        .limit(1);
+
+      if (matched) {
+        ownerId = matched.id;
+        isNewOwner = false;
+      } else {
+        const [created] = await tx
+          .insert(venueOwners)
+          .values({ email: claim.email, name: claim.name, phone: claim.phone })
+          .returning({ id: venueOwners.id });
+        ownerId = created.id;
+        isNewOwner = true;
+      }
+    }
+
+    await tx.insert(venueOwnerVenues).values({ venueOwnerId: ownerId, venueId: claim.venueId });
     await tx.update(venues).set({ claimedAt: now }).where(eq(venues.id, claim.venueId));
     await tx
       .update(venueClaimRequests)
@@ -79,7 +126,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return {
       ok: true as const,
-      venueOwnerId: owner.id,
+      venueOwnerId: ownerId,
+      isNewOwner,
       venueId: claim.venueId,
       regionId: venue.regionId,
       email: claim.email,
@@ -100,10 +148,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const siteUrl = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
       const loginUrl = `${siteUrl}/owner/login/${token}`;
       const logoUrl = `${siteUrl}/icons/icon-192.png`;
-      const bodyHtml = `
+      // An owner who already has an account (matched or manually linked) doesn't need
+      // another "you're approved, here's your first login" pitch -- just tell them the
+      // new location was added, with a fresh link since they may not have an active
+      // session on this device.
+      const bodyHtml = outcome.isNewOwner
+        ? `
         <p>Your claim on <strong>${region.brandName}</strong> has been approved.</p>
         <p>Click below to log in and start managing your listing:</p>
         <p><a href="${loginUrl}" style="display:inline-block;background:#c14a1f;color:#fffaf0;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Log in to your listing</a></p>
+        <p style="font-size:13px;color:#6b654e;">This link works for 30 days.</p>
+      `
+        : `
+        <p>A new location has been added to your <strong>${region.brandName}</strong> account.</p>
+        <p><a href="${loginUrl}" style="display:inline-block;background:#c14a1f;color:#fffaf0;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Manage your listings</a></p>
         <p style="font-size:13px;color:#6b654e;">This link works for 30 days.</p>
       `;
       const footer = `${region.mailingAddress}`;
@@ -111,7 +169,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       try {
         await sendOutreachEmail({
           to: outcome.email,
-          subject: `You're approved — manage your ${region.brandName} listing`,
+          subject: outcome.isNewOwner
+            ? `You're approved — manage your ${region.brandName} listing`
+            : `New location added to your ${region.brandName} account`,
           htmlContent,
           senderName: region.brandName,
           replyTo: region.domain

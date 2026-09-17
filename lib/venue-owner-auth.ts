@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
-import { db, venueOwnerSessions, venueOwners } from "@/db";
+import { db, venueOwnerSessions, venueOwnerVenues } from "@/db";
 import { eq, and, gt } from "drizzle-orm";
 
 export const OWNER_COOKIE = "todaystab_owner_session";
@@ -23,19 +23,30 @@ export async function createOwnerSession(venueOwnerId: number): Promise<string> 
   return token;
 }
 
+// venueIds can be more than one -- moat layer 3 lets one owner account manage several
+// venues (a real chain owner, or an admin manually linking two unrelated-named venues
+// they know belong to the same person). Always resolved fresh from venueOwnerVenues,
+// never cached on the session token itself, so linking a new venue to an existing owner
+// takes effect on that owner's very next request with no re-login needed.
 export interface OwnerSession {
   venueOwnerId: number;
-  venueId: number;
+  venueIds: number[];
 }
 
 export async function resolveOwnerToken(token: string): Promise<OwnerSession | null> {
-  const [row] = await db
-    .select({ venueOwnerId: venueOwnerSessions.venueOwnerId, venueId: venueOwners.venueId })
+  const [session] = await db
+    .select({ venueOwnerId: venueOwnerSessions.venueOwnerId })
     .from(venueOwnerSessions)
-    .innerJoin(venueOwners, eq(venueOwners.id, venueOwnerSessions.venueOwnerId))
     .where(and(eq(venueOwnerSessions.token, token), gt(venueOwnerSessions.expiresAt, new Date())))
     .limit(1);
-  return row ?? null;
+  if (!session) return null;
+
+  const venueRows = await db
+    .select({ venueId: venueOwnerVenues.venueId })
+    .from(venueOwnerVenues)
+    .where(eq(venueOwnerVenues.venueOwnerId, session.venueOwnerId));
+
+  return { venueOwnerId: session.venueOwnerId, venueIds: venueRows.map((r) => r.venueId) };
 }
 
 // Consumes the magic-link token from the approval email one time: deletes its row and, if
