@@ -325,6 +325,14 @@ export async function replaceVenueMenuItems(
 // sourceUrls, deduped -- a plain array update rather than anything
 // per-element, since this only ever grows and is small (capped by
 // discoverVenueLinks' own MAX_DISCOVERED).
+// Every URL stored here gets fetched and fed into the extraction prompt on every
+// single nightly run, forever -- there's no per-URL expiry, so with no cap this array
+// only ever grows (confirmed live: one venue's site kept surfacing new individual
+// event pages each week and reached 34 stored URLs, most of them stale, before this
+// cap existed). Capped well above what a legitimate venue needs (website + menu +
+// a handful of specials/happy-hour/events pages) so real discovery still has room.
+export const MAX_VENUE_SOURCE_URLS = 10;
+
 export async function mergeVenueSourceUrls(venueId: number, newUrls: string[]): Promise<void> {
   if (newUrls.length === 0) return;
   const [venue] = await db
@@ -333,7 +341,10 @@ export async function mergeVenueSourceUrls(venueId: number, newUrls: string[]): 
     .where(eq(venues.id, venueId))
     .limit(1);
   if (!venue) return;
-  const merged = Array.from(new Set([...venue.sourceUrls, ...newUrls]));
+  // Once a venue is at the cap, stop discovering more rather than evicting an
+  // established (already-fetchable) URL to make room for an unproven new one.
+  if (venue.sourceUrls.length >= MAX_VENUE_SOURCE_URLS) return;
+  const merged = Array.from(new Set([...venue.sourceUrls, ...newUrls])).slice(0, MAX_VENUE_SOURCE_URLS);
   if (merged.length === venue.sourceUrls.length) return;
   await db.update(venues).set({ sourceUrls: merged }).where(eq(venues.id, venueId));
 }

@@ -10,6 +10,24 @@ const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
 // matching would miss it.
 const KEYWORD_RE = /special|happy[-\s]?hour|promo|deal|event|calendar|whats?-?on|menu/i;
 
+// A venue's own event CALENDAR/listing page ("/events", "/whats-on") is exactly what
+// discovery should find -- but a lot of site builders (Squarespace's "/event-details/"
+// block is the most common) give every INDIVIDUAL event, past or upcoming, its own
+// permanent sub-page under that same section, and those never expire once the event has
+// happened. Because "event" alone satisfies KEYWORD_RE, every one of those detail pages
+// looked like a valid candidate, and with no pruning anywhere downstream (see
+// mergeVenueSourceUrls) they only ever accumulated -- one real venue reached 34 stored
+// URLs, most of them years-old one-off events, all still being fetched every single
+// night. A detail page is identified by having a further path segment under the
+// event(s) root; the bare root itself ("/events", "/events/", "/event-details") is
+// still a legitimate listing page and stays eligible.
+const EVENT_DETAIL_PAGE_RE = /\/events?(-details)?\/[^/]+/i;
+
+// If a URL also matches a stronger keyword (an actual happy-hour/menu/special page
+// that just happens to live under an events section), don't exclude it on the event-
+// detail heuristic alone.
+const STRONG_KEYWORD_RE = /special|happy[-\s]?hour|promo|deal|menu/i;
+
 // Platforms we already know need a logged-in, manually-driven session (see
 // the claude-in-chrome sweep) -- not something this unattended nightly
 // fetch can read, so don't bother storing them as scrape targets.
@@ -54,7 +72,7 @@ function toAbsolute(raw: string, origin: string): string | null {
 // completely different domain (e.g. Browns Socialhouse's own "Social Hour"
 // menu lives at browns.xdineapp.com, not brownssocialhouse.com). Restricting
 // to same-origin would silently miss exactly the pages we're looking for.
-function isCandidate(
+export function isCandidate(
   absUrl: string,
   linkText: string,
   origin: string,
@@ -68,7 +86,11 @@ function isCandidate(
   }
   if (requireSameOrigin && u.origin !== origin) return false;
   if (SKIP_DOMAINS.test(u.href)) return false;
-  return KEYWORD_RE.test(u.pathname) || KEYWORD_RE.test(linkText);
+  if (!KEYWORD_RE.test(u.pathname) && !KEYWORD_RE.test(linkText)) return false;
+  if (EVENT_DETAIL_PAGE_RE.test(u.pathname) && !STRONG_KEYWORD_RE.test(u.pathname) && !STRONG_KEYWORD_RE.test(linkText)) {
+    return false;
+  }
+  return true;
 }
 
 async function fromSitemap(origin: string): Promise<string[]> {
