@@ -52,3 +52,6 @@ backups/
 
 # git worktrees for isolated feature work
 .worktrees/
+
+# throwaway working data (region-launch venue seed dumps, etc.) -- not source
+/scratch/

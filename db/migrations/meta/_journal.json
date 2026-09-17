@@ -239,6 +239,83 @@
       "when": 1789052827774,
       "tag": "0033_yellow_the_hood",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789272803252,
+      "tag": "0034_fine_alex_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1789273513406,
+      "tag": "0035_clear_red_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789275841786,
+      "tag": "0036_serious_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789276068239,
+      "tag": "0037_long_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789323644345,
+      "tag": "0038_keen_mikhail_rasputin",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1789394984354,
+      "tag": "0039_known_johnny_blaze",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1789567724148,
+      "tag": "0040_chubby_landau",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1789570844810,
+      "tag": "0041_dashing_morph",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1789571919765,
+      "tag": "0042_foamy_dark_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1789572030129,
+      "tag": "0043_brave_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1789654313100,
+      "tag": "0044_hot_sinister_six",
+      "breakpoints": true
     }
   ]
 }

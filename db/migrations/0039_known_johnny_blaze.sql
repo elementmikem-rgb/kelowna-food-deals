@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."regions" ADD COLUMN "language" text DEFAULT 'en' NOT NULL;

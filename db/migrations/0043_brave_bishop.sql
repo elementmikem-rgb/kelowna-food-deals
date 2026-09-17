@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."extraction_batch_items" ADD COLUMN "page_text_haystack" text NOT NULL;
