@@ -39,7 +39,10 @@ export function parseCoverCharge(description: string): number | null {
 }
 
 // Some CMSes double-encode entities (e.g. a literal "&ndash;" survives
-// cheerio's normal decoding), so decode common ones a second pass.
+// cheerio's normal decoding), so decode common ones a second pass. Numeric
+// character references (e.g. "&#8211;", seen live in 604Now's own REST API
+// title field -- WordPress's REST layer doesn't always fully decode these
+// before returning JSON) get a generic decode too, not just the named ones.
 export function decodeEntities(text: string): string {
   return text
     .replace(/&ndash;/g, "–")
@@ -49,7 +52,9 @@ export function decodeEntities(text: string): string {
     .replace(/&rdquo;/g, "”")
     .replace(/&ldquo;/g, "“")
     .replace(/&amp;/g, "&")
-    .replace(/&nbsp;/g, " ");
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
 }
 
 export function pacificToday(): Date {

@@ -6,10 +6,22 @@ import { classifyEventType, parseCoverCharge, decodeEntities } from "./eventClas
 
 const SOURCE_TAG = "source:nowmedia";
 
-// Both kelownafooddeals.shop's Kelowna and Penticton regions have a NowMedia
-// "...Now.com" local news site with an identical events platform (same URL
-// shape, same category taxonomy) -- one shared scraper, one row per site,
-// rather than a bespoke scraper per region.
+// NowMedia's "...Now.com" network runs an identical events platform (same
+// URL shape, same category taxonomy) across every site it operates -- one
+// shared scraper, one row per site, rather than a bespoke scraper per
+// region. Confirmed live 2026-09-12 before adding Kamloops/Victoria: fetched
+// each site's /events/ page directly and matched real dated event listing
+// URLs against the same regex this scraper already parses (not just a
+// domain-name guess). kamloopsnow.com 301s to kamloopsbcnow.com -- using the
+// canonical domain directly avoids that extra hop on every run.
+//
+// Checked and deliberately NOT added: vancouvernow.com resolves to the
+// NowCities parent-company landing page ("NowCities | Stuff that Matters"),
+// not a real localized site with its own event content -- and there is no
+// NowMedia-network equivalent for the rest of the Lower Mainland/Fraser
+// Valley at all (that market's local news is Black Press's Surrey Now-Leader
+// and Fraser Valley Current, unrelated companies on unrelated platforms this
+// scraper can't parse).
 interface NowMediaSite {
   regionSlug: string;
   baseUrl: string;
@@ -17,6 +29,8 @@ interface NowMediaSite {
 const SITES: NowMediaSite[] = [
   { regionSlug: "kelowna", baseUrl: "https://www.kelownanow.com" },
   { regionSlug: "penticton", baseUrl: "https://www.pentictonnow.com" },
+  { regionSlug: "kamloops", baseUrl: "https://www.kamloopsbcnow.com" },
+  { regionSlug: "victoria", baseUrl: "https://www.victorianow.com" },
 ];
 
 // Nightlife-adjacent only, same spirit as Castanet's own category allowlist --

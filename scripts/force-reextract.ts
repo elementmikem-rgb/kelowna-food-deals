@@ -12,14 +12,37 @@ import { normalizeText, hashText } from "../cron/hash";
 import { extractVenueContent } from "../cron/extract";
 import { getActiveVenues, logScrapeRun, replaceVenueSpecials, replaceVenueEvents } from "../cron/upsert";
 import { db, regions } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
-const TOKEN_CEILING = 200_000;
+const TOKEN_CEILING = Number(process.env.FORCE_REEXTRACT_TOKEN_CEILING ?? 200_000);
+
+// Same scoping convention as cron/index.ts's CRON_REGIONS -- this script
+// re-extracts EVERY active venue on the whole platform if left unscoped,
+// which is exactly the kind of unscoped full-platform run CRON_ALLOW_FULL_SWEEP
+// exists to prevent for the normal nightly cron. This script is a separate
+// entry point that bypasses that guard entirely, so it needs its own: refuse
+// to run without FORCE_REEXTRACT_REGIONS unless FORCE_REEXTRACT_ALLOW_ALL=1
+// is explicitly set.
+const REGIONS_FILTER = process.env.FORCE_REEXTRACT_REGIONS
+  ? process.env.FORCE_REEXTRACT_REGIONS.split(",").map((s) => s.trim()).filter(Boolean)
+  : null;
+const ALLOW_ALL = process.env.FORCE_REEXTRACT_ALLOW_ALL === "1";
 
 async function main() {
-  // Loops over every active region, same as cron/index.ts's runScrapeCycle,
-  // since getActiveVenues is now region-scoped.
-  const activeRegions = await db.select().from(regions).where(eq(regions.active, true));
+  if (!REGIONS_FILTER && !ALLOW_ALL) {
+    throw new Error(
+      "Refusing to force-reextract every region on the platform.\n" +
+        "  - To scope this run to specific regions: FORCE_REEXTRACT_REGIONS=slug1,slug2 npx tsx scripts/force-reextract.ts\n" +
+        "  - To deliberately re-extract every active region: FORCE_REEXTRACT_ALLOW_ALL=1 npx tsx scripts/force-reextract.ts"
+    );
+  }
+  if (REGIONS_FILTER) {
+    console.log(`FORCE_REEXTRACT_REGIONS set -- scoping this run to: ${REGIONS_FILTER.join(", ")}`);
+  }
+
+  const activeRegions = REGIONS_FILTER
+    ? await db.select().from(regions).where(inArray(regions.slug, REGIONS_FILTER))
+    : await db.select().from(regions).where(eq(regions.active, true));
 
   let ok = 0;
   let failed = 0;
@@ -49,7 +72,16 @@ async function main() {
         : await fetchAndExtractText(url);
       if (!fetched.ok) {
         console.error(`[${venue.name}] fetch failed: ${fetched.error}`);
-        await logScrapeRun({ venueId: venue.id, contentHash: null, changed: false, tokensUsed: 0, error: fetched.error });
+        await logScrapeRun({
+          venueId: venue.id,
+          contentHash: null,
+          changed: false,
+          tokensUsed: 0,
+          cacheCreationTokens: 0,
+          cacheReadTokens: 0,
+          outputTokens: 0,
+          error: fetched.error,
+        });
         failed++;
         continue;
       }
@@ -58,10 +90,20 @@ async function main() {
       const hash = hashText(normalized);
 
       try {
-        const { specials, events, tokensUsed } = await extractVenueContent(normalized);
+        const { specials, events, tokensUsed, cacheCreationTokens, cacheReadTokens, outputTokens } =
+          await extractVenueContent(normalized, true);
         await replaceVenueSpecials(venue.id, region.id, url, specials);
         await replaceVenueEvents(venue.id, region.id, url, events);
-        await logScrapeRun({ venueId: venue.id, contentHash: hash, changed: true, tokensUsed, error: null });
+        await logScrapeRun({
+          venueId: venue.id,
+          contentHash: hash,
+          changed: true,
+          tokensUsed,
+          cacheCreationTokens,
+          cacheReadTokens,
+          outputTokens,
+          error: null,
+        });
         totalTokens += tokensUsed;
         ok++;
         console.log(
@@ -70,7 +112,16 @@ async function main() {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         console.error(`[${venue.name}] extraction failed: ${message}`);
-        await logScrapeRun({ venueId: venue.id, contentHash: hash, changed: true, tokensUsed: 0, error: `extraction failed: ${message}` });
+        await logScrapeRun({
+          venueId: venue.id,
+          contentHash: hash,
+          changed: true,
+          tokensUsed: 0,
+          cacheCreationTokens: 0,
+          cacheReadTokens: 0,
+          outputTokens: 0,
+          error: `extraction failed: ${message}`,
+        });
         failed++;
       }
     }

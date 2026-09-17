@@ -1,11 +1,73 @@
 import * as cheerio from "cheerio";
 import { PDFParse } from "pdf-parse";
 import robotsParser from "robots-parser";
+import { lookup as dnsLookup } from "dns/promises";
+import { isIP } from "net";
 import { rateLimit } from "./rateLimit";
+import { transcribeImageText } from "./vision";
 
 // kelownaspecials.com is NXDOMAIN — a venue operator checking their access
 // logs needs an identifier that actually resolves.
 const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
+
+// SSRF guard for image URLs pulled out of a venue's OWN page content --
+// unlike venue.website/menuUrl (typed in by Mike when seeding a venue),
+// an <img src> is third-party input: any venue site (compromised, or just
+// misconfigured) could point one at an internal service or a cloud metadata
+// endpoint, and this server would fetch it. Same-origin-only narrows this a
+// lot (a real promo image is basically always hosted on the venue's own
+// domain), and the IP-range check below stops the DNS-rebinding case where
+// that same domain resolves to something internal anyway.
+function isPrivateOrReservedIp(ip: string): boolean {
+  if (isIP(ip) === 4) {
+    const octets = ip.split(".").map(Number);
+    const [a, b] = octets;
+    return (
+      a === 10 ||
+      a === 127 ||
+      a === 0 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    );
+  }
+  if (isIP(ip) === 6) {
+    const lower = ip.toLowerCase();
+    return (
+      lower === "::1" ||
+      lower.startsWith("fc") ||
+      lower.startsWith("fd") ||
+      lower.startsWith("fe8") ||
+      lower.startsWith("fe9") ||
+      lower.startsWith("fea") ||
+      lower.startsWith("feb") ||
+      lower.startsWith("::ffff:127.") ||
+      lower.startsWith("::ffff:10.") ||
+      lower.startsWith("::ffff:169.254.")
+    );
+  }
+  return false;
+}
+
+async function isSafeImageUrl(imgUrl: string, pageUrl: string): Promise<boolean> {
+  let url: URL;
+  let page: URL;
+  try {
+    url = new URL(imgUrl);
+    page = new URL(pageUrl);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  if (url.hostname !== page.hostname) return false;
+  try {
+    const addresses = await dnsLookup(url.hostname, { all: true });
+    if (addresses.some((a) => isPrivateOrReservedIp(a.address))) return false;
+  } catch {
+    return false; // unresolvable host -- don't fetch it
+  }
+  return true;
+}
 
 const robotsCache = new Map<string, ReturnType<typeof robotsParser> | null>();
 
@@ -42,8 +104,87 @@ export async function isAllowedByRobots(url: string): Promise<boolean> {
 }
 
 export type FetchResult =
-  | { ok: true; text: string }
+  | { ok: true; text: string; tokensUsed: number }
   | { ok: false; error: string };
+
+// Same ceiling vision.ts enforces post-download -- checked here first, off
+// the Content-Length header, so a venue with a genuinely huge promo image
+// doesn't cost a full download (and rate-limit slot) for a call that would
+// just get rejected afterward anyway.
+const MAX_IMAGE_DOWNLOAD_BYTES = 5 * 1024 * 1024;
+
+function exceedsMaxImageSize(res: Response): boolean {
+  const len = res.headers.get("content-length");
+  return len !== null && Number(len) > MAX_IMAGE_DOWNLOAD_BYTES;
+}
+
+// A venue's own promo graphic/flyer only ever shows up as an <img> tag --
+// cheerio's .text() pass has nothing to extract from that node, so this
+// content was invisible to the pipeline until image transcription existed
+// (see ./vision.ts). Mirrors discover.ts's KEYWORD_RE but kept as its own
+// copy here rather than imported: discover.ts already imports from this
+// file, and importing back from discover.ts would create a cycle.
+const PROMO_IMAGE_KEYWORD_RE = /special|happy[-\s]?hour|promo|deal|menu/i;
+const MAX_IMAGES_PER_PAGE = 2;
+
+async function transcribePromoImages(
+  $: cheerio.CheerioAPI,
+  pageUrl: string
+): Promise<{ text: string; tokensUsed: number }> {
+  let origin: string;
+  try {
+    origin = new URL(pageUrl).origin;
+  } catch {
+    return { text: "", tokensUsed: 0 };
+  }
+
+  const candidates: string[] = [];
+  $("img[src]").each((_, el) => {
+    if (candidates.length >= MAX_IMAGES_PER_PAGE) return;
+    const src = $(el).attr("src") ?? "";
+    const alt = $(el).attr("alt") ?? "";
+    if (!PROMO_IMAGE_KEYWORD_RE.test(src) && !PROMO_IMAGE_KEYWORD_RE.test(alt)) return;
+    try {
+      candidates.push(new URL(src, origin).toString());
+    } catch {
+      /* unparseable src -- skip */
+    }
+  });
+
+  let combinedText = "";
+  let tokensUsed = 0;
+  for (const imgUrl of candidates) {
+    if (!(await isSafeImageUrl(imgUrl, pageUrl))) {
+      console.warn(`[${imgUrl}] skipped promo image transcription: not a same-origin public URL`);
+      continue;
+    }
+    try {
+      await rateLimit();
+      // redirect: "manual" -- a redirect target hasn't been through the
+      // same-origin/private-IP check above, so silently following one would
+      // undo it. Losing an occasional legitimately-redirected image is an
+      // acceptable tradeoff for a minor content-enrichment feature.
+      const res = await fetch(imgUrl, { headers: { "User-Agent": USER_AGENT }, redirect: "manual" });
+      if (!res.ok) continue;
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.startsWith("image/")) continue;
+      if (exceedsMaxImageSize(res)) {
+        console.warn(`[${imgUrl}] skipped promo image transcription: exceeds ${MAX_IMAGE_DOWNLOAD_BYTES} byte limit`);
+        continue;
+      }
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const result = await transcribeImageText(buffer, contentType, imgUrl);
+      if (!result) continue;
+      tokensUsed += result.tokensUsed;
+      if (result.text) {
+        combinedText += `\n=== IMAGE: ${imgUrl} ===\n${result.text}\n`;
+      }
+    } catch {
+      // One bad image (dead link, corrupt file) shouldn't fail the whole page.
+    }
+  }
+  return { text: combinedText, tokensUsed };
+}
 
 export async function fetchAndExtractText(url: string): Promise<FetchResult> {
   const allowed = await isAllowedByRobots(url);
@@ -68,11 +209,28 @@ export async function fetchAndExtractText(url: string): Promise<FetchResult> {
       const parser = new PDFParse({ data: buffer });
       const parsed = await parser.getText();
       await parser.destroy();
-      return { ok: true, text: parsed.text };
+      return { ok: true, text: parsed.text, tokensUsed: 0 };
+    }
+
+    // A venue whose menuUrl/sourceUrls points directly at an image file
+    // (not a page that happens to contain one) -- transcribe it directly
+    // instead of falling through to cheerio, which would just turn the raw
+    // image bytes into garbage text.
+    if (contentType.startsWith("image/")) {
+      if (exceedsMaxImageSize(res)) {
+        return { ok: false, error: `image exceeds ${MAX_IMAGE_DOWNLOAD_BYTES} byte limit` };
+      }
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const result = await transcribeImageText(buffer, contentType, url);
+      if (!result) {
+        return { ok: false, error: "image transcription failed" };
+      }
+      return { ok: true, text: result.text, tokensUsed: result.tokensUsed };
     }
 
     const html = await res.text();
     const $ = cheerio.load(html);
+    const { text: imageText, tokensUsed } = await transcribePromoImages($, url);
     $("script, style, noscript, svg, nav, footer").remove();
     // cheerio's .text() concatenates text nodes with no separator, so
     // adjacent block elements run together ("DRINKS" + "HOUSE BEER" becomes
@@ -82,7 +240,7 @@ export async function fetchAndExtractText(url: string): Promise<FetchResult> {
       "\n"
     );
     const text = $("body").text();
-    return { ok: true, text };
+    return { ok: true, text: text + imageText, tokensUsed };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
@@ -142,7 +300,7 @@ export async function fetchAndExtractTextViaBrowser(url: string): Promise<FetchR
       document.querySelectorAll("script, style, noscript, svg, nav, footer").forEach((el) => el.remove());
       return document.body.innerText;
     });
-    return { ok: true, text };
+    return { ok: true, text, tokensUsed: 0 };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   } finally {

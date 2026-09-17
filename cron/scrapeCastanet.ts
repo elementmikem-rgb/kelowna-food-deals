@@ -1,9 +1,10 @@
 import * as cheerio from "cheerio";
 import { db, events, venues } from "@/db";
-import { eq, like, isNotNull, and } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { isAllowedByRobots } from "./fetch";
 import { rateLimit } from "./rateLimit";
 import { classifyEventType, parseCoverCharge, decodeEntities, pacificToday } from "./eventClassify";
+import { buildRegionCityMatchers, matchRegionForLocation } from "./regionMatch";
 
 const SOURCE_TAG = "source:castanet";
 const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
@@ -18,53 +19,6 @@ const ALLOWED_CATEGORIES = new Set([
   "wineries/breweries",
   "dances/parties",
 ]);
-
-// One matcher per active region, built from that region's own active venues'
-// city names (e.g. Kelowna -> kelowna/west kelowna/peachland/lake country;
-// Penticton -> penticton/naramata/oliver/osoyoos/summerland) -- not a single
-// hardcoded list, so a Castanet event gets attributed to whichever region it's
-// actually in, and a newly added satellite town is picked up automatically the
-// next time this runs, with no code change needed.
-async function buildRegionCityMatchers(): Promise<Map<number, RegExp>> {
-  const rows = await db
-    .selectDistinct({ regionId: venues.regionId, city: venues.city })
-    .from(venues)
-    .where(and(eq(venues.active, true), isNotNull(venues.city)));
-
-  const citiesByRegion = new Map<number, Set<string>>();
-  for (const row of rows) {
-    if (!row.city) continue;
-    const set = citiesByRegion.get(row.regionId) ?? new Set<string>();
-    set.add(row.city.toLowerCase());
-    citiesByRegion.set(row.regionId, set);
-  }
-
-  const matchers = new Map<number, RegExp>();
-  for (const [regionId, cities] of citiesByRegion) {
-    if (cities.size === 0) continue;
-    const escaped = Array.from(cities).map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    matchers.set(regionId, new RegExp(`\\b(${escaped.join("|")})\\b`, "i"));
-  }
-  return matchers;
-}
-
-// Ambiguous (matches more than one region, which shouldn't happen given the
-// two regions' city sets don't overlap today) or unmatched (a location Castanet
-// listed that isn't any tracked region's city, e.g. Vernon) both return null --
-// skip the event rather than guess.
-function matchRegionForLocation(
-  locationLine: string,
-  matchers: Map<number, RegExp>
-): number | null {
-  let matched: number | null = null;
-  for (const [regionId, re] of matchers) {
-    if (re.test(locationLine)) {
-      if (matched !== null) return null;
-      matched = regionId;
-    }
-  }
-  return matched;
-}
 
 const MONTHS: Record<string, number> = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,

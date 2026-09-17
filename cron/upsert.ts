@@ -1,4 +1,4 @@
-import { db, specials, events, menuItems, scrapeRuns, venues } from "@/db";
+import { db, specials, events, menuItems, scrapeRuns, venues, extractionBatches, extractionBatchItems } from "@/db";
 import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { ExtractedSpecial, ExtractedEvent, ExtractedMenuItem } from "./extract";
 import { pacificTodayISODate } from "@/lib/time";
@@ -343,6 +343,9 @@ export async function logScrapeRun(row: {
   contentHash: string | null;
   changed: boolean;
   tokensUsed: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  outputTokens: number;
   error: string | null;
 }): Promise<void> {
   await db.insert(scrapeRuns).values(row);
@@ -369,6 +372,10 @@ export async function getActiveVenues(regionId: number) {
       menuUrl: venues.menuUrl,
       sourceUrls: venues.sourceUrls,
       requiresBrowser: venues.requiresBrowser,
+      claimedAt: venues.claimedAt,
+      // Used by cron/index.ts's CRON_NEVER_SCRAPED_ONLY filter -- a brand-new region
+      // launch only needs this subset, not a re-check of every already-known venue.
+      neverScraped: sql<boolean>`${lastRun.ranAt} is null`,
     })
     .from(venues)
     .leftJoin(lastRun, eq(venues.id, lastRun.venueId))
@@ -386,6 +393,131 @@ export async function getLastContentHash(venueId: number): Promise<string | null
     .orderBy(desc(scrapeRuns.ranAt))
     .limit(1);
   return rows[0]?.contentHash ?? null;
+}
+
+// A menu changes far less often than daily specials/events, but every "content changed"
+// night used to re-ask the model to re-extract the full a-la-carte menu anyway -- for a
+// venue with a big menu, that's a large, mostly-identical chunk of output tokens paid
+// again for no real freshness gain. Menu items only get asked for again once this returns
+// false: never extracted before, or last extraction older than the cadence -- see
+// MENU_ITEMS_RECHECK_DAYS in cron/index.ts for the current interval.
+export async function hasFreshMenuItems(venueId: number, days: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: menuItems.id })
+    .from(menuItems)
+    .where(
+      and(
+        eq(menuItems.venueId, venueId),
+        isNull(menuItems.archivedAt),
+        sql`${menuItems.lastVerifiedAt} > now() - (${days} || ' days')::interval`
+      )
+    )
+    .limit(1);
+  return !!row;
+}
+
+export interface PendingBatchItem {
+  id: number;
+  venueId: number;
+  regionId: number;
+  customId: string;
+  sourceUrl: string;
+  contentHash: string;
+  includeMenuItems: boolean;
+  fetchTokens: number;
+  pageTextHaystack: string;
+}
+
+export interface PendingBatch {
+  id: number;
+  anthropicBatchId: string;
+  regionId: number;
+  items: PendingBatchItem[];
+}
+
+// Every batch still awaiting results, oldest first -- checked at the start of every cron
+// run (cron/index.ts) so a batch submitted by last night's run gets its results applied
+// (or, if it's aged out, gets marked failed) before this run submits anything new.
+export async function getPendingExtractionBatches(): Promise<PendingBatch[]> {
+  const batches = await db
+    .select({ id: extractionBatches.id, anthropicBatchId: extractionBatches.anthropicBatchId, regionId: extractionBatches.regionId })
+    .from(extractionBatches)
+    .where(eq(extractionBatches.status, "pending"))
+    .orderBy(extractionBatches.createdAt);
+  if (batches.length === 0) return [];
+
+  const items = await db
+    .select({
+      id: extractionBatchItems.id,
+      batchId: extractionBatchItems.batchId,
+      venueId: extractionBatchItems.venueId,
+      regionId: extractionBatchItems.regionId,
+      customId: extractionBatchItems.customId,
+      sourceUrl: extractionBatchItems.sourceUrl,
+      contentHash: extractionBatchItems.contentHash,
+      includeMenuItems: extractionBatchItems.includeMenuItems,
+      fetchTokens: extractionBatchItems.fetchTokens,
+      pageTextHaystack: extractionBatchItems.pageTextHaystack,
+    })
+    .from(extractionBatchItems)
+    .where(
+      and(
+        inArray(extractionBatchItems.batchId, batches.map((b) => b.id)),
+        eq(extractionBatchItems.status, "pending")
+      )
+    );
+
+  const itemsByBatch = new Map<number, PendingBatchItem[]>();
+  for (const item of items) {
+    const list = itemsByBatch.get(item.batchId) ?? [];
+    list.push(item);
+    itemsByBatch.set(item.batchId, list);
+  }
+
+  return batches.map((b) => ({ ...b, items: itemsByBatch.get(b.id) ?? [] }));
+}
+
+export async function createExtractionBatch(
+  anthropicBatchId: string,
+  regionId: number,
+  items: Omit<PendingBatchItem, "id">[]
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [batch] = await tx
+      .insert(extractionBatches)
+      .values({ anthropicBatchId, regionId })
+      .returning({ id: extractionBatches.id });
+    if (items.length > 0) {
+      await tx.insert(extractionBatchItems).values(
+        items.map((item) => ({
+          batchId: batch.id,
+          venueId: item.venueId,
+          regionId: item.regionId,
+          customId: item.customId,
+          sourceUrl: item.sourceUrl,
+          contentHash: item.contentHash,
+          includeMenuItems: item.includeMenuItems,
+          fetchTokens: item.fetchTokens,
+          pageTextHaystack: item.pageTextHaystack,
+        }))
+      );
+    }
+  });
+}
+
+export async function markExtractionBatchItemDone(itemId: number, status: "applied" | "failed", error?: string): Promise<void> {
+  await db.update(extractionBatchItems).set({ status, error: error ?? null }).where(eq(extractionBatchItems.id, itemId));
+}
+
+// Called once every item in the batch has been applied or failed -- "failed" here means
+// the whole batch itself was unusable (expired, canceled), not that every item failed
+// individually; a mix of applied/failed items still marks the batch "applied" since the
+// successful items' results were written.
+export async function markExtractionBatchResolved(batchId: number, status: "applied" | "failed"): Promise<void> {
+  await db
+    .update(extractionBatches)
+    .set({ status, resolvedAt: new Date() })
+    .where(eq(extractionBatches.id, batchId));
 }
 
 // A month-limited special (isMonthly with a known monthlyThroughDate, e.g. a venue's
