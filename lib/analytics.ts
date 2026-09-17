@@ -272,3 +272,37 @@ export async function getAnalyticsStats(
     },
   };
 }
+
+// A venue detail pageview's own `page` column is always exactly
+// "/{regionSlug}/venues/{id}" with no further segments (confirmed against
+// AnalyticsTracker.tsx and the venue page's own route) -- the trailing anchor on
+// \d+ is what excludes the venue's own /claim sub-page and anything else nested
+// under it, without needing a venue foreign key on analytics_events at all.
+export const VENUE_DETAIL_PAGE_RE = "/venues/[0-9]+$";
+
+// One query per region per call (this week, last week -- called twice by the digest
+// builder), not one per venue: cheap regardless of how many claimed venues a region has.
+export async function getRegionVenueWeeklyViews(
+  regionId: number,
+  from: Date,
+  to: Date
+): Promise<Map<number, number>> {
+  const rows = await db
+    .select({
+      venueId: sql<number>`substring(${analyticsEvents.page} from '/venues/([0-9]+)$')::int`,
+      views: sql<number>`count(*)::int`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.eventType, "pageview"),
+        eq(analyticsEvents.regionId, regionId),
+        sql`${analyticsEvents.page} ~ ${VENUE_DETAIL_PAGE_RE}`,
+        gte(analyticsEvents.createdAt, from),
+        lt(analyticsEvents.createdAt, to)
+      )
+    )
+    .groupBy(sql`1`);
+
+  return new Map(rows.map((r) => [r.venueId, r.views]));
+}

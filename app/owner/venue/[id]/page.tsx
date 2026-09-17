@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems } from "@/db";
+import { db, venues, specials, events, menuItems, venueOwners } from "@/db";
 import { and, eq, isNull } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
@@ -21,6 +21,12 @@ export default async function OwnerVenuePage({ params }: PageProps) {
 
   const [venue] = await db.select({ id: venues.id, name: venues.name }).from(venues).where(eq(venues.id, venueId)).limit(1);
   if (!venue) notFound();
+
+  const [owner] = await db
+    .select({ weeklyDigestOptOut: venueOwners.weeklyDigestOptOut })
+    .from(venueOwners)
+    .where(eq(venueOwners.id, session.venueOwnerId))
+    .limit(1);
 
   const [venueSpecials, venueEvents, venueMenuItems] = await Promise.all([
     db
@@ -73,6 +79,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
           description: m.description,
           priceCents: m.priceCents,
         }))}
+        weeklyDigestOptOut={owner?.weeklyDigestOptOut ?? false}
       />
     </div>
   );

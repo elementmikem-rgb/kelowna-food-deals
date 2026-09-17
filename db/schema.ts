@@ -177,6 +177,10 @@ export const venueOwners = specialsSchema.table(
     email: text("email").notNull(),
     name: text("name").notNull(),
     phone: text("phone"),
+    // Separate from venues.unsubscribedAt, which gates cold outreach email -- an owner
+    // who already claimed their listing opting out of the weekly stats digest shouldn't
+    // silently also suppress a different email stream they never asked to stop.
+    weeklyDigestOptOut: boolean("weekly_digest_opt_out").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   // One owner per venue in this first phase -- no multi-location/multi-user accounts yet.

@@ -3,6 +3,7 @@ import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
+import { sendWeeklyDigests } from "@/lib/weekly-digest";
 import { normalizeText, hashText } from "./hash";
 import { syncBookings } from "./booking-sync";
 import { extractVenueContent, truncatePageText } from "./extract";
@@ -626,6 +627,15 @@ async function main() {
 
   try {
     await runScrapeCycle();
+
+    // Monday: recaps the prior Mon-Sun week, a natural "start of week" framing. Runs
+    // once per cron invocation, independent of CRON_REGIONS_FILTER -- which regions a
+    // given night's scrape happens to be scoped to has nothing to do with which
+    // claimed venues are due a digest.
+    if (new Date().getDay() === 1) {
+      console.log("Monday -- sending weekly owner digests...");
+      await sendWeeklyDigests();
+    }
   } finally {
     await db.execute(sql`select pg_advisory_unlock(${CRON_LOCK_KEY})`);
   }

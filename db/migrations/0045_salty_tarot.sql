@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venue_owners" ADD COLUMN "weekly_digest_opt_out" boolean DEFAULT false NOT NULL;

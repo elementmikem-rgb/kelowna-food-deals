@@ -607,14 +607,51 @@ const emptyEvent: Omit<EventData, "id"> = {
 
 const emptyMenuItem: Omit<MenuItemData, "id"> = { name: "", description: null, priceCents: null };
 
+function DigestPreferenceToggle({ initialOptOut }: { initialOptOut: boolean }) {
+  const [optOut, setOptOut] = useState(initialOptOut);
+  const [saving, setSaving] = useState(false);
+
+  async function toggle() {
+    const next = !optOut;
+    setSaving(true);
+    const res = await fetch("/api/owner/digest-preference", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ optOut: next }),
+    });
+    if (res.ok) setOptOut(next);
+    setSaving(false);
+  }
+
+  return (
+    <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-medium text-foreground/90">Weekly stats email</span>
+        <span className="text-xs text-muted">
+          {optOut ? "Off — you won't get weekly view stats." : "On — a weekly summary of your listing's views."}
+        </span>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={saving}
+        className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+      >
+        {optOut ? "Turn on" : "Turn off"}
+      </button>
+    </section>
+  );
+}
+
 export function OwnerDashboard({
   specials,
   events,
   menuItems,
+  weeklyDigestOptOut,
 }: {
   specials: SpecialData[];
   events: EventData[];
   menuItems: MenuItemData[];
+  weeklyDigestOptOut: boolean;
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
@@ -717,6 +754,8 @@ export function OwnerDashboard({
           />
         ))}
       </SectionShell>
+
+      <DigestPreferenceToggle initialOptOut={weeklyDigestOptOut} />
     </div>
   );
 }
