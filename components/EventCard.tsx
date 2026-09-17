@@ -6,6 +6,7 @@ import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { isPromotionActive } from "@/lib/promotion";
 
 export function EventCard({ event, regionSlug }: { event: EventWithVenue; regionSlug: string }) {
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
@@ -13,6 +14,7 @@ export function EventCard({ event, regionSlug }: { event: EventWithVenue; region
   );
 
   const stale = isStale(event.lastVerifiedAt);
+  const boosted = isPromotionActive(event.boostedUntil);
   const cover = formatPrice(event.coverChargeCents);
   // null cover means "nobody told us", not "free" -- the extractor emits null both for
   // genuinely-free nights and for ticketed shows whose price it couldn't read. Only an
@@ -49,19 +51,36 @@ export function EventCard({ event, regionSlug }: { event: EventWithVenue; region
         aria-label={`${event.venueName} — ${event.title}, view full details`}
       />
 
-      <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
-        <h3 className="font-display text-xl leading-tight text-foreground">
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none">
+        <h3 className="font-display text-xl leading-tight text-foreground break-words min-w-0">
           {event.title}
         </h3>
-        <span className="shrink-0 rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
-          {EVENT_TYPE_LABELS[event.eventType]}
-        </span>
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <span className="rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
+            {EVENT_TYPE_LABELS[event.eventType]}
+          </span>
+          {boosted && (
+            <span className="rounded-full border border-accent-dim/40 bg-accent-dim/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent-dim">
+              Featured
+            </span>
+          )}
+        </div>
       </div>
 
       {event.description && (
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {event.description}
         </p>
+      )}
+
+      {boosted && event.hasPhoto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/events/${event.id}/photo`}
+          alt={`${event.title} poster`}
+          className="relative z-10 pointer-events-none w-full max-h-60 rounded-xl object-cover"
+          loading="lazy"
+        />
       )}
 
       <div className="relative z-10 flex items-baseline gap-3 mt-1 flex-wrap pointer-events-none">

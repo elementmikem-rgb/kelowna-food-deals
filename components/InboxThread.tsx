@@ -268,7 +268,15 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
           >
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-medium text-foreground/80">{m.fromLabel}</p>
-              <span className="text-[11px] text-muted-2">{new Date(m.at).toLocaleString()}</span>
+              {/* Explicit timeZone -- without it this renders in the SERVER's
+                  local time (UTC on Railway) on first paint and the
+                  BROWSER's local time on hydration, and those two strings
+                  differ for every visitor not in UTC, which is exactly the
+                  React hydration-mismatch error (#418) confirmed live
+                  2026-09-12 on this page. */}
+              <span className="text-[11px] text-muted-2">
+                {new Date(m.at).toLocaleString("en-CA", { timeZone: "America/Vancouver" })}
+              </span>
             </div>
             {m.subject && <p className="text-sm font-medium text-foreground/90">{m.subject}</p>}
             {m.direction === "outbound" && m.bodyHtml ? (
@@ -276,7 +284,14 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
               // sender-supplied — see lib/inbox-data.ts for why inbound never
               // sets bodyHtml.
               <div
-                className="text-sm text-muted whitespace-pre-wrap overflow-x-auto w-full min-w-0 [&_a]:text-accent-dim [&_a]:underline"
+                // whitespace-pre-wrap belongs on the plain-text fallback
+                // below, not here -- applied to real injected HTML markup it
+                // preserves every literal newline/indent whitespace from the
+                // template's own source text as visible characters, which is
+                // what caused the mid-word line breaks confirmed live
+                // 2026-09-12 (the email's own tags/inline styles already
+                // handle its layout; this was double-wrapping it).
+                className="text-sm text-muted overflow-x-auto w-full min-w-0 [&_a]:text-accent-dim [&_a]:underline"
                 // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{ __html: m.bodyHtml }}
               />

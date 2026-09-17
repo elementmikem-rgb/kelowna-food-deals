@@ -1,16 +1,43 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BLOG_POSTS, getBlogPost } from "@/lib/blog-data";
+import { getBlogPost } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getCurrentRegion } from "@/lib/regions";
+import type { Language } from "@/lib/i18n";
+import { getEffectiveLanguage } from "@/lib/i18n";
 
-export const dynamicParams = false;
+const content = {
+  en: {
+    subtitle: "Guides to what's actually going on around town.",
+    backLink: "← All posts",
+    sponsored: "Sponsored",
+    sponsoredPre: "This post is a paid feature. See our",
+    sponsoredLinkText: "privacy & terms",
+    sponsoredPost: "page for how sponsored content works here.",
+  },
+  fr: {
+    subtitle: "Guides sur ce qui se passe vraiment en ville.",
+    backLink: "← Tous les articles",
+    sponsored: "Commandité",
+    sponsoredPre: "Cet article est un contenu commandité. Consultez notre page",
+    sponsoredLinkText: "confidentialité et conditions",
+    sponsoredPost: "pour en savoir plus sur le fonctionnement des contenus commandités.",
+  },
+} as const;
 
-export function generateStaticParams() {
-  return BLOG_POSTS.map((p) => ({ slug: p.slug }));
-}
+// This route has two dynamic segments ([region] and [slug]); the page body
+// also reads headers()/cookies() (via getCurrentRegion/getEffectiveLanguage)
+// for per-region, per-visitor rendering, which Next disallows during static
+// generation. generateStaticParams below only ever enumerated slug (never
+// region), so with dynamicParams left at its default it produced a
+// DYNAMIC_SERVER_USAGE 500 on every request; with dynamicParams = false it
+// 404'd everything instead, since no request could ever match. force-dynamic
+// (the same fix used by app/[region]/archive/page.tsx) is the correct
+// answer: render this page live per request, same as the region it belongs
+// to already requires.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -50,6 +77,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const post = getBlogPost(slug);
   if (!post) notFound();
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -72,13 +100,13 @@ export default async function BlogPostPage({ params }: PageProps) {
       />
       <SiteHeader
         active="blog"
-        subtitle="Guides to what's actually going on around town."
+        subtitle={content[lang].subtitle}
         brandIsHeading={false}
       />
 
       <div>
         <Link href={`/${region.slug}/blog`} className="text-sm text-accent-dim hover:underline">
-          ← All posts
+          {content[lang].backLink}
         </Link>
       </div>
 
@@ -90,18 +118,18 @@ export default async function BlogPostPage({ params }: PageProps) {
             </span>
             {post.sponsored && (
               <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-                Sponsored
+                {content[lang].sponsored}
               </span>
             )}
           </div>
           <h1 className="font-display text-3xl text-foreground">{post.title}</h1>
           {post.sponsored && (
             <p className="text-xs text-muted-2">
-              This post is a paid feature. See our{" "}
+              {content[lang].sponsoredPre}{" "}
               <Link href={`/${region.slug}/privacy`} className="text-accent-dim underline">
-                privacy &amp; terms
+                {content[lang].sponsoredLinkText}
               </Link>{" "}
-              page for how sponsored content works here.
+              {content[lang].sponsoredPost}
             </p>
           )}
         </header>

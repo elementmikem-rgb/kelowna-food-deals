@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
 import { HomeIntroCallout } from "@/components/HomeIntroCallout";
 import { buildSpecialsJsonLd } from "@/lib/seo";
+import { t, getEffectiveLanguage } from "@/lib/i18n";
 
 // Per-region correctness requires reading the request's own domain
 // (getCurrentRegion, via proxy.ts's x-region-id header) rather than a single
@@ -17,12 +18,11 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
   const { timezone } = await getRegionContext(region);
   const [specials, categorySponsors] = await Promise.all([
     getAllSpecialsWithVenue(region.id),
-    // categorySponsors has no region column yet -- sponsorships are currently
-    // site-wide across all regions. Flagged as a follow-up, not part of this fix.
-    getActiveCategorySponsors(),
+    getActiveCategorySponsors([region.id]),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone);
@@ -39,7 +39,7 @@ export default async function Home() {
       />
       <SiteHeader
         active="specials"
-        subtitle="What's actually on today — verified, not guessed."
+        subtitle={t(lang).verified.subtitle}
       />
 
       <HomeIntroCallout regionSlug={region.slug} />
@@ -49,10 +49,11 @@ export default async function Home() {
         categorySponsors={categorySponsors}
         timezone={timezone}
         regionSlug={region.slug}
+        lang={lang}
       />
 
-      <TipJar regionSlug={region.slug} />
-      <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} />
+      <TipJar regionSlug={region.slug} lang={lang} />
+      <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
       <SiteFooter />
     </div>
   );

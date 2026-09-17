@@ -1,3 +1,5 @@
+import { type Language, dowShortNameLocalized, dowFullNameLocalized } from "./i18n";
+
 const PACIFIC_TZ = "America/Vancouver";
 const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const DOW_FULL = [
@@ -111,12 +113,12 @@ export function daysInclusive(start: string, end: string): number {
   return Math.round((b - a) / (1000 * 60 * 60 * 24)) + 1;
 }
 
-export function dowShortName(dow: number): string {
-  return DOW_NAMES[dow] ?? "?";
+export function dowShortName(dow: number, lang: Language = "en"): string {
+  return dowShortNameLocalized(dow, lang);
 }
 
-export function dowFullName(dow: number): string {
-  return DOW_FULL[dow] ?? "Unknown";
+export function dowFullName(dow: number, lang: Language = "en"): string {
+  return dowFullNameLocalized(dow, lang);
 }
 
 const STALE_DAYS = 60;
@@ -130,8 +132,13 @@ export function isStale(lastVerifiedAt: Date, now: Date = new Date()): boolean {
   return daysSince(lastVerifiedAt, now) > STALE_DAYS;
 }
 
-export function formatVerifiedRelative(lastVerifiedAt: Date, now: Date = new Date()): string {
+export function formatVerifiedRelative(lastVerifiedAt: Date, now: Date = new Date(), lang: Language = "en"): string {
   const days = daysSince(lastVerifiedAt, now);
+  if (lang === "fr") {
+    if (days <= 0) return "vérifié aujourd'hui";
+    if (days === 1) return "vérifié il y a 1 jour";
+    return `vérifié il y a ${days} jours`;
+  }
   if (days <= 0) return "verified today";
   if (days === 1) return "verified 1 day ago";
   return `verified ${days} days ago`;
@@ -147,16 +154,16 @@ export function formatTimeOfDay(time: string | null): string | null {
   return m === 0 ? `${displayHour}${period}` : `${displayHour}:${String(m).padStart(2, "0")}${period}`;
 }
 
-export function formatTimeWindow(start: string | null, end: string | null): string | null {
+export function formatTimeWindow(start: string | null, end: string | null, lang: Language = "en"): string | null {
   const s = formatTimeOfDay(start);
   const e = formatTimeOfDay(end);
   if (s && e) return `${s}–${e}`;
   // A bare time reads as "starts at" (matches how a start-only value like a
   // recurring event's "8PM" is already understood everywhere this is shown).
-  // An end-only value needs "Until " -- without it, "4PM" on a card whose
+  // An end-only value needs a "Until" prefix -- without it, "4PM" on a card whose
   // deal actually stops at 4pm reads as if it starts then, the opposite of
   // what's true.
-  if (e) return `Until ${e}`;
+  if (e) return `${lang === "fr" ? "Jusqu'à " : "Until "}${e}`;
   return s ?? null;
 }
 

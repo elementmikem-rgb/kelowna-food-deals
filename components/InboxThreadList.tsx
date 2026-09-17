@@ -179,7 +179,7 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className="text-[11px] text-muted-2">
-                      {new Date(t.lastAt).toLocaleDateString()}
+                      {new Date(t.lastAt).toLocaleDateString("en-CA", { timeZone: "America/Vancouver" })}
                     </span>
                     {t.unreadCount > 0 && (
                       <span className="rounded-full bg-accent text-background text-[10px] font-medium px-1.5 py-0.5">
@@ -188,18 +188,22 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     )}
                   </div>
                 </Link>
-                <div className="flex flex-col gap-1 shrink-0">
+                {/* gap-2.5 + min-h-11 (44px, the standard minimum mobile tap
+                    target): confirmed live 2026-09-12 the previous gap-1 +
+                    px-2 py-1.5 pair (Delete sitting directly under Archive
+                    with ~4px between) was an easy fat-finger risk on mobile. */}
+                <div className="flex flex-col gap-2.5 shrink-0">
                   <button
                     onClick={() => bulkAction2(t.key, t.archived ? "unarchive" : "archive")}
                     disabled={busy}
-                    className="text-[11px] text-muted hover:text-foreground px-2 py-1.5 disabled:opacity-50"
+                    className="text-xs text-muted hover:text-foreground px-3 min-h-11 flex items-center justify-center rounded-lg border border-border disabled:opacity-50"
                   >
                     {t.archived ? "Unarchive" : "Archive"}
                   </button>
                   <button
                     onClick={() => bulkAction2(t.key, "delete")}
                     disabled={busy}
-                    className="text-[11px] text-danger/80 hover:text-danger px-2 py-1.5 disabled:opacity-50"
+                    className="text-xs text-danger/80 hover:text-danger px-3 min-h-11 flex items-center justify-center rounded-lg border border-danger/30 disabled:opacity-50"
                   >
                     Delete
                   </button>

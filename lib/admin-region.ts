@@ -3,7 +3,7 @@ import { inArray, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { db, regions, provinces } from "@/db";
-import { getCurrentRegion } from "./regions";
+import { getPrimaryRegion } from "./regions";
 
 export const ADMIN_COUNTRY_COOKIE = "kds_admin_country";
 export const ADMIN_PROVINCE_COOKIE = "kds_admin_province";
@@ -49,9 +49,15 @@ export async function getSelectedAdminScope(): Promise<AdminScope> {
     return { regionIds: "all" };
   }
 
-  // Nothing selected yet (fresh admin session) -- default to the current
-  // domain's own region.
-  const current = await getCurrentRegion();
+  // Nothing selected yet (fresh admin session) -- default to the primary
+  // region. getCurrentRegion() reads the x-region-id header proxy.ts only
+  // sets on public /[region]/... routes -- every /admin/* request has none,
+  // so that call throws here on every single fresh-scope admin page load
+  // (this WAS the real bug, confirmed live in production logs 2026-09-12 --
+  // an earlier fix only touched AdminShell.tsx's own separate fresh-session
+  // branch, missing this call site, which runs unconditionally on every
+  // admin page regardless of that other check).
+  const current = await getPrimaryRegion();
   return { regionIds: [current.id] };
 }
 

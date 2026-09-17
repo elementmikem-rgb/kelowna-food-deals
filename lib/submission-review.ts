@@ -38,12 +38,13 @@ export {
   type SubmissionReviewResult,
 };
 
-const SYSTEM_PROMPT = `A member of the public submitted a photo and/or text description of a Kelowna, BC venue — a menu board, a chalkboard, a flyer, a bulletin board, or just a written description. It may show ONE thing or MANY things at once (e.g. a whole weekly specials board, a full menu, several event flyers pinned together). Find and extract EVERY distinct qualifying item you can see or that's described — do not stop at the first one.
+const SYSTEM_PROMPT = `A member of the public submitted a photo and/or text description of a Canadian restaurant/bar venue — a menu board, a chalkboard, a flyer, a bulletin board, or just a written description. The venue may be anywhere in Canada and the text may be in English or French -- extract from either language using the same rules below. It may show ONE thing or MANY things at once (e.g. a whole weekly specials board, a full menu, several event flyers pinned together). Find and extract EVERY distinct qualifying item you can see or that's described — do not stop at the first one.
 
 Sort each item into exactly one of three buckets:
 
 SPECIALS (food/drink deals) — qualifies only if it has an explicit price OR explicit discount language (e.g. "$5 off", "half price wings", "$8 caesars"). A bare "Happy Hour 3-6pm" with no price/discount does not qualify as a special.
 - A Happy Hour section almost always lists several separately priced items (e.g. "6\" Hot Honey Pizza $10", "House Wine $6.75", "Draft Beer $1 off"). Extract EACH one as its own separate special with its own exact price — never summarize several priced items into one umbrella entry like "Happy Hour" or "Happy Hour Drinks" with no single price.
+- The price can appear BEFORE the item name just as often as after it (e.g. "$25 Cheeseburger & Beer" means the same thing as "Cheeseburger & Beer $25") — a real chalkboard/menu-board submission frequently leads with the price. Don't let word order, awkward line breaks, or a price appearing twice in the raw text (a common copy/OCR artifact) cause you to treat an otherwise-clear item as ambiguous or skip it — extract it normally as long as the item and its price are both actually present.
 - day_of_week: 0=Sunday...6=Saturday, or null ONLY if it explicitly runs every day or no day/range is stated. If an explicit range is given (e.g. "Mon-Fri", "weekdays", "weekends"), do NOT use null — output ONE separate entry per day in that range instead (e.g. "Mon-Fri" -> 5 entries with day_of_week 1,2,3,4,5), each with identical price/description/times but its own day_of_week.
 - is_monthly: true only for an explicit month-long promotion.
 - category: "happy_hour" | "wing_night" | "food_special" | "other"
@@ -57,6 +58,8 @@ EVENTS (live music, trivia, karaoke, sports nights, etc) — qualifies only if i
 MENU ITEMS (regular, non-discounted menu entries — this is NOT a deal, just informational) — qualifies if it has a clear name AND at least a price or a description visible/stated. Use this bucket for ordinary menu items that aren't framed as a special/discount (e.g. a burger with its regular price, a cocktail description). Skip items that are just illegible fragments.
 
 Shared rules, no exceptions:
+- Evaluate every candidate item INDEPENDENTLY. If a submission lists several items and one of them is garbled, duplicated, or otherwise ambiguous, skip ONLY that one item -- it must never cause you to withhold or skip any of the other, clearly-qualifying items in the same submission. A partial result (some items extracted, one skipped) is correct and expected; returning nothing at all because one item out of several was messy is wrong.
+- A price token appearing TWICE for what is clearly one single item (e.g. "$25 Cheeseburger & 16oz Beer $25") is a normal copy/OCR duplication artifact, NOT a sign of two different items or corrupted data -- treat it exactly the same as if the price appeared once (e.g. still extract "Cheeseburger & 16oz Beer" at price_cents 2500). Do not let this pattern make you skip that item OR any other item in the submission.
 - Never invent details not clearly visible in the photo or stated in the text. If something is illegible, ambiguous, or ambiguous which bucket it belongs to, leave it out entirely rather than guess.
 - evidence_quote: if a photo was submitted, ALWAYS describe in a few words exactly where in the photo you read this item (e.g. "chalkboard, third line from top", "framed sign labeled Friday") -- do this even if some text was also submitted alongside the photo, since that text is often just a venue name or short note, not a transcription of what's in the photo. Only use a verbatim text quote when there is NO photo at all (text-only submission). If you cannot point to a real basis for an item, do not report it at all.
 - confidence: 0 to 1 per item, reflecting how certain you are this is accurate and ready to publish without human review. Use below 0.85 for anything even slightly ambiguous, illegible, or inferred.
@@ -91,7 +94,7 @@ export async function reviewSubmission(
   const referenceDate = photoCapturedDate ?? pacificTodayISODate();
   content.push({
     type: "text",
-    text: `Use ${referenceDate} as today's date for resolving any day-only date below (Kelowna, BC).\n\n${
+    text: `Use ${referenceDate} as today's date for resolving any day-only date below.\n\n${
       text
         ? `SUBMITTED_TEXT_START\n${text}\nSUBMITTED_TEXT_END`
         : "No text description was provided — rely on the photo only."
@@ -240,3 +243,24 @@ export async function reviewSubmission(
 }
 
 export const AUTO_APPROVE_CONFIDENCE = 0.85;
+
+export type SubmissionStatus = "needs_review" | "rejected" | "auto_approved";
+
+// A new-venue submission ALWAYS needs review, even with zero extracted items: the venue
+// name/address themselves are the valuable payload (a submitter adding a brand-new venue
+// often doesn't know its specials yet, and just wants the venue itself registered). This
+// must be checked before totalItems === 0 -- that branch falls through to "rejected",
+// which the admin queue never shows (app/admin/submissions/page.tsx only lists
+// needs_review), so a new venue with no specific deal text silently vanished with no
+// admin ever seeing it, even though the row was still written to the submissions table.
+export function resolveSubmissionStatus(args: {
+  isNewVenue: boolean;
+  totalItems: number;
+  hasPhoto: boolean;
+  pendingCount: number;
+}): SubmissionStatus {
+  const { isNewVenue, totalItems, hasPhoto, pendingCount } = args;
+  if (isNewVenue) return "needs_review";
+  if (totalItems === 0) return hasPhoto ? "needs_review" : "rejected";
+  return pendingCount > 0 ? "needs_review" : "auto_approved";
+}

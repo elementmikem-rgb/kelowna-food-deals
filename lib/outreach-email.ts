@@ -2,6 +2,7 @@ interface SendParams {
   to: string;
   subject: string;
   htmlContent: string;
+  textContent?: string;
   replyTo?: string;
   senderName?: string;
   headers?: Record<string, string>;
@@ -15,6 +16,7 @@ export async function sendOutreachEmail({
   to,
   subject,
   htmlContent,
+  textContent,
   replyTo,
   senderName,
   headers,
@@ -38,6 +40,7 @@ export async function sendOutreachEmail({
       replyTo: replyTo ? { email: replyTo } : { email: fromEmail },
       subject,
       htmlContent,
+      textContent,
       headers,
     }),
   });

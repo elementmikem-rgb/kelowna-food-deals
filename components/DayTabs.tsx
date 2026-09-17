@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { dowShortName } from "@/lib/time";
+import { type Language, dowShortNameLocalized } from "@/lib/i18n";
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6];
 
@@ -9,10 +9,12 @@ export function DayTabs({
   selected,
   today,
   onSelect,
+  lang = "en",
 }: {
   selected: number;
   today: number;
   onSelect: (dow: number) => void;
+  lang?: Language;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
@@ -54,7 +56,7 @@ export function DayTabs({
                   : "bg-transparent text-muted border-border hover:border-muted"
               }`}
             >
-              {dowShortName(dow)}
+              {dowShortNameLocalized(dow, lang)}
               {isToday && !isSelected && (
                 <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-accent align-middle" />
               )}

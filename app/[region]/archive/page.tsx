@@ -5,6 +5,23 @@ import { groupByDayRange } from "@/lib/group-days";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ArchiveSearch } from "@/components/ArchiveSearch";
+import type { Language } from "@/lib/i18n";
+import { getEffectiveLanguage } from "@/lib/i18n";
+
+const content = {
+  en: {
+    metaDesc: "Specials that used to run before venues changed them up.",
+    heading: "Archive",
+    subtitle: "What used to be running before venues changed it up.",
+    empty: "Nothing archived yet.",
+  },
+  fr: {
+    metaDesc: "Spéciaux qui étaient actifs avant que les établissements les changent.",
+    heading: "Archives",
+    subtitle: "Ce qui tournait avant que les établissements le changent.",
+    empty: "Rien d'archivé pour l'instant.",
+  },
+} as const;
 
 // Retired specials are thin, near-duplicate content next to the live board --
 // useful for a curious visitor, not something worth ranking on its own.
@@ -16,9 +33,10 @@ export async function generateMetadata({
   const { region: slug } = await params;
   const region = await getRegionBySlug(slug);
   if (!region) return {};
+  const lang = region.language as Language;
   return {
-    title: "Archive",
-    description: "Specials that used to run before venues changed them up.",
+    title: content[lang].heading,
+    description: content[lang].metaDesc,
     robots: { index: false, follow: true },
     alternates: { canonical: `/${region.slug}/archive` },
   };
@@ -30,6 +48,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ArchivePage() {
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
   const previous = await getPreviousSpecials(region.id, 500);
 
   const byVenue = new Map<number, { venueName: string; items: typeof previous }>();
@@ -49,12 +68,12 @@ export default async function ArchivePage() {
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-8">
       <SiteHeader
         active="blog"
-        heading="Archive"
-        subtitle="What used to be running before venues changed it up."
+        heading={content[lang].heading}
+        subtitle={content[lang].subtitle}
       />
 
       {venues.length === 0 ? (
-        <p className="text-muted-2 text-sm">Nothing archived yet.</p>
+        <p className="text-muted-2 text-sm">{content[lang].empty}</p>
       ) : (
         <ArchiveSearch venues={venues} regionSlug={region.slug} />
       )}

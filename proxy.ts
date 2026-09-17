@@ -39,7 +39,13 @@ export async function proxy(req: NextRequest) {
     // domain visitor landing on the homepage. Only the root case needs this:
     // every other pathname already starts with its own "/", so concatenation
     // never introduces a second trailing slash.
-    const targetPath = pathname === "/" ? `/${region.slug}` : `/${region.slug}${pathname}`;
+    // A visitor who types the region slug onto the legacy domain themselves
+    // (kelownafooddeals.shop/kelowna -- an easy guess given the domain name)
+    // must not get it prepended a second time: that produced /kelowna/kelowna,
+    // a dead 404, on the exact URL shape most likely to get typed or bookmarked.
+    const alreadyHasSlug = pathname === `/${region.slug}` || pathname.startsWith(`/${region.slug}/`);
+    const targetPath =
+      pathname === "/" ? `/${region.slug}` : alreadyHasSlug ? pathname : `/${region.slug}${pathname}`;
     const target = new URL(targetPath, `https://${PATH_BASED_DOMAIN}`);
     target.search = req.nextUrl.search;
     return NextResponse.redirect(target, 301);

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SiteNav } from "./SiteNav";
 import { ShareButton } from "./ShareButton";
 import { getCurrentRegion } from "@/lib/regions";
+import { t, getEffectiveLanguage } from "@/lib/i18n";
+import { LanguageToggle } from "./LanguageToggle";
 
 export async function SiteHeader({
   active,
@@ -20,48 +22,63 @@ export async function SiteHeader({
   heading?: string;
 }) {
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
+  const tr = t(lang);
+  const returnPath =
+    active === "events" ? `/${region.slug}/events` : active === "monthly" ? `/${region.slug}/monthly` : `/${region.slug}`;
   const BrandTag = brandIsHeading ? "h1" : "span";
   const [firstWord, ...rest] = region.brandName.split(" ");
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-      <div className="flex items-center gap-3 sm:gap-4">
-        <Link href={`/${region.slug}`} className="shrink-0">
-          <Image
-            src={region.logoUrl}
-            alt={`${region.brandName} logo`}
-            width={56}
-            height={56}
-            className="rounded-full w-10 h-10 sm:w-14 sm:h-14"
-          />
-        </Link>
-        <div className="flex flex-col gap-0.5 sm:gap-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <BrandTag className="block font-display text-2xl sm:text-4xl text-foreground">
-              <Link href={`/${region.slug}`}>
-                {heading ?? (
-                  <>
-                    <span className="hand-underline">{firstWord}</span> {rest.join(" ")}
-                  </>
-                )}
-              </Link>
-            </BrandTag>
-            {/* !hidden: .stamp's plain (unlayered) CSS rule sets display:inline-flex,
-                which in Tailwind v4's cascade layers beats a layered "hidden" utility
-                regardless of source order -- !important is the reliable override. */}
-            <span className="stamp px-2.5 py-1 text-[10px] !hidden sm:!inline-flex">
-              Okanagan · verified
-            </span>
-          </div>
-          <p className="text-muted text-xs sm:text-sm">{subtitle}</p>
-        </div>
+    <header className="flex flex-col gap-2 sm:gap-4">
+      {/* Deliberately its own row above everything else -- it used to sit
+          right next to the Specials/Events/Monthly/Share pills and got
+          miss-clicked as part of that cluster. A separate row in normal flow
+          (not absolutely positioned) so it never overlaps Share or anything
+          else regardless of how tall the brand/subtitle block ends up on a
+          given page. */}
+      <div className="flex justify-end">
+        <LanguageToggle lang={lang} returnPath={returnPath} />
       </div>
-      <div className="flex items-center gap-2">
-        <SiteNav active={active} />
-        <ShareButton
-          title={region.brandName}
-          text={`Verified food & drink specials happening today around ${firstWord}:`}
-          url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`}
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href={`/${region.slug}`} className="shrink-0">
+            <Image
+              src={region.logoUrl}
+              alt={`${region.brandName} logo`}
+              width={56}
+              height={56}
+              className="rounded-full w-10 h-10 sm:w-14 sm:h-14"
+            />
+          </Link>
+          <div className="flex flex-col gap-0.5 sm:gap-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <BrandTag className="block font-display text-2xl sm:text-4xl text-foreground">
+                <Link href={`/${region.slug}`}>
+                  {heading ?? (
+                    <>
+                      <span className="hand-underline">{firstWord}</span> {rest.join(" ")}
+                    </>
+                  )}
+                </Link>
+              </BrandTag>
+              {/* !hidden: .stamp's plain (unlayered) CSS rule sets display:inline-flex,
+                  which in Tailwind v4's cascade layers beats a layered "hidden" utility
+                  regardless of source order -- !important is the reliable override. */}
+              <span className="stamp px-2.5 py-1 text-[10px] !hidden sm:!inline-flex">
+                {tr.verified.badge}
+              </span>
+            </div>
+            <p className="text-muted text-xs sm:text-sm">{subtitle}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <SiteNav active={active} />
+          <ShareButton
+            title={region.brandName}
+            text={`Verified food & drink specials happening today around ${firstWord}:`}
+            url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`}
+          />
+        </div>
       </div>
     </header>
   );

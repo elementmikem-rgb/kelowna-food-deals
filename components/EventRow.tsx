@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
+import { isPromotionActive } from "@/lib/promotion";
 
 export function EventRow({ event }: { event: EventWithVenue }) {
   const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
@@ -14,6 +15,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
   );
 
   const stale = isStale(event.lastVerifiedAt);
+  const boosted = isPromotionActive(event.boostedUntil);
   const cover = formatPrice(event.coverChargeCents);
   // null cover means "nobody told us", not "free" -- the extractor emits null both for
   // genuinely-free nights and for ticketed shows whose price it couldn't read. Only an
@@ -57,6 +59,11 @@ export function EventRow({ event }: { event: EventWithVenue }) {
             <span className="shrink-0 rounded-full border border-gold/40 bg-gold/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
               {EVENT_TYPE_LABELS[event.eventType]}
             </span>
+            {boosted && (
+              <span className="shrink-0 rounded-full border border-accent-dim/40 bg-accent-dim/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-accent-dim">
+                Featured
+              </span>
+            )}
           </div>
           {event.description && (
             <p className="text-xs text-muted">{event.description}</p>
@@ -76,6 +83,16 @@ export function EventRow({ event }: { event: EventWithVenue }) {
           )}
         </div>
       </div>
+
+      {boosted && event.hasPhoto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/events/${event.id}/photo`}
+          alt={`${event.title} poster`}
+          className="mt-2 w-full max-h-40 rounded-lg object-cover"
+          loading="lazy"
+        />
+      )}
 
       <div className="flex items-center justify-between mt-1">
         {stale ? (

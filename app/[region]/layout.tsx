@@ -21,7 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
     description,
     applicationName: region.brandName,
     appleWebApp: { capable: true, statusBarStyle: "default", title: region.brandName },
-    openGraph: { type: "website", locale: "en_CA", url: siteUrl, siteName: region.brandName, title, description },
+    openGraph: {
+      type: "website",
+      locale: region.language === "fr" ? "fr_CA" : "en_CA",
+      url: siteUrl,
+      siteName: region.brandName,
+      title,
+      description,
+    },
     twitter: { card: "summary", title, description },
     alternates: { canonical: siteUrl },
   };

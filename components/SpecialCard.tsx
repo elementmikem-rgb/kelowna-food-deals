@@ -67,8 +67,8 @@ export function SpecialCard({
         aria-label={`${special.venueName} — ${special.title}, view full details`}
       />
 
-      <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
-        <h3 className="font-display text-xl leading-tight text-foreground">
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none">
+        <h3 className="font-display text-xl leading-tight text-foreground break-words min-w-0">
           {special.title}
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
@@ -92,6 +92,16 @@ export function SpecialCard({
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {special.description}
         </p>
+      )}
+
+      {boosted && special.hasPhoto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/specials/${special.id}/photo`}
+          alt={`${special.title} photo`}
+          className="relative z-10 pointer-events-none w-full max-h-60 rounded-xl object-cover"
+          loading="lazy"
+        />
       )}
 
       <div className="relative z-10 flex items-baseline gap-3 mt-1 pointer-events-none">

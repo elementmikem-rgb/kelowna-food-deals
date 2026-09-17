@@ -8,6 +8,34 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
 import { getPrimaryRegion } from "@/lib/regions";
 
+// Shared by the "approve" (venue lazily created on the first approved item) and
+// "create_venue" (venue created with no item at all) paths -- both need the exact same
+// find-by-name-or-create logic, and must stay identical so a submission can't end up with
+// two venue rows depending on which path an admin happened to click first.
+async function findOrCreateVenue(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  venueName: string,
+  venueAddress: string | null,
+  submissionRegionId: number | null
+): Promise<number> {
+  const [existing] = await tx
+    .select({ id: venues.id })
+    .from(venues)
+    .where(sql`lower(${venues.name}) = lower(${venueName})`)
+    .limit(1);
+  if (existing) return existing.id;
+
+  // submission.regionId is set from the region-aware /submit page for every submission
+  // going forward. Only null on rows predating that column -- fall back to the primary
+  // region for those rather than failing the approval outright.
+  const regionId = submissionRegionId ?? (await getPrimaryRegion()).id;
+  const [created] = await tx
+    .insert(venues)
+    .values({ name: venueName, address: venueAddress ?? "Address not provided", regionId, active: true })
+    .returning({ id: venues.id });
+  return created.id;
+}
+
 const actionSchema = z.union([
   z.object({
     action: z.enum(["approve", "reject"]),
@@ -19,6 +47,12 @@ const actionSchema = z.union([
   // they could never be closed out and would clog the review queue forever. "dismiss"
   // just closes the whole submission.
   z.object({ action: z.literal("dismiss") }),
+  // A new-venue submission with zero extracted items (no specials/events/menu items --
+  // the submitter just wanted the venue itself added) has no itemType/itemIndex an
+  // "approve" could ever target, so without this action there was literally no way to
+  // create the venue -- only "dismiss" (== reject) was reachable. Confirmed live
+  // 2026-09-16: two real submissions for "Kettle Valley Pub" had no path to publish.
+  z.object({ action: z.literal("create_venue") }),
 ]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +72,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "invalid action" }, { status: 400 });
   }
   const action = parsed.data.action;
-  const baseKey = action === "dismiss" ? null : `${parsed.data.itemType}:${parsed.data.itemIndex}`;
+  const baseKey =
+    action === "dismiss" || action === "create_venue"
+      ? null
+      : `${parsed.data.itemType}:${parsed.data.itemIndex}`;
   // Reject is recorded with a distinct prefix (rather than a bare "approve" always winning
   // the ambiguity) so a submission where every item was rejected doesn't read back as
   // indistinguishable from one where every item was approved.
@@ -82,6 +119,46 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       };
     }
 
+    if (action === "create_venue") {
+      if (submission.venueId !== null) {
+        return { error: "venue already resolved for this submission" as const, status: 409 };
+      }
+      if (!submission.venueName) {
+        return { error: "submission has no venueName -- nothing to create" as const, status: 400 };
+      }
+      const venueId = await findOrCreateVenue(
+        tx,
+        submission.venueName,
+        submission.venueAddress,
+        submission.regionId
+      );
+      const extractedForCount = submission.aiExtracted as SubmissionReviewResult | null;
+      const totalItems = extractedForCount
+        ? extractedForCount.specials.length + extractedForCount.events.length + extractedForCount.menu_items.length
+        : 0;
+      // Nothing else for a human to approve/reject once the venue itself is created and
+      // there were never any structured items -- close the submission out now instead of
+      // leaving it sitting in the queue with no further action possible. If there WERE
+      // items, leave it needs_review so the per-item approve/reject cards (now pointed at
+      // a real venueId instead of null) still work normally.
+      const fullyResolved = totalItems === 0;
+      await tx
+        .update(submissions)
+        .set({
+          venueId,
+          status: fullyResolved ? "approved" : "needs_review",
+          reviewedAt: fullyResolved ? now : null,
+        })
+        .where(eq(submissions.id, submissionId));
+      return {
+        ok: true as const,
+        fullyResolved,
+        venueId,
+        photoData: submission.photoData,
+        photoMimeType: submission.photoMimeType,
+      };
+    }
+
     if (submission.resolvedItemKeys.includes(baseKey!) || submission.resolvedItemKeys.includes(`rejected:${baseKey}`)) {
       return { error: "item already resolved" as const, status: 409 };
     }
@@ -103,30 +180,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (!submission.venueName) {
         return { error: "submission has no venueId and no venueName -- can't resolve a venue" as const, status: 400 };
       }
-      const [existing] = await tx
-        .select({ id: venues.id })
-        .from(venues)
-        .where(sql`lower(${venues.name}) = lower(${submission.venueName})`)
-        .limit(1);
-      if (existing) {
-        venueId = existing.id;
-      } else {
-        // submission.regionId is set from the region-aware /submit page for every
-        // submission going forward. Only null on rows predating that column -- fall
-        // back to the primary region for those rather than failing the approval outright.
-        const newVenueRegionId =
-          submission.regionId ?? (await getPrimaryRegion()).id;
-        const [created] = await tx
-          .insert(venues)
-          .values({
-            name: submission.venueName,
-            address: submission.venueAddress ?? "Address not provided",
-            regionId: newVenueRegionId,
-            active: true,
-          })
-          .returning({ id: venues.id });
-        venueId = created.id;
-      }
+      venueId = await findOrCreateVenue(tx, submission.venueName, submission.venueAddress, submission.regionId);
       await tx.update(submissions).set({ venueId }).where(eq(submissions.id, submissionId));
     }
 

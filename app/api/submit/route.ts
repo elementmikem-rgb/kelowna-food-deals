@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, venues, specials, events, menuItems, submissions } from "@/db";
 import { eq } from "drizzle-orm";
-import { reviewSubmission, AUTO_APPROVE_CONFIDENCE } from "@/lib/submission-review";
+import { reviewSubmission, AUTO_APPROVE_CONFIDENCE, resolveSubmissionStatus } from "@/lib/submission-review";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { specialMatchesArchived, eventMatchesArchived } from "@/lib/archived-match";
 import { getRegionBySlug } from "@/lib/regions";
+import { savePhotoOnApproval } from "@/lib/venue-photos";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4MB, before base64 overhead
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
@@ -243,44 +244,50 @@ export async function POST(req: NextRequest) {
     const totalItems = result.specials.length + result.events.length + result.menu_items.length;
     const pendingCount = totalItems - autoApprovedCount - autoRejectedCount;
     const hasPhoto = !!(photoBase64 && photoMimeType);
-    // A photo is never auto-published as a venue photo here regardless of text confidence --
-    // it only gets attached via the admin approve action (app/api/admin/submissions/[id]/route.ts).
-    // But that's a reason to hold back the PHOTO, not the whole submission: when every extracted
-    // item already resolved (auto-approved or auto-rejected) there's nothing left an admin can
-    // act on via the per-item approve/reject buttons, so forcing needs_review here left the
-    // submission permanently stuck open with no way to close it (AdminSubmissionRow already
-    // hides it once `remaining <= 0`, so the photo was never actually getting reviewed anyway --
-    // this just left the badge/count wrong forever). Only fall back to needs_review for the
-    // photo's sake when there are no structured items at all for a human to fall back on.
-    // A new venue is never auto-published either -- there's no venue row yet to attach to.
-    const status =
-      totalItems === 0
-        ? hasPhoto
-          ? "needs_review"
-          : "rejected"
-        : isNewVenue || pendingCount > 0
-          ? "needs_review"
-          : "auto_approved";
+    // A photo with nothing auto-approved alongside it still needs a human look (via the
+    // admin per-item approve action, app/api/admin/submissions/[id]/route.ts) before it's
+    // attached as a venue photo -- that's the `totalItems === 0` / all-pending case inside
+    // resolveSubmissionStatus. But once at least one item WAS confident enough to
+    // auto-publish (autoApprovedCount > 0 below), the accompanying photo auto-attaches too
+    // instead of waiting on a review that was never going to happen: when every extracted
+    // item already auto-resolved, no per-item card ever renders for an admin to click
+    // Approve on, so a photo gated on that click sat in the DB forever, invisible --
+    // confirmed live 2026-09-16, this had almost certainly already dropped real venue
+    // photos. A new venue is never auto-published either -- there's no venue row yet to
+    // attach a photo to. See resolveSubmissionStatus for why isNewVenue is checked first.
+    const status = resolveSubmissionStatus({ isNewVenue, totalItems, hasPhoto, pendingCount });
 
-    await db.insert(submissions).values({
-      venueId,
-      venueName: isNewVenue ? venueName : null,
-      venueAddress: isNewVenue ? venueAddress : null,
-      regionId: submittedRegion.id,
-      rawText: text,
-      photoData: photoBase64,
-      photoMimeType,
-      status,
-      aiExtracted: result,
-      aiConfidence: null,
-      aiNotes: isNewVenue
-        ? `New venue "${venueName}" -- needs an admin to create the venue record before anything can publish.`
-        : totalItems === 0
-          ? "No qualifying specials, events, or menu items found."
-          : `${autoApprovedCount} auto-published, ${pendingCount} pending review.`,
-      resolvedItemKeys: isNewVenue ? [] : resolvedItemKeys,
-      reviewedAt: status === "needs_review" ? null : now,
-    });
+    const [insertedSubmission] = await db
+      .insert(submissions)
+      .values({
+        venueId,
+        venueName: isNewVenue ? venueName : null,
+        venueAddress: isNewVenue ? venueAddress : null,
+        regionId: submittedRegion.id,
+        rawText: text,
+        photoData: photoBase64,
+        photoMimeType,
+        status,
+        aiExtracted: result,
+        aiConfidence: null,
+        aiNotes: isNewVenue
+          ? `New venue "${venueName}" -- needs an admin to create the venue record before anything can publish.`
+          : totalItems === 0
+            ? "No qualifying specials, events, or menu items found."
+            : `${autoApprovedCount} auto-published, ${pendingCount} pending review.`,
+        resolvedItemKeys: isNewVenue ? [] : resolvedItemKeys,
+        reviewedAt: status === "needs_review" ? null : now,
+      })
+      .returning({ id: submissions.id });
+
+    if (!isNewVenue && hasPhoto && autoApprovedCount > 0) {
+      await savePhotoOnApproval({
+        venueId: venueId!,
+        photoData: photoBase64,
+        photoMimeType,
+        submissionId: insertedSubmission.id,
+      });
+    }
 
     return NextResponse.json({
       status,

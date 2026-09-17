@@ -133,6 +133,52 @@ function DismissButton({ submissionId, onDismissed }: { submissionId: number; on
   );
 }
 
+// The only way to publish a new-venue submission that has no specific special/event/menu
+// item attached (a submitter who just wants the venue itself added) -- "approve" only
+// exists per-item, so without this action there was no way to create the venue at all,
+// only "dismiss" (which rejects it). See create_venue in the API route.
+function CreateVenueButton({
+  submissionId,
+  onCreated,
+}: {
+  submissionId: number;
+  onCreated: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function create() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_venue" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 items-start">
+      <button
+        onClick={create}
+        disabled={loading}
+        className="press-pill rounded-full bg-accent text-background px-3 py-1 text-xs font-medium disabled:opacity-50"
+      >
+        Create venue
+      </button>
+      {error && <p className="text-xs text-stale">{error}</p>}
+    </div>
+  );
+}
+
 export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
   const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
   const [showPhoto, setShowPhoto] = useState(false);
@@ -237,7 +283,12 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
           <p className="text-xs text-stale">
             {submission.aiNotes ?? "AI found nothing to auto-extract — check the raw text/photo yourself."}
           </p>
-          <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+          <div className="flex gap-2">
+            {submission.isNewVenue && (
+              <CreateVenueButton submissionId={submission.id} onCreated={() => setDismissed(true)} />
+            )}
+            <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+          </div>
         </>
       )}
 

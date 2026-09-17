@@ -2,9 +2,11 @@ import Link from "next/link";
 import { getLastScrapeTime } from "@/lib/status";
 import { formatCheckedAt } from "@/lib/time";
 import { getCurrentRegion } from "@/lib/regions";
+import { t, getEffectiveLanguage } from "@/lib/i18n";
 
 export async function SiteFooter() {
   const [lastScrape, region] = await Promise.all([getLastScrapeTime(), getCurrentRegion()]);
+  const footer = t(await getEffectiveLanguage(region)).footer;
   const base = `/${region.slug}`;
 
   return (
@@ -15,22 +17,22 @@ export async function SiteFooter() {
         <p>Checking daily around 6am Pacific.</p>
       )}
       <Link href={`${base}/submit`} className="text-accent-dim underline">
-        See something wrong or missing? Tell us
+        {footer.tellUs}
       </Link>
       <Link href={`${base}/blog`} className="text-muted-2 underline">
-        Blog
+        {footer.blog}
       </Link>
       <Link href={`${base}/archive`} className="text-muted-2 underline">
-        Archive
+        {footer.archive}
       </Link>
       <Link href={`${base}/advertise`} className="text-muted-2 underline">
-        Advertise with us
+        {footer.advertise}
       </Link>
       <Link href={`${base}#tip-jar`} className="text-muted-2 underline">
-        Tip jar
+        {footer.tipJar}
       </Link>
       <Link href={`${base}/privacy`} className="text-muted-2 underline">
-        Privacy &amp; terms
+        {footer.privacy}
       </Link>
     </footer>
   );

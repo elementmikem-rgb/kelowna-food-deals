@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { parse as exifrParse } from "exifr";
+import { fileToBase64 } from "@/lib/client-image";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -12,18 +13,7 @@ interface SubmitResult {
   totalItems: number;
 }
 
-function readAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-const MAX_DIMENSION = 1600;
-
-// Must run on the ORIGINAL file, before fileToBase64's canvas resize below --
+// Must run on the ORIGINAL file, before fileToBase64's canvas resize --
 // re-encoding through a canvas strips all EXIF metadata, including this.
 // A chalkboard/menu photo's own capture date is a far more reliable "today"
 // for resolving a day-only date (e.g. "the 18th") than the moment the
@@ -40,38 +30,6 @@ async function getPhotoCapturedDate(file: File): Promise<string | null> {
     return `${y}-${m}-${d}`;
   } catch {
     return null;
-  }
-}
-
-// Phone camera photos are routinely well over the server's 4MB limit, so
-// downscale through a canvas before base64-encoding rather than letting the
-// upload fail server-side.
-async function fileToBase64(file: File): Promise<{ data: string; mimeType: string }> {
-  const dataUrl = await readAsDataUrl(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("Could not read that image"));
-      el.src = dataUrl;
-    });
-
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(img.width * scale));
-    canvas.height = Math.max(1, Math.round(img.height * scale));
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas unavailable");
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    const resized = canvas.toDataURL("image/jpeg", 0.85);
-    const [, base64] = resized.split(",", 2);
-    if (!base64) throw new Error("Canvas encode failed");
-    return { data: base64, mimeType: "image/jpeg" };
-  } catch {
-    // Fall back to the original bytes if canvas processing isn't available.
-    const [, base64] = dataUrl.split(",", 2);
-    return { data: base64, mimeType: file.type };
   }
 }
 
@@ -154,6 +112,19 @@ export function SubmitForm({
   }
 
   if (status === "done" && result) {
+    if (isNewVenue) {
+      return (
+        <div className="rounded-xl border border-border bg-surface p-6 text-center">
+          <p className="font-display text-xl text-foreground mb-1">Thanks — got it</p>
+          <p className="text-sm text-muted">
+            We&apos;ll verify {newVenueName.trim() || "this venue"} is a real, current spot and add it
+            {result.totalItems > 0
+              ? ` along with the ${result.totalItems} thing${result.totalItems === 1 ? "" : "s"} you described.`
+              : "."}
+          </p>
+        </div>
+      );
+    }
     if (result.totalItems === 0) {
       return (
         <div className="rounded-xl border border-border bg-surface p-6 text-center">
@@ -171,16 +142,10 @@ export function SubmitForm({
           Found {result.totalItems} thing{result.totalItems === 1 ? "" : "s"}
         </p>
         <p className="text-sm text-muted">
-          {isNewVenue
-            ? "We'll add this venue and verify the details before anything goes live."
-            : (
-              <>
-                {result.autoApprovedCount > 0 &&
-                  `${result.autoApprovedCount} published immediately. `}
-                {result.pendingCount > 0 &&
-                  `${result.pendingCount} sent for a quick human check before going live.`}
-              </>
-            )}
+          {result.autoApprovedCount > 0 &&
+            `${result.autoApprovedCount} published immediately. `}
+          {result.pendingCount > 0 &&
+            `${result.pendingCount} sent for a quick human check before going live.`}
         </p>
       </div>
     );

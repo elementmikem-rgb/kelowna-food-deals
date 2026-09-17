@@ -116,3 +116,18 @@ export async function getCurrentRegion(): Promise<Region> {
   }
   return region;
 }
+
+// Same lookup as getCurrentRegion(), but tolerant of pages that aren't scoped
+// to one region (the "/" city picker, a 404) -- used only by the root layout
+// to pick the right <html lang>, since only the root layout can render <html>
+// and app/[region]/layout.tsx (which knows the real region) runs too deep to
+// set it. Falls back to the primary region's language so non-region pages
+// still get a valid lang rather than none.
+export async function getCurrentOrPrimaryRegion(): Promise<Region> {
+  const regionId = (await headers()).get("x-region-id");
+  if (regionId) {
+    const region = await getRegionById(Number(regionId));
+    if (region) return region;
+  }
+  return getPrimaryRegion();
+}

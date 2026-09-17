@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Karla, Geist_Mono } from "next/font/google";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
-import { getPrimaryRegion } from "@/lib/regions";
+import { getPrimaryRegion, getCurrentOrPrimaryRegion } from "@/lib/regions";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -57,13 +57,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // nested <style> tag for every real region page.
   const fallbackRegion = await getPrimaryRegion();
   const themeStyle = `:root { --accent: ${fallbackRegion.accentColor}; --accent-dim: ${fallbackRegion.accentDimColor}; --accent-soft: ${fallbackRegion.accentSoftColor}; --background: ${fallbackRegion.backgroundColor}; --foreground: ${fallbackRegion.foregroundColor}; --evergreen: ${fallbackRegion.evergreenColor}; }`;
+  // Resolved separately from the theme's fallbackRegion above: the picker
+  // page has no real region (language defaults to the primary region's, "en")
+  // but any actual /{region} page's html lang must match that region, even
+  // though only this root layout is allowed to render <html>.
+  const langRegion = await getCurrentOrPrimaryRegion();
 
   return (
     <html
-      lang="en"
+      lang={langRegion.language}
+      translate="no"
       className={`${fraunces.variable} ${karla.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        {/* lang stays the region's canonical language for SEO even when the
+            visible text differs (a French-canonical region shown in English
+            to a visitor whose browser prefers it) -- that mismatch otherwise
+            makes Chrome's own page-translate feature kick in on top of our
+            manual toggle and garble already-English text (e.g. "Mon"/"Tue"
+            read as French words and mistranslated back to English). These two
+            notranslate signals turn that off since we ship our own toggle. */}
+        <meta name="google" content="notranslate" />
         {/* eslint-disable-next-line react/no-danger -- static string built entirely
             from our own regions table, never from request-supplied input */}
         <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
@@ -73,7 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-full focus:bg-accent focus:text-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
         >
-          Skip to content
+          {langRegion.language === "fr" ? "Passer au contenu" : "Skip to content"}
         </a>
         <main id="main-content" className="flex flex-col flex-1">
           {children}

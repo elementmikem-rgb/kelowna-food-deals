@@ -5,6 +5,7 @@ import { MonthlySpecials } from "@/components/MonthlySpecials";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
+import { getEffectiveLanguage } from "@/lib/i18n";
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
 // which forces dynamic rendering -- see app/page.tsx's comment.
@@ -25,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MonthlyPage() {
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
   const { timezone } = await getRegionContext(region);
   const specials = await getMonthlySpecials(region.id);
   const areaName = region.brandName.split(" ")[0];
@@ -39,7 +41,7 @@ export default async function MonthlyPage() {
 
       <MonthlySpecials specials={specials} timezone={timezone} regionSlug={region.slug} />
 
-      <TipJar regionSlug={region.slug} />
+      <TipJar regionSlug={region.slug} lang={lang} />
       <SiteFooter />
     </div>
   );

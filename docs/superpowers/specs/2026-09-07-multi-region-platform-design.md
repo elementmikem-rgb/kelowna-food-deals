@@ -16,9 +16,67 @@ Each entry below will eventually become one row in the `regions` table, added on
 
 **BC:** Kelowna *(live)* → South Okanagan → North Okanagan → Kamloops → Lower Mainland → Vancouver Island → Prince George
 
-**Alberta:** Calgary → Edmonton → Red Deer → Lethbridge → Banff/Canmore → Fort McMurray → Grande Prairie → Medicine Hat
+**Alberta:** Calgary (split into multiple sub-regions, like Metro Vancouver, given its population and venue density) → Edmonton (same treatment) → Red Deer → Lethbridge → Banff/Canmore → Fort McMurray → Grande Prairie → Medicine Hat. Exact Calgary/Edmonton sub-region boundaries to be worked out when Alberta launch is actually scoped.
 
-**Rest of Canada:** open, to be planned when Alberta is underway.
+**Rest of Canada (first-draft sketch, 2026-09-13):** applies the same split method as BC/Alberta (dense metros split into sub-regions, mid-size cities standalone, small tourist towns get a region despite low population if venue density justifies it, thin markets deferred). Population figures are general-knowledge ballparks for sequencing only — re-verify with real data when each province's turn actually comes, per [[feedback_region_splitting_methodology]] in Mike's memory: don't treat any of these counts as a target or a cap.
+
+- **Ontario (~15.8M, the biggest build)** — GTA needs Toronto itself split, not just the surrounding cities, since the city alone (~2.9M) is bigger than all of Metro Vancouver:
+  - Toronto Core (Downtown/Entertainment District/King West/Queen West/Annex/Yorkville)
+  - Toronto East (Scarborough, East York, the Beaches, Danforth)
+  - Toronto North (North York, Willowdale, Yonge & Eglinton)
+  - Toronto West (Etobicoke, High Park)
+  - Mississauga
+  - Brampton
+  - York Region (Markham, Richmond Hill, Vaughan, Newmarket)
+  - Durham Region (Oshawa, Whitby, Ajax, Pickering)
+  - Halton Region (Oakville, Burlington, Milton)
+  - Hamilton
+  - Niagara Region (St. Catharines, Niagara Falls, Welland, Niagara-on-the-Lake)
+  - Kitchener-Waterloo-Cambridge
+  - Guelph
+  - London
+  - Windsor-Essex
+  - Ottawa
+  - Kingston
+  - Barrie & Simcoe County
+  - Sudbury
+  - Thunder Bay
+  - Sault Ste. Marie
+  - North Bay
+  - Peterborough & the Kawarthas
+  - Muskoka *(tourist/cottage-country region — same logic as Whistler/Banff-Canmore: small resident population, outsized bar/restaurant density in summer)*
+  - Deferred until the above proves out: Prince Edward County (wine-country tourist), Collingwood/Blue Mountain (ski tourist town), Brantford, Chatham-Kent
+  - That's ~23 core regions + 4 deferred — Ontario alone could plausibly land anywhere from 23 to 30+ depending on how far the deferred list and further Toronto splitting go.
+
+- **Quebec (~9M)**
+  - Montreal Core (Plateau, Mile End, Downtown, Old Montreal)
+  - Montreal West Island
+  - Laval
+  - Longueuil / Rive-Sud (South Shore)
+  - Quebec City
+  - Gatineau *(Ottawa's twin across the river — its own market/province, not folded into the Ottawa region above)*
+  - Sherbrooke
+  - Trois-Rivières
+  - Saguenay
+  - Laurentians / Mont-Tremblant *(tourist region, same logic as Muskoka/Whistler)*
+  - Deferred: Charlevoix (tourist), Eastern Townships/Estrie wine country
+  - ~10 core regions + 2 deferred
+
+- **Manitoba (~1.47M):** Winnipeg, Brandon. (Portage la Prairie, Steinbach deferred — too thin to start.)
+
+- **Saskatchewan (~1.2M):** Saskatoon, Regina. (Moose Jaw, Prince Albert deferred.)
+
+- **Nova Scotia (~1M):** Halifax, Cape Breton (Sydney), Annapolis Valley/Wolfville *(small wine-tourist region)*.
+
+- **New Brunswick (~0.8M):** Moncton, Saint John, Fredericton.
+
+- **Prince Edward Island (~0.17M):** Charlottetown *(effectively the whole province — PEI is itself a summer tourist destination, similar logic to why a small population still justifies one region)*.
+
+- **Newfoundland & Labrador (~0.54M):** St. John's.
+
+- **Territories (Yukon/NWT/Nunavut, ~130K combined):** not worth planning at region level yet — revisit once every province above is live. Whitehorse would be the only plausible single region if this ever gets addressed.
+
+**Rough total if all of the above eventually launches:** BC (18) + Alberta (17) + this sketch (~50-58) ≈ 85-95 regions for all of Canada. That is a first-draft planning number from today's population data, not a commitment — re-derive it province by province with real data when that province's launch is actually being scoped.
 
 ## Global Constraints
 

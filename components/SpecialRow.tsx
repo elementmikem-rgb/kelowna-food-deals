@@ -15,6 +15,10 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
   const boosted = isPromotionActive(special.boostedUntil);
+  // hasPhoto is only ever true while the boost that paid for it is still active (see
+  // specials.photoData's schema comment) -- boosted is implied, but check both anyway
+  // rather than relying on that invariant holding across every future code path.
+  const showPhoto = boosted && special.hasPhoto;
 
   return (
     <li className={`relative z-10 py-2.5 first:pt-0 last:pb-0 ${stale ? "opacity-50" : ""}`}>
@@ -42,6 +46,16 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
           )}
         </div>
       </div>
+
+      {showPhoto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/specials/${special.id}/photo`}
+          alt={`${special.title} photo`}
+          className="mt-2 w-full max-h-40 rounded-lg object-cover"
+          loading="lazy"
+        />
+      )}
 
       {stale && (
         <p className="mt-1 text-[11px] text-stale">

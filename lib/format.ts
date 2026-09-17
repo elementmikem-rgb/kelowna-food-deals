@@ -19,8 +19,9 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-export function formatEventDate(dateStr: string): string {
+export function formatEventDate(dateStr: string, lang: "en" | "fr" = "en"): string {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
+  const locale = lang === "fr" ? "fr-CA" : "en-CA";
+  return date.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" });
 }

@@ -5,7 +5,7 @@ import type { SpecialWithVenue } from "@/lib/data";
 import type { SpecialCategory } from "@/db/schema";
 import type { CategorySponsor } from "@/lib/sponsored-data";
 import { todayDowInRegion, dowFullName, regionTodayISODate } from "@/lib/time";
-import { CATEGORY_LABELS } from "@/lib/format";
+import { CATEGORY_LABELS, t, type Language } from "@/lib/i18n";
 import { DayTabs } from "./DayTabs";
 import { CategoryFilter } from "./CategoryFilter";
 import { CityFilter } from "./CityFilter";
@@ -40,12 +40,15 @@ export function SpecialsBoard({
   categorySponsors = [],
   timezone,
   regionSlug,
+  lang = "en",
 }: {
   specials: SpecialWithVenue[];
   categorySponsors?: CategorySponsor[];
   timezone: string;
   regionSlug: string;
+  lang?: Language;
 }) {
+  const tr = t(lang);
   // The page is served from an ISR cache that can be an evening old, so the day baked
   // into the HTML is routinely yesterday. Render the baked value first (no hydration
   // mismatch), then correct it on mount and whenever the tab is refocused, so a tab
@@ -57,6 +60,7 @@ export function SpecialsBoard({
     "all"
   );
   const [selectedCity, setSelectedCity] = useState<string | "all">("all");
+  const [venueQuery, setVenueQuery] = useState("");
   const dayPickedByUser = useRef(false);
 
   // Derived from this region's own specials rather than a hardcoded list --
@@ -86,12 +90,15 @@ export function SpecialsBoard({
     setSelectedDay(day);
   }
 
+  const normalizedQuery = venueQuery.trim().toLowerCase();
+
   const filtered = useMemo(() => {
     return specials
       .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
       .filter((s) => selectedCity === "all" || s.venueCity === selectedCity)
+      .filter((s) => !normalizedQuery || s.venueName.toLowerCase().includes(normalizedQuery))
       .sort((a, b) => {
         // A paid seasonal boost outranks everything else while it's active.
         const boostDiff =
@@ -114,7 +121,7 @@ export function SpecialsBoard({
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [specials, selectedDay, selectedCategory, selectedCity]);
+  }, [specials, selectedDay, selectedCategory, selectedCity, normalizedQuery]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -132,7 +139,7 @@ export function SpecialsBoard({
       .filter((g) => !g.items.some((s) => isPromotionActive(s.boostedUntil)))
       .slice()
       .sort((a, b) => dailyRandom(a.venueId ?? 0, today) - dailyRandom(b.venueId ?? 0, today));
-    return [...featured, ...boosted, ...plain];
+    return { featured, boosted, plain, all: [...featured, ...boosted, ...plain] };
   }, [filtered]);
 
   const activeSponsor =
@@ -140,15 +147,44 @@ export function SpecialsBoard({
 
   return (
     <div className="flex flex-col gap-4">
-      <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} />
-      <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
-      {cities.length > 0 && (
-        <CityFilter cities={cities} selected={selectedCity} onSelect={setSelectedCity} />
-      )}
+      <DayTabs selected={selectedDay} today={today} onSelect={handleSelectDay} lang={lang} />
+
+      <div className="relative">
+        <input
+          type="text"
+          value={venueQuery}
+          onChange={(e) => setVenueQuery(e.target.value)}
+          placeholder={tr.filters.searchPlaceholder}
+          aria-label={tr.filters.searchAriaLabel}
+          className="w-full sm:w-64 rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+        />
+        {venueQuery && (
+          <button
+            type="button"
+            onClick={() => setVenueQuery("")}
+            aria-label={tr.filters.clearSearchAriaLabel}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground text-sm"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <CategoryFilter
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+          lang={lang}
+          regionSlug={regionSlug}
+        />
+        {cities.length > 0 && (
+          <CityFilter cities={cities} selected={selectedCity} onSelect={setSelectedCity} lang={lang} />
+        )}
+      </div>
 
       {activeSponsor && (
         <p className="-mt-2 text-xs text-muted-2">
-          {CATEGORY_LABELS[activeSponsor.category]} presented by{" "}
+          {CATEGORY_LABELS[lang][activeSponsor.category]} presented by{" "}
           {activeSponsor.sponsorUrl ? (
             <a href={activeSponsor.sponsorUrl} target="_blank" rel="noopener noreferrer" className="text-accent-dim underline">
               {activeSponsor.sponsorName}
@@ -161,36 +197,90 @@ export function SpecialsBoard({
 
       <p className="text-sm text-muted flex items-center justify-between gap-3 flex-wrap">
         <span>
-          {dowFullName(selectedDay)}
+          {dowFullName(selectedDay, lang)}
           {selectedDay === today ? " (today)" : ""} · {filtered.length} special
-          {filtered.length === 1 ? "" : "s"} at {grouped.length} place
-          {grouped.length === 1 ? "" : "s"}
+          {filtered.length === 1 ? "" : "s"} at {grouped.all.length} place
+          {grouped.all.length === 1 ? "" : "s"}
           {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
         </span>
         {/* A condensed nudge here so the tip jar isn't only reachable by
             scrolling past the entire feed -- the full ask still lives at
             the bottom for anyone who reads that far. */}
         <a href="#tip-jar" className="text-xs text-accent-dim hover:underline shrink-0">
-          Found this useful? Leave a tip →
+          {tr.tip.nudge}
         </a>
       </p>
 
-      {grouped.length === 0 ? (
+      {grouped.all.length === 0 ? (
         <p className="text-muted-2 text-sm py-8 text-center">
-          No specials found for this day/category yet.
+          {normalizedQuery
+            ? tr.emptyState.noSpecialsSearch(venueQuery.trim())
+            : tr.emptyState.noSpecials}
         </p>
       ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
-          {grouped.map((g) => (
-            <SpecialVenueGroup
-              key={g.key}
-              venueId={g.venueId!}
-              venueName={g.venueName}
-              specials={g.items}
-              regionSlug={regionSlug}
-            />
-          ))}
-        </div>
+        <>
+          {grouped.featured.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">
+                ⭐ Featured
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+                {grouped.featured.map((g) => (
+                  <SpecialVenueGroup
+                    key={g.key}
+                    venueId={g.venueId!}
+                    venueName={g.venueName}
+                    specials={g.items}
+                    regionSlug={regionSlug}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {grouped.boosted.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-2">
+                Trending today
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+                {grouped.boosted.map((g) => (
+                  <SpecialVenueGroup
+                    key={g.key}
+                    venueId={g.venueId!}
+                    venueName={g.venueName}
+                    specials={g.items}
+                    regionSlug={regionSlug}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {grouped.plain.length > 0 && (
+            <section className="flex flex-col gap-3">
+              {(grouped.featured.length > 0 || grouped.boosted.length > 0) && (
+                <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-2">
+                  All specials
+                </h2>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+                {grouped.plain.map((g) => (
+                  <SpecialVenueGroup
+                    key={g.key}
+                    venueId={g.venueId!}
+                    venueName={g.venueName}
+                    specials={g.items}
+                    regionSlug={regionSlug}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

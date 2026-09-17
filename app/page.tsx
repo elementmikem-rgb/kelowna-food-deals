@@ -1,7 +1,6 @@
-import Link from "next/link";
-import Image from "next/image";
-import { db, regions, specials, venues } from "@/db";
+import { db, regions, provinces, specials, venues } from "@/db";
 import { eq, asc, and, isNull, sql } from "drizzle-orm";
+import CityFinder from "@/components/CityFinder";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +11,13 @@ export default async function CityPickerPage() {
       brandName: regions.brandName,
       logoUrl: regions.logoUrl,
       accentColor: regions.accentColor,
+      provinceName: provinces.name,
+      provinceCode: provinces.code,
     })
     .from(regions)
+    .innerJoin(provinces, eq(regions.provinceId, provinces.id))
     .where(eq(regions.active, true))
-    .orderBy(asc(regions.brandName));
+    .orderBy(asc(provinces.name), asc(regions.brandName));
 
   // A live count is the fastest way to prove "checked daily" to a visitor who
   // has never heard of the site before -- cheap enough to run on every request
@@ -51,29 +53,7 @@ export default async function CityPickerPage() {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 pt-2">
-        {activeRegions.map((region, i) => (
-          <Link
-            key={region.slug}
-            href={`/${region.slug}`}
-            className={`pin-card ${i % 2 === 0 ? "tilt-a" : "tilt-b"} press-pill flex items-center gap-3 rounded-2xl border border-border bg-surface px-6 py-4 hover:border-muted`}
-          >
-            <span
-              className="flex items-center justify-center rounded-full p-0.5"
-              style={{ boxShadow: `0 0 0 2px ${region.accentColor}` }}
-            >
-              <Image
-                src={region.logoUrl}
-                alt={`${region.brandName} logo`}
-                width={40}
-                height={40}
-                className="rounded-full w-10 h-10"
-              />
-            </span>
-            <span className="font-display text-lg text-foreground">{region.brandName}</span>
-          </Link>
-        ))}
-      </div>
+      <CityFinder regions={activeRegions} />
 
       <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 max-w-2xl text-left pt-4 border-t border-border/70">
         <div className="flex-1 flex flex-col gap-1">

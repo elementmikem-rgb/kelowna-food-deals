@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
+import { getEffectiveLanguage } from "@/lib/i18n";
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
 // which forces dynamic rendering -- see app/page.tsx's comment.
@@ -26,6 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function EventsPage() {
   const region = await getCurrentRegion();
+  const lang = await getEffectiveLanguage(region);
   const { timezone } = await getRegionContext(region);
   const areaName = region.brandName.split(" ")[0];
   const [recurring, upcoming] = await Promise.all([
@@ -48,9 +50,10 @@ export default async function EventsPage() {
         upcoming={upcoming}
         timezone={timezone}
         regionSlug={region.slug}
+        lang={lang}
       />
 
-      <TipJar regionSlug={region.slug} />
+      <TipJar regionSlug={region.slug} lang={lang} />
       <SiteFooter />
     </div>
   );
