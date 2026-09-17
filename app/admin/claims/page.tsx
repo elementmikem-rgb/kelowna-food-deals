@@ -1,4 +1,4 @@
-import { db, venueClaimRequests, venues, venueOwners, venueOwnerVenues } from "@/db";
+import { db, venueClaimRequests, venues, venueOwners, venueOwnerVenues, venueChains } from "@/db";
 import { and, asc, eq, inArray, ne, or, sql, isNotNull } from "drizzle-orm";
 import { AdminClaimRow } from "@/components/AdminClaimRow";
 import { AdminShell } from "@/components/AdminShell";
@@ -43,6 +43,11 @@ export default async function AdminClaimsPage() {
     rows.map(async (r) => {
       let chainSuggestion: { chainName: string; otherClaimedVenues: string[] } | null = null;
       if (r.venueChainId) {
+        const [chain] = await db
+          .select({ canonicalName: venueChains.canonicalName })
+          .from(venueChains)
+          .where(eq(venueChains.id, r.venueChainId))
+          .limit(1);
         const siblings = await db
           .select({ name: venues.name })
           .from(venues)
@@ -53,8 +58,8 @@ export default async function AdminClaimsPage() {
               isNotNull(venues.claimedAt)
             )
           );
-        if (siblings.length > 0) {
-          chainSuggestion = { chainName: r.venueName.split(/[\-(]/)[0].trim(), otherClaimedVenues: siblings.map((s) => s.name) };
+        if (chain && siblings.length > 0) {
+          chainSuggestion = { chainName: chain.canonicalName, otherClaimedVenues: siblings.map((s) => s.name) };
         }
       }
 
