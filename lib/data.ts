@@ -25,11 +25,19 @@ export interface SpecialWithVenue {
   // Standing paid status -- unlike the two above, doesn't expire on its own.
   // Non-null means "is a partner", the exact date isn't otherwise used yet.
   venuePartnerSince: Date | null;
+  // Non-null means an owner has claimed and actively maintains this venue's listing --
+  // drives the "Owner verified" trust badge, distinct from the scrape-verified stamp.
+  venueClaimedAt: Date | null;
   venueConfirmedAt: Date | null;
   // Count of visitor "confirm" feedback rows from the last 30 days -- a rolling window
   // so an old special's count doesn't just accumulate forever and lose meaning. See
   // docs/superpowers/specs/2026-09-07-deal-verification-design.md Section 1.
   confirmCount: number;
+  // Whether a paid photo add-on photo exists -- a boolean flag rather than shipping the
+  // base64 photoData itself in this list query, which would bloat every page load with
+  // image bytes most cards don't even show (only rendered while boostedUntil is active,
+  // via /api/specials/[id]/photo).
+  hasPhoto: boolean;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -54,12 +62,14 @@ const baseColumns = {
   venueFeaturedUntil: venues.featuredUntil,
   boostedUntil: specials.boostedUntil,
   venuePartnerSince: venues.partnerSince,
+  venueClaimedAt: venues.claimedAt,
   venueConfirmedAt: specials.venueConfirmedAt,
   confirmCount: sql<number>`(
     select count(*)::int from specials.deal_feedback
     where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
       and created_at > now() - interval '30 days'
   )`,
+  hasPhoto: sql<boolean>`${specials.photoData} is not null`,
 };
 
 export async function getAllSpecialsWithVenue(regionId: number): Promise<SpecialWithVenue[]> {

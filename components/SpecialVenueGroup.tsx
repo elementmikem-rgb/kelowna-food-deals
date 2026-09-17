@@ -2,9 +2,11 @@ import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialRow } from "./SpecialRow";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { OwnerVerifiedBadge } from "./OwnerVerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
 import { VenueGroupActions } from "./VenueGroupActions";
 import { isPromotionActive } from "@/lib/promotion";
+import { t, type Language } from "@/lib/i18n";
 
 // Above this many, a venue's card starts crowding out everyone else's on the
 // board (BNA Brewing and Cutwater Brewing both run past 10) -- the rest are
@@ -16,11 +18,13 @@ export function SpecialVenueGroup({
   venueName,
   specials,
   regionSlug,
+  lang = "en",
 }: {
   venueId: number;
   venueName: string;
   specials: SpecialWithVenue[];
   regionSlug: string;
+  lang?: Language;
 }) {
   const freshest = specials.reduce((latest, s) =>
     s.lastVerifiedAt > latest.lastVerifiedAt ? s : latest
@@ -41,10 +45,10 @@ export function SpecialVenueGroup({
       <Link
         href={`/${regionSlug}/venues/${venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
-        aria-label={`${venueName} — full menu, hours, and details`}
+        aria-label={t(lang).card.fullDetails(venueName)}
       />
 
-      <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none pb-2 border-b border-border">
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none pb-2 border-b border-border">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
           {featured && (
@@ -64,7 +68,8 @@ export function SpecialVenueGroup({
               {specials.length} specials
             </span>
           )}
-          <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} />
+          {freshest.venueClaimedAt !== null && <OwnerVerifiedBadge />}
+          <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
         </div>
       </div>
 
@@ -85,7 +90,7 @@ export function SpecialVenueGroup({
           venueConfirmedAt={freshest.venueConfirmedAt}
           confirmCount={freshest.confirmCount}
         />
-        <VenueGroupActions specialId={freshest.id} venueId={venueId} />
+        <VenueGroupActions specialId={freshest.id} venueId={venueId} lang={lang} />
       </div>
     </article>
   );

@@ -1,5 +1,5 @@
 import { db, events, venues } from "@/db";
-import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import type { EventType } from "@/db/schema";
 import { regionTodayISODate } from "@/lib/time";
 
@@ -19,6 +19,11 @@ export interface EventWithVenue {
   lastVerifiedAt: Date;
   confidence: number;
   sourceUrl: string | null;
+  venueFeaturedUntil: Date | null;
+  venueClaimedAt: Date | null;
+  boostedUntil: Date | null;
+  // See SpecialWithVenue.hasPhoto's comment in lib/data.ts -- same reasoning.
+  hasPhoto: boolean;
 }
 
 const recurringColumns = {
@@ -37,6 +42,10 @@ const recurringColumns = {
   lastVerifiedAt: events.lastVerifiedAt,
   confidence: events.confidence,
   sourceUrl: events.sourceUrl,
+  venueFeaturedUntil: venues.featuredUntil,
+  venueClaimedAt: venues.claimedAt,
+  boostedUntil: events.boostedUntil,
+  hasPhoto: sql<boolean>`${events.photoData} is not null`,
 };
 
 export async function getRecurringEvents(regionId: number): Promise<EventWithVenue[]> {
@@ -92,7 +101,11 @@ export async function getUpcomingOneOffEvents(
       lastVerifiedAt: events.lastVerifiedAt,
       confidence: events.confidence,
       sourceUrl: events.sourceUrl,
+      boostedUntil: events.boostedUntil,
+      hasPhoto: sql<boolean>`${events.photoData} is not null`,
       venueActive: venues.active,
+      venueFeaturedUntil: venues.featuredUntil,
+      venueClaimedAt: venues.claimedAt,
     })
     .from(events)
     .leftJoin(venues, eq(events.venueId, venues.id))
@@ -124,5 +137,9 @@ export async function getUpcomingOneOffEvents(
       lastVerifiedAt: r.lastVerifiedAt,
       confidence: r.confidence,
       sourceUrl: r.sourceUrl,
+      boostedUntil: r.boostedUntil,
+      hasPhoto: r.hasPhoto,
+      venueFeaturedUntil: r.venueId === null ? null : r.venueFeaturedUntil,
+      venueClaimedAt: r.venueId === null ? null : r.venueClaimedAt,
     }));
 }

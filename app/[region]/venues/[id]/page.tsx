@@ -18,6 +18,53 @@ import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 import { ShareButton } from "@/components/ShareButton";
 import { formatPrice } from "@/lib/format";
 import { groupByDayRange } from "@/lib/group-days";
+import type { Language } from "@/lib/i18n";
+import { getEffectiveLanguage } from "@/lib/i18n";
+
+const content = {
+  en: {
+    metaDesc: (name: string, addr: string) =>
+      `Current food/drink specials, events, and info for ${name} — ${addr}. Verified, not guessed.`,
+    backLink: "← All specials",
+    shareText: (name: string, brandName: string) => `Specials & events at ${name} — ${brandName}:`,
+    websiteLabel: "Website",
+    menuLabel: "Menu",
+    mapsLabel: "Open in Google Maps",
+    reviewsLabel: "Search reviews",
+    currentSpecialsHeading: "Current Specials",
+    noSpecials: "No current specials on file for this venue.",
+    eventsHeading: "Events",
+    mapTitle: (name: string) => `Map of ${name}`,
+    photosHeading: "Photos",
+    photosSubmitted: "Submitted by visitors — menus, boards, and signage as spotted in the wild.",
+    noPhotosPrompt: "No photos yet — been here recently?",
+    noPhotosAddLink: "Add one",
+    noPhotosTrail: "and help other visitors picture the place.",
+    fullMenuHeading: "Full Menu",
+    fullMenuDesc: "Regular menu items spotted by visitors — not deals, just what’s on offer.",
+  },
+  fr: {
+    metaDesc: (name: string, addr: string) =>
+      `Spéciaux repas et boissons, événements et informations pour ${name} — ${addr}. Vérifiés, pas devinés.`,
+    backLink: "← Tous les spéciaux",
+    shareText: (name: string, brandName: string) => `Spéciaux et événements à ${name} — ${brandName} :`,
+    websiteLabel: "Site web",
+    menuLabel: "Menu",
+    mapsLabel: "Ouvrir dans Google Maps",
+    reviewsLabel: "Rechercher des avis",
+    currentSpecialsHeading: "Spéciaux en cours",
+    noSpecials: "Aucun spécial en cours pour cet établissement.",
+    eventsHeading: "Événements",
+    mapTitle: (name: string) => `Carte de ${name}`,
+    photosHeading: "Photos",
+    photosSubmitted: "Soumises par des visiteurs — menus, tableaux et affichages repérés sur place.",
+    noPhotosPrompt: "Pas encore de photos — vous y êtes allé récemment ?",
+    noPhotosAddLink: "Ajouter une photo",
+    noPhotosTrail: "et aidez les autres visiteurs à s’imaginer l’endroit.",
+    fullMenuHeading: "Menu complet",
+    fullMenuDesc: "Articles du menu repérés par des visiteurs — pas des offres spéciales, juste ce qui est proposé.",
+  },
+} as const;
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
 // which forces dynamic rendering -- see app/page.tsx's comment.
@@ -32,8 +79,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const venue = await getVenueById(Number(id));
   const region = await getCurrentRegion();
   if (!venue || venue.regionId !== region.id) return { title: "Venue not found" };
+  const lang = region.language as Language;
   const title = venue.name;
-  const description = `Current food/drink specials, events, and info for ${venue.name} — ${venue.address}. Verified, not guessed.`;
+  const description = content[lang].metaDesc(venue.name, venue.address);
   const url = `/${region.slug}/venues/${venue.id}`;
   return {
     title,
@@ -54,6 +102,7 @@ export default async function VenuePage({ params }: PageProps) {
   // otherwise a deep link (or a search-engine-indexed URL) from one domain
   // could still reach another region's venue page directly.
   if (!venue || venue.regionId !== region.id) notFound();
+  const lang = await getEffectiveLanguage(region);
 
   const { timezone } = await getRegionContext(region);
 
@@ -132,7 +181,7 @@ export default async function VenuePage({ params }: PageProps) {
       />
       <div>
         <Link href={`/${region.slug}`} className="text-sm text-accent-dim hover:underline">
-          ← All specials
+          {content[lang].backLink}
         </Link>
       </div>
 
@@ -141,7 +190,7 @@ export default async function VenuePage({ params }: PageProps) {
           <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
           <ShareButton
             title={venue.name}
-            text={`Specials & events at ${venue.name} — ${region.brandName}:`}
+            text={content[lang].shareText(venue.name, region.brandName)}
             url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/venues/${venue.id}`}
             className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
           />
@@ -155,7 +204,7 @@ export default async function VenuePage({ params }: PageProps) {
               rel="noopener noreferrer"
               className="text-accent-dim underline"
             >
-              Website
+              {content[lang].websiteLabel}
             </a>
           )}
           {venue.menuUrl && venue.menuUrl !== venue.website && (
@@ -165,7 +214,7 @@ export default async function VenuePage({ params }: PageProps) {
               rel="noopener noreferrer"
               className="text-accent-dim underline"
             >
-              Menu
+              {content[lang].menuLabel}
             </a>
           )}
           {venue.phone && <span className="text-muted">{venue.phone}</span>}
@@ -175,7 +224,7 @@ export default async function VenuePage({ params }: PageProps) {
             rel="noopener noreferrer"
             className="text-accent-dim underline"
           >
-            Open in Google Maps
+            {content[lang].mapsLabel}
           </a>
           <a
             href={`https://www.google.com/search?q=${reviewsQuery}`}
@@ -183,15 +232,20 @@ export default async function VenuePage({ params }: PageProps) {
             rel="noopener noreferrer"
             className="text-accent-dim underline"
           >
-            Search reviews
+            {content[lang].reviewsLabel}
           </a>
+          {venue.claimedAt === null && (
+            <Link href={`/${region.slug}/venues/${venue.id}/claim`} className="text-accent-dim underline">
+              Is this your venue? Claim it
+            </Link>
+          )}
         </div>
       </header>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-2xl text-foreground">Current Specials</h2>
+        <h2 className="font-display text-2xl text-foreground">{content[lang].currentSpecialsHeading}</h2>
         {venueSpecials.length === 0 ? (
-          <p className="text-muted-2 text-sm">No current specials on file for this venue.</p>
+          <p className="text-muted-2 text-sm">{content[lang].noSpecials}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {groupByDayRange(venueSpecials).map((s) => (
@@ -203,7 +257,7 @@ export default async function VenuePage({ params }: PageProps) {
 
       {venueEvents.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">Events</h2>
+          <h2 className="font-display text-2xl text-foreground">{content[lang].eventsHeading}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {venueEvents.map((e) => (
               <EventCard key={e.id} event={e} regionSlug={region.slug} />
@@ -216,7 +270,7 @@ export default async function VenuePage({ params }: PageProps) {
           pushed below a fixed-height map embed on mobile. */}
       <div className="rounded-2xl overflow-hidden border border-border h-64">
         <iframe
-          title={`Map of ${venue.name}`}
+          title={content[lang].mapTitle(venue.name)}
           className="w-full h-full"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -225,30 +279,30 @@ export default async function VenuePage({ params }: PageProps) {
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-2xl text-foreground">Photos</h2>
+        <h2 className="font-display text-2xl text-foreground">{content[lang].photosHeading}</h2>
         {venuePhotos.length > 0 ? (
           <>
             <p className="text-sm text-muted-2 -mt-1">
-              Submitted by visitors — menus, boards, and signage as spotted in the wild.
+              {content[lang].photosSubmitted}
             </p>
             <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
           </>
         ) : (
           <p className="text-sm text-muted-2 -mt-1">
-            No photos yet — been here recently?{" "}
+            {content[lang].noPhotosPrompt}{" "}
             <Link href={`/${region.slug}/submit`} className="text-accent-dim underline">
-              Add one
+              {content[lang].noPhotosAddLink}
             </Link>{" "}
-            and help other visitors picture the place.
+            {content[lang].noPhotosTrail}
           </p>
         )}
       </section>
 
       {venueMenuItems.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">Full Menu</h2>
+          <h2 className="font-display text-2xl text-foreground">{content[lang].fullMenuHeading}</h2>
           <p className="text-sm text-muted-2 -mt-1">
-            Regular menu items spotted by visitors — not deals, just what&apos;s on offer.
+            {content[lang].fullMenuDesc}
           </p>
           <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
             {venueMenuItems.map((m) => {

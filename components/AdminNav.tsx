@@ -4,7 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type AdminSection = "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics" | "flagged";
+type AdminSection =
+  | "submissions"
+  | "claims"
+  | "outreach"
+  | "inbox"
+  | "sponsored"
+  | "revenue"
+  | "analytics"
+  | "flagged"
+  | "scrapeHealth";
 
 function Badge({ count, tone }: { count: number; tone: "accent" | "evergreen" }) {
   if (count <= 0) return null;
@@ -158,8 +167,10 @@ function scopeLabel(
 export function AdminNav({
   active,
   pendingSubmissions,
+  pendingClaims,
   unreadInbox,
   flaggedCount,
+  scrapeHealthCount,
   countries,
   provinces,
   regions,
@@ -169,8 +180,10 @@ export function AdminNav({
 }: {
   active: AdminSection | null;
   pendingSubmissions: number;
+  pendingClaims: number;
   unreadInbox: number;
   flaggedCount: number;
+  scrapeHealthCount: number;
   countries: { id: number; name: string }[];
   provinces: { id: number; countryId: number; name: string }[];
   regions: { id: number; provinceId: number; brandName: string }[];
@@ -180,12 +193,14 @@ export function AdminNav({
 }) {
   const items: { key: AdminSection; href: string; label: string; badge?: number; tone?: "accent" | "evergreen" }[] = [
     { key: "submissions", href: "/admin/submissions", label: "Submissions", badge: pendingSubmissions, tone: "accent" },
+    { key: "claims", href: "/admin/claims", label: "Claims", badge: pendingClaims, tone: "accent" },
     { key: "outreach", href: "/admin/outreach", label: "Outreach" },
     { key: "inbox", href: "/admin/inbox", label: "Inbox", badge: unreadInbox, tone: "evergreen" },
     { key: "sponsored", href: "/admin/sponsored", label: "Sponsored" },
     { key: "revenue", href: "/admin/revenue", label: "Revenue" },
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
     { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },
+    { key: "scrapeHealth", href: "/admin/scrape-health", label: "Scrape health", badge: scrapeHealthCount, tone: "accent" },
   ];
 
   const currentScopeLabel = scopeLabel(
@@ -207,23 +222,32 @@ export function AdminNav({
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1.5 overflow-x-auto">
-          {items.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              data-selected={active === item.key}
-              className={`press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border whitespace-nowrap ${
-                active === item.key
-                  ? "bg-accent text-background border-accent"
-                  : "bg-transparent text-muted border-border hover:border-muted hover:text-foreground"
-              }`}
-            >
-              {item.label}
-              {item.badge !== undefined && <Badge count={item.badge} tone={item.tone!} />}
-            </Link>
-          ))}
-        </nav>
+        <div className="relative min-w-0 flex-1">
+          <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {items.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                data-selected={active === item.key}
+                className={`press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border whitespace-nowrap ${
+                  active === item.key
+                    ? "bg-accent text-background border-accent"
+                    : "bg-transparent text-muted border-border hover:border-muted hover:text-foreground"
+                }`}
+              >
+                {item.label}
+                {item.badge !== undefined && <Badge count={item.badge} tone={item.tone!} />}
+              </Link>
+            ))}
+          </nav>
+          {/* This row is 8 items wide and routinely overflows a phone-width
+              screen (confirmed live 2026-09-12: ~804px of content in a 390px
+              viewport) -- it already scrolls, but with no cue a mobile user
+              has no reason to think Revenue/Analytics/Flagged/Scrape health
+              exist off-screen. Same fade pattern as the public site's
+              DayTabs/CategoryFilter/CityFilter rows. */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent sm:hidden" />
+        </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <ScopeSwitcher

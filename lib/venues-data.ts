@@ -16,6 +16,7 @@ export interface VenueDetail {
   website: string | null;
   menuUrl: string | null;
   instagramHandle: string | null;
+  claimedAt: Date | null;
 }
 
 export async function getVenueById(id: number): Promise<VenueDetail | null> {
@@ -32,6 +33,7 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
       website: venues.website,
       menuUrl: venues.menuUrl,
       instagramHandle: venues.instagramHandle,
+      claimedAt: venues.claimedAt,
     })
     .from(venues)
     .where(and(eq(venues.id, id), eq(venues.active, true)))
@@ -66,6 +68,7 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
         where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
           and created_at > now() - interval '30 days'
       )`,
+      hasPhoto: sql<boolean>`${specials.photoData} is not null`,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
@@ -101,6 +104,7 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
         where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
           and created_at > now() - interval '30 days'
       )`,
+      hasPhoto: sql<boolean>`${specials.photoData} is not null`,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
@@ -160,6 +164,7 @@ export async function getVenueEvents(venueId: number, timezone: string): Promise
       id: events.id,
       venueId: events.venueId,
       venueName: venues.name,
+      locationAddress: events.locationAddress,
       title: events.title,
       description: events.description,
       eventType: events.eventType,
@@ -170,6 +175,10 @@ export async function getVenueEvents(venueId: number, timezone: string): Promise
       coverChargeCents: events.coverChargeCents,
       lastVerifiedAt: events.lastVerifiedAt,
       confidence: events.confidence,
+      sourceUrl: events.sourceUrl,
+      venueFeaturedUntil: venues.featuredUntil,
+      boostedUntil: events.boostedUntil,
+      hasPhoto: sql<boolean>`${events.photoData} is not null`,
     })
     .from(events)
     .innerJoin(venues, eq(events.venueId, venues.id))

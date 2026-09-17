@@ -6,7 +6,7 @@ import {
   ADMIN_REGION_COOKIE,
   getSelectedAdminScope,
 } from "@/lib/admin-region";
-import { getCurrentRegion } from "@/lib/regions";
+import { getPrimaryRegion } from "@/lib/regions";
 import { db, regions, provinces, countries } from "@/db";
 import { cookies } from "next/headers";
 import { AdminNav } from "./AdminNav";
@@ -18,7 +18,17 @@ export async function AdminShell({
   maxWidth = "max-w-4xl",
   children,
 }: {
-  active: "submissions" | "outreach" | "inbox" | "sponsored" | "revenue" | "analytics" | "flagged" | null;
+  active:
+    | "submissions"
+    | "claims"
+    | "outreach"
+    | "inbox"
+    | "sponsored"
+    | "revenue"
+    | "analytics"
+    | "flagged"
+    | "scrapeHealth"
+    | null;
   // Sub-pages (compose, a single thread) sit one level under a nav section --
   // they keep the same persistent nav but add a breadcrumb back to it.
   backHref?: string;
@@ -42,13 +52,17 @@ export async function AdminShell({
   // admin page filters by -- fetch it once here rather than duplicating
   // getSelectedAdminScope()'s cookie/DB logic.
   const { regionIds } = await getSelectedAdminScope();
-  const [{ pendingSubmissions, unreadInbox, flaggedCount }, countryRows, provinceRows, regionRows] =
-    await Promise.all([
-      getAdminNavCounts(regionIds),
-      db.select({ id: countries.id, name: countries.name }).from(countries),
-      db.select({ id: provinces.id, countryId: provinces.countryId, name: provinces.name }).from(provinces),
-      db.select({ id: regions.id, provinceId: regions.provinceId, brandName: regions.brandName }).from(regions),
-    ]);
+  const [
+    { pendingSubmissions, pendingClaims, unreadInbox, flaggedCount, scrapeHealthCount },
+    countryRows,
+    provinceRows,
+    regionRows,
+  ] = await Promise.all([
+    getAdminNavCounts(regionIds),
+    db.select({ id: countries.id, name: countries.name }).from(countries),
+    db.select({ id: provinces.id, countryId: provinces.countryId, name: provinces.name }).from(provinces),
+    db.select({ id: regions.id, provinceId: regions.provinceId, brandName: regions.brandName }).from(regions),
+  ]);
 
   let selectedCountryId: number | "all" = rawCountryId === "all" || !rawCountryId ? "all" : Number(rawCountryId);
   let selectedProvinceId: number | "all" =
@@ -56,7 +70,14 @@ export async function AdminShell({
   let selectedRegionId: number | "all" = rawRegionId === "all" || !rawRegionId ? "all" : Number(rawRegionId);
 
   if (isFreshSession) {
-    const current = await getCurrentRegion();
+    // getCurrentRegion() reads the x-region-id header proxy.ts only sets on
+    // public /[region]/... routes -- every /admin/* request has none, so
+    // that call throws a 500 on the very first admin page a genuinely fresh
+    // session (no scope cookie yet) ever hits. getPrimaryRegion() resolves
+    // by domain instead, with no header dependency, and is already the
+    // established fallback for exactly this "give me a sensible default
+    // region" need elsewhere in the app.
+    const current = await getPrimaryRegion();
     const currentRegionRow = regionRows.find((r) => r.id === current.id);
     const currentProvinceRow = currentRegionRow
       ? provinceRows.find((p) => p.id === currentRegionRow.provinceId)
@@ -71,8 +92,10 @@ export async function AdminShell({
       <AdminNav
         active={active}
         pendingSubmissions={pendingSubmissions}
+        pendingClaims={pendingClaims}
         unreadInbox={unreadInbox}
         flaggedCount={flaggedCount}
+        scrapeHealthCount={scrapeHealthCount}
         countries={countryRows}
         provinces={provinceRows}
         regions={regionRows}
