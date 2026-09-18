@@ -296,10 +296,22 @@ export async function fetchAndExtractTextViaBrowser(url: string): Promise<FetchR
     // common case of content injected shortly after the load event.
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(2500);
-    const text = await page.evaluate(() => {
+    // document.body can genuinely be null here -- seen live on matchpub.com: a page that
+    // does a client-side redirect/reload sometime in that 2500ms window can have the old
+    // document torn down and the new one not yet attached at the exact moment evaluate()
+    // runs. A short poll (not a single reread) covers that transitional gap instead of
+    // hard-failing the whole fetch over what's usually a few hundred ms of bad timing.
+    const text = await page.evaluate(async () => {
+      for (let attempt = 0; attempt < 5 && !document.body; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      if (!document.body) return null;
       document.querySelectorAll("script, style, noscript, svg, nav, footer").forEach((el) => el.remove());
       return document.body.innerText;
     });
+    if (text === null) {
+      return { ok: false, error: "document.body never attached after redirect/reload" };
+    }
     return { ok: true, text, tokensUsed: 0 };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
