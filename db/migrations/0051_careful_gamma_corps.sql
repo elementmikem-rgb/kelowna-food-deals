@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venue_claim_requests" ADD COLUMN "rejection_reason" text;

@@ -45,9 +45,11 @@ export function PendingBookingsPanel({ pending }: { pending: PendingBooking[] })
                     {b.specialTitle ? ` (${b.specialTitle})` : ""}
                     {b.eventTitle ? ` (${b.eventTitle})` : ""}
                     {b.category ? ` (${b.category})` : ""}
+                    {b.autoRenew && <span className="text-gold"> · auto-renews monthly</span>}
                   </span>
                   <span className="text-xs text-muted-2">
-                    {b.startDate} to {b.endDate} · {formatPrice(b.priceCents)} · {b.buyerEmail}
+                    {b.startDate} to {b.endDate} · {formatPrice(b.priceCents)}
+                    {b.autoRenew ? "/mo" : ""} · {b.buyerEmail}
                   </span>
                   {b.conflictDetected && (
                     <span className="text-xs text-stale">

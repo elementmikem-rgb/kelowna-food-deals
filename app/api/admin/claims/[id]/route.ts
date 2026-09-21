@@ -7,6 +7,7 @@ import { createOwnerSession } from "@/lib/venue-owner-auth";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { wrapOutreachHtml } from "@/lib/outreach-send";
 import { getRegionById } from "@/lib/regions";
+import { grantFreeTrialCredits } from "@/lib/credits";
 
 // linkToOwnerId is the admin's manual "I know this is the same person" override (moat
 // layer 3) -- used for exactly the case an automatic email/phone match can't catch, e.g.
@@ -15,6 +16,7 @@ import { getRegionById } from "@/lib/regions";
 const actionSchema = z.object({
   action: z.enum(["approve", "reject"]),
   linkToOwnerId: z.number().int().positive().optional(),
+  rejectionReason: z.string().trim().min(1).max(500).optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (parsed.data.action === "reject") {
       await tx
         .update(venueClaimRequests)
-        .set({ status: "rejected", reviewedAt: now })
+        .set({ status: "rejected", reviewedAt: now, rejectionReason: parsed.data.rejectionReason ?? null })
         .where(eq(venueClaimRequests.id, claimId));
       return {
         ok: true as const,
@@ -119,6 +121,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     await tx.insert(venueOwnerVenues).values({ venueOwnerId: ownerId, venueId: claim.venueId });
     await tx.update(venues).set({ claimedAt: now }).where(eq(venues.id, claim.venueId));
+    await grantFreeTrialCredits(tx, claim.venueId);
     await tx
       .update(venueClaimRequests)
       .set({ status: "approved", reviewedAt: now })

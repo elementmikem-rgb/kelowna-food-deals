@@ -34,6 +34,9 @@ export async function SiteFooter() {
       <Link href={`${base}/privacy`} className="text-muted-2 underline">
         {footer.privacy}
       </Link>
+      <Link href="/owner/login" className="text-muted-2 underline">
+        {footer.ownerLogin}
+      </Link>
     </footer>
   );
 }

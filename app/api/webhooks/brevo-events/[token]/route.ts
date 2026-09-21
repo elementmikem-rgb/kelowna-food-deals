@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, outreachSends } from "@/db";
-import { eq, isNull, and } from "drizzle-orm";
+import { isNull, and, sql } from "drizzle-orm";
+
+// Brevo's send API response (captured at send time into brevoMessageId) returns
+// the message id wrapped in angle brackets (SMTP Message-ID header style), but
+// this events webhook's own "message-id" field omits them -- strip brackets on
+// both sides so the match works regardless of which format either side has.
+function matchesMessageId(messageId: string) {
+  return sql`replace(replace(${outreachSends.brevoMessageId}, '<', ''), '>', '') = replace(replace(${messageId}, '<', ''), '>', '')`;
+}
 
 // Brevo's transactional-webhook payload uses snake_case event names
 // ("hard_bounce", "soft_bounce") even though the API used to CREATE the
@@ -44,7 +52,7 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ openedAt: new Date() })
-        .where(and(eq(outreachSends.brevoMessageId, messageId), isNull(outreachSends.openedAt)));
+        .where(and(matchesMessageId(messageId), isNull(outreachSends.openedAt)));
     } else if (event === "click") {
       // A click implies an open even if the "opened" pixel itself got
       // blocked (common with image-blocking mail clients), so backfill
@@ -52,11 +60,11 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ clickedAt: new Date() })
-        .where(and(eq(outreachSends.brevoMessageId, messageId), isNull(outreachSends.clickedAt)));
+        .where(and(matchesMessageId(messageId), isNull(outreachSends.clickedAt)));
       await db
         .update(outreachSends)
         .set({ openedAt: new Date() })
-        .where(and(eq(outreachSends.brevoMessageId, messageId), isNull(outreachSends.openedAt)));
+        .where(and(matchesMessageId(messageId), isNull(outreachSends.openedAt)));
     } else if (event === "hard_bounce") {
       // Only a hard bounce is permanent -- a soft bounce (mailbox full,
       // temporary server issue) may still get delivered on retry, so it
@@ -64,7 +72,7 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ status: "bounced", errorMessage: item.reason ?? "hard bounce" })
-        .where(eq(outreachSends.brevoMessageId, messageId));
+        .where(matchesMessageId(messageId));
     }
   }
 

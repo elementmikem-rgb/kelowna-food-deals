@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venue_owners" ADD COLUMN "stripe_customer_id" text;

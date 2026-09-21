@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
 import { HomeIntroCallout } from "@/components/HomeIntroCallout";
+import { RegionChatBox } from "@/components/RegionChatBox";
 import { buildSpecialsJsonLd } from "@/lib/seo";
 import { t, getEffectiveLanguage } from "@/lib/i18n";
 
@@ -55,6 +56,8 @@ export default async function Home() {
       <TipJar regionSlug={region.slug} lang={lang} />
       <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
       <SiteFooter />
+
+      <RegionChatBox regionId={region.id} />
     </div>
   );
 }

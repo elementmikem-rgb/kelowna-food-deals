@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import type { SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
 import { endOfDayPacific, pacificTodayISODate } from "@/lib/time";
 import { regionScopeCondition } from "@/lib/admin-region";
+import { refundCredits, centsToCredits } from "@/lib/credits";
 
 export interface PendingBooking {
   id: number;
@@ -20,6 +21,7 @@ export interface PendingBooking {
   priceCents: number;
   buyerEmail: string;
   conflictDetected: boolean;
+  autoRenew: boolean;
 }
 
 export async function getPendingApprovalBookings(regionIds: number[] | "all"): Promise<PendingBooking[]> {
@@ -40,6 +42,7 @@ export async function getPendingApprovalBookings(regionIds: number[] | "all"): P
       priceCents: bookings.priceCents,
       buyerEmail: bookings.buyerEmail,
       conflictDetected: bookings.conflictDetected,
+      autoRenew: bookings.autoRenew,
     })
     .from(bookings)
     .leftJoin(venues, eq(bookings.venueId, venues.id))
@@ -210,10 +213,28 @@ export async function approveBooking(bookingId: number): Promise<{ venueId: numb
 }
 
 export async function rejectBooking(bookingId: number): Promise<void> {
-  await db
-    .update(bookings)
-    .set({ status: "rejected", refundNeeded: true, reviewedAt: new Date() })
-    .where(and(eq(bookings.id, bookingId), eq(bookings.status, "pending_approval")));
+  await db.transaction(async (tx) => {
+    const [booking] = await tx
+      .select({ venueId: bookings.venueId, creditsSpentCents: bookings.creditsSpentCents })
+      .from(bookings)
+      .where(and(eq(bookings.id, bookingId), eq(bookings.status, "pending_approval")))
+      .for("update");
+    if (!booking) return;
+
+    // Credit-paid bookings refund themselves immediately, same transaction, no manual
+    // step needed -- there's no external payment processor involved, unlike the cash
+    // path below (refundNeeded=true) which still needs a human to issue the actual
+    // Stripe refund before clicking "mark refunded".
+    const isCreditPaid = booking.creditsSpentCents !== null;
+    if (isCreditPaid && booking.venueId !== null) {
+      await refundCredits(tx, booking.venueId, centsToCredits(booking.creditsSpentCents!), bookingId);
+    }
+
+    await tx
+      .update(bookings)
+      .set({ status: "rejected", refundNeeded: !isCreditPaid, reviewedAt: new Date() })
+      .where(eq(bookings.id, bookingId));
+  });
 }
 
 export async function markRefunded(bookingId: number): Promise<void> {

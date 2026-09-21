@@ -84,8 +84,10 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
   const [error, setError] = useState<string | null>(null);
   const [linkedOwner, setLinkedOwner] = useState<OwnerSearchResult | null>(null);
   const [showLinkSearch, setShowLinkSearch] = useState(false);
+  const [showRejectReason, setShowRejectReason] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
-  async function act(action: "approve" | "reject") {
+  async function act(action: "approve" | "reject", rejectionReasonValue?: string) {
     setState("loading");
     setError(null);
     try {
@@ -95,6 +97,7 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
         body: JSON.stringify({
           action,
           ...(action === "approve" && linkedOwner ? { linkToOwnerId: linkedOwner.id } : {}),
+          ...(action === "reject" && rejectionReasonValue ? { rejectionReason: rejectionReasonValue } : {}),
         }),
       });
       const data = await res.json();
@@ -171,6 +174,37 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
 
       {error && <p className="text-xs text-stale">{error}</p>}
 
+      {showRejectReason && (
+        <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface-raised p-2">
+          <input
+            autoFocus
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder="Why? (e.g. no specials to publish yet) — optional but helps a later follow-up"
+            className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => act("reject", rejectionReason.trim() || undefined)}
+              disabled={state === "loading"}
+              className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+            >
+              Confirm reject
+            </button>
+            <button
+              onClick={() => {
+                setShowRejectReason(false);
+                setRejectionReason("");
+              }}
+              disabled={state === "loading"}
+              className="text-xs text-muted underline disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 mt-1 items-center">
         <button
           onClick={() => act("approve")}
@@ -179,13 +213,15 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
         >
           Approve
         </button>
-        <button
-          onClick={() => act("reject")}
-          disabled={state === "loading"}
-          className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
-        >
-          Reject
-        </button>
+        {!showRejectReason && (
+          <button
+            onClick={() => setShowRejectReason(true)}
+            disabled={state === "loading"}
+            className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+          >
+            Reject
+          </button>
+        )}
         {!linkedOwner && !showLinkSearch && (
           <button
             onClick={() => setShowLinkSearch(true)}

@@ -36,6 +36,11 @@ function emptyByProduct(): Record<BookingProductType, { totalCents: number; coun
     featured: { totalCents: 0, count: 0 },
     boost: { totalCents: 0, count: 0 },
     category_sponsor: { totalCents: 0, count: 0 },
+    // chat_term_sponsor never goes through this table -- no self-serve checkout for it
+    // yet (see lib/region-chat.ts/app/api/admin/sponsored/term/route.ts), only the
+    // admin-manual chatTermSponsors table. Zeroed here just to satisfy the exhaustive
+    // Record type; revisit once/if real checkout is wired for it.
+    chat_term_sponsor: { totalCents: 0, count: 0 },
   };
 }
 
@@ -99,4 +104,49 @@ export async function getRevenueInRange(
       records: bookingRows,
     },
   };
+}
+
+export interface ActiveSubscription {
+  id: number;
+  productType: BookingProductType;
+  venueName: string | null;
+  specialTitle: string | null;
+  priceCents: number;
+  endDate: string;
+}
+
+// "Still recurring" isn't just status = "approved" -- a cancelled-but-not-yet-expired
+// subscription (handleSubscriptionDeleted in the Stripe webhook turns autoRenew off
+// but leaves the row running to its current endDate) shouldn't count toward MRR even
+// though it's still technically approved and live right now, since no further charge
+// is actually coming.
+export async function getActiveSubscriptions(regionIds: number[] | "all"): Promise<ActiveSubscription[]> {
+  return db
+    .select({
+      id: bookings.id,
+      productType: bookings.productType,
+      venueName: venues.name,
+      specialTitle: specials.title,
+      priceCents: bookings.priceCents,
+      endDate: bookings.endDate,
+    })
+    .from(bookings)
+    .leftJoin(venues, eq(bookings.venueId, venues.id))
+    .leftJoin(specials, eq(bookings.specialId, specials.id))
+    .where(
+      and(
+        eq(bookings.status, "approved"),
+        eq(bookings.autoRenew, true),
+        regionScopeCondition(venues.regionId, regionIds)
+      )
+    )
+    .orderBy(sql`${bookings.endDate} asc`);
+}
+
+export async function getMRRCents(regionIds: number[] | "all"): Promise<number> {
+  const rows = await getActiveSubscriptions(regionIds);
+  // Every stored priceCents on an auto-renew booking already IS its monthly charge
+  // (AUTO_RENEW_WINDOW_DAYS in cart-checkout/route.ts prices every auto-renew item at
+  // exactly dailyRate * 30 up front) -- no per-day conversion needed here.
+  return rows.reduce((sum, r) => sum + r.priceCents, 0);
 }

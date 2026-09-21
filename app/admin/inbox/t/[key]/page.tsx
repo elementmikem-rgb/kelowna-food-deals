@@ -22,7 +22,12 @@ export default async function ThreadPage({ params }: PageProps) {
         displayName={thread.displayName}
         contactEmail={thread.contactEmail}
         archived={thread.archived}
-        messages={thread.messages.map((m) => ({ ...m, at: m.at.toISOString() }))}
+        messages={thread.messages.map((m) => ({
+          ...m,
+          at: m.at.toISOString(),
+          openedAt: m.openedAt ? m.openedAt.toISOString() : null,
+          clickedAt: m.clickedAt ? m.clickedAt.toISOString() : null,
+        }))}
       />
     </AdminShell>
   );

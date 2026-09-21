@@ -113,6 +113,15 @@ export function daysInclusive(start: string, end: string): number {
   return Math.round((b - a) / (1000 * 60 * 60 * 24)) + 1;
 }
 
+// "YYYY-MM-DD" + N days -> "YYYY-MM-DD". Used to compute a 30-day auto-renew booking
+// window from just a start date (see cart-checkout route) the same way daysInclusive's
+// caller works backward from an explicit end date.
+export function addDaysISO(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function dowShortName(dow: number, lang: Language = "en"): string {
   return dowShortNameLocalized(dow, lang);
 }

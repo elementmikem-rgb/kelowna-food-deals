@@ -14,6 +14,8 @@ interface Message {
   at: string;
   inboundId: number | null;
   attachments: { id: number; fileName: string; contentType: string; sizeBytes: number }[];
+  openedAt: string | null;
+  clickedAt: string | null;
 }
 
 interface InboxThreadProps {
@@ -274,7 +276,13 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
                   differ for every visitor not in UTC, which is exactly the
                   React hydration-mismatch error (#418) confirmed live
                   2026-09-12 on this page. */}
-              <span className="text-[11px] text-muted-2">
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-2">
+                {m.direction === "outbound" && m.clickedAt && (
+                  <span className="rounded-full bg-accent-soft/40 text-accent-dim px-1.5 py-0.5">Clicked</span>
+                )}
+                {m.direction === "outbound" && m.openedAt && !m.clickedAt && (
+                  <span className="rounded-full bg-accent-soft/40 text-accent-dim px-1.5 py-0.5">Opened</span>
+                )}
                 {new Date(m.at).toLocaleString("en-CA", { timeZone: "America/Vancouver" })}
               </span>
             </div>

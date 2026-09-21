@@ -22,6 +22,8 @@ export interface EventWithVenue {
   venueFeaturedUntil: Date | null;
   venueClaimedAt: Date | null;
   boostedUntil: Date | null;
+  // Separate, independent add-on from boostedUntil -- see db/schema.ts.
+  chatBoostedUntil: Date | null;
   // See SpecialWithVenue.hasPhoto's comment in lib/data.ts -- same reasoning.
   hasPhoto: boolean;
 }
@@ -45,6 +47,7 @@ const recurringColumns = {
   venueFeaturedUntil: venues.featuredUntil,
   venueClaimedAt: venues.claimedAt,
   boostedUntil: events.boostedUntil,
+  chatBoostedUntil: events.chatBoostedUntil,
   hasPhoto: sql<boolean>`${events.photoData} is not null`,
 };
 
@@ -102,6 +105,7 @@ export async function getUpcomingOneOffEvents(
       confidence: events.confidence,
       sourceUrl: events.sourceUrl,
       boostedUntil: events.boostedUntil,
+      chatBoostedUntil: events.chatBoostedUntil,
       hasPhoto: sql<boolean>`${events.photoData} is not null`,
       venueActive: venues.active,
       venueFeaturedUntil: venues.featuredUntil,
@@ -138,6 +142,7 @@ export async function getUpcomingOneOffEvents(
       confidence: r.confidence,
       sourceUrl: r.sourceUrl,
       boostedUntil: r.boostedUntil,
+      chatBoostedUntil: r.chatBoostedUntil,
       hasPhoto: r.hasPhoto,
       venueFeaturedUntil: r.venueId === null ? null : r.venueFeaturedUntil,
       venueClaimedAt: r.venueId === null ? null : r.venueClaimedAt,

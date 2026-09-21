@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { getRevenueInRange } from "@/lib/revenue-data";
+import { getRevenueInRange, getMRRCents, getActiveSubscriptions } from "@/lib/revenue-data";
+import { getChatTermSponsorRevenue } from "@/lib/sponsored-data";
 import { AdminShell } from "@/components/AdminShell";
 import { getSelectedAdminScope } from "@/lib/admin-region";
 import { pacificTodayISODate, startOfDayPacific, endOfDayPacific } from "@/lib/time";
 import type { BookingProductType } from "@/db/schema";
+
+// Real Stripe-checkout products only -- chat_term_sponsor never goes through `bookings`
+// (see lib/revenue-data.ts's emptyByProduct comment), so it would always show $0/0 here
+// and imply there's no chat-term revenue even when there is. It gets its own section
+// below, fed by getChatTermSponsorRevenue instead.
+const BOOKING_PRODUCT_KEYS: BookingProductType[] = ["featured", "boost", "category_sponsor"];
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +29,7 @@ const PRODUCT_LABELS: Record<BookingProductType, string> = {
   featured: "Featured placement",
   boost: "Seasonal boost",
   category_sponsor: "Category sponsorship",
+  chat_term_sponsor: "Chat term sponsorship",
 };
 
 function centsToDisplay(cents: number): string {
@@ -62,7 +70,12 @@ export default async function AdminRevenuePage({
   // when regionIds is genuinely "all" -- under any specific scope, totalCents
   // is bookings-only and tips are shown as their own always-account-wide figure.
   const { regionIds } = await getSelectedAdminScope();
-  const summary = await getRevenueInRange(from, to, regionIds);
+  const [summary, chatTermRevenue, mrrCents, activeSubscriptions] = await Promise.all([
+    getRevenueInRange(from, to, regionIds),
+    getChatTermSponsorRevenue(regionIds, from, to),
+    getMRRCents(regionIds),
+    getActiveSubscriptions(regionIds),
+  ]);
   const isAllScope = regionIds === "all";
 
   return (
@@ -145,10 +158,41 @@ export default async function AdminRevenuePage({
         )}
       </div>
 
+      <div className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-1">
+        <span className="text-xs uppercase tracking-wide text-muted-2">Monthly recurring revenue</span>
+        <span className="font-display text-3xl text-foreground">{centsToDisplay(mrrCents)}</span>
+        <span className="text-xs text-muted-2">
+          {activeSubscriptions.length} auto-renewing sponsorship{activeSubscriptions.length === 1 ? "" : "s"}{" "}
+          currently active -- not part of the date-range total above, this is what's committed going forward.
+        </span>
+      </div>
+
+      {activeSubscriptions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg text-foreground">Active auto-renews</h2>
+          <div className="rounded-xl border border-border bg-surface divide-y divide-border">
+            {activeSubscriptions.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-foreground/90 truncate">
+                    {s.venueName ?? "Unknown venue"}
+                    {s.specialTitle ? ` — ${s.specialTitle}` : ""}
+                  </span>
+                  <span className="text-xs text-muted-2">
+                    {PRODUCT_LABELS[s.productType]} · next renewal {s.endDate}
+                  </span>
+                </div>
+                <span className="font-mono-tabular text-muted shrink-0">{centsToDisplay(s.priceCents)}/mo</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <h2 className="font-display text-lg text-foreground">Sponsorship &amp; placements</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {(Object.keys(PRODUCT_LABELS) as BookingProductType[]).map((key) => (
+          {BOOKING_PRODUCT_KEYS.map((key) => (
             <div key={key} className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-1">
               <span className="text-xs uppercase tracking-wide text-muted-2">{PRODUCT_LABELS[key]}</span>
               <span className="font-display text-2xl text-foreground">
@@ -180,6 +224,20 @@ export default async function AdminRevenuePage({
               <span className="font-mono-tabular text-muted shrink-0">{centsToDisplay(b.priceCents)}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-lg text-foreground">Chat term sponsorships</h2>
+        <p className="text-xs text-muted-2">
+          Manual sales (no self-serve checkout yet) -- not part of the total above, counted
+          separately.
+        </p>
+        <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-1 max-w-xs">
+          <span className="font-display text-2xl text-foreground">{centsToDisplay(chatTermRevenue.totalCents)}</span>
+          <span className="text-xs text-muted-2">
+            {chatTermRevenue.count} sale{chatTermRevenue.count === 1 ? "" : "s"}
+          </span>
         </div>
       </div>
 

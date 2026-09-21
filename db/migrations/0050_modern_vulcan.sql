@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."chat_term_sponsors" ADD COLUMN "total_price_cents" integer NOT NULL;

@@ -151,6 +151,12 @@ export const venues = specialsSchema.table(
     // Drives two things: the nightly cron skips this venue entirely (cron/index.ts) since the
     // owner is now the source of truth, and the "Owner verified" badge on its cards.
     claimedAt: timestamp("claimed_at", { withTimezone: true }),
+    // Cached sum of creditLedger.delta for this venue -- read on every checkout/dashboard
+    // load, so a cache avoids re-summing the ledger every time. The ledger stays the
+    // source of truth/audit trail; every write to this column happens in the same
+    // transaction as the matching ledger insert (see lib/credits.ts), so the two can
+    // never drift. Units: whole dollar-credits (1 credit = $1, see lib/credits.ts).
+    creditBalance: integer("credit_balance").notNull().default(0),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );
@@ -175,6 +181,10 @@ export const venueClaimRequests = specialsSchema.table("venue_claim_requests", {
   status: text("status").$type<VenueClaimRequestStatus>().notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  // Only set on reject -- lets an admin note why (e.g. "no specials to publish yet")
+  // instead of the claimant just seeing silence, and gives us a record to check before
+  // reaching back out later. Never set on approve.
+  rejectionReason: text("rejection_reason"),
 });
 
 // A pure owner identity -- the actual account a venueOwnerSessions token resolves to.
@@ -190,6 +200,15 @@ export const venueOwners = specialsSchema.table("venue_owners", {
   // who already claimed their listing opting out of the weekly stats digest shouldn't
   // silently also suppress a different email stream they never asked to stop.
   weeklyDigestOptOut: boolean("weekly_digest_opt_out").notNull().default(false),
+  // Null until the owner sets one from the dashboard -- magic-link login (above) always
+  // keeps working even after a password is set, this is an alongside option, not a
+  // replacement. Format: "<hex salt>:<hex scrypt hash>", see lib/owner-password.ts.
+  passwordHash: text("password_hash"),
+  passwordSetAt: timestamp("password_set_at", { withTimezone: true }),
+  // Lazily created on first visit to billing (Stripe Customer Portal or checkout), not
+  // at account/claim time -- an owner who never touches billing shouldn't have a Stripe
+  // object created on their behalf with nothing to manage.
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -321,6 +340,11 @@ export const specials = specialsSchema.table("specials", {
   // first within its venue's card and gets a "Featured" badge. Same lapses-itself
   // design as venues.featuredUntil.
   boostedUntil: timestamp("boosted_until", { withTimezone: true }),
+  // Separate paid add-on from boostedUntil above -- a venue can buy one, the other,
+  // both, or neither. While now() < chatBoostedUntil, this item is guaranteed to survive
+  // the Ask chat's context caps and gets a "(Promoted)" mention when genuinely relevant
+  // to a visitor's question (see lib/region-chat.ts). Never affects the public board.
+  chatBoostedUntil: timestamp("chat_boosted_until", { withTimezone: true }),
   // Set when the venue itself clicks "Yes, this is accurate" on the /verify/[token]
   // page reached from the outreach email -- see lib/venue-verify.ts. Null means never
   // confirmed by the venue. Survives unchanged across cron re-scrapes (the nightly
@@ -375,6 +399,8 @@ export const events = specialsSchema.table("events", {
   // requires a non-null venues.id to resolve a region for capacity scoping -- see
   // booking-availability.ts), never for a non-venue event.
   boostedUntil: timestamp("boosted_until", { withTimezone: true }),
+  // See specials.chatBoostedUntil -- same separate, independent Ask-chat-only add-on.
+  chatBoostedUntil: timestamp("chat_boosted_until", { withTimezone: true }),
   // See specials.photoData -- same paid photo/poster add-on, same "only shown while
   // boosted" rule. For an event this is typically the venue's own poster graphic.
   photoData: text("photo_data"),
@@ -632,7 +658,35 @@ export const categorySponsors = specialsSchema.table("category_sponsors", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const bookingProductType = ["featured", "boost", "category_sponsor"] as const;
+// Flat-price, one-owner-per-(region, term) sponsorship for the Ask chat specifically --
+// a third, distinct mechanism from specials.boostedUntil (public board "Featured") and
+// specials/events.chatBoostedUntil (promotes one specific special/event). This promotes
+// a venue whenever a visitor's question matches the purchased term (e.g. "beer",
+// "trivia"), regardless of which specific item answers it -- see lib/region-chat.ts.
+// `term` is free text, not a rigid enum, matched by the chat's own relevance judgment the
+// same way item-level Promoted tags already are -- "beer" isn't a SpecialCategory value.
+// priceCentsPerDay is a snapshot of what was actually charged (same convention as
+// bookings.priceCents), typed by an admin at time of sale, never defaulted by code.
+export const chatTermSponsors = specialsSchema.table("chat_term_sponsors", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id")
+    .notNull()
+    .references(() => regions.id),
+  term: text("term").notNull(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  priceCentsPerDay: integer("price_cents_per_day").notNull(),
+  // Snapshot of the full amount charged for this sale (priceCentsPerDay * days at the
+  // time it was sold) -- lets revenue reporting sum a real dollar figure without
+  // re-deriving it from a rate and two timestamps, and survives independently of
+  // whatever the flat rate later changes to.
+  totalPriceCents: integer("total_price_cents").notNull(),
+  until: timestamp("until", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const bookingProductType = ["featured", "boost", "category_sponsor", "chat_term_sponsor"] as const;
 export type BookingProductType = (typeof bookingProductType)[number];
 
 export const bookingStatus = [
@@ -670,6 +724,15 @@ export const bookings = specialsSchema.table("bookings", {
   priceCents: integer("price_cents").notNull(), // snapshot of what was actually charged
   stripeSessionId: text("stripe_session_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  // Set only for a subscription-mode checkout (owner-dashboard cart auto-renew items).
+  // Several bookings can share one subscription id, the same way several can share one
+  // stripeSessionId above -- one Stripe subscription can bundle multiple monthly
+  // line items. The webhook extends endDate by 30 days on each "subscription_cycle"
+  // invoice for a booking that's still approved; it never re-enters pending_approval,
+  // only the very first period (via checkout.session.completed, same as a one-time
+  // booking) needs a human look.
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  autoRenew: boolean("auto_renew").notNull().default(false),
   buyerEmail: text("buyer_email").notNull(),
   buyerVerifiedAt: timestamp("buyer_verified_at", { withTimezone: true }),
   refundNeeded: boolean("refund_needed").notNull().default(false),
@@ -683,6 +746,12 @@ export const bookings = specialsSchema.table("bookings", {
   hasPhotoAddOn: boolean("has_photo_add_on").notNull().default(false),
   photoData: text("photo_data"),
   photoMimeType: text("photo_mime_type"),
+  // Set only when this booking was paid from the venue's credit wallet instead of
+  // Stripe (see lib/credits.ts) -- same units/value as priceCents, just a different
+  // payment rail. stripeSessionId/stripePaymentIntentId stay null on a credit-paid
+  // booking, and status goes straight to "pending_approval" (no "pending_payment"
+  // hold, since the credits were already debited atomically at insert time).
+  creditsSpentCents: integer("credits_spent_cents"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });
@@ -707,6 +776,44 @@ export type AddOnType = (typeof addOnType)[number];
 export const addOnSettings = specialsSchema.table("add_on_settings", {
   addOnType: text("add_on_type").$type<AddOnType>().primaryKey(),
   priceCentsPerDay: integer("price_cents_per_day").notNull(),
+});
+
+export const creditLedgerReason = ["free_trial", "purchase", "spend", "refund"] as const;
+export type CreditLedgerReason = (typeof creditLedgerReason)[number];
+
+// Append-only audit trail for venues.creditBalance -- every grant, purchase, spend, or
+// refund gets a row here in the same transaction as the balance update (see
+// lib/credits.ts), so the balance is always independently reconstructible by summing
+// delta for a venueId. 1 credit = $1 (see lib/credits.ts's CENTS_PER_CREDIT), not a
+// separate gamified currency -- credits reuse monetizationSettings.priceCentsPerDay
+// directly instead of needing their own price list.
+export const creditLedger = specialsSchema.table("credit_ledger", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  delta: integer("delta").notNull(), // whole credits, positive (grant/purchase/refund) or negative (spend)
+  reason: text("reason").$type<CreditLedgerReason>().notNull(),
+  // "spend" and "refund" only -- which booking the credits were spent on / refunded from.
+  relatedBookingId: integer("related_booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  // "purchase" only -- the Stripe Checkout session that paid for this credit bundle.
+  stripeSessionId: text("stripe_session_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Admin-configurable prepaid credit bundles, same "seeded with placeholder values,
+// operator sets real numbers before this goes live" posture as monetizationSettings
+// above. `credits` can exceed `priceCents / CENTS_PER_CREDIT` (see lib/credits.ts) --
+// that gap is the bundle's bonus/discount, e.g. paying $250 for 275 credits. The
+// smallest tier is expected to have no bonus (par value) so there's always a
+// no-discount baseline option.
+export const creditBundles = specialsSchema.table("credit_bundles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  priceCents: integer("price_cents").notNull(),
+  credits: integer("credits").notNull(),
+  active: boolean("active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
 });
 
 // A resized photo can be hundreds of KB of base64 -- far too large to embed in the
@@ -745,4 +852,20 @@ export const emailAttachments = specialsSchema.table("email_attachments", {
   contentType: text("content_type").notNull(),
   fileData: text("file_data").notNull(), // base64
   sizeBytes: integer("size_bytes").notNull(),
+});
+
+// One row per region "Ask" chat box question -- doubles as both an audit log (what are
+// people actually asking) and the data source for the platform-wide daily query cap in
+// lib/region-chat.ts, since this is the first real-time (non-batch) Anthropic cost this
+// app has and needs a hard ceiling against a single day draining the account.
+export const chatQueries = specialsSchema.table("chat_queries", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id")
+    .notNull()
+    .references(() => regions.id, { onDelete: "cascade" }),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  tokensUsed: integer("tokens_used").notNull(),
+  ip: text("ip").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

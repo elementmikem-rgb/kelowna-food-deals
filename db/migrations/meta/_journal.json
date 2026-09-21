@@ -330,6 +330,76 @@
       "when": 1789686805416,
       "tag": "0046_keen_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1789947044854,
+      "tag": "0047_serious_captain_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1789962874495,
+      "tag": "0048_ambitious_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1789964817071,
+      "tag": "0049_large_pepper_potts",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1789966551223,
+      "tag": "0050_modern_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1789998361648,
+      "tag": "0051_careful_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1790003902507,
+      "tag": "0052_youthful_doctor_doom",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1790004913252,
+      "tag": "0053_flippant_dreadnoughts",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790005879396,
+      "tag": "0054_magenta_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1790026594687,
+      "tag": "0055_green_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1790026921747,
+      "tag": "0056_regular_johnny_storm",
+      "breakpoints": true
     }
   ]
 }

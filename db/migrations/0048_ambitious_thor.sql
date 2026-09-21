@@ -1,0 +1,2 @@
+ALTER TABLE "specials"."events" ADD COLUMN "chat_boosted_until" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "specials"."specials" ADD COLUMN "chat_boosted_until" timestamp with time zone;

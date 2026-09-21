@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems, venueOwners } from "@/db";
+import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles } from "@/db";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
+import { getRegionById, getRegionContext } from "@/lib/regions";
+import { regionTodayISODate } from "@/lib/time";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,19 +23,19 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   if (!session.venueIds.includes(venueId)) redirect(`/owner/venue/${session.venueIds[0]}`);
 
   const ownedVenues = await db
-    .select({ id: venues.id, name: venues.name })
+    .select({ id: venues.id, name: venues.name, regionId: venues.regionId, creditBalance: venues.creditBalance })
     .from(venues)
     .where(inArray(venues.id, session.venueIds));
   const venue = ownedVenues.find((v) => v.id === venueId);
   if (!venue) notFound();
 
   const [owner] = await db
-    .select({ weeklyDigestOptOut: venueOwners.weeklyDigestOptOut })
+    .select({ weeklyDigestOptOut: venueOwners.weeklyDigestOptOut, passwordHash: venueOwners.passwordHash })
     .from(venueOwners)
     .where(eq(venueOwners.id, session.venueOwnerId))
     .limit(1);
 
-  const [venueSpecials, venueEvents, venueMenuItems] = await Promise.all([
+  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows] = await Promise.all([
     db
       .select()
       .from(specials)
@@ -46,7 +48,26 @@ export default async function OwnerVenuePage({ params }: PageProps) {
       .select()
       .from(menuItems)
       .where(and(eq(menuItems.venueId, venueId), isNull(menuItems.archivedAt))),
+    db.select().from(monetizationSettings),
+    getRegionById(venue.regionId),
+    db
+      .select({ id: creditBundles.id, name: creditBundles.name, priceCents: creditBundles.priceCents, credits: creditBundles.credits })
+      .from(creditBundles)
+      .where(eq(creditBundles.active, true))
+      .orderBy(creditBundles.sortOrder),
   ]);
+  if (!region) notFound();
+  const { timezone } = await getRegionContext(region);
+  const todayISO = regionTodayISODate(timezone);
+
+  function settingsFor(productType: "featured" | "boost" | "category_sponsor") {
+    const row = promoteSettingsRows.find((r) => r.productType === productType);
+    return {
+      priceCentsPerDay: row?.priceCentsPerDay ?? 0,
+      minDays: row?.minDays ?? 1,
+      maxDays: row?.maxDays ?? 30,
+    };
+  }
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
@@ -103,6 +124,15 @@ export default async function OwnerVenuePage({ params }: PageProps) {
           priceCents: m.priceCents,
         }))}
         weeklyDigestOptOut={owner?.weeklyDigestOptOut ?? false}
+        hasPassword={owner?.passwordHash != null}
+        promoteSettings={{
+          featured: settingsFor("featured"),
+          boost: settingsFor("boost"),
+          category_sponsor: settingsFor("category_sponsor"),
+        }}
+        todayISO={todayISO}
+        creditBalance={venue.creditBalance}
+        creditBundles={creditBundleRows}
       />
     </div>
   );

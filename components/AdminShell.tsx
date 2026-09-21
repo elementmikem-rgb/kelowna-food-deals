@@ -28,6 +28,7 @@ export async function AdminShell({
     | "analytics"
     | "flagged"
     | "scrapeHealth"
+    | "chat"
     | null;
   // Sub-pages (compose, a single thread) sit one level under a nav section --
   // they keep the same persistent nav but add a breadcrumb back to it.

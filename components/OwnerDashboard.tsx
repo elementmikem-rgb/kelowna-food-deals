@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { formatPrice, CATEGORY_LABELS, EVENT_TYPE_LABELS } from "@/lib/format";
+import { OwnerCart } from "@/components/OwnerCart";
+import { OwnerCredits } from "@/components/OwnerCredits";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -642,18 +644,123 @@ function DigestPreferenceToggle({ initialOptOut }: { initialOptOut: boolean }) {
   );
 }
 
+function PasswordSection({ hasPassword: initialHasPassword }: { hasPassword: boolean }) {
+  const [hasPassword, setHasPassword] = useState(initialHasPassword);
+  const [editing, setEditing] = useState(false);
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/owner/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Failed");
+      setHasPassword(true);
+      setEditing(false);
+      setPassword("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground/90">Password login</span>
+          <span className="text-xs text-muted">
+            {hasPassword
+              ? "Set — you can log in with your email and password, or still use an emailed link."
+              : "Not set — you can only log in via an emailed link right now."}
+          </span>
+        </div>
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted"
+          >
+            {hasPassword ? "Change" : "Set a password"}
+          </button>
+        )}
+      </div>
+      {editing && (
+        <form onSubmit={submit} className="flex flex-col gap-2">
+          <input
+            type="password"
+            required
+            minLength={8}
+            autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm"
+          />
+          {error && <p className="text-xs text-stale">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="press-pill rounded-full bg-accent text-background px-3 py-1 text-xs font-medium disabled:opacity-50"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false);
+                setPassword("");
+                setError(null);
+              }}
+              disabled={saving}
+              className="text-xs text-muted underline disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+interface MonetizationSettings {
+  priceCentsPerDay: number;
+  minDays: number;
+  maxDays: number;
+}
+
 export function OwnerDashboard({
   venueId,
   specials,
   events,
   menuItems,
   weeklyDigestOptOut,
+  hasPassword,
+  promoteSettings,
+  todayISO,
+  creditBalance,
+  creditBundles,
 }: {
   venueId: number;
   specials: SpecialData[];
   events: EventData[];
   menuItems: MenuItemData[];
   weeklyDigestOptOut: boolean;
+  hasPassword: boolean;
+  promoteSettings: Record<"featured" | "boost" | "category_sponsor", MonetizationSettings>;
+  todayISO: string;
+  creditBalance: number;
+  creditBundles: { id: number; name: string; priceCents: number; credits: number }[];
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
@@ -757,6 +864,28 @@ export function OwnerDashboard({
         ))}
       </SectionShell>
 
+      <OwnerCart
+        venueId={venueId}
+        specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
+        events={eventList.map((e) => ({ id: e.id, title: e.title }))}
+        settings={promoteSettings}
+        todayISO={todayISO}
+        creditBalance={creditBalance}
+      />
+      <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
+      <PasswordSection hasPassword={hasPassword} />
+      <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground/90">Billing</span>
+          <span className="text-xs text-muted">Manage your saved card and view invoices.</span>
+        </div>
+        <a
+          href="/api/owner/billing-portal"
+          className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted"
+        >
+          Manage billing
+        </a>
+      </section>
       <DigestPreferenceToggle initialOptOut={weeklyDigestOptOut} />
     </div>
   );

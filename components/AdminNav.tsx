@@ -13,7 +13,8 @@ type AdminSection =
   | "revenue"
   | "analytics"
   | "flagged"
-  | "scrapeHealth";
+  | "scrapeHealth"
+  | "chat";
 
 function Badge({ count, tone }: { count: number; tone: "accent" | "evergreen" }) {
   if (count <= 0) return null;
@@ -201,6 +202,7 @@ export function AdminNav({
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
     { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },
     { key: "scrapeHealth", href: "/admin/scrape-health", label: "Scrape health", badge: scrapeHealthCount, tone: "accent" },
+    { key: "chat", href: "/admin/chat", label: "Chat" },
   ];
 
   const currentScopeLabel = scopeLabel(

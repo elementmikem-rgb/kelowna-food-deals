@@ -48,6 +48,7 @@ export const strings = {
       advertise: "Advertise with us",
       tipJar: "Tip jar",
       privacy: "Privacy & terms",
+      ownerLogin: "Own a venue? Log in",
     },
     emptyState: {
       noSpecials: "No specials found for this day/category yet.",
@@ -105,6 +106,7 @@ export const strings = {
       advertise: "Annoncez avec nous",
       tipJar: "Pourboire",
       privacy: "Confidentialité et conditions",
+      ownerLogin: "Propriétaire d'un établissement? Connexion",
     },
     emptyState: {
       noSpecials: "Aucun spécial trouvé pour ce jour/cette catégorie pour l'instant.",

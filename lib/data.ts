@@ -22,6 +22,8 @@ export interface SpecialWithVenue {
   // consumers compare against Date.now() rather than trusting these as booleans.
   venueFeaturedUntil: Date | null;
   boostedUntil: Date | null;
+  // Separate, independent add-on from boostedUntil -- see db/schema.ts.
+  chatBoostedUntil: Date | null;
   // Standing paid status -- unlike the two above, doesn't expire on its own.
   // Non-null means "is a partner", the exact date isn't otherwise used yet.
   venuePartnerSince: Date | null;
@@ -61,6 +63,7 @@ const baseColumns = {
   confidence: specials.confidence,
   venueFeaturedUntil: venues.featuredUntil,
   boostedUntil: specials.boostedUntil,
+  chatBoostedUntil: specials.chatBoostedUntil,
   venuePartnerSince: venues.partnerSince,
   venueClaimedAt: venues.claimedAt,
   venueConfirmedAt: specials.venueConfirmedAt,

@@ -136,6 +136,8 @@ export interface ThreadMessage {
   at: Date;
   inboundId: number | null; // set for inbound messages, used to mark-read
   attachments: { id: number; fileName: string; contentType: string; sizeBytes: number }[];
+  openedAt: Date | null; // outbound only, null for inbound
+  clickedAt: Date | null; // outbound only, null for inbound
 }
 
 export interface ThreadDetail {
@@ -203,6 +205,8 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         at: s.createdAt,
         inboundId: null,
         attachments: [],
+        openedAt: s.openedAt,
+        clickedAt: s.clickedAt,
       })),
       ...inbound.map((e) => ({
         id: `i${e.id}`,
@@ -215,6 +219,8 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         at: e.receivedAt,
         inboundId: e.id,
         attachments: attachmentsByEmail.get(e.id) ?? [],
+        openedAt: null,
+        clickedAt: null,
       })),
     ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
@@ -281,6 +287,8 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         at: s.createdAt,
         inboundId: null,
         attachments: [],
+        openedAt: s.openedAt,
+        clickedAt: s.clickedAt,
       })),
       ...inbound.map((e) => ({
         id: `i${e.id}`,
@@ -293,6 +301,8 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
         at: e.receivedAt,
         inboundId: e.id,
         attachments: attachmentsByEmail.get(e.id) ?? [],
+        openedAt: null,
+        clickedAt: null,
       })),
     ].sort((a, b) => a.at.getTime() - b.at.getTime());
 

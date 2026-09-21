@@ -15,6 +15,7 @@ import {
   type BatchResultOutcome,
 } from "./batchExtract";
 import { discoverVenueLinks, isAutomatableUrl } from "./discover";
+import { venuesToScrapeTonight } from "./rotation";
 import { db, regions } from "@/db";
 import { eq, sql } from "drizzle-orm";
 import {
@@ -110,6 +111,10 @@ const CRON_NEVER_SCRAPED_ONLY = process.env.CRON_NEVER_SCRAPED_ONLY === "1" || p
 // CRON_REGIONS must now also pass this explicitly, which is exactly the deliberate,
 // hard-to-do-by-accident step a stale doc reminder never was.
 const CRON_ALLOW_FULL_SWEEP = process.env.CRON_ALLOW_FULL_SWEEP === "1" || process.env.CRON_ALLOW_FULL_SWEEP === "true";
+// Escape hatch for a deliberate one-off "check every venue in every region
+// tonight" run, without needing to enumerate every region slug via
+// CRON_REGIONS -- see cron/rotation.ts for what this normally skips.
+const CRON_DISABLE_ROTATION = process.env.CRON_DISABLE_ROTATION === "1" || process.env.CRON_DISABLE_ROTATION === "true";
 // Arbitrary fixed key for this cron's advisory lock -- any int works as long as it's
 // stable across runs and not reused by another job sharing the same database.
 const CRON_LOCK_KEY = 8_412_991;
@@ -679,19 +684,30 @@ async function runScrapeCycle() {
   for (const region of activeRegions) {
     const tokenCeiling = Math.min(region.tokenCeiling, CRON_TOKEN_CEILING_OVERRIDE ?? Infinity);
     const fetchedVenues = await getActiveVenues(region.id);
-    const venueList = CRON_NEVER_SCRAPED_ONLY
+    const neverScrapedOnlyList = CRON_NEVER_SCRAPED_ONLY
       ? fetchedVenues.filter((v) => v.neverScraped)
       : fetchedVenues;
+    // Rotation only applies to the unscoped nightly full-sweep path -- an explicit
+    // CRON_REGIONS=slug manual/launch run means "process everything in this region,"
+    // and CRON_NEVER_SCRAPED_ONLY already means "just the never-scraped subset,"
+    // rotating on top of either would just be confusing. See cron/rotation.ts.
+    const venueList =
+      CRON_REGIONS_FILTER || CRON_NEVER_SCRAPED_ONLY || CRON_DISABLE_ROTATION
+        ? neverScrapedOnlyList
+        : venuesToScrapeTonight(neverScrapedOnlyList);
     console.log(
-      `Starting scrape run for ${venueList.length} active venue(s) in region ${region.slug}`
+      `Starting scrape run for ${venueList.length} of ${fetchedVenues.length} active venue(s) in region ${region.slug}`
     );
 
     // Sunday only: a site's own link structure rarely changes night to
     // night, so re-crawling every venue's homepage/sitemap every night would
     // be pure overhead for no benefit -- see runLinkDiscovery's own comment.
     if (new Date().getDay() === 0) {
+      // Runs against the full (pre-rotation) list, not the capped venueList below --
+      // this is a plain crawl (discoverVenueLinks), no Anthropic tokens involved, so
+      // there's no cost reason to rotate it too. Still honors CRON_NEVER_SCRAPED_ONLY.
       console.log(`Running weekly link discovery for region ${region.slug}...`);
-      await runLinkDiscovery(venueList);
+      await runLinkDiscovery(neverScrapedOnlyList);
     }
 
     // estimatedTokens (pre-submission) here, not real usage -- the Batch API's async

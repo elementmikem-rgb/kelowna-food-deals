@@ -1,11 +1,14 @@
+import { OwnerLoginOptions } from "@/components/OwnerLoginOptions";
+
 export default function ExpiredOwnerLoginPage() {
   return (
-    <div className="flex flex-col items-center justify-center flex-1 px-4 py-16 text-center gap-3">
+    <div className="flex flex-col items-center justify-center flex-1 px-4 py-16 text-center gap-4">
       <h1 className="font-display text-2xl text-foreground">This link has expired</h1>
       <p className="text-sm text-muted max-w-sm">
-        Login links only work once and expire after a while for security. Contact us and
-        we&apos;ll send you a fresh one.
+        Login links only work once and expire after a while for security. Log in with a
+        password if you&apos;ve set one, or get a fresh link below.
       </p>
+      <OwnerLoginOptions />
     </div>
   );
 }
