@@ -1,7 +1,7 @@
-import { db, bookings, venues, specials, events, categorySponsors } from "@/db";
-import { and, asc, eq } from "drizzle-orm";
+import { db, bookings, venues, specials, events, categorySponsors, chatTermSponsors } from "@/db";
+import { and, asc, eq, gt, sql } from "drizzle-orm";
 import type { SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
-import { endOfDayPacific, pacificTodayISODate } from "@/lib/time";
+import { endOfDayPacific, pacificTodayISODate, daysInclusive } from "@/lib/time";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { refundCredits, centsToCredits } from "@/lib/credits";
 
@@ -188,6 +188,32 @@ export async function activateBooking(bookingId: number): Promise<void> {
       sponsorName,
       sponsorUrl,
       sponsorUntil: until,
+    });
+  } else if (booking.productType === "chat_term_sponsor" && booking.chatTerm !== null && booking.venueId !== null) {
+    const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, booking.venueId));
+    if (!venue) return;
+
+    // Same "one owner per (region, term)" scope as the admin-direct panel
+    // (app/api/admin/sponsored/term/route.ts), case-insensitive so "Beer" and "beer"
+    // share one slot.
+    const scope = and(eq(chatTermSponsors.regionId, venue.regionId), sql`lower(${chatTermSponsors.term}) = lower(${booking.chatTerm})`);
+
+    const [existing] = await db.select().from(chatTermSponsors).where(and(scope, gt(chatTermSponsors.until, new Date())));
+    if (existing && existing.venueId === booking.venueId && alreadyCovered(existing.until, until)) {
+      return;
+    }
+
+    const days = daysInclusive(booking.startDate, booking.endDate);
+    const priceCentsPerDay = Math.round(booking.priceCents / days);
+
+    await db.delete(chatTermSponsors).where(scope);
+    await db.insert(chatTermSponsors).values({
+      regionId: venue.regionId,
+      term: booking.chatTerm,
+      venueId: booking.venueId,
+      priceCentsPerDay,
+      totalPriceCents: booking.priceCents,
+      until,
     });
   }
 }

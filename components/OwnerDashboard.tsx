@@ -757,7 +757,7 @@ export function OwnerDashboard({
   menuItems: MenuItemData[];
   weeklyDigestOptOut: boolean;
   hasPassword: boolean;
-  promoteSettings: Record<"featured" | "boost" | "category_sponsor", MonetizationSettings>;
+  promoteSettings: Record<"featured" | "boost" | "category_sponsor" | "chat_term_sponsor", MonetizationSettings>;
   todayISO: string;
   creditBalance: number;
   creditBundles: { id: number; name: string; priceCents: number; credits: number }[];

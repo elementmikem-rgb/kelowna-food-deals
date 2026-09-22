@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."bookings" ADD COLUMN "chat_term" text;

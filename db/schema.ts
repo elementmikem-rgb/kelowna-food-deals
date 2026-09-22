@@ -714,6 +714,10 @@ export const bookings = specialsSchema.table("bookings", {
   eventId: integer("event_id").references(() => events.id, { onDelete: "cascade" }), // "boost" only, mutually exclusive with specialId
   category: text("category").$type<SpecialCategory | EventType>(), // "category_sponsor" only
   categoryKind: text("category_kind").$type<SponsorCategoryKind>(), // "category_sponsor" only -- disambiguates category, see sponsorCategoryKind
+  // "chat_term_sponsor" only -- free text (not an enum, matched by the Ask chat's own
+  // relevance judgment, same as chatTermSponsors.term). This is that product's
+  // equivalent of category+categoryKind's scoping key.
+  chatTerm: text("chat_term"),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   status: text("status").$type<BookingStatus>().notNull().default("pending_payment"),

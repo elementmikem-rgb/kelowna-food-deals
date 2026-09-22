@@ -1,7 +1,7 @@
 import { db, bookings, venues } from "@/db";
 import type * as schema from "@/db/schema";
 import type { BookingProductType, SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
-import { and, eq, gt, inArray, or } from "drizzle-orm";
+import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 
@@ -65,7 +65,11 @@ export async function getOccupyingBookings(
   // event-type sponsorship never compete for the same cap slot.
   categoryKind: SponsorCategoryKind | null,
   regionId: number,
-  excludeId?: number
+  excludeId?: number,
+  // "chat_term_sponsor" only -- its equivalent of category+categoryKind's scoping key
+  // (see bookings.chatTerm). Case-insensitive so "Beer" and "beer" compete for the
+  // same slot instead of silently coexisting as two different terms.
+  chatTerm?: string | null
 ): Promise<OccupyingRange[]> {
   const rows = await executor
     .select({ id: bookings.id, startDate: bookings.startDate, endDate: bookings.endDate })
@@ -77,6 +81,7 @@ export async function getOccupyingBookings(
         eq(venues.regionId, regionId),
         category !== null ? eq(bookings.category, category) : undefined,
         categoryKind !== null ? eq(bookings.categoryKind, categoryKind) : undefined,
+        chatTerm ? sql`lower(${bookings.chatTerm}) = lower(${chatTerm})` : undefined,
         or(
           inArray(bookings.status, OCCUPYING_STATUSES),
           and(eq(bookings.status, "pending_payment"), gt(bookings.reservedUntil, new Date()))
@@ -95,9 +100,10 @@ export async function checkAvailability(
   regionId: number,
   startDate: string,
   endDate: string,
-  excludeId?: number
+  excludeId?: number,
+  chatTerm?: string | null
 ): Promise<boolean> {
   if (capCount === null) return true;
-  const occupying = await getOccupyingBookings(executor, productType, category, categoryKind, regionId, excludeId);
+  const occupying = await getOccupyingBookings(executor, productType, category, categoryKind, regionId, excludeId, chatTerm);
   return isRangeAvailable(occupying, startDate, endDate, capCount);
 }

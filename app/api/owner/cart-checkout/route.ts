@@ -27,12 +27,14 @@ const AUTO_RENEW_WINDOW_DAYS = 30;
 
 const itemSchema = z
   .object({
-    productType: z.enum(["featured", "boost", "category_sponsor"]),
+    productType: z.enum(["featured", "boost", "category_sponsor", "chat_term_sponsor"]),
     venueId: z.number().int().positive(),
     specialId: z.number().int().positive().nullable().default(null),
     eventId: z.number().int().positive().nullable().default(null),
     category: z.string().nullable().default(null),
     categoryKind: z.enum(["special", "event"]).nullable().default(null),
+    // "chat_term_sponsor" only.
+    term: z.string().trim().min(1).max(100).nullable().default(null),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     // Ignored server-side when autoRenew is true (see AUTO_RENEW_WINDOW_DAYS) -- kept
     // optional rather than required so the client doesn't have to fabricate one.
@@ -51,10 +53,16 @@ const bodySchema = z.object({
   payWithCredits: z.boolean().default(false),
 });
 
-function lockKeyFor(regionId: number, productType: string, category: string | null, categoryKind: string | null): string {
-  return category
-    ? `booking:${regionId}:${productType}:${categoryKind}:${category}`
-    : `booking:${regionId}:${productType}`;
+function lockKeyFor(
+  regionId: number,
+  productType: string,
+  category: string | null,
+  categoryKind: string | null,
+  chatTerm: string | null
+): string {
+  if (category) return `booking:${regionId}:${productType}:${categoryKind}:${category}`;
+  if (chatTerm) return `booking:${regionId}:${productType}:${chatTerm.toLowerCase()}`;
+  return `booking:${regionId}:${productType}`;
 }
 
 const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
@@ -128,6 +136,7 @@ export async function POST(req: NextRequest) {
     eventId: number | null;
     category: SpecialCategory | EventType | null;
     categoryKind: SponsorCategoryKind | null;
+    chatTerm: string | null;
     startDate: string;
     endDate: string;
     priceCents: number;
@@ -170,6 +179,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "category_sponsor needs a category and categoryKind" }, { status: 400 });
     }
 
+    const chatTerm = item.productType === "chat_term_sponsor" ? item.term : null;
+    if (item.productType === "chat_term_sponsor" && !chatTerm) {
+      return NextResponse.json({ error: "chat_term_sponsor needs a term" }, { status: 400 });
+    }
+
     priced.push({
       productType: item.productType,
       venueId: item.venueId,
@@ -178,6 +192,7 @@ export async function POST(req: NextRequest) {
       eventId: item.productType === "boost" ? item.eventId : null,
       category,
       categoryKind,
+      chatTerm,
       startDate: item.startDate,
       endDate,
       priceCents: settings.priceCentsPerDay * days,
@@ -191,7 +206,7 @@ export async function POST(req: NextRequest) {
 
   const now = Date.now();
 
-  const lockKeys = [...new Set(priced.map((p) => lockKeyFor(p.regionId, p.productType, p.category, p.categoryKind)))].sort();
+  const lockKeys = [...new Set(priced.map((p) => lockKeyFor(p.regionId, p.productType, p.category, p.categoryKind, p.chatTerm)))].sort();
 
   let insufficientCredits: InsufficientCreditsError | null = null;
   const inserted = await db
@@ -209,7 +224,9 @@ export async function POST(req: NextRequest) {
           item.capCount,
           item.regionId,
           item.startDate,
-          item.endDate
+          item.endDate,
+          undefined,
+          item.chatTerm
         );
         if (!available) return null;
       }
@@ -227,6 +244,7 @@ export async function POST(req: NextRequest) {
             eventId: item.eventId,
             category: item.category,
             categoryKind: item.categoryKind,
+            chatTerm: item.chatTerm,
             startDate: item.startDate,
             endDate: item.endDate,
             status: initialStatus,

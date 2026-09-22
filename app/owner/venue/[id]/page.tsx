@@ -60,7 +60,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   const { timezone } = await getRegionContext(region);
   const todayISO = regionTodayISODate(timezone);
 
-  function settingsFor(productType: "featured" | "boost" | "category_sponsor") {
+  function settingsFor(productType: "featured" | "boost" | "category_sponsor" | "chat_term_sponsor") {
     const row = promoteSettingsRows.find((r) => r.productType === productType);
     return {
       priceCentsPerDay: row?.priceCentsPerDay ?? 0,
@@ -129,6 +129,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
           featured: settingsFor("featured"),
           boost: settingsFor("boost"),
           category_sponsor: settingsFor("category_sponsor"),
+          chat_term_sponsor: settingsFor("chat_term_sponsor"),
         }}
         todayISO={todayISO}
         creditBalance={venue.creditBalance}

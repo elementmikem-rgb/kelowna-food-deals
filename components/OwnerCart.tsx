@@ -5,7 +5,7 @@ import { CATEGORY_LABELS, EVENT_TYPE_LABELS, formatPrice } from "@/lib/format";
 import { stripeFeeCents } from "@/lib/stripe-fee";
 import { daysInclusive } from "@/lib/time";
 
-type ProductType = "featured" | "boost" | "category_sponsor";
+type ProductType = "featured" | "boost" | "category_sponsor" | "chat_term_sponsor";
 type SpecialCategory = "happy_hour" | "food_special" | "wing_night" | "other";
 type EventType = "live_music" | "trivia" | "karaoke" | "sports_night" | "other";
 
@@ -15,6 +15,7 @@ const PRODUCT_LABELS: Record<ProductType, string> = {
   featured: "Featured placement",
   boost: "Seasonal boost",
   category_sponsor: "Category sponsorship",
+  chat_term_sponsor: "Ask-chat term sponsor",
 };
 const AUTO_RENEW_DAYS = 30;
 
@@ -32,6 +33,7 @@ interface CartItem {
   eventId: number | null;
   category: string | null;
   categoryKind: "special" | "event" | null;
+  term: string | null;
   startDate: string;
   endDate?: string;
   autoRenew: boolean;
@@ -136,6 +138,7 @@ export function OwnerCart({
   const [boostTargetKey, setBoostTargetKey] = useState("");
   const [categoryKind, setCategoryKind] = useState<"special" | "event">("special");
   const [category, setCategory] = useState<SpecialCategory | EventType>("happy_hour");
+  const [term, setTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [autoRenew, setAutoRenew] = useState(false);
@@ -159,13 +162,16 @@ export function OwnerCart({
       }
     }
     if (productType === "boost" && !boostTargetKey) return setError("Pick a special or event to boost.");
+    if (productType === "chat_term_sponsor" && !term.trim()) return setError("Enter a term to sponsor.");
 
     const targetLabel =
       productType === "boost"
         ? (boostKind === "special" ? specials : events).find((x) => x.id === boostId)?.title
         : productType === "category_sponsor"
           ? (categoryKind === "special" ? CATEGORY_LABELS : EVENT_TYPE_LABELS)[category]
-          : null;
+          : productType === "chat_term_sponsor"
+            ? `"${term.trim()}"`
+            : null;
 
     const priceCents = autoRenew ? current.priceCentsPerDay * AUTO_RENEW_DAYS : current.priceCentsPerDay * daysInclusive(startDate, endDate);
     const dateLabel = autoRenew ? `starts ${startDate}, renews monthly` : `${startDate} to ${endDate}`;
@@ -178,6 +184,7 @@ export function OwnerCart({
       eventId: productType === "boost" && boostKind === "event" ? boostId : null,
       category: productType === "category_sponsor" ? category : null,
       categoryKind: productType === "category_sponsor" ? categoryKind : null,
+      term: productType === "chat_term_sponsor" ? term.trim() : null,
       startDate,
       endDate: autoRenew ? undefined : endDate,
       autoRenew,
@@ -188,6 +195,7 @@ export function OwnerCart({
     setStartDate("");
     setEndDate("");
     setBoostTargetKey("");
+    setTerm("");
   }
 
   function removeFromCart(key: string) {
@@ -251,8 +259,8 @@ export function OwnerCart({
         </span>
       </div>
 
-      <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start">
-        {(["featured", "boost", "category_sponsor"] as ProductType[]).map((pt) => (
+      <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start flex-wrap">
+        {(["featured", "boost", "category_sponsor", "chat_term_sponsor"] as ProductType[]).map((pt) => (
           <button
             key={pt}
             onClick={() => setProductType(pt)}
@@ -325,6 +333,23 @@ export function OwnerCart({
               ))}
             </optgroup>
           </select>
+        </label>
+      )}
+
+      {productType === "chat_term_sponsor" && (
+        <label className="flex flex-col gap-1 text-sm text-muted">
+          Term to sponsor (e.g. &quot;beer&quot;, &quot;trivia&quot;)
+          <input
+            type="text"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="beer"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+          <span className="text-xs text-muted-2">
+            Whenever someone asks the Ask-chat about this term, your venue is the answer. One
+            sponsor per term at a time — if it&apos;s already taken, checkout will say so.
+          </span>
         </label>
       )}
 
