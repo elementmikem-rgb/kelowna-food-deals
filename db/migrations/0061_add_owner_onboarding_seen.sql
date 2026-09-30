@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venue_owners" ADD COLUMN "onboarding_seen_at" timestamp with time zone;

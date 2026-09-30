@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venues" ADD COLUMN "approx_coords" boolean DEFAULT false NOT NULL;

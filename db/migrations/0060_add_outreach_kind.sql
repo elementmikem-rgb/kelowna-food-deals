@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."outreach_sends" ADD COLUMN "kind" text DEFAULT 'first_contact' NOT NULL;

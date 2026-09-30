@@ -83,6 +83,14 @@ export const regions = specialsSchema.table("regions", {
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   provinceId: integer("province_id").notNull().references(() => provinces.id),
+  // The region's own town/city center, NOT a per-venue location -- geocoded
+  // once from the region's own name+province (see scripts/geocode-regions.ts).
+  // Good enough for "which region is closest to you" (CityFinder's "Use my
+  // location"); a real per-venue lat/lng (venues.lat/lng, currently 0%
+  // populated) would give a more precise "nearest venue" answer, but that's
+  // a much bigger backfill -- backlogged separately, not needed for this.
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
 });
 export type Region = typeof regions.$inferSelect;
 
@@ -114,6 +122,16 @@ export const venues = specialsSchema.table(
     city: text("city"),
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
+    // True when lat/lng is the PARENT REGION's center point, not this venue's
+    // own geocoded location -- set for the ~346 venues (2026-09-23 backfill)
+    // whose address was too vague/landmark-based for Nominatim to resolve
+    // (e.g. "downtown Oliver, BC", "Near Jasper Ave & Rogers Place"). False
+    // for every venue with a real geocoded address, including new ones seeded
+    // going forward. These should get re-geocoded with a better source
+    // (Google/Mapbox, or a manually-corrected address) eventually -- query
+    // `where approxCoords = true` to find them, don't assume every venue's
+    // coordinates are precise.
+    approxCoords: boolean("approx_coords").notNull().default(false),
     phone: text("phone"),
     website: text("website"),
     menuUrl: text("menu_url"),
@@ -134,6 +152,12 @@ export const venues = specialsSchema.table(
     // timestamp rather than a boolean so a lapsed placement un-features itself with
     // no cron needed to flip it back off.
     featuredUntil: timestamp("featured_until", { withTimezone: true }),
+    // Paid map pin boost: while now() < mapPinBoostedUntil, this venue's pin on the
+    // /[region]/map view renders larger/highlighted and sorts above regular pins in a
+    // cluster. Independent of featuredUntil -- a venue can pay for either, both, or
+    // neither; the map is a separate surface from the list view. Same "timestamp, not
+    // boolean" self-expiring pattern as featuredUntil.
+    mapPinBoostedUntil: timestamp("map_pin_boosted_until", { withTimezone: true }),
     // Standing paid status, separate from the time-limited featuredUntil/boostedUntil
     // placements: the date they became a partner, or null. Doesn't expire on its own --
     // an admin clears it manually when a partnership ends. Shown as its own badge.
@@ -210,6 +234,10 @@ export const venueOwners = specialsSchema.table("venue_owners", {
   // object created on their behalf with nothing to manage.
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // Null until the owner dismisses the first-login welcome banner (the dashboard's
+  // OwnerOnboarding component) -- shown once per owner account, not once per venue, so
+  // an owner with multiple claimed venues doesn't see it again switching between them.
+  onboardingSeenAt: timestamp("onboarding_seen_at", { withTimezone: true }),
 });
 
 // One row per venue an owner account manages. A venue still has at most one owner (the
@@ -259,6 +287,13 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // sponsorship inquiry) -- still logged here so it shows up in that thread's
   // history in the admin inbox, same as a venue-matched reply does.
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  // "first_contact" (the original free-listing email) vs "follow_up" (a later
+  // email to the same venue, e.g. the claim-flow/credit-system campaign).
+  // Default keeps every pre-existing row correctly labeled without a backfill.
+  // app/api/admin/outreach/send/route.ts's "already sent" guard checks this
+  // kind specifically, so a follow-up campaign doesn't get silently blocked
+  // by (or silently re-trigger a duplicate of) the first-contact send.
+  kind: text("kind").$type<"first_contact" | "follow_up">().notNull().default("first_contact"),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),
@@ -359,6 +394,20 @@ export const specials = specialsSchema.table("specials", {
   // venuePhotos.photoData.
   photoData: text("photo_data"),
   photoMimeType: text("photo_mime_type"),
+  // Flash special: a venue-posted, time-limited urgent deal ("first 20 people get a
+  // free beer, next 2 hours") -- posted free from the owner dashboard (OwnerDashboard.tsx
+  // / app/api/owner/flash-special/route.ts), not a paid booking product.
+  // Non-null flashExpiresAt IS the flag (no separate boolean) -- once past, the row is
+  // just a normal expired special and the display/query layers stop treating it as
+  // flash automatically rather than needing a second field to also flip.
+  flashExpiresAt: timestamp("flash_expires_at", { withTimezone: true }),
+  // Null = unlimited claims, just a time limit. Set = "first N people" -- the owner's
+  // own read of demand at post time, not something this app tracks fulfillment of (no
+  // POS integration); flashClaimCount is a visitor-side "I'm claiming this" tap count,
+  // purely informational (creates urgency: "14 of 20 claimed"), never enforced as a hard
+  // cutoff since there's no way to verify a claim actually happened at the bar.
+  flashClaimLimit: integer("flash_claim_limit"),
+  flashClaimCount: integer("flash_claim_count").notNull().default(0),
 });
 
 export const eventType = [
@@ -619,14 +668,52 @@ export const rateLimits = specialsSchema.table(
 // itemId + kind together identify the target row (specials.id or events.id) -- mirrors
 // the same kind-discriminated design app/api/report/route.ts already uses, rather than
 // adding two separate nullable foreign key columns.
+export const dealFeedbackReason = ["price_wrong", "not_offered", "wrong_day_time", "other"] as const;
+export type DealFeedbackReason = (typeof dealFeedbackReason)[number];
+
 export const dealFeedback = specialsSchema.table("deal_feedback", {
   id: serial("id").primaryKey(),
   itemId: integer("item_id").notNull(),
   kind: text("kind").$type<"special" | "event">().notNull(),
-  feedbackType: text("feedback_type").$type<"confirm" | "dispute">().notNull(),
+  // "interested" (events only, Eventbrite-style social proof -- see
+  // components/EventInterestButton.tsx) is a plain text value like the other two, not
+  // a Postgres enum, so adding it needed no migration -- just this TS type widening.
+  feedbackType: text("feedback_type").$type<"confirm" | "dispute" | "interested">().notNull(),
+  // Only ever set on a "dispute" row -- a visitor's pick from ReportDialog's preset
+  // reasons. Null for confirm/interested rows, and for disputes logged before this
+  // column existed (kept nullable rather than backfilled so old rows just render with
+  // no reason shown instead of a fabricated guess).
+  reason: text("reason").$type<DealFeedbackReason>(),
+  // Free-text elaboration, optional even when reason is "other" -- a visitor who just
+  // wants to flag something wrong without typing shouldn't be blocked from submitting.
+  note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 export type DealFeedback = typeof dealFeedback.$inferSelect;
+
+// A visitor's Web Push subscription (components/PushOptIn.tsx / lib/push-send.ts).
+// Scoped to a region rather than a lat/lng radius -- a true geofence would need a second
+// browser permission (Geolocation) on top of Notifications, and this site is already
+// region-partitioned by domain (see lib/regions.ts), so "subscribed while browsing
+// Kelowna" is a reasonable, lower-friction proxy for "near Kelowna" without asking twice.
+// endpoint is the natural unique key (one row per browser+origin subscription, not per
+// visitor -- there's no visitor account system to key on, same reasoning as
+// lib/saved-venues.ts).
+export const pushSubscriptions = specialsSchema.table(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    regionId: integer("region_id")
+      .notNull()
+      .references(() => regions.id),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("push_subscriptions_endpoint_unique").on(table.endpoint)]
+);
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 
 // "category_sponsor" bookings/sponsors can sponsor either a specials category
 // (happy_hour/food_special/wing_night/other) or an event type
@@ -686,7 +773,7 @@ export const chatTermSponsors = specialsSchema.table("chat_term_sponsors", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const bookingProductType = ["featured", "boost", "category_sponsor", "chat_term_sponsor"] as const;
+export const bookingProductType = ["featured", "boost", "category_sponsor", "chat_term_sponsor", "map_pin"] as const;
 export type BookingProductType = (typeof bookingProductType)[number];
 
 export const bookingStatus = [
