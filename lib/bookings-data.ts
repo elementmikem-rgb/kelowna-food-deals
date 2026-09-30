@@ -4,6 +4,7 @@ import type { SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schem
 import { endOfDayPacific, pacificTodayISODate, daysInclusive } from "@/lib/time";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { refundCredits, centsToCredits } from "@/lib/credits";
+import { getStripe } from "@/lib/stripe";
 
 export interface PendingBooking {
   id: number;
@@ -246,9 +247,15 @@ export async function approveBooking(bookingId: number): Promise<{ venueId: numb
 }
 
 export async function rejectBooking(bookingId: number): Promise<void> {
+  let stripeSubscriptionId: string | null = null;
+
   await db.transaction(async (tx) => {
     const [booking] = await tx
-      .select({ venueId: bookings.venueId, creditsSpentCents: bookings.creditsSpentCents })
+      .select({
+        venueId: bookings.venueId,
+        creditsSpentCents: bookings.creditsSpentCents,
+        stripeSubscriptionId: bookings.stripeSubscriptionId,
+      })
       .from(bookings)
       .where(and(eq(bookings.id, bookingId), eq(bookings.status, "pending_approval")))
       .for("update");
@@ -263,11 +270,27 @@ export async function rejectBooking(bookingId: number): Promise<void> {
       await refundCredits(tx, booking.venueId, centsToCredits(booking.creditsSpentCents!), bookingId);
     }
 
+    stripeSubscriptionId = booking.stripeSubscriptionId;
+
     await tx
       .update(bookings)
       .set({ status: "rejected", refundNeeded: !isCreditPaid, reviewedAt: new Date() })
       .where(eq(bookings.id, bookingId));
   });
+
+  // Outside the transaction: a Stripe API call isn't rollback-able and shouldn't hold a
+  // DB row lock while it's in flight. Without this, a rejected auto-renew booking's
+  // subscription kept billing the customer every month until an admin found and
+  // cancelled it by hand in the Stripe dashboard -- this is the whole point of rejecting
+  // the booking, so it has to happen here, not as a separate manual step.
+  if (stripeSubscriptionId) {
+    try {
+      await getStripe().subscriptions.cancel(stripeSubscriptionId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[booking ${bookingId}] failed to cancel Stripe subscription ${stripeSubscriptionId}: ${message}`);
+    }
+  }
 }
 
 export async function markRefunded(bookingId: number): Promise<void> {

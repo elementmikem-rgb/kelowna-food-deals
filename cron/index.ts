@@ -491,14 +491,39 @@ async function applyBatchItemResult(
 
   const { specials, events, menuItems } = outcome.data;
   const tokensSpent = item.fetchTokens + outcome.tokensUsed;
-  await replaceVenueSpecials(item.venueId, item.regionId, item.sourceUrl, specials);
-  await replaceVenueEvents(item.venueId, item.regionId, item.sourceUrl, events);
-  // Only touch menu items when this call actually asked for them -- passing an empty
-  // array here when menu items were deliberately skipped would make
-  // replaceVenueMenuItems's reconciliation logic archive every existing menu item for
-  // this venue, as if the venue had removed its whole menu.
-  if (item.includeMenuItems) {
-    await replaceVenueMenuItems(item.venueId, item.sourceUrl, menuItems);
+  // A malformed-but-zod-valid value (e.g. start_time "24:30" or specific_date
+  // "2026-02-30") passes extraction validation but fails Postgres's own time/date
+  // constraints. Without this guard, that throw propagates out of
+  // applyBatchItemResult uncaught, which crashes the whole batch-resolution loop --
+  // and since the item is never marked done, getPendingExtractionBatches() returns it
+  // again on every later run, crashing the cron on startup until the batch itself
+  // expires on Anthropic's side (~29 days). Caught here, the one bad item is marked
+  // failed and every other venue in the batch still applies normally.
+  try {
+    await replaceVenueSpecials(item.venueId, item.regionId, item.sourceUrl, specials);
+    await replaceVenueEvents(item.venueId, item.regionId, item.sourceUrl, events);
+    // Only touch menu items when this call actually asked for them -- passing an empty
+    // array here when menu items were deliberately skipped would make
+    // replaceVenueMenuItems's reconciliation logic archive every existing menu item for
+    // this venue, as if the venue had removed its whole menu.
+    if (item.includeMenuItems) {
+      await replaceVenueMenuItems(item.venueId, item.sourceUrl, menuItems);
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await logScrapeRun({
+      venueId: item.venueId,
+      contentHash: null,
+      changed: true,
+      tokensUsed: tokensSpent,
+      cacheCreationTokens: outcome.cacheCreationTokens,
+      cacheReadTokens: outcome.cacheReadTokens,
+      outputTokens: outcome.outputTokens,
+      error: `batch result write failed: ${message}`.slice(0, 2000),
+    });
+    console.error(`[venue ${item.venueId}] batch result write failed: ${message}`);
+    await markExtractionBatchItemDone(item.id, "failed", message.slice(0, 2000));
+    return;
   }
   await logScrapeRun({
     venueId: item.venueId,
