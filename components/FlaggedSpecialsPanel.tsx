@@ -4,6 +4,13 @@ import { useState } from "react";
 import type { FlaggedSpecial } from "@/lib/flagged-data";
 import { useRouter } from "next/navigation";
 
+const REASON_LABELS: Record<string, string> = {
+  price_wrong: "Price is wrong",
+  not_offered: "No longer offered",
+  wrong_day_time: "Wrong day/time",
+  other: "Other",
+};
+
 export function FlaggedSpecialsPanel({
   flagged,
   apiBasePath = "/api/admin/flagged",
@@ -37,12 +44,20 @@ export function FlaggedSpecialsPanel({
   return (
     <ul className="flex flex-col gap-3">
       {flagged.map((f) => (
-        <li key={f.id} className="rounded-xl border border-border bg-surface p-4 flex items-center justify-between gap-3">
-          <div>
+        <li key={f.id} className="rounded-xl border border-border bg-surface p-4 flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1.5 min-w-0">
             <p className="text-sm font-medium text-foreground">{f.title}</p>
             <p className="text-xs text-muted">
               {f.venueName} — flagged {f.disputeCount} time{f.disputeCount === 1 ? "" : "s"}
             </p>
+            <ul className="flex flex-col gap-0.5">
+              {f.reasons.map((r, i) => (
+                <li key={i} className="text-xs text-muted-2">
+                  {r.reason ? REASON_LABELS[r.reason] ?? r.reason : "No reason given"}
+                  {r.note ? ` — "${r.note}"` : ""}
+                </li>
+              ))}
+            </ul>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button

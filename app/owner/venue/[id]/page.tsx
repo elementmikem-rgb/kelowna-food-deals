@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles } from "@/db";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles, bookings } from "@/db";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
 import { getRegionById, getRegionContext } from "@/lib/regions";
@@ -30,12 +30,16 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   if (!venue) notFound();
 
   const [owner] = await db
-    .select({ weeklyDigestOptOut: venueOwners.weeklyDigestOptOut, passwordHash: venueOwners.passwordHash })
+    .select({
+      weeklyDigestOptOut: venueOwners.weeklyDigestOptOut,
+      passwordHash: venueOwners.passwordHash,
+      onboardingSeenAt: venueOwners.onboardingSeenAt,
+    })
     .from(venueOwners)
     .where(eq(venueOwners.id, session.venueOwnerId))
     .limit(1);
 
-  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows] = await Promise.all([
+  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows, venueBookings] = await Promise.all([
     db
       .select()
       .from(specials)
@@ -55,12 +59,33 @@ export default async function OwnerVenuePage({ params }: PageProps) {
       .from(creditBundles)
       .where(eq(creditBundles.active, true))
       .orderBy(creditBundles.sortOrder),
+    // Every booking this venue has ever placed, most recent first -- excludes only
+    // "expired" (an abandoned checkout hold, never a real attempt the owner needs to
+    // see again). Without this, spending credits gave the owner zero way to tell
+    // whether their purchase actually went anywhere: pending_approval bookings sit
+    // invisibly until an admin approves them (confirmed live 2026-09-28), and even an
+    // approved one had nothing on the dashboard confirming it.
+    db
+      .select({
+        id: bookings.id,
+        productType: bookings.productType,
+        status: bookings.status,
+        startDate: bookings.startDate,
+        endDate: bookings.endDate,
+        priceCents: bookings.priceCents,
+        creditsSpentCents: bookings.creditsSpentCents,
+        createdAt: bookings.createdAt,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.venueId, venueId), ne(bookings.status, "expired")))
+      .orderBy(desc(bookings.createdAt))
+      .limit(10),
   ]);
   if (!region) notFound();
   const { timezone } = await getRegionContext(region);
   const todayISO = regionTodayISODate(timezone);
 
-  function settingsFor(productType: "featured" | "boost" | "category_sponsor" | "chat_term_sponsor") {
+  function settingsFor(productType: "featured" | "boost" | "category_sponsor" | "chat_term_sponsor" | "map_pin") {
     const row = promoteSettingsRows.find((r) => r.productType === productType);
     return {
       priceCentsPerDay: row?.priceCentsPerDay ?? 0,
@@ -96,16 +121,38 @@ export default async function OwnerVenuePage({ params }: PageProps) {
 
       <OwnerDashboard
         venueId={venueId}
-        specials={venueSpecials.map((s) => ({
-          id: s.id,
-          title: s.title,
-          description: s.description,
-          priceCents: s.priceCents,
-          dayOfWeek: s.dayOfWeek,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          category: s.category,
-        }))}
+        specials={venueSpecials
+          // Flash specials are managed through their own widget (below), not the
+          // general specials list -- a currently-live one would render oddly there
+          // (no dayOfWeek/startTime, an "Add new" form that doesn't fit its shape),
+          // and an expired-but-not-yet-archived one is nothing the owner needs to
+          // see or manage again. Same rows are still in the DB; this is just what
+          // this dashboard shows.
+          .filter((s) => s.flashExpiresAt === null)
+          .map((s) => ({
+            id: s.id,
+            title: s.title,
+            description: s.description,
+            priceCents: s.priceCents,
+            dayOfWeek: s.dayOfWeek,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            category: s.category,
+          }))}
+        liveFlashSpecial={(() => {
+          const live = venueSpecials.find((s) => s.flashExpiresAt !== null && s.flashExpiresAt > new Date());
+          return live
+            ? {
+                id: live.id,
+                title: live.title,
+                priceCents: live.priceCents,
+                category: live.category,
+                flashExpiresAt: live.flashExpiresAt!,
+                flashClaimLimit: live.flashClaimLimit,
+                flashClaimCount: live.flashClaimCount,
+              }
+            : null;
+        })()}
         events={venueEvents.map((e) => ({
           id: e.id,
           title: e.title,
@@ -130,10 +177,13 @@ export default async function OwnerVenuePage({ params }: PageProps) {
           boost: settingsFor("boost"),
           category_sponsor: settingsFor("category_sponsor"),
           chat_term_sponsor: settingsFor("chat_term_sponsor"),
+          map_pin: settingsFor("map_pin"),
         }}
         todayISO={todayISO}
         creditBalance={venue.creditBalance}
         creditBundles={creditBundleRows}
+        bookings={venueBookings}
+        showOnboarding={owner?.onboardingSeenAt == null}
       />
     </div>
   );

@@ -3,24 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
-import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
+import { FlashSpecialPanel } from "./FlashSpecialPanel";
 import { isPromotionActive } from "@/lib/promotion";
+import { t, CATEGORY_LABELS, type Language } from "@/lib/i18n";
+import { ReportButton } from "./ReportButton";
 
 export function SpecialCard({
   special,
   dayLabel,
   regionSlug,
+  lang = "en",
 }: {
   special: SpecialWithVenue;
   dayLabel?: string | null;
   regionSlug: string;
+  lang?: Language;
 }) {
-  const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
   const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -30,20 +32,6 @@ export function SpecialCard({
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
   const boosted = isPromotionActive(special.boostedUntil);
   const isPartner = special.venuePartnerSince != null;
-
-  async function handleReport() {
-    setReportState("sending");
-    try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specialId: special.id, venueId: special.venueId }),
-      });
-      setReportState(res.ok ? "sent" : "error");
-    } catch {
-      setReportState("error");
-    }
-  }
 
   async function handleConfirm() {
     setConfirmState("sending");
@@ -73,16 +61,16 @@ export function SpecialCard({
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
-            {CATEGORY_LABELS[special.category]}
+            {CATEGORY_LABELS[lang][special.category]}
           </span>
           {boosted && (
             <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
-              Featured
+              {t(lang).card.featured}
             </span>
           )}
           {isPartner && (
             <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
-              Partner
+              {t(lang).card.partner}
             </span>
           )}
         </div>
@@ -92,6 +80,15 @@ export function SpecialCard({
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {special.description}
         </p>
+      )}
+
+      {special.flashExpiresAt && (
+        <FlashSpecialPanel
+          specialId={special.id}
+          expiresAt={special.flashExpiresAt}
+          claimLimit={special.flashClaimLimit}
+          claimCount={special.flashClaimCount}
+        />
       )}
 
       {boosted && special.hasPhoto && (
@@ -120,10 +117,12 @@ export function SpecialCard({
 
       <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-border">
         <div className="flex flex-col gap-1">
-          <VerifiedBadge lastVerifiedAt={special.lastVerifiedAt} />
+          <VerifiedBadge lastVerifiedAt={special.lastVerifiedAt} lang={lang} />
           <ConfirmedBadges
             venueConfirmedAt={special.venueConfirmedAt}
             confirmCount={special.confirmCount}
+            lastConfirmedAt={special.lastConfirmedAt}
+            lang={lang}
           />
         </div>
         <div className="flex items-center gap-1">
@@ -135,21 +134,12 @@ export function SpecialCard({
             disabled={confirmState !== "idle"}
             className="relative z-10 text-xs text-evergreen hover:underline disabled:cursor-default px-2 py-2.5 -my-2.5"
           >
-            {confirmState === "idle" && "Confirm this deal"}
-            {confirmState === "sending" && "Sending…"}
-            {confirmState === "sent" && "Thanks!"}
-            {confirmState === "error" && "Failed — try again"}
+            {confirmState === "idle" && t(lang).card.confirmDeal}
+            {confirmState === "sending" && t(lang).card.sending}
+            {confirmState === "sent" && t(lang).card.confirmThanks}
+            {confirmState === "error" && t(lang).card.failedTryAgain}
           </button>
-          <button
-            onClick={handleReport}
-            disabled={reportState !== "idle"}
-            className="relative z-10 text-xs text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2.5 -my-2.5"
-          >
-            {reportState === "idle" && "Report incorrect"}
-            {reportState === "sending" && "Sending…"}
-            {reportState === "sent" && "Reported"}
-            {reportState === "error" && "Failed — try again"}
-          </button>
+          <ReportButton itemId={special.id} venueId={special.venueId} lang={lang} />
         </div>
       </div>
     </article>

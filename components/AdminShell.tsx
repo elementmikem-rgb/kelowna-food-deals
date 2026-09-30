@@ -54,7 +54,7 @@ export async function AdminShell({
   // getSelectedAdminScope()'s cookie/DB logic.
   const { regionIds } = await getSelectedAdminScope();
   const [
-    { pendingSubmissions, pendingClaims, unreadInbox, flaggedCount, scrapeHealthCount },
+    { pendingSubmissions, pendingClaims, unreadInbox, flaggedCount, scrapeHealthCount, pendingBookings },
     countryRows,
     provinceRows,
     regionRows,
@@ -97,6 +97,7 @@ export async function AdminShell({
         unreadInbox={unreadInbox}
         flaggedCount={flaggedCount}
         scrapeHealthCount={scrapeHealthCount}
+        pendingBookings={pendingBookings}
         countries={countryRows}
         provinces={provinceRows}
         regions={regionRows}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, specials, events, dealFeedback } from "@/db";
+import { db, specials, events, dealFeedback, dealFeedbackReason } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 
@@ -8,6 +8,10 @@ const reportSchema = z.object({
   specialId: z.number().int().positive(),
   venueId: z.number().int().positive().nullable(),
   kind: z.enum(["special", "event"]).default("special"),
+  reason: z.enum(dealFeedbackReason).optional(),
+  // Capped well above anything a legitimate "what's wrong" note needs -- just a guard
+  // against someone pasting a huge blob into the admin-facing flagged queue.
+  note: z.string().trim().min(1).max(500).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  const { specialId, kind } = parsed.data;
+  const { specialId, kind, reason, note } = parsed.data;
 
   // Confirm the target actually exists before logging a dispute against it -- an
   // invalid specialId (typo, stale client, tampered request) shouldn't silently create
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "not found" }, { status: 400 });
   }
 
-  await db.insert(dealFeedback).values({ itemId: specialId, kind, feedbackType: "dispute" });
+  await db.insert(dealFeedback).values({ itemId: specialId, kind, feedbackType: "dispute", reason, note });
 
   return NextResponse.json({ ok: true });
 }

@@ -5,7 +5,7 @@ import { CATEGORY_LABELS, EVENT_TYPE_LABELS, formatPrice } from "@/lib/format";
 import { stripeFeeCents } from "@/lib/stripe-fee";
 import { daysInclusive } from "@/lib/time";
 
-type ProductType = "featured" | "boost" | "category_sponsor" | "chat_term_sponsor";
+type ProductType = "featured" | "boost" | "category_sponsor" | "chat_term_sponsor" | "map_pin";
 type SpecialCategory = "happy_hour" | "food_special" | "wing_night" | "other";
 type EventType = "live_music" | "trivia" | "karaoke" | "sports_night" | "other";
 
@@ -16,6 +16,7 @@ const PRODUCT_LABELS: Record<ProductType, string> = {
   boost: "Seasonal boost",
   category_sponsor: "Category sponsorship",
   chat_term_sponsor: "Ask-chat term sponsor",
+  map_pin: "Map pin boost",
 };
 const AUTO_RENEW_DAYS = 30;
 
@@ -251,7 +252,7 @@ export function OwnerCart({
   const autoRenewItems = cart.filter((i) => i.autoRenew);
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
+    <section id="promote" className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium text-foreground/90">Promote this venue</span>
         <span className="text-xs text-muted">
@@ -260,7 +261,7 @@ export function OwnerCart({
       </div>
 
       <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start flex-wrap">
-        {(["featured", "boost", "category_sponsor", "chat_term_sponsor"] as ProductType[]).map((pt) => (
+        {(["featured", "boost", "category_sponsor", "chat_term_sponsor", "map_pin"] as ProductType[]).map((pt) => (
           <button
             key={pt}
             onClick={() => setProductType(pt)}
@@ -334,6 +335,12 @@ export function OwnerCart({
             </optgroup>
           </select>
         </label>
+      )}
+
+      {productType === "map_pin" && (
+        <p className="text-xs text-muted-2">
+          Your pin on the map view shows larger and highlighted, above regular pins.
+        </p>
       )}
 
       {productType === "chat_term_sponsor" && (

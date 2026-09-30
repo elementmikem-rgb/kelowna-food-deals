@@ -27,7 +27,7 @@ const AUTO_RENEW_WINDOW_DAYS = 30;
 
 const itemSchema = z
   .object({
-    productType: z.enum(["featured", "boost", "category_sponsor", "chat_term_sponsor"]),
+    productType: z.enum(["featured", "boost", "category_sponsor", "chat_term_sponsor", "map_pin"]),
     venueId: z.number().int().positive(),
     specialId: z.number().int().positive().nullable().default(null),
     eventId: z.number().int().positive().nullable().default(null),

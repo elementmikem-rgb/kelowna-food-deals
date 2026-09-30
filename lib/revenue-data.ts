@@ -41,6 +41,7 @@ function emptyByProduct(): Record<BookingProductType, { totalCents: number; coun
     // admin-manual chatTermSponsors table. Zeroed here just to satisfy the exhaustive
     // Record type; revisit once/if real checkout is wired for it.
     chat_term_sponsor: { totalCents: 0, count: 0 },
+    map_pin: { totalCents: 0, count: 0 },
   };
 }
 

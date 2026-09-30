@@ -5,6 +5,7 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { OwnerVerifiedBadge } from "./OwnerVerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
 import { VenueGroupActions } from "./VenueGroupActions";
+import { SaveVenueButton } from "./SaveVenueButton";
 import { isPromotionActive } from "@/lib/promotion";
 import { t, type Language } from "@/lib/i18n";
 
@@ -31,6 +32,7 @@ export function SpecialVenueGroup({
   );
   const featured = isPromotionActive(specials[0]?.venueFeaturedUntil ?? null);
   const isPartner = specials[0]?.venuePartnerSince != null;
+  const photoId = specials[0]?.venuePhotoId ?? null;
   const visible = specials.slice(0, MAX_VISIBLE);
   const hiddenCount = specials.length - visible.length;
 
@@ -40,25 +42,39 @@ export function SpecialVenueGroup({
         venueId % 2 === 0 ? "tilt-a" : "tilt-b"
       } break-inside-avoid-column mb-3 rounded-2xl border ${
         featured ? "border-gold" : "border-border"
-      } bg-surface p-4 pt-5 flex flex-col gap-1 shadow-[0_2px_10px_rgba(42,40,24,0.06)]`}
+      } bg-surface overflow-hidden flex flex-col gap-1 shadow-[0_2px_10px_rgba(42,40,24,0.06)]`}
     >
       <Link
         href={`/${regionSlug}/venues/${venueId}`}
-        className="absolute inset-0 z-0 rounded-2xl"
+        className="absolute inset-0 z-0"
         aria-label={t(lang).card.fullDetails(venueName)}
       />
 
+      {/* Lead photo when a visitor has submitted one for this venue -- most
+          venues don't have one yet (submission-driven, see lib/data.ts's
+          venuePhotoId comment), so the card layout below works fine without
+          this block too. */}
+      {photoId !== null && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/venue-photos/${photoId}`}
+          alt=""
+          className="relative z-0 h-32 w-full object-cover pointer-events-none"
+        />
+      )}
+
+      <div className="p-4 pt-5 flex flex-col gap-1">
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none pb-2 border-b border-border">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
           {featured && (
             <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-              Featured
+              {t(lang).card.featured}
             </span>
           )}
           {isPartner && (
             <span className="shrink-0 rounded-full border border-evergreen/40 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
-              Partner
+              {t(lang).card.partner}
             </span>
           )}
         </div>
@@ -70,12 +86,19 @@ export function SpecialVenueGroup({
           )}
           {freshest.venueClaimedAt !== null && <OwnerVerifiedBadge />}
           <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
+          <SaveVenueButton
+            venueId={venueId}
+            venueName={venueName}
+            regionSlug={regionSlug}
+            lang={lang}
+            className="pointer-events-auto"
+          />
         </div>
       </div>
 
       <ul className="flex flex-col divide-y divide-border">
         {visible.map((s) => (
-          <SpecialRow key={s.id} special={s} />
+          <SpecialRow key={s.id} special={s} lang={lang} />
         ))}
       </ul>
 
@@ -89,8 +112,11 @@ export function SpecialVenueGroup({
         <ConfirmedBadges
           venueConfirmedAt={freshest.venueConfirmedAt}
           confirmCount={freshest.confirmCount}
+          lastConfirmedAt={freshest.lastConfirmedAt}
+          lang={lang}
         />
         <VenueGroupActions specialId={freshest.id} venueId={venueId} lang={lang} />
+      </div>
       </div>
     </article>
   );

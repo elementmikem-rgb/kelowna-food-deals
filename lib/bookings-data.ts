@@ -115,6 +115,13 @@ export async function activateBooking(bookingId: number): Promise<void> {
       .where(eq(venues.id, booking.venueId));
     if (!venue || alreadyCovered(venue.featuredUntil, until)) return;
     await db.update(venues).set({ featuredUntil: until }).where(eq(venues.id, booking.venueId));
+  } else if (booking.productType === "map_pin" && booking.venueId !== null) {
+    const [venue] = await db
+      .select({ mapPinBoostedUntil: venues.mapPinBoostedUntil })
+      .from(venues)
+      .where(eq(venues.id, booking.venueId));
+    if (!venue || alreadyCovered(venue.mapPinBoostedUntil, until)) return;
+    await db.update(venues).set({ mapPinBoostedUntil: until }).where(eq(venues.id, booking.venueId));
   } else if (booking.productType === "boost" && booking.specialId !== null) {
     const [special] = await db
       .select({ boostedUntil: specials.boostedUntil })

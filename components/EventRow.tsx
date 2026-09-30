@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import type { EventWithVenue } from "@/lib/events-data";
-import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
+import { formatPrice, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
+import { ConfirmedBadges } from "./ConfirmedBadges";
+import { EventInterestButton } from "./EventInterestButton";
+import { ReportButton } from "./ReportButton";
+import { t, EVENT_TYPE_LABELS, type Language } from "@/lib/i18n";
 
-export function EventRow({ event }: { event: EventWithVenue }) {
+export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?: Language }) {
+  const tr = t(lang);
   const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
-  const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
 
@@ -23,7 +25,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
   // Unknown renders nothing rather than a "not listed" label -- with most events
   // carrying no cover info, spelling out its absence on every row is pure noise.
   const coverLabel =
-    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? "Free" : `${cover} cover`;
+    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? tr.card.free : tr.card.cover(cover!);
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
 
   async function handleConfirm() {
@@ -36,20 +38,6 @@ export function EventRow({ event }: { event: EventWithVenue }) {
     }
   }
 
-  async function handleReport() {
-    setReportState("sending");
-    try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specialId: event.id, venueId: event.venueId, kind: "event" }),
-      });
-      setReportState(res.ok ? "sent" : "error");
-    } catch {
-      setReportState("error");
-    }
-  }
-
   return (
     <li className={`relative z-10 py-2.5 first:pt-0 last:pb-0 ${stale ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-3">
@@ -57,11 +45,11 @@ export function EventRow({ event }: { event: EventWithVenue }) {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-medium text-foreground/90">{event.title}</p>
             <span className="shrink-0 rounded-full border border-gold/40 bg-gold/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-              {EVENT_TYPE_LABELS[event.eventType]}
+              {EVENT_TYPE_LABELS[lang][event.eventType]}
             </span>
             {boosted && (
               <span className="shrink-0 rounded-full border border-accent-dim/40 bg-accent-dim/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-accent-dim">
-                Featured
+                {tr.card.featured}
               </span>
             )}
           </div>
@@ -94,6 +82,17 @@ export function EventRow({ event }: { event: EventWithVenue }) {
         />
       )}
 
+      {(event.confirmCount > 0) && !stale && (
+        <div className="mt-1">
+          <ConfirmedBadges
+            venueConfirmedAt={null}
+            confirmCount={event.confirmCount}
+            lastConfirmedAt={event.lastConfirmedAt}
+            lang={lang}
+          />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mt-1">
         {stale ? (
           <span className="text-[11px] text-stale">
@@ -106,7 +105,7 @@ export function EventRow({ event }: { event: EventWithVenue }) {
             rel="noopener noreferrer"
             className="relative z-10 text-[11px] text-accent-dim hover:underline"
           >
-            Details ↗
+            {tr.card.details}
           </a>
         ) : (
           <span />
@@ -117,22 +116,23 @@ export function EventRow({ event }: { event: EventWithVenue }) {
             disabled={confirmState !== "idle"}
             className="relative z-10 text-[11px] text-evergreen hover:underline disabled:cursor-default px-2 py-2 -my-2"
           >
-            {confirmState === "idle" && "Confirm this event"}
-            {confirmState === "sending" && "Sending…"}
-            {confirmState === "sent" && "Thanks!"}
-            {confirmState === "error" && "Failed — try again"}
+            {confirmState === "idle" && tr.card.confirmEvent}
+            {confirmState === "sending" && tr.card.sending}
+            {confirmState === "sent" && tr.card.confirmThanks}
+            {confirmState === "error" && tr.card.failedTryAgain}
           </button>
-          <button
-            onClick={handleReport}
-            disabled={reportState !== "idle"}
+          <ReportButton
+            itemId={event.id}
+            venueId={event.venueId}
+            kind="event"
+            lang={lang}
             className="relative z-10 text-[11px] text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2 -my-2"
-          >
-            {reportState === "idle" && "Report incorrect"}
-            {reportState === "sending" && "Sending…"}
-            {reportState === "sent" && "Reported"}
-            {reportState === "error" && "Failed — try again"}
-          </button>
+          />
         </div>
+      </div>
+
+      <div className="mt-1">
+        <EventInterestButton eventId={event.id} initialCount={event.interestedCount} />
       </div>
     </li>
   );

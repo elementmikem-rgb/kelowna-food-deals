@@ -172,6 +172,7 @@ export function AdminNav({
   unreadInbox,
   flaggedCount,
   scrapeHealthCount,
+  pendingBookings,
   countries,
   provinces,
   regions,
@@ -185,6 +186,7 @@ export function AdminNav({
   unreadInbox: number;
   flaggedCount: number;
   scrapeHealthCount: number;
+  pendingBookings: number;
   countries: { id: number; name: string }[];
   provinces: { id: number; countryId: number; name: string }[];
   regions: { id: number; provinceId: number; brandName: string }[];
@@ -197,7 +199,7 @@ export function AdminNav({
     { key: "claims", href: "/admin/claims", label: "Claims", badge: pendingClaims, tone: "accent" },
     { key: "outreach", href: "/admin/outreach", label: "Outreach" },
     { key: "inbox", href: "/admin/inbox", label: "Inbox", badge: unreadInbox, tone: "evergreen" },
-    { key: "sponsored", href: "/admin/sponsored", label: "Sponsored" },
+    { key: "sponsored", href: "/admin/sponsored", label: "Sponsored", badge: pendingBookings, tone: "accent" },
     { key: "revenue", href: "/admin/revenue", label: "Revenue" },
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
     { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },

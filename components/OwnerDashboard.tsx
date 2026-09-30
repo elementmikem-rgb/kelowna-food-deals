@@ -4,6 +4,258 @@ import { useState } from "react";
 import { formatPrice, CATEGORY_LABELS, EVENT_TYPE_LABELS } from "@/lib/format";
 import { OwnerCart } from "@/components/OwnerCart";
 import { OwnerCredits } from "@/components/OwnerCredits";
+import { FlashCountdown } from "@/components/FlashCountdown";
+
+const FLASH_DURATIONS = [
+  { minutes: 15, label: "15 min" },
+  { minutes: 30, label: "30 min" },
+  { minutes: 60, label: "1 hour" },
+  { minutes: 120, label: "2 hours" },
+  { minutes: 240, label: "4 hours" },
+];
+
+interface BookingData {
+  id: number;
+  productType: "featured" | "boost" | "category_sponsor" | "chat_term_sponsor" | "map_pin";
+  status: "pending_payment" | "pending_approval" | "approved" | "rejected" | "expired";
+  startDate: string;
+  endDate: string;
+  priceCents: number;
+  creditsSpentCents: number | null;
+  createdAt: string | Date;
+}
+
+const BOOKING_PRODUCT_LABELS: Record<BookingData["productType"], string> = {
+  featured: "Featured",
+  boost: "Boost",
+  category_sponsor: "Category sponsorship",
+  chat_term_sponsor: "Ask-chat term sponsor",
+  map_pin: "Map pin boost",
+};
+
+// A credit-paid booking skips Stripe entirely and lands in "pending_approval" until an
+// admin reviews it (see app/api/owner/cart-checkout/route.ts) -- without this, an owner
+// who just spent their credits had zero way to tell whether anything actually happened
+// (confirmed live 2026-09-28: neither this dashboard nor anywhere else showed booking
+// status at all, credit-paid or not).
+function BookingStatusBadge({ status }: { status: BookingData["status"] }) {
+  const label: Record<BookingData["status"], string> = {
+    pending_payment: "Awaiting payment",
+    pending_approval: "Pending review",
+    approved: "Approved",
+    rejected: "Rejected",
+    expired: "Expired",
+  };
+  const tone: Record<BookingData["status"], string> = {
+    pending_payment: "border-border text-muted",
+    pending_approval: "border-gold/40 bg-gold/10 text-gold",
+    approved: "border-evergreen/30 bg-evergreen/10 text-evergreen",
+    rejected: "border-danger/30 bg-danger/10 text-danger",
+    expired: "border-border text-muted-2",
+  };
+  return (
+    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${tone[status]}`}>
+      {label[status]}
+    </span>
+  );
+}
+
+function BookingHistoryList({ bookings }: { bookings: BookingData[] }) {
+  if (bookings.length === 0) return null;
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-medium text-foreground/90">Your promotions</span>
+        <span className="text-xs text-muted">
+          Pending review means an admin still needs to approve it before it goes live.
+        </span>
+      </div>
+      <ul className="flex flex-col divide-y divide-border">
+        {bookings.map((b) => (
+          <li key={b.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-sm text-foreground/90">{BOOKING_PRODUCT_LABELS[b.productType]}</span>
+              <span className="text-xs text-muted">
+                {b.startDate} – {b.endDate} · {b.creditsSpentCents != null ? `${b.creditsSpentCents / 100} credits` : formatPrice(b.priceCents)}
+              </span>
+            </div>
+            <BookingStatusBadge status={b.status} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+interface LiveFlashSpecial {
+  id: number;
+  title: string;
+  priceCents: number | null;
+  category: string;
+  flashExpiresAt: Date;
+  flashClaimLimit: number | null;
+  flashClaimCount: number;
+}
+
+// Separate from SpecialForm/SectionShell above -- a flash special is a different
+// kind of thing (urgent, ephemeral, one-at-a-time) from the recurring weekly
+// specials list, not a form field on it. See app/owner/venue/[id]/page.tsx's
+// comment for why it's filtered out of the regular specials list entirely.
+function FlashSpecialWidget({
+  venueId,
+  live,
+  onPosted,
+  onEnded,
+}: {
+  venueId: number;
+  live: LiveFlashSpecial | null;
+  onPosted: (special: LiveFlashSpecial) => void;
+  onEnded: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState(Object.keys(CATEGORY_LABELS)[0]);
+  const [duration, setDuration] = useState(FLASH_DURATIONS[1].minutes);
+  const [claimLimit, setClaimLimit] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    if (!title.trim()) return;
+    setPosting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/owner/flash-special", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId,
+          title: title.trim(),
+          priceCents: dollarsToCents(price),
+          category,
+          durationMinutes: duration,
+          claimLimit: claimLimit.trim() ? Number(claimLimit) : null,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Failed");
+      onPosted({
+        id: body.id,
+        title: title.trim(),
+        priceCents: dollarsToCents(price),
+        category,
+        flashExpiresAt: new Date(body.flashExpiresAt),
+        flashClaimLimit: claimLimit.trim() ? Number(claimLimit) : null,
+        flashClaimCount: 0,
+      });
+      setTitle("");
+      setPrice("");
+      setClaimLimit("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function endEarly() {
+    if (!live) return;
+    setEnding(true);
+    try {
+      const res = await fetch(`/api/owner/specials/${live.id}`, { method: "DELETE" });
+      if (res.ok) onEnded();
+    } finally {
+      setEnding(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-display text-xl text-foreground">Flash Special</h2>
+      {live ? (
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-sm font-medium text-foreground">{live.title}</p>
+            <span className="text-xs text-danger font-medium">
+              <FlashCountdown expiresAt={live.flashExpiresAt} />
+            </span>
+          </div>
+          <p className="text-xs text-muted-2">
+            {live.flashClaimLimit !== null
+              ? `${live.flashClaimCount} of ${live.flashClaimLimit} claimed`
+              : `${live.flashClaimCount} claimed`}
+          </p>
+          <button
+            onClick={endEarly}
+            disabled={ending}
+            className="press-pill self-start rounded-full border border-danger/50 text-danger px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+          >
+            {ending ? "Ending…" : "End early"}
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-surface-raised p-3 flex flex-col gap-2">
+          <p className="text-xs text-muted-2">
+            Post an urgent, time-limited deal -- shows live on the board and map while it runs.
+          </p>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. First 20 people get a free beer"
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          />
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Price ($, optional)"
+              inputMode="decimal"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm w-36"
+            />
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            >
+              {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            >
+              {FLASH_DURATIONS.map((d) => (
+                <option key={d.minutes} value={d.minutes}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+            <input
+              value={claimLimit}
+              onChange={(e) => setClaimLimit(e.target.value)}
+              placeholder="Limit (optional, e.g. 20)"
+              inputMode="numeric"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm w-40"
+            />
+          </div>
+          {error && <p className="text-xs text-stale">{error}</p>}
+          <button
+            onClick={submit}
+            disabled={posting}
+            className="press-pill self-start rounded-full bg-danger text-white px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+          >
+            {posting ? "Posting…" : "Post flash special"}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -609,6 +861,70 @@ const emptyEvent: Omit<EventData, "id"> = {
 
 const emptyMenuItem: Omit<MenuItemData, "id"> = { name: "", description: null, priceCents: null };
 
+// One-time welcome banner on an owner's first dashboard visit after their claim is
+// approved -- dismissal is per owner ACCOUNT (venueOwners.onboardingSeenAt), not per
+// venue, so an owner with multiple claimed venues only sees this once total, not once
+// per venue switched to.
+function OwnerOnboarding({ creditBalance, onDismiss }: { creditBalance: number; onDismiss: () => void }) {
+  const [dismissing, setDismissing] = useState(false);
+
+  async function dismiss() {
+    setDismissing(true);
+    const res = await fetch("/api/owner/onboarding-dismiss", { method: "POST" });
+    if (res.ok) onDismiss();
+    setDismissing(false);
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-accent bg-surface p-4">
+      <div className="flex flex-col gap-1">
+        <span className="stamp px-2 py-0.5 text-[10px] self-start">Welcome</span>
+        <h2 className="font-display text-lg text-foreground">You're all set up</h2>
+        <p className="text-sm text-muted">A few things worth knowing:</p>
+      </div>
+      <ol className="flex flex-col gap-2 text-sm text-foreground/90">
+        <li className="flex gap-2">
+          <span className="text-muted">1.</span>
+          <span>
+            Your listing is now yours to manage — add or edit specials, events, and menu items any time from
+            this page.
+          </span>
+        </li>
+        <li className="flex gap-2">
+          <span className="text-muted">2.</span>
+          <span>
+            You've got <strong>{creditBalance} free credits</strong> (${creditBalance} of value) in your
+            account, no strings attached.
+          </span>
+        </li>
+        <li className="flex gap-2">
+          <span className="text-muted">3.</span>
+          <span>
+            Spend them under <strong>Promote this venue</strong> below — pin your card to the top of the
+            homepage, boost a specific special, or sponsor a category.
+          </span>
+        </li>
+      </ol>
+      <div className="flex items-center gap-2">
+        <a
+          href="#promote"
+          onClick={dismiss}
+          className="press-pill rounded-full bg-accent px-3 py-1.5 text-xs text-background"
+        >
+          Show me
+        </a>
+        <button
+          onClick={dismiss}
+          disabled={dismissing}
+          className="press-pill rounded-full border border-border px-3 py-1.5 text-xs text-muted disabled:opacity-50"
+        >
+          Got it, dismiss
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function DigestPreferenceToggle({ initialOptOut }: { initialOptOut: boolean }) {
   const [optOut, setOptOut] = useState(initialOptOut);
   const [saving, setSaving] = useState(false);
@@ -750,6 +1066,9 @@ export function OwnerDashboard({
   todayISO,
   creditBalance,
   creditBundles,
+  showOnboarding,
+  liveFlashSpecial,
+  bookings,
 }: {
   venueId: number;
   specials: SpecialData[];
@@ -757,17 +1076,33 @@ export function OwnerDashboard({
   menuItems: MenuItemData[];
   weeklyDigestOptOut: boolean;
   hasPassword: boolean;
-  promoteSettings: Record<"featured" | "boost" | "category_sponsor" | "chat_term_sponsor", MonetizationSettings>;
+  promoteSettings: Record<"featured" | "boost" | "category_sponsor" | "chat_term_sponsor" | "map_pin", MonetizationSettings>;
   todayISO: string;
   creditBalance: number;
   creditBundles: { id: number; name: string; priceCents: number; credits: number }[];
+  showOnboarding: boolean;
+  liveFlashSpecial: LiveFlashSpecial | null;
+  bookings: BookingData[];
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
   const [menuItemList, setMenuItemList] = useState(menuItems);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [flashSpecial, setFlashSpecial] = useState(liveFlashSpecial);
 
   return (
     <div className="flex flex-col gap-8">
+      {showOnboarding && !onboardingDismissed && (
+        <OwnerOnboarding creditBalance={creditBalance} onDismiss={() => setOnboardingDismissed(true)} />
+      )}
+
+      <FlashSpecialWidget
+        venueId={venueId}
+        live={flashSpecial}
+        onPosted={setFlashSpecial}
+        onEnded={() => setFlashSpecial(null)}
+      />
+
       <SectionShell
         title="Specials"
         addForm={
@@ -872,6 +1207,7 @@ export function OwnerDashboard({
         todayISO={todayISO}
         creditBalance={creditBalance}
       />
+      <BookingHistoryList bookings={bookings} />
       <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
       <PasswordSection hasPassword={hasPassword} />
       <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">

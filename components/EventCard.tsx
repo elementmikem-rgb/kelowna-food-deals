@@ -3,13 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { EventWithVenue } from "@/lib/events-data";
-import { formatPrice, EVENT_TYPE_LABELS, formatEventDate } from "@/lib/format";
+import { formatPrice, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { ConfirmedBadges } from "./ConfirmedBadges";
+import { EventInterestButton } from "./EventInterestButton";
 import { isPromotionActive } from "@/lib/promotion";
+import { t, EVENT_TYPE_LABELS, type Language } from "@/lib/i18n";
+import { ReportButton } from "./ReportButton";
 
-export function EventCard({ event, regionSlug }: { event: EventWithVenue; regionSlug: string }) {
-  const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">(
+export function EventCard({
+  event,
+  regionSlug,
+  lang = "en",
+}: {
+  event: EventWithVenue;
+  regionSlug: string;
+  lang?: Language;
+}) {
+  const tr = t(lang);
+  const [confirmState, setConfirmState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
 
@@ -22,20 +35,16 @@ export function EventCard({ event, regionSlug }: { event: EventWithVenue; region
   // listed" label -- with most events carrying no cover info, spelling out its absence
   // on every single card is pure noise.
   const coverLabel =
-    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? "Free" : `${cover} cover`;
+    event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? tr.card.free : tr.card.cover(cover!);
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
 
-  async function handleReport() {
-    setReportState("sending");
+  async function handleConfirm() {
+    setConfirmState("sending");
     try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specialId: event.id, venueId: event.venueId, kind: "event" }),
-      });
-      setReportState(res.ok ? "sent" : "error");
+      const res = await fetch(`/api/events/${event.id}/confirm`, { method: "POST" });
+      setConfirmState(res.ok ? "sent" : "error");
     } catch {
-      setReportState("error");
+      setConfirmState("error");
     }
   }
 
@@ -57,11 +66,11 @@ export function EventCard({ event, regionSlug }: { event: EventWithVenue; region
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <span className="rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
-            {EVENT_TYPE_LABELS[event.eventType]}
+            {EVENT_TYPE_LABELS[lang][event.eventType]}
           </span>
           {boosted && (
             <span className="rounded-full border border-accent-dim/40 bg-accent-dim/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent-dim">
-              Featured
+              {tr.card.featured}
             </span>
           )}
         </div>
@@ -98,17 +107,32 @@ export function EventCard({ event, regionSlug }: { event: EventWithVenue; region
       </div>
 
       <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-border">
-        <VerifiedBadge lastVerifiedAt={event.lastVerifiedAt} />
-        <button
-          onClick={handleReport}
-          disabled={reportState !== "idle"}
-          className="relative z-10 text-xs text-danger/80 hover:text-danger disabled:cursor-default px-2 py-2.5 -my-2.5"
-        >
-          {reportState === "idle" && "Report incorrect"}
-          {reportState === "sending" && "Sending…"}
-          {reportState === "sent" && "Reported"}
-          {reportState === "error" && "Failed — try again"}
-        </button>
+        <div className="flex flex-col gap-1">
+          <VerifiedBadge lastVerifiedAt={event.lastVerifiedAt} lang={lang} />
+          <ConfirmedBadges
+            venueConfirmedAt={null}
+            confirmCount={event.confirmCount}
+            lastConfirmedAt={event.lastConfirmedAt}
+            lang={lang}
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleConfirm}
+            disabled={confirmState !== "idle"}
+            className="relative z-10 text-xs text-evergreen hover:underline disabled:cursor-default px-2 py-2.5 -my-2.5"
+          >
+            {confirmState === "idle" && tr.card.confirmEvent}
+            {confirmState === "sending" && tr.card.sending}
+            {confirmState === "sent" && tr.card.confirmThanks}
+            {confirmState === "error" && tr.card.failedTryAgain}
+          </button>
+          <ReportButton itemId={event.id} venueId={event.venueId} kind="event" lang={lang} />
+        </div>
+      </div>
+
+      <div className="relative z-10 -mt-1">
+        <EventInterestButton eventId={event.id} initialCount={event.interestedCount} />
       </div>
     </article>
   );

@@ -3,6 +3,8 @@ import type { EventWithVenue } from "@/lib/events-data";
 import { EventRow } from "./EventRow";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { OwnerVerifiedBadge } from "./OwnerVerifiedBadge";
+import { ConfirmedBadges } from "./ConfirmedBadges";
+import { SaveVenueButton } from "./SaveVenueButton";
 import { isPromotionActive } from "@/lib/promotion";
 import { t, type Language } from "@/lib/i18n";
 
@@ -55,7 +57,7 @@ export function EventVenueGroup({
             <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
             {featured && (
               <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-                Featured
+                {t(lang).card.featured}
               </span>
             )}
           </div>
@@ -71,12 +73,21 @@ export function EventVenueGroup({
           )}
           {freshest.venueClaimedAt !== null && <OwnerVerifiedBadge />}
           <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
+          {venueId !== null && (
+            <SaveVenueButton
+              venueId={venueId}
+              venueName={venueName}
+              regionSlug={regionSlug}
+              lang={lang}
+              className="pointer-events-auto"
+            />
+          )}
         </div>
       </div>
 
       <ul className="flex flex-col divide-y divide-border">
         {visible.map((e) => (
-          <EventRow key={e.id} event={e} />
+          <EventRow key={e.id} event={e} lang={lang} />
         ))}
       </ul>
 
@@ -84,6 +95,20 @@ export function EventVenueGroup({
         <p className="relative z-10 pointer-events-none mt-1 pt-2 border-t border-dashed border-border text-xs font-medium text-accent-dim">
           + {hiddenCount} more — view all {events.length} events →
         </p>
+      )}
+
+      {/* Events have no venue-side confirmation (see EventWithVenue's comment) -- only
+          ever the visitor confirmCount/lastConfirmedAt, so this footer only appears
+          once a real confirm exists rather than always reserving empty space for it. */}
+      {freshest.confirmCount > 0 && (
+        <div className="relative z-10 mt-1 pt-2 border-t border-border">
+          <ConfirmedBadges
+            venueConfirmedAt={null}
+            confirmCount={freshest.confirmCount}
+            lastConfirmedAt={freshest.lastConfirmedAt}
+            lang={lang}
+          />
+        </div>
       )}
     </article>
   );

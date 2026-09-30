@@ -1,4 +1,4 @@
-import { db, submissions, venueClaimRequests, inboundEmails, venues } from "@/db";
+import { db, submissions, venueClaimRequests, inboundEmails, venues, bookings } from "@/db";
 import { and, count, eq, isNull } from "drizzle-orm";
 import { getFlaggedSpecials, getFlaggedEvents } from "./flagged-data";
 import { getRecentlyFailingVenues } from "./scrape-health";
@@ -13,8 +13,9 @@ export async function getAdminNavCounts(regionIds: number[] | "all"): Promise<{
   unreadInbox: number;
   flaggedCount: number;
   scrapeHealthCount: number;
+  pendingBookings: number;
 }> {
-  const [[submissionRow], [claimRow], [inboxRow], flaggedSpecials, flaggedEvents, failingVenues] = await Promise.all([
+  const [[submissionRow], [claimRow], [inboxRow], flaggedSpecials, flaggedEvents, failingVenues, [bookingRow]] = await Promise.all([
     db
       .select({ n: count() })
       .from(submissions)
@@ -50,6 +51,16 @@ export async function getAdminNavCounts(regionIds: number[] | "all"): Promise<{
     // permanently non-zero and worthless as a "something's actually wrong"
     // signal.
     getRecentlyFailingVenues(regionIds),
+    // A credit-paid owner booking never touches Stripe, so nothing else in this
+    // file's counts (or anywhere in the nav) ever surfaces it -- confirmed live
+    // 2026-09-28: it sat in pending_approval with zero admin visibility until
+    // someone happened to open /admin/sponsored. Same leftJoin(venues) +
+    // regionScopeCondition shape as getPendingApprovalBookings itself.
+    db
+      .select({ n: count() })
+      .from(bookings)
+      .leftJoin(venues, eq(bookings.venueId, venues.id))
+      .where(and(eq(bookings.status, "pending_approval"), regionScopeCondition(venues.regionId, regionIds))),
   ]);
   return {
     pendingSubmissions: submissionRow?.n ?? 0,
@@ -57,5 +68,6 @@ export async function getAdminNavCounts(regionIds: number[] | "all"): Promise<{
     unreadInbox: inboxRow?.n ?? 0,
     flaggedCount: flaggedSpecials.length + flaggedEvents.length,
     scrapeHealthCount: failingVenues.length,
+    pendingBookings: bookingRow?.n ?? 0,
   };
 }

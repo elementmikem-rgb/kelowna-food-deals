@@ -30,6 +30,7 @@ const PRODUCT_LABELS: Record<BookingProductType, string> = {
   boost: "Seasonal boost",
   category_sponsor: "Category sponsorship",
   chat_term_sponsor: "Chat term sponsorship",
+  map_pin: "Map pin boost",
 };
 
 function centsToDisplay(cents: number): string {

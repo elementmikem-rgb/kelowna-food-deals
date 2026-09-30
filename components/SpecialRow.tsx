@@ -1,7 +1,9 @@
 import type { SpecialWithVenue } from "@/lib/data";
-import { formatPrice, CATEGORY_LABELS } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
+import { FlashSpecialPanel } from "./FlashSpecialPanel";
+import { t, CATEGORY_LABELS, type Language } from "@/lib/i18n";
 
 // Confirm/Report used to live on every row here -- up to MAX_VISIBLE (5) pairs
 // stacked in one venue card, which is both visually noisy and a real
@@ -10,7 +12,7 @@ import { isPromotionActive } from "@/lib/promotion";
 // component is a pure display row again, matching the shape SpecialCard.tsx
 // still needs (SpecialCard renders one venue's specials on its own dedicated
 // page, where per-special actions still make sense -- no crowding there).
-export function SpecialRow({ special }: { special: SpecialWithVenue }) {
+export function SpecialRow({ special, lang = "en" }: { special: SpecialWithVenue; lang?: Language }) {
   const stale = isStale(special.lastVerifiedAt);
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
@@ -27,11 +29,11 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-medium text-foreground/90">{special.title}</p>
             <span className="shrink-0 rounded-full border border-evergreen/30 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
-              {CATEGORY_LABELS[special.category]}
+              {CATEGORY_LABELS[lang][special.category]}
             </span>
             {boosted && (
               <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-                Featured
+                {t(lang).card.featured}
               </span>
             )}
           </div>
@@ -61,6 +63,17 @@ export function SpecialRow({ special }: { special: SpecialWithVenue }) {
         <p className="mt-1 text-[11px] text-stale">
           stale — {formatVerifiedRelative(special.lastVerifiedAt)}
         </p>
+      )}
+
+      {special.flashExpiresAt && (
+        <div className="mt-2">
+          <FlashSpecialPanel
+            specialId={special.id}
+            expiresAt={special.flashExpiresAt}
+            claimLimit={special.flashClaimLimit}
+            claimCount={special.flashClaimCount}
+          />
+        </div>
       )}
     </li>
   );
