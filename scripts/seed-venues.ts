@@ -1,5 +1,6 @@
 import { db, venues, regions } from "@/db";
 import { eq, sql } from "drizzle-orm";
+import { geocode, sleep, GEOCODE_DELAY_MS } from "@/lib/geocode";
 
 interface SeedVenue {
   name: string;
@@ -417,7 +418,36 @@ async function main() {
     .limit(1);
   if (!kelownaRegion) throw new Error("kelowna region not found — run the platform migration first");
 
+  const [kelownaCenter] = await db
+    .select({ lat: regions.lat, lng: regions.lng })
+    .from(regions)
+    .where(eq(regions.id, kelownaRegion.id))
+    .limit(1);
+
   for (const v of SEED_VENUES) {
+    // Geocode from the address if not already supplied -- every future
+    // venue batch should populate lat/lng this way rather than leaving it
+    // null, so "near me" features work without a separate backfill later.
+    // If the address is too vague/landmark-based for Nominatim (unit numbers,
+    // mall names, etc.), fall back to the region's own center and mark
+    // approxCoords so it's findable for a later re-geocode with a better
+    // source -- same pattern as the 2026-09-23 platform-wide backfill.
+    let lat = v.lat ?? null;
+    let lng = v.lng ?? null;
+    let approxCoords = false;
+    if (lat === null || lng === null) {
+      const result = await geocode(`${v.address}, Canada`);
+      if (result) {
+        lat = result.lat;
+        lng = result.lng;
+      } else if (kelownaCenter?.lat != null && kelownaCenter?.lng != null) {
+        lat = kelownaCenter.lat;
+        lng = kelownaCenter.lng;
+        approxCoords = true;
+      }
+      await sleep(GEOCODE_DELAY_MS);
+    }
+
     await db
       .insert(venues)
       .values({
@@ -425,8 +455,9 @@ async function main() {
         address: v.address,
         regionId: kelownaRegion.id,
         city: cityFromAddress(v.address),
-        lat: v.lat ?? null,
-        lng: v.lng ?? null,
+        approxCoords,
+        lat,
+        lng,
         phone: v.phone ?? null,
         website: v.website ?? null,
         menuUrl: v.menuUrl ?? null,
@@ -441,6 +472,7 @@ async function main() {
           city: sql`excluded.city`,
           lat: sql`excluded.lat`,
           lng: sql`excluded.lng`,
+          approxCoords: sql`excluded.approx_coords`,
           phone: sql`excluded.phone`,
           website: sql`excluded.website`,
           menuUrl: sql`excluded.menu_url`,

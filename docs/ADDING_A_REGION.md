@@ -118,9 +118,15 @@ via a one-off Node script (same `db` import pattern as
 | `tokenCeiling` | Nightly Haiku extraction budget for this region alone | `50000` to start |
 | `active` | Must be `true` for the region to show up anywhere | `true` |
 | `provinceId` | FK from Phase 1 | the BC province's id |
+| `lat`, `lng` | This region's own town center (NOT a venue location) — geocode via `geocode()` from `@/lib/geocode`, e.g. `geocode("Vernon, British Columbia, Canada")` | powers CityFinder's "Use my location" distance match |
 
 **Do not skip `mailingAddress`** — it's a legal requirement (CASL), not a
-nice-to-have.
+nice-to-have. Don't skip `lat`/`lng` either — a region without coordinates
+silently can't be matched by "Use my location" (it just won't appear as a
+candidate, no error), even though it works fine everywhere else. A combined
+name like "X & Y" often fails to geocode as one place (Nominatim couldn't
+resolve "Burnaby & Tri-Cities" or "Cranbrook & Fernie") — fall back to
+geocoding just the primary/larger town name in that case.
 
 Once inserted, `/{slug}` works immediately — city picker (`app/page.tsx`),
 sitemap/robots, `app/[region]/layout.tsx`'s metadata/theme injection, and the
@@ -173,6 +179,34 @@ reuse directly.
    `website` and/or `menuUrl` set. A venue with neither is silently skipped
    by the scraper every night (logged, not an error), so it will never get
    real specials/events without one.
+   `venues.lat`/`venues.lng` should also get populated — every seed script
+   should import `geocode`/`sleep`/`GEOCODE_DELAY_MS` from `@/lib/geocode`
+   and geocode each venue's address before insert (see `scripts/seed-venues.ts`
+   for the pattern) unless coordinates are already known. This was 0%
+   populated platform-wide as of 2026-09-22 (2,791 venues) — a backfill script
+   (`scripts/_geocode-venues.ts`, throwaway, deleted after running) closed
+   the historical gap using the same free Nominatim geocoder, but every new
+   venue from here on should be geocoded at seed time so the gap doesn't
+   reopen. Nominatim is free but rate-limited to ~1 req/sec (`GEOCODE_DELAY_MS`
+   handles this) — a big batch (dozens of venues) takes real wall-clock time,
+   budget for it. `regions.lat`/`regions.lng` (the region's own town center,
+   not per-venue) also now exist and are already fully backfilled — a new
+   region's Phase 2 insert should geocode its own center the same way.
+
+   Nominatim can't resolve ~12% of real addresses (unit/suite numbers, mall
+   names, landmark descriptions like "downtown Oliver, BC") even after a
+   simplification retry pass (stripping unit numbers recovered some but not
+   all). `scripts/seed-venues.ts`'s pattern handles this: when geocoding
+   fails, fall back to the venue's own region center and set
+   `venues.approxCoords = true` (added 2026-09-23, migration
+   `0059_add_venue_approx_coords.sql`) rather than leaving lat/lng null. This
+   makes the gap queryable (`where approxCoords = true`) instead of
+   invisible, so it can be revisited later — e.g. re-geocoded with a paid API
+   (Google/Mapbox) that handles messier addresses better, or manually
+   corrected one at a time. As of 2026-09-23, 361 of 2,791 venues carry this
+   flag. Don't build anything that assumes every venue's coordinates are
+   precise (a map pin, a "sort by distance" feature) without checking this
+   flag first.
 5. After the initial scrape (Phase 4) runs, expect a real chunk of venues to
    come back with zero specials/events — some genuinely have nothing
    promotional on their site, but a real fraction turn out to have content
