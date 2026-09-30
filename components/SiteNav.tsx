@@ -6,7 +6,10 @@ import { t, getEffectiveLanguage } from "@/lib/i18n";
 // "monthly" isn't a tab here either -- it moved to a chip at the end of the
 // category filter row on the Specials page (CategoryFilter.tsx) so it's not
 // mixed in among the two most-used tabs; the /monthly page itself is unchanged.
-export async function SiteNav({ active }: { active: "specials" | "events" | "monthly" | "blog" }) {
+// "saved" (the My Spots page) is the same story -- reached via SavedVenuesLink in
+// the header, not a permanent third tab (see the feature's UI-audit-driven
+// decision not to add another always-visible nav pill on mobile).
+export async function SiteNav({ active }: { active: "specials" | "events" | "monthly" | "blog" | "saved" }) {
   const region = await getCurrentRegion();
   const nav = t(await getEffectiveLanguage(region)).nav;
   const base = `/${region.slug}`;

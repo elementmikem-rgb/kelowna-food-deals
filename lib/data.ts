@@ -1,5 +1,6 @@
 import { db, specials, venues, dealFeedback } from "@/db";
-import { and, desc, eq, isNull, isNotNull, notExists, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, isNotNull, notExists, or, sql } from "drizzle-orm";
+import { toDateOrNull } from "@/lib/time";
 import { alias } from "drizzle-orm/pg-core";
 import type { SpecialCategory } from "@/db/schema";
 
@@ -35,11 +36,38 @@ export interface SpecialWithVenue {
   // so an old special's count doesn't just accumulate forever and lose meaning. See
   // docs/superpowers/specs/2026-09-07-deal-verification-design.md Section 1.
   confirmCount: number;
+  // Timestamp of the most recent visitor confirm (any window, not the 30-day one
+  // confirmCount uses) -- drives the "live" confirm badge (ConfirmedBadges/
+  // isRecentConfirm in lib/time.ts), which only reads as "live" for a few hours.
+  lastConfirmedAt: Date | null;
   // Whether a paid photo add-on photo exists -- a boolean flag rather than shipping the
   // base64 photoData itself in this list query, which would bloat every page load with
   // image bytes most cards don't even show (only rendered while boostedUntil is active,
   // via /api/specials/[id]/photo).
   hasPhoto: boolean;
+  // Most recent visitor-submitted venue photo (specials.venue_photos), if any -- shown
+  // as the card's lead image on the region board. Distinct from hasPhoto above, which
+  // is the paid boost photo add-on tied to this specific special. Most venues have none
+  // yet (submission-driven), so consumers must handle null gracefully.
+  venuePhotoId: number | null;
+  // Map view fields (components/MapView.tsx) -- included on every fetch rather than a
+  // separate query, since the map reads the exact same specials data the list view
+  // already loaded, just grouped and plotted differently.
+  venueLat: number | null;
+  venueLng: number | null;
+  // True when venueLat/venueLng is the parent region's center point, not this venue's
+  // own geocoded address (see venues.approxCoords in db/schema.ts) -- the map skips
+  // these rather than plotting a pin at the wrong building.
+  venueApproxCoords: boolean;
+  venueMapPinBoostedUntil: Date | null;
+  // Flash special (db/schema.ts) -- non-null flashExpiresAt means this row is a
+  // venue-posted, time-limited urgent deal rather than a normal recurring special.
+  // Queries below only ever return an unexpired one (or null), so any consumer
+  // seeing a non-null value here can treat it as "currently live" without an extra
+  // now() check of its own.
+  flashExpiresAt: Date | null;
+  flashClaimLimit: number | null;
+  flashClaimCount: number;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -72,8 +100,40 @@ const baseColumns = {
     where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
       and created_at > now() - interval '30 days'
   )`,
+  lastConfirmedAt: sql<Date | null>`(
+    select max(created_at) from specials.deal_feedback
+    where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
+  )`,
   hasPhoto: sql<boolean>`${specials.photoData} is not null`,
+  venuePhotoId: sql<number | null>`(
+    select id from specials.venue_photos
+    where venue_id = ${venues.id}
+    order by created_at desc
+    limit 1
+  )`,
+  venueLat: venues.lat,
+  venueLng: venues.lng,
+  venueApproxCoords: venues.approxCoords,
+  venueMapPinBoostedUntil: venues.mapPinBoostedUntil,
+  flashExpiresAt: specials.flashExpiresAt,
+  flashClaimLimit: specials.flashClaimLimit,
+  flashClaimCount: specials.flashClaimCount,
 };
+
+// A flash special stops being a "deal" the moment it expires -- unlike a normal
+// special (which just sits there until the next day-of-week rolls around again),
+// there's nothing to show once flashExpiresAt passes. Every specials query in this
+// file that feeds a public page applies this same condition rather than relying on
+// a cron to clean expired rows up after the fact -- this page is force-dynamic
+// (app/[region]/page.tsx), so every request already re-checks against real time.
+const notExpiredFlash = or(isNull(specials.flashExpiresAt), gt(specials.flashExpiresAt, sql`now()`));
+
+// See lib/time.ts's toDateOrNull comment -- baseColumns.lastConfirmedAt is a raw SQL
+// subquery, so the driver hands it back as a plain string, not a real Date, and
+// every query using baseColumns needs this fix-up before returning to a caller.
+function fixLastConfirmedAt<T extends { lastConfirmedAt: Date | string | null }>(rows: T[]): T[] {
+  return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) }));
+}
 
 export async function getAllSpecialsWithVenue(regionId: number): Promise<SpecialWithVenue[]> {
   const rows = await db
@@ -81,10 +141,15 @@ export async function getAllSpecialsWithVenue(regionId: number): Promise<Special
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
     .where(
-      and(eq(venues.active, true), eq(venues.regionId, regionId), isNull(specials.archivedAt))
+      and(
+        eq(venues.active, true),
+        eq(venues.regionId, regionId),
+        isNull(specials.archivedAt),
+        notExpiredFlash
+      )
     );
 
-  return rows as SpecialWithVenue[];
+  return fixLastConfirmedAt(rows) as SpecialWithVenue[];
 }
 
 export async function getMonthlySpecials(regionId: number): Promise<SpecialWithVenue[]> {
@@ -101,7 +166,7 @@ export async function getMonthlySpecials(regionId: number): Promise<SpecialWithV
       )
     );
 
-  return rows as SpecialWithVenue[];
+  return fixLastConfirmedAt(rows) as SpecialWithVenue[];
 }
 
 const MAX_PREVIOUS_PER_VENUE = 4;
@@ -150,7 +215,7 @@ export async function getPreviousSpecials(regionId: number, limit = 30): Promise
 
   const perVenue = new Map<number, number>();
   const capped: PreviousSpecial[] = [];
-  for (const row of rows as PreviousSpecial[]) {
+  for (const row of fixLastConfirmedAt(rows) as PreviousSpecial[]) {
     const seen = perVenue.get(row.venueId) ?? 0;
     if (seen >= MAX_PREVIOUS_PER_VENUE) continue;
     perVenue.set(row.venueId, seen + 1);

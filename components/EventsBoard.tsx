@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { EventWithVenue } from "@/lib/events-data";
 import type { EventType } from "@/db/schema";
 import type { CategorySponsor } from "@/lib/sponsored-data";
@@ -13,6 +14,13 @@ import { EventTypeFilter } from "./EventTypeFilter";
 import { EventVenueGroup } from "./EventVenueGroup";
 import { EventsCalendar } from "./EventsCalendar";
 import { groupByVenue, type VenueGroup } from "@/lib/group-by-venue";
+
+// Same reasoning as SpecialsBoard's own dynamic import: Leaflet touches
+// window/document at module load, so it can only ever run client-side.
+const MapView = dynamic(() => import("./MapView").then((m) => m.MapView), {
+  ssr: false,
+  loading: () => <p className="text-muted-2 text-sm py-8 text-center">Loading map…</p>,
+});
 
 const WEEKEND_DAYS = [5, 6, 0]; // Fri, Sat, Sun
 
@@ -44,6 +52,8 @@ export function EventsBoard({
   timezone,
   regionSlug,
   lang = "en",
+  regionLat = null,
+  regionLng = null,
 }: {
   recurring: EventWithVenue[];
   upcoming: EventWithVenue[];
@@ -51,6 +61,10 @@ export function EventsBoard({
   timezone: string;
   regionSlug: string;
   lang?: Language;
+  // Map view's initial center -- see SpecialsBoard's identical prop for why
+  // this comes from the region rather than being derived from venue pins.
+  regionLat?: number | null;
+  regionLng?: number | null;
 }) {
   const tr = t(lang);
   const today = useMemo(() => todayDowInRegion(timezone), [timezone]);
@@ -58,6 +72,7 @@ export function EventsBoard({
   const [selectedType, setSelectedType] = useState<EventType | "all">("all");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [venueQuery, setVenueQuery] = useState("");
+  const [view, setView] = useState<"list" | "map">("list");
   const normalizedQuery = venueQuery.trim().toLowerCase();
 
   const todayKey = useMemo(
@@ -176,7 +191,39 @@ export function EventsBoard({
           {groupedRecurring.length === 1 ? "" : "s"}
         </p>
 
-        {groupedRecurring.length === 0 ? (
+        {/* List/Map toggle -- defaults to List so nothing changes for existing
+            visitors unless they opt in, same as SpecialsBoard's own toggle. */}
+        <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start">
+          {(["list", "map"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`press-pill rounded-full px-3 py-1 capitalize ${
+                view === v ? "bg-accent text-background" : "text-muted"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+
+        {view === "map" && (
+          <MapView
+            specials={[]}
+            regionSlug={regionSlug}
+            lang={lang}
+            regionLat={regionLat}
+            regionLng={regionLng}
+            // "weekend" has no single day-of-week for the map's day-scoped query
+            // to use -- falls back to today rather than picking one of the three
+            // weekend days arbitrarily.
+            selectedDay={selectedDay === "weekend" ? today : selectedDay}
+            selectedCategory="all"
+            allowedLayers={["events"]}
+          />
+        )}
+
+        {view === "list" && (groupedRecurring.length === 0 ? (
           <p className="text-muted-2 text-sm py-8 text-center">
             {normalizedQuery
               ? tr.emptyState.noEventsSearch(venueQuery.trim())
@@ -195,7 +242,7 @@ export function EventsBoard({
               />
             ))}
           </div>
-        )}
+        ))}
       </div>
 
       {upcoming.length > 0 && (
@@ -229,6 +276,7 @@ export function EventsBoard({
                       venueName={g.venueName}
                       events={g.items}
                       regionSlug={regionSlug}
+                      lang={lang}
                     />
                   ))}
                 </div>

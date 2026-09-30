@@ -1,15 +1,23 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata = {
   title: "Page Not Found",
 };
 
+// This is Next's global catch-all for any unmatched path -- including ones proxy.ts
+// can't resolve to a region at all (a mistyped /api/ path, a bad top-level URL), so it
+// can't safely use SiteHeader/SiteFooter here: both call the strict getCurrentRegion()
+// (lib/regions.ts), which deliberately throws when there's no x-region-id header,
+// turning what should be a clean 404 into a 500. A plain, region-agnostic header/footer
+// avoids that -- there's no real region to brand this page with anyway.
 export default function NotFound() {
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">
-      <SiteHeader active="blog" subtitle="This page doesn't exist." />
+      <header>
+        <Link href="/" className="font-display text-2xl text-foreground">
+          TodaysTab
+        </Link>
+      </header>
 
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-surface p-10 text-center">
         <p className="font-display text-3xl text-foreground">Page not found</p>
@@ -24,7 +32,11 @@ export default function NotFound() {
         </Link>
       </div>
 
-      <SiteFooter />
+      <footer className="text-center text-xs text-muted-2 pt-4 pb-8 border-t border-border">
+        <Link href="/" className="text-accent-dim underline">
+          TodaysTab.com
+        </Link>
+      </footer>
     </div>
   );
 }

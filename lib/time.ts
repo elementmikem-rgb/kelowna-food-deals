@@ -153,6 +153,46 @@ export function formatVerifiedRelative(lastVerifiedAt: Date, now: Date = new Dat
   return `verified ${days} days ago`;
 }
 
+// Drizzle's postgres-js driver only auto-parses a column's value into a real JS Date
+// when it recognizes the column's own declared type (e.g. specials.lastVerifiedAt).
+// A raw `sql<Date | null>` subquery (e.g. `max(created_at)` computed inline, as
+// lib/data.ts's lastConfirmedAt column is) has no such mapping and comes back as a
+// plain Postgres-formatted string at runtime despite the TS type saying Date --
+// calling .getTime() on it throws. Every query that selects a raw-SQL timestamp
+// column runs its result through this first.
+export function toDateOrNull(value: Date | string | null): Date | null {
+  if (value === null) return null;
+  return value instanceof Date ? value : new Date(value);
+}
+
+// Window for the "live" confirm badge (ConfirmedBadges) -- a confirm inside this
+// window reads as "someone was just there," which is the whole point of a live
+// signal; past it, the exact minute stops being meaningful and it falls back to
+// the existing static "Confirmed by N visitors" badge instead.
+const LIVE_CONFIRM_WINDOW_HOURS = 4;
+
+export function isRecentConfirm(confirmedAt: Date, now: Date = new Date()): boolean {
+  const hours = (now.getTime() - confirmedAt.getTime()) / (1000 * 60 * 60);
+  return hours >= 0 && hours < LIVE_CONFIRM_WINDOW_HOURS;
+}
+
+// Minute/hour-granularity relative time for the live confirm badge -- distinct from
+// formatVerifiedRelative's day-granularity ("verified 3 days ago"), since a badge
+// meant to feel live needs "12 min ago," not "verified today."
+export function formatRecentRelative(confirmedAt: Date, now: Date = new Date(), lang: Language = "en"): string {
+  const minutes = Math.max(0, Math.round((now.getTime() - confirmedAt.getTime()) / (1000 * 60)));
+  if (lang === "fr") {
+    if (minutes < 1) return "à l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.round(minutes / 60);
+    return `il y a ${hours} h`;
+  }
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} hr ago`;
+}
+
 export function formatTimeOfDay(time: string | null): string | null {
   if (!time) return null;
   const [hStr, mStr] = time.split(":");

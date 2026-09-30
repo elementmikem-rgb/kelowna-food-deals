@@ -49,14 +49,17 @@
 }
 
 body {
+  /* Texture opacity halved (0.035/0.06 -> 0.018/0.03) for Design Direction A
+     ("refined rustic"): keep the paper-grain identity, but let content read
+     first instead of competing with the background on every scroll. */
   background:
     repeating-linear-gradient(
       transparent,
       transparent 27px,
-      rgba(42, 40, 24, 0.035) 27px,
-      rgba(42, 40, 24, 0.035) 28px
+      rgba(42, 40, 24, 0.018) 27px,
+      rgba(42, 40, 24, 0.018) 28px
     ),
-    radial-gradient(circle at 1px 1px, rgba(42, 40, 24, 0.06) 1px, transparent 0) 0 0 / 20px 20px,
+    radial-gradient(circle at 1px 1px, rgba(42, 40, 24, 0.03) 1px, transparent 0) 0 0 / 20px 20px,
     var(--background);
   color: var(--foreground);
   font-family: var(--font-body), sans-serif;
@@ -130,12 +133,14 @@ h1, h2, h3, .font-display {
   opacity: 1;
 }
 
+/* Tilt magnitude halved for Design Direction A -- resting cards should read as
+   "gently placed," not crooked; the hover un-rotate-and-lift is unchanged. */
 .pin-card.tilt-a {
-  --tilt: -0.55deg;
+  --tilt: -0.25deg;
 }
 
 .pin-card.tilt-b {
-  --tilt: 0.6deg;
+  --tilt: 0.3deg;
 }
 
 .pin-card::before {
@@ -195,13 +200,32 @@ h1, h2, h3, .font-display {
   .pin-card::before,
   .pin-card::after,
   .press-pill,
-  .press-pill:active {
+  .press-pill:active,
+  .live-dot {
     transition: none;
     animation: none;
     transform: none;
   }
 }
 
+/* ConfirmedBadges' "live" state (a confirm inside the last few hours) -- a
+   gentle pulse rather than a hard blink, so the badge reads as "recent
+   activity" without being distracting next to specials that just sit still. */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.live-dot {
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
+/* Reserved for the ONE dashed badge per card (VerifiedBadge) -- Design
+   Direction A keeps this signature mark but everything else that used to
+   reach for the same dashed-stamp look (ConfirmedBadges' "confirmed by
+   venue", the homepage stat line) now uses a plain solid pill instead, so a
+   card never shows more than one stamp at a time. Rotation eased from -3deg
+   to -1.5deg so it reads as a stamp, not a crooked sticker. */
 .stamp {
   display: inline-flex;
   align-items: center;
@@ -213,8 +237,21 @@ h1, h2, h3, .font-display {
   font-family: var(--font-mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  transform: rotate(-3deg);
+  transform: rotate(-1.5deg);
   mix-blend-mode: multiply;
+}
+
+/* Plain, quieter pill for stats/badges that don't need the stamp treatment --
+   solid border and no rotation, so it doesn't compete with the one real
+   dashed stamp on a card. */
+.pill-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted-2);
+  border-radius: 9999px;
 }
 
 /* Used on horizontally-scrolling filter/tab rows (day tabs, category/city/event-type

@@ -51,6 +51,8 @@ export default async function EventsPage() {
         timezone={timezone}
         regionSlug={region.slug}
         lang={lang}
+        regionLat={region.lat}
+        regionLng={region.lng}
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />

@@ -16,6 +16,7 @@ import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 import { ShareButton } from "@/components/ShareButton";
+import { SaveVenueButton } from "@/components/SaveVenueButton";
 import { formatPrice } from "@/lib/format";
 import { groupByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
@@ -42,6 +43,7 @@ const content = {
     noPhotosTrail: "and help other visitors picture the place.",
     fullMenuHeading: "Full Menu",
     fullMenuDesc: "Regular menu items spotted by visitors — not deals, just what’s on offer.",
+    claimVenue: "Is this your venue? Claim it",
   },
   fr: {
     metaDesc: (name: string, addr: string) =>
@@ -63,6 +65,7 @@ const content = {
     noPhotosTrail: "et aidez les autres visiteurs à s’imaginer l’endroit.",
     fullMenuHeading: "Menu complet",
     fullMenuDesc: "Articles du menu repérés par des visiteurs — pas des offres spéciales, juste ce qui est proposé.",
+    claimVenue: "Est-ce votre établissement? Réclamez-le",
   },
 } as const;
 
@@ -185,24 +188,129 @@ export default async function VenuePage({ params }: PageProps) {
         </Link>
       </div>
 
-      <header className="flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
-          <ShareButton
-            title={venue.name}
-            text={content[lang].shareText(venue.name, region.brandName)}
-            url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/venues/${venue.id}`}
-            className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground shrink-0 mt-1"
-          />
+      {/* A visitor-submitted photo leads the page when one exists, photo-forward
+          rather than buried after the map -- most venues don't have one yet
+          (submission-driven), so the header below works fine without it too. */}
+      {venuePhotos.length > 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/venue-photos/${venuePhotos[0].id}`}
+          alt=""
+          className="w-full h-56 sm:h-72 object-cover rounded-2xl border border-border"
+        />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-8 min-w-0">
+          <header className="flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
+              <div className="flex items-center gap-2 shrink-0 mt-1">
+                <SaveVenueButton venueId={venue.id} venueName={venue.name} regionSlug={region.slug} lang={lang} />
+                <ShareButton
+                  title={venue.name}
+                  text={content[lang].shareText(venue.name, region.brandName)}
+                  url={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/venues/${venue.id}`}
+                  className="press-pill inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground"
+                />
+              </div>
+            </div>
+            <p className="text-muted text-sm">{venue.address}</p>
+          </header>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="font-display text-2xl text-foreground">{content[lang].currentSpecialsHeading}</h2>
+            {venueSpecials.length === 0 ? (
+              <p className="text-muted-2 text-sm">{content[lang].noSpecials}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {groupByDayRange(venueSpecials).map((s) => (
+                  <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} regionSlug={region.slug} lang={lang} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {venueEvents.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="font-display text-2xl text-foreground">{content[lang].eventsHeading}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {venueEvents.map((e) => (
+                  <EventCard key={e.id} event={e} regionSlug={region.slug} lang={lang} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="flex flex-col gap-3">
+            <h2 className="font-display text-2xl text-foreground">{content[lang].photosHeading}</h2>
+            {venuePhotos.length > 0 ? (
+              <>
+                <p className="text-sm text-muted-2 -mt-1">
+                  {content[lang].photosSubmitted}
+                </p>
+                <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-2 -mt-1">
+                {content[lang].noPhotosPrompt}{" "}
+                <Link href={`/${region.slug}/submit`} className="text-accent-dim underline">
+                  {content[lang].noPhotosAddLink}
+                </Link>{" "}
+                {content[lang].noPhotosTrail}
+              </p>
+            )}
+          </section>
+
+          {venueMenuItems.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="font-display text-2xl text-foreground">{content[lang].fullMenuHeading}</h2>
+              <p className="text-sm text-muted-2 -mt-1">
+                {content[lang].fullMenuDesc}
+              </p>
+              <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
+                {venueMenuItems.map((m) => {
+                  const price = formatPrice(m.priceCents);
+                  return (
+                    <div key={m.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="text-sm font-medium text-foreground/90">{m.name}</span>
+                        {m.description && (
+                          <span className="text-xs text-muted">{m.description}</span>
+                        )}
+                      </div>
+                      {price && (
+                        <span className="font-mono-tabular text-sm text-muted shrink-0">{price}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <PreviousSpecials specials={previousSpecials} regionSlug={region.slug} lang={lang} />
         </div>
-        <p className="text-muted text-sm">{venue.address}</p>
-        <div className="flex flex-wrap gap-3 text-sm mt-1">
+
+        {/* Sticky action sidebar -- website/menu/phone/maps/reviews/claim, all
+            previously a flat wrapped row of underlined links under the title,
+            now a single scannable card that stays in view while the specials
+            list (the actual reason someone opened this page) scrolls past it. */}
+        <aside className="lg:sticky lg:top-6 flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press-pill rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-background text-center hover:bg-accent-dim"
+          >
+            {content[lang].mapsLabel}
+          </a>
           {venue.website && (
             <a
               href={venue.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-dim underline"
+              className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
             >
               {content[lang].websiteLabel}
             </a>
@@ -212,120 +320,47 @@ export default async function VenuePage({ params }: PageProps) {
               href={venue.menuUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-dim underline"
+              className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
             >
               {content[lang].menuLabel}
             </a>
           )}
-          {venue.phone && <span className="text-muted">{venue.phone}</span>}
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent-dim underline"
-          >
-            {content[lang].mapsLabel}
-          </a>
+          {venue.phone && (
+            <a
+              href={`tel:${venue.phone}`}
+              className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
+            >
+              {venue.phone}
+            </a>
+          )}
           <a
             href={`https://www.google.com/search?q=${reviewsQuery}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-dim underline"
+            className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
           >
             {content[lang].reviewsLabel}
           </a>
           {venue.claimedAt === null && (
-            <Link href={`/${region.slug}/venues/${venue.id}/claim`} className="text-accent-dim underline">
-              Is this your venue? Claim it
+            <Link
+              href={`/${region.slug}/venues/${venue.id}/claim`}
+              className="press-pill rounded-full border border-dashed border-evergreen text-evergreen px-4 py-2.5 text-sm text-center hover:bg-evergreen/10"
+            >
+              {content[lang].claimVenue}
             </Link>
           )}
-        </div>
-      </header>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-2xl text-foreground">{content[lang].currentSpecialsHeading}</h2>
-        {venueSpecials.length === 0 ? (
-          <p className="text-muted-2 text-sm">{content[lang].noSpecials}</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {groupByDayRange(venueSpecials).map((s) => (
-              <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} regionSlug={region.slug} />
-            ))}
+          <div className="rounded-xl overflow-hidden border border-border h-48 mt-2">
+            <iframe
+              title={content[lang].mapTitle(venue.name)}
+              className="w-full h-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+            />
           </div>
-        )}
-      </section>
-
-      {venueEvents.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">{content[lang].eventsHeading}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {venueEvents.map((e) => (
-              <EventCard key={e.id} event={e} regionSlug={region.slug} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Specials/events lead, so the reason someone opened this page is never
-          pushed below a fixed-height map embed on mobile. */}
-      <div className="rounded-2xl overflow-hidden border border-border h-64">
-        <iframe
-          title={content[lang].mapTitle(venue.name)}
-          className="w-full h-full"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
-        />
+        </aside>
       </div>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-2xl text-foreground">{content[lang].photosHeading}</h2>
-        {venuePhotos.length > 0 ? (
-          <>
-            <p className="text-sm text-muted-2 -mt-1">
-              {content[lang].photosSubmitted}
-            </p>
-            <VenuePhotoGallery photos={venuePhotos} venueName={venue.name} />
-          </>
-        ) : (
-          <p className="text-sm text-muted-2 -mt-1">
-            {content[lang].noPhotosPrompt}{" "}
-            <Link href={`/${region.slug}/submit`} className="text-accent-dim underline">
-              {content[lang].noPhotosAddLink}
-            </Link>{" "}
-            {content[lang].noPhotosTrail}
-          </p>
-        )}
-      </section>
-
-      {venueMenuItems.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl text-foreground">{content[lang].fullMenuHeading}</h2>
-          <p className="text-sm text-muted-2 -mt-1">
-            {content[lang].fullMenuDesc}
-          </p>
-          <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
-            {venueMenuItems.map((m) => {
-              const price = formatPrice(m.priceCents);
-              return (
-                <div key={m.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-sm font-medium text-foreground/90">{m.name}</span>
-                    {m.description && (
-                      <span className="text-xs text-muted">{m.description}</span>
-                    )}
-                  </div>
-                  {price && (
-                    <span className="font-mono-tabular text-sm text-muted shrink-0">{price}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      <PreviousSpecials specials={previousSpecials} regionSlug={region.slug} />
 
       <SiteFooter />
     </div>

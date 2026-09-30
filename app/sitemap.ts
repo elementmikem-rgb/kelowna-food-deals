@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { db, venues, specials, regions } from "@/db";
 import { and, eq, isNull, max } from "drizzle-orm";
 import { BLOG_POSTS } from "@/lib/blog-data";
+import { DAY_SLUGS } from "@/lib/day-slugs";
+import { CATEGORY_SLUGS } from "@/lib/category-slugs";
 
 // Without this, Next prerenders the sitemap once at build time and it never
 // regenerates -- venues added by the nightly cron wouldn't appear until the
@@ -39,6 +41,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push(
       { url: BASE_URL, lastModified: new Date(), changeFrequency: "hourly", priority: 1 },
       { url: `${BASE_URL}/events`, lastModified: new Date(), changeFrequency: "hourly", priority: 0.8 },
+      // Per-day-of-week and per-category landing pages (e.g. /kelowna/saturday,
+      // /kelowna/wing-night) -- built to target long-tail "[region] happy hour
+      // [day/category]" searches the single all-days-all-categories home page
+      // can't rank for on its own. Both served by app/[region]/[slug]/page.tsx.
+      ...DAY_SLUGS.map((slug) => ({
+        url: `${BASE_URL}/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      })),
+      ...Object.keys(CATEGORY_SLUGS).map((slug) => ({
+        url: `${BASE_URL}/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      })),
       { url: `${BASE_URL}/monthly`, lastModified: new Date(), changeFrequency: "daily", priority: 0.5 },
       { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
       { url: `${BASE_URL}/submit`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },

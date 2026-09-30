@@ -1,7 +1,7 @@
 import { db, events, venues } from "@/db";
 import { and, asc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import type { EventType } from "@/db/schema";
-import { regionTodayISODate } from "@/lib/time";
+import { regionTodayISODate, toDateOrNull } from "@/lib/time";
 
 export interface EventWithVenue {
   id: number;
@@ -26,7 +26,34 @@ export interface EventWithVenue {
   chatBoostedUntil: Date | null;
   // See SpecialWithVenue.hasPhoto's comment in lib/data.ts -- same reasoning.
   hasPhoto: boolean;
+  // Same shape/reasoning as SpecialWithVenue's confirmCount/lastConfirmedAt in
+  // lib/data.ts -- events share the same deal_feedback table (kind: 'event'),
+  // just never got the venue-side venueConfirmedAt verification (see the
+  // deal-verification design doc's non-goals: events deferred, visitor confirms
+  // only).
+  confirmCount: number;
+  lastConfirmedAt: Date | null;
+  // "X people interested" social proof (Eventbrite-style, components/EventInterestButton.tsx)
+  // -- all-time count, no rolling window (unlike confirmCount), since interest is meant to
+  // accumulate over an event's whole life, not just recent activity.
+  interestedCount: number;
 }
+
+const CONFIRM_COLUMNS = {
+  confirmCount: sql<number>`(
+    select count(*)::int from specials.deal_feedback
+    where item_id = ${events.id} and kind = 'event' and feedback_type = 'confirm'
+      and created_at > now() - interval '30 days'
+  )`,
+  lastConfirmedAt: sql<Date | null>`(
+    select max(created_at) from specials.deal_feedback
+    where item_id = ${events.id} and kind = 'event' and feedback_type = 'confirm'
+  )`,
+  interestedCount: sql<number>`(
+    select count(*)::int from specials.deal_feedback
+    where item_id = ${events.id} and kind = 'event' and feedback_type = 'interested'
+  )`,
+};
 
 const recurringColumns = {
   id: events.id,
@@ -49,6 +76,7 @@ const recurringColumns = {
   boostedUntil: events.boostedUntil,
   chatBoostedUntil: events.chatBoostedUntil,
   hasPhoto: sql<boolean>`${events.photoData} is not null`,
+  ...CONFIRM_COLUMNS,
 };
 
 export async function getRecurringEvents(regionId: number): Promise<EventWithVenue[]> {
@@ -71,7 +99,9 @@ export async function getRecurringEvents(regionId: number): Promise<EventWithVen
       )
     );
 
-  return rows as EventWithVenue[];
+  // See lib/time.ts's toDateOrNull comment -- CONFIRM_COLUMNS' lastConfirmedAt is a
+  // raw SQL subquery, so the driver hands it back as a plain string, not a real Date.
+  return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) })) as EventWithVenue[];
 }
 
 export async function getUpcomingOneOffEvents(
@@ -110,6 +140,7 @@ export async function getUpcomingOneOffEvents(
       venueActive: venues.active,
       venueFeaturedUntil: venues.featuredUntil,
       venueClaimedAt: venues.claimedAt,
+      ...CONFIRM_COLUMNS,
     })
     .from(events)
     .leftJoin(venues, eq(events.venueId, venues.id))
@@ -146,5 +177,9 @@ export async function getUpcomingOneOffEvents(
       hasPhoto: r.hasPhoto,
       venueFeaturedUntil: r.venueId === null ? null : r.venueFeaturedUntil,
       venueClaimedAt: r.venueId === null ? null : r.venueClaimedAt,
+      confirmCount: r.confirmCount,
+      // See lib/time.ts's toDateOrNull comment.
+      lastConfirmedAt: toDateOrNull(r.lastConfirmedAt),
+      interestedCount: r.interestedCount,
     }));
 }

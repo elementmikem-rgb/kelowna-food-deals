@@ -6,9 +6,14 @@ const MAX_JSONLD_ITEMS = 80;
 export function buildSpecialsJsonLd(
   specials: SpecialWithVenue[],
   regionName: string,
-  timezone: string
+  timezone: string,
+  // Locks the "today" the structured data describes -- passed by the /[region]/
+  // [day] SEO pages, which show a specific day rather than whatever day it is
+  // right now (see SpecialsBoard's initialDay). Defaults to the real today for
+  // every other call site (the home page), unchanged from before.
+  dayOverride?: number
 ) {
-  const today = todayDowInRegion(timezone);
+  const today = dayOverride ?? todayDowInRegion(timezone);
   // The page only ever shows today's specials (SpecialsBoard filters by day), so the
   // structured data must match: publishing every day-of-week's specials as InStock every
   // day told crawlers something the rendered page didn't say, and kept advertising specials

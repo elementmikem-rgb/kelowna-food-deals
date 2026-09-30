@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
 import { HomeIntroCallout } from "@/components/HomeIntroCallout";
+import { PushOptIn } from "@/components/PushOptIn";
 import { RegionChatBox } from "@/components/RegionChatBox";
 import { buildSpecialsJsonLd } from "@/lib/seo";
 import { t, getEffectiveLanguage } from "@/lib/i18n";
@@ -43,7 +44,9 @@ export default async function Home() {
         subtitle={t(lang).verified.subtitle}
       />
 
-      <HomeIntroCallout regionSlug={region.slug} />
+      <HomeIntroCallout regionSlug={region.slug} lang={lang} />
+
+      <PushOptIn regionId={region.id} />
 
       <SpecialsBoard
         specials={specials}
@@ -51,6 +54,8 @@ export default async function Home() {
         timezone={timezone}
         regionSlug={region.slug}
         lang={lang}
+        regionLat={region.lat}
+        regionLng={region.lng}
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />

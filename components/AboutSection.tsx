@@ -1,4 +1,6 @@
 import { t, type Language } from "@/lib/i18n";
+import { DAY_SLUGS, dayLabel } from "@/lib/day-slugs";
+import { CATEGORY_SLUGS, categoryPageLabel } from "@/lib/category-slugs";
 
 export function AboutSection({
   brandName,
@@ -34,6 +36,26 @@ export function AboutSection({
           {about.submitLink}
         </a>{" "}
         {about.submitTrailer}
+      </p>
+      {/* Real crawlable links to the per-day pages -- DayTabs above the fold is a
+          client-side button row (onClick, not <a href>), so without this, Google
+          would only ever learn these pages exist from the sitemap, a much weaker
+          discovery/ranking signal than an actual on-page link. */}
+      <p className="flex flex-wrap gap-x-1.5 gap-y-1 pt-1">
+        <span>Browse by day:</span>
+        {DAY_SLUGS.map((slug, dow) => (
+          <a key={slug} href={`/${regionSlug}/${slug}`} className="text-accent-dim underline">
+            {dayLabel(dow)}
+          </a>
+        ))}
+      </p>
+      <p className="flex flex-wrap gap-x-1.5 gap-y-1">
+        <span>Browse by type:</span>
+        {Object.entries(CATEGORY_SLUGS).map(([slug, category]) => (
+          <a key={slug} href={`/${regionSlug}/${slug}`} className="text-accent-dim underline">
+            {categoryPageLabel(category)}
+          </a>
+        ))}
       </p>
     </section>
   );

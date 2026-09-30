@@ -2,7 +2,7 @@ import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
 import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
-import { regionTodayISODate } from "./time";
+import { regionTodayISODate, toDateOrNull } from "./time";
 
 export interface VenueDetail {
   id: number;
@@ -68,13 +68,31 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
         where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
           and created_at > now() - interval '30 days'
       )`,
+      lastConfirmedAt: sql<Date | null>`(
+        select max(created_at) from specials.deal_feedback
+        where item_id = ${specials.id} and kind = 'special' and feedback_type = 'confirm'
+      )`,
       hasPhoto: sql<boolean>`${specials.photoData} is not null`,
+      flashExpiresAt: specials.flashExpiresAt,
+      flashClaimLimit: specials.flashClaimLimit,
+      flashClaimCount: specials.flashClaimCount,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
-    .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt)));
+    .where(
+      and(
+        eq(specials.venueId, venueId),
+        isNull(specials.archivedAt),
+        // See lib/data.ts's notExpiredFlash comment -- same reasoning, duplicated here
+        // since this query builds its own column/where list rather than sharing
+        // lib/data.ts's baseColumns.
+        or(isNull(specials.flashExpiresAt), gte(specials.flashExpiresAt, sql`now()`))
+      )
+    );
 
-  return rows as SpecialWithVenue[];
+  // See lib/time.ts's toDateOrNull comment -- lastConfirmedAt is a raw SQL subquery,
+  // so the driver hands it back as a plain string, not a real Date.
+  return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) })) as SpecialWithVenue[];
 }
 
 export async function getVenuePreviousSpecials(venueId: number): Promise<PreviousSpecial[]> {

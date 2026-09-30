@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteNav } from "./SiteNav";
 import { ShareButton } from "./ShareButton";
+import { SavedVenuesLink } from "./SavedVenuesLink";
 import { getCurrentRegion } from "@/lib/regions";
 import { t, getEffectiveLanguage } from "@/lib/i18n";
 import { LanguageToggle } from "./LanguageToggle";
@@ -12,7 +13,7 @@ export async function SiteHeader({
   brandIsHeading = true,
   heading,
 }: {
-  active: "specials" | "events" | "monthly" | "blog";
+  active: "specials" | "events" | "monthly" | "blog" | "saved";
   subtitle: string;
   // Pages that carry their own <h1> (e.g. a blog post title) pass false so the
   // brand renders as plain text and the page keeps exactly one real heading.
@@ -72,6 +73,7 @@ export async function SiteHeader({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <SavedVenuesLink regionSlug={region.slug} lang={lang} />
           <SiteNav active={active} />
           <ShareButton
             title={region.brandName}

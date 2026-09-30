@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Karla, Geist_Mono } from "next/font/google";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { getPrimaryRegion, getCurrentOrPrimaryRegion } from "@/lib/regions";
 import "./globals.css";
 
@@ -93,6 +94,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </main>
         <AnalyticsTracker />
+        <InstallPrompt />
         <Script src="/js/track.js" strategy="afterInteractive" />
       </body>
     </html>
