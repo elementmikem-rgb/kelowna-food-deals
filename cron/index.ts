@@ -181,6 +181,11 @@ export async function processVenue(
 ): Promise<{ tokensUsed: number; error?: string }> {
   const urls = venueUrls(venue);
   if (urls.length === 0) {
+    // Not an "error" for scrape-health purposes -- a venue with no website on
+    // file is a known, permanent state (usually FB-only), not something that
+    // changes night to night. Logging it with error set made it resurface in
+    // "Recently failing" every single night forever even after a human
+    // manually confirmed there's nothing to fix -- see admin/scrape-health.
     await logScrapeRun({
       venueId: venue.id,
       contentHash: null,
@@ -189,9 +194,9 @@ export async function processVenue(
       cacheCreationTokens: 0,
       cacheReadTokens: 0,
       outputTokens: 0,
-      error: "no website or menu_url configured",
+      error: null,
     });
-    console.error(`[${venue.name}] skipped: no website or menu_url configured`);
+    console.log(`[${venue.name}] skipped: no website or menu_url configured`);
     return { tokensUsed: 0 };
   }
 
@@ -374,6 +379,8 @@ async function fetchVenueForBatch(
 
   const urls = venueUrls(venue);
   if (urls.length === 0) {
+    // See the identical comment in processVenue() above -- no website on file
+    // is a known, permanent state, not a nightly "failure" worth flagging.
     await logScrapeRun({
       venueId: venue.id,
       contentHash: null,
@@ -382,9 +389,9 @@ async function fetchVenueForBatch(
       cacheCreationTokens: 0,
       cacheReadTokens: 0,
       outputTokens: 0,
-      error: "no website or menu_url configured",
+      error: null,
     });
-    console.error(`[${venue.name}] skipped: no website or menu_url configured`);
+    console.log(`[${venue.name}] skipped: no website or menu_url configured`);
     return { kind: "logged", tokensUsed: 0 };
   }
 
@@ -768,18 +775,33 @@ async function runScrapeCycle() {
         if (BILLING_FAILURE_RE.test(message)) billing.failures++;
         // Nothing was queued into extraction_batches for this failed submission -- log
         // each venue's own scrape run now rather than leaving it silently unaccounted
-        // for, since no batch will ever resolve for it.
+        // for, since no batch will ever resolve for it. Wrapped in its own try/catch --
+        // confirmed live 2026-09-28: a DB-level insert failure (e.g. a NUL byte from a
+        // malformed PDF) reproduces in `message` itself, so this logging insert can fail
+        // the exact same way the original one did. Letting that second failure propagate
+        // uncaught crashed the whole cron process (Railway showed the "cron" service as
+        // "Crashed") instead of just skipping this one region's failure log.
         for (const item of queued) {
-          await logScrapeRun({
-            venueId: item.venueId,
-            contentHash: null,
-            changed: true,
-            tokensUsed: item.fetchTokens,
-            cacheCreationTokens: 0,
-            cacheReadTokens: 0,
-            outputTokens: 0,
-            error: `batch submission failed: ${message}`,
-          });
+          try {
+            await logScrapeRun({
+              venueId: item.venueId,
+              contentHash: null,
+              changed: true,
+              tokensUsed: item.fetchTokens,
+              cacheCreationTokens: 0,
+              cacheReadTokens: 0,
+              outputTokens: 0,
+              // Capped well short of any column limit -- this is a human-readable log
+              // entry, not a full error dump, and a very long message (e.g. one that
+              // embeds an entire failed multi-row INSERT's params) is exactly the kind
+              // of value that risks tripping the same failure mode it's reporting on.
+              error: `batch submission failed: ${message}`.slice(0, 2000),
+            });
+          } catch (logErr) {
+            console.error(
+              `[venue ${item.venueId}] failed to log scrape run after batch submission failure: ${logErr instanceof Error ? logErr.message : String(logErr)}`
+            );
+          }
         }
       }
     }

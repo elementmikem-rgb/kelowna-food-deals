@@ -6,6 +6,12 @@ interface SendParams {
   replyTo?: string;
   senderName?: string;
   headers?: Record<string, string>;
+  // Echoed back verbatim on every open/click/bounce event Brevo posts to our
+  // webhook -- unlike the SMTP messageId this call returns, which is NOT what
+  // Brevo's webhook payload's own "message-id" field contains (that's a
+  // separate internal id, format "an#..."), so tags are the only reliable way
+  // to tie an engagement event back to a specific outreachSends row.
+  tags?: string[];
 }
 
 interface SendResult {
@@ -20,6 +26,7 @@ export async function sendOutreachEmail({
   replyTo,
   senderName,
   headers,
+  tags,
 }: SendParams): Promise<SendResult> {
   const apiKey = process.env.BREVO_API_KEY;
   const fromEmail = process.env.REPORT_EMAIL_FROM;
@@ -42,6 +49,7 @@ export async function sendOutreachEmail({
       htmlContent,
       textContent,
       headers,
+      tags,
     }),
   });
 

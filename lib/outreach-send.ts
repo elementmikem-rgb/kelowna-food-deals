@@ -323,6 +323,7 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       },
+      tags: [`send-${sendRow.id}`],
     });
     await db.update(outreachSends).set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() }).where(eq(outreachSends.id, sendRow.id));
     return { ok: true, messageId };

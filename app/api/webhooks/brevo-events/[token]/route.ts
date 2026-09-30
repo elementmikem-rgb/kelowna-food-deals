@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, outreachSends } from "@/db";
-import { isNull, and, sql } from "drizzle-orm";
+import { isNull, and, sql, eq } from "drizzle-orm";
 
-// Brevo's send API response (captured at send time into brevoMessageId) returns
-// the message id wrapped in angle brackets (SMTP Message-ID header style), but
-// this events webhook's own "message-id" field omits them -- strip brackets on
-// both sides so the match works regardless of which format either side has.
+// Confirmed live 2026-09-24: this webhook's real "message-id" field is Brevo's
+// own internal id (format "an#123..."), NOT the SMTP Message-ID our send API
+// response gives us at send time (format "<...@smtp-relay.mailin.fr>") -- the
+// two never match, so every open/click since this webhook was set up on
+// 2026-09-15 silently failed to record. Fixed by tagging each send with
+// `send-<outreachSends.id>` (lib/outreach-email.ts) and matching on the tag
+// Brevo echoes back instead. messageId matching is kept as a harmless no-op
+// fallback for older in-flight sends and in case Brevo ever fixes this field.
 function matchesMessageId(messageId: string) {
   return sql`replace(replace(${outreachSends.brevoMessageId}, '<', ''), '>', '') = replace(replace(${messageId}, '<', ''), '>', '')`;
+}
+
+function extractSendId(tags: string[] | undefined): number | null {
+  for (const tag of tags ?? []) {
+    const match = /^send-(\d+)$/.exec(tag);
+    if (match) return Number(match[1]);
+  }
+  return null;
 }
 
 // Brevo's transactional-webhook payload uses snake_case event names
@@ -20,6 +32,7 @@ function matchesMessageId(messageId: string) {
 interface BrevoEventItem {
   event?: string;
   "message-id"?: string;
+  tags?: string[];
   reason?: string;
 }
 
@@ -43,7 +56,10 @@ export async function POST(
   for (const item of items) {
     const messageId = item["message-id"];
     const event = item.event?.toLowerCase();
-    if (!messageId || !event) continue;
+    const sendId = extractSendId(item.tags);
+    if ((!messageId && sendId === null) || !event) continue;
+
+    const idMatch = sendId !== null ? eq(outreachSends.id, sendId) : matchesMessageId(messageId!);
 
     if (event === "opened" || event === "unique_opened") {
       // Brevo fires "opened" on every open (image reloads, forwards, etc.),
@@ -52,7 +68,7 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ openedAt: new Date() })
-        .where(and(matchesMessageId(messageId), isNull(outreachSends.openedAt)));
+        .where(and(idMatch, isNull(outreachSends.openedAt)));
     } else if (event === "click") {
       // A click implies an open even if the "opened" pixel itself got
       // blocked (common with image-blocking mail clients), so backfill
@@ -60,11 +76,11 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ clickedAt: new Date() })
-        .where(and(matchesMessageId(messageId), isNull(outreachSends.clickedAt)));
+        .where(and(idMatch, isNull(outreachSends.clickedAt)));
       await db
         .update(outreachSends)
         .set({ openedAt: new Date() })
-        .where(and(matchesMessageId(messageId), isNull(outreachSends.openedAt)));
+        .where(and(idMatch, isNull(outreachSends.openedAt)));
     } else if (event === "hard_bounce") {
       // Only a hard bounce is permanent -- a soft bounce (mailbox full,
       // temporary server issue) may still get delivered on retry, so it
@@ -72,7 +88,7 @@ export async function POST(
       await db
         .update(outreachSends)
         .set({ status: "bounced", errorMessage: item.reason ?? "hard bounce" })
-        .where(matchesMessageId(messageId));
+        .where(idMatch);
     }
   }
 
