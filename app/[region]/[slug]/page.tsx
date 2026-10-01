@@ -73,7 +73,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
 
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
-  const { timezone } = await getRegionContext(region);
+  const { timezone, province } = await getRegionContext(region);
   const [specials, categorySponsors] = await Promise.all([
     getAllSpecialsWithVenue(region.id),
     getActiveCategorySponsors([region.id]),
@@ -81,7 +81,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
 
   const areaName = region.brandName.split(" ")[0];
   const dow = resolved.kind === "day" ? resolved.dow : undefined;
-  const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, dow);
+  const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code, dow);
 
   const heading =
     resolved.kind === "day"

@@ -21,13 +21,13 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
-  const { timezone } = await getRegionContext(region);
+  const { timezone, province } = await getRegionContext(region);
   const [specials, categorySponsors] = await Promise.all([
     getAllSpecialsWithVenue(region.id),
     getActiveCategorySponsors([region.id]),
   ]);
 
-  const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone);
+  const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code);
   const areas = Array.from(
     new Set(specials.map((s) => s.venueCity).filter((c): c is string => !!c))
   ).sort();

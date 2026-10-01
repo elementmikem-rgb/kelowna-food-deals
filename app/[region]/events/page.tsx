@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 import { getEffectiveLanguage } from "@/lib/i18n";
+import { buildEventsJsonLd } from "@/lib/seo";
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
 // which forces dynamic rendering -- see app/page.tsx's comment.
@@ -28,15 +29,21 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function EventsPage() {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
-  const { timezone } = await getRegionContext(region);
+  const { timezone, province } = await getRegionContext(region);
   const areaName = region.brandName.split(" ")[0];
   const [recurring, upcoming] = await Promise.all([
     getRecurringEvents(region.id),
     getUpcomingOneOffEvents(region.id, timezone),
   ]);
+  const jsonLd = buildEventsJsonLd([...recurring, ...upcoming], region.brandName, timezone, province.code);
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <SiteHeader
         active="events"
         heading={`${areaName} Live Music & Events Tonight`}
