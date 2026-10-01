@@ -250,6 +250,9 @@ export async function POST(req: NextRequest) {
       customer_email: selection.buyerEmail,
       client_reference_id: String(booking.id),
       metadata: { bookingId: String(booking.id) },
+      // Belt and braces alongside the webhook's own payment_status check -- see
+      // app/api/webhooks/stripe/route.ts.
+      excluded_payment_method_types: ["acss_debit"],
       expires_at: Math.ceil((now + HOLD_MS + STRIPE_EXPIRY_MARGIN_MS) / 1000),
       success_url: `${SITE_URL}/book/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${SITE_URL}/advertise`,

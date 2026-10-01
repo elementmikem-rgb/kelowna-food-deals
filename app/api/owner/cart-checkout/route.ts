@@ -334,6 +334,10 @@ export async function POST(req: NextRequest) {
         line_items: lineItems,
         customer: customerId,
         metadata: { bookingIds: inserted.map((b) => b.id).join(",") },
+        // Belt and braces alongside the webhook's own payment_status check: a delayed
+        // payment method (bank debit) could otherwise fire "completed" before the
+        // money actually clears. Excluded outright rather than relied on indirectly.
+        excluded_payment_method_types: ["acss_debit"],
         // Without this, Stripe's default 24h session lifetime outlives the 30-minute
         // booking hold (reservedUntil) by a wide margin -- another buyer can take the
         // capped slot after 30 minutes, then this session can still be completed hours
@@ -372,6 +376,7 @@ export async function POST(req: NextRequest) {
         line_items: lineItems,
         customer: customerId,
         metadata: { bookingIds: inserted.map((b) => b.id).join(",") },
+        excluded_payment_method_types: ["acss_debit"],
         expires_at: Math.ceil((now + HOLD_MS + STRIPE_EXPIRY_MARGIN_MS) / 1000),
         success_url: `${SITE_URL}/owner/venue/${firstVenueId}?checkout=success`,
         cancel_url: `${SITE_URL}/owner/venue/${firstVenueId}?checkout=cancelled`,

@@ -28,7 +28,18 @@ export async function POST(req: NextRequest) {
 
   switch (event.type) {
     case "checkout.session.completed":
+    // "completed" fires as soon as the customer finishes the checkout form -- for an
+    // instant method (card, Link, wallets) that's the same moment the payment clears,
+    // but for a delayed method (bank debit) it fires immediately while payment_status
+    // is still "unpaid"; the real confirmation arrives later as this separate event.
+    // Routed to the same handler, which only fulfills when payment_status is actually
+    // "paid"/"no_payment_required" -- see handleCheckoutCompleted and
+    // handleCreditBundlePurchase.
+    case "checkout.session.async_payment_succeeded":
       await handleCheckoutCompleted(event.data.object as CheckoutSessionLike);
+      break;
+    case "checkout.session.async_payment_failed":
+      await handleAsyncPaymentFailed(event.data.object as CheckoutSessionLike);
       break;
     case "invoice.paid":
       await handleInvoicePaid(event.data.object as InvoiceLike);
@@ -52,6 +63,12 @@ interface CheckoutSessionLike {
   payment_intent: string | null;
   subscription: string | null;
   metadata: Record<string, string> | null;
+  // "paid" / "no_payment_required" means the money has actually arrived (or there was
+  // nothing to pay). "unpaid" means a delayed payment method (e.g. a bank debit) is
+  // still pending -- confirmation comes later as a separate async_payment_succeeded/
+  // async_payment_failed event. Reacting to session "completion" alone without this
+  // would fulfill a booking or grant credits before payment actually cleared.
+  payment_status: "paid" | "unpaid" | "no_payment_required";
 }
 interface InvoiceLike {
   id: string;
@@ -69,6 +86,32 @@ interface SubscriptionLike {
   id: string;
 }
 
+// Two shapes share this webhook: the anonymous single-item flow
+// (app/api/bookings/checkout/route.ts) sets metadata.bookingId, the owner-dashboard
+// cart (app/api/owner/cart-checkout/route.ts) sets metadata.bookingIds as a
+// comma-joined list since one Stripe session there can cover several booking rows.
+function parseBookingIds(session: CheckoutSessionLike): number[] {
+  return session.metadata?.bookingIds
+    ? session.metadata.bookingIds.split(",").map(Number).filter(Number.isInteger)
+    : Number.isInteger(Number(session.metadata?.bookingId))
+      ? [Number(session.metadata?.bookingId)]
+      : [];
+}
+
+// A delayed payment method's final answer: the authorization never cleared. Release
+// the hold these bookings put on capacity instead of leaving them stuck in
+// pending_payment until reservedUntil quietly lapses on its own.
+async function handleAsyncPaymentFailed(session: CheckoutSessionLike) {
+  if (session.metadata?.type === "credit_bundle") return; // nothing was ever granted
+  const bookingIds = parseBookingIds(session);
+  if (bookingIds.length === 0) return;
+
+  await db
+    .update(bookings)
+    .set({ status: "expired" })
+    .where(and(inArray(bookings.id, bookingIds), eq(bookings.status, "pending_payment")));
+}
+
 async function handleCheckoutCompleted(session: CheckoutSessionLike) {
   // A third shape shares this webhook: a credit bundle purchase
   // (app/api/owner/credits/checkout/route.ts) sets metadata.type = "credit_bundle"
@@ -79,15 +122,16 @@ async function handleCheckoutCompleted(session: CheckoutSessionLike) {
     return;
   }
 
-  // Two shapes share this webhook: the anonymous single-item flow
-  // (app/api/bookings/checkout/route.ts) sets metadata.bookingId, the owner-dashboard
-  // cart (app/api/owner/cart-checkout/route.ts) sets metadata.bookingIds as a
-  // comma-joined list since one Stripe session there can cover several booking rows.
-  const bookingIds = session.metadata?.bookingIds
-    ? session.metadata.bookingIds.split(",").map(Number).filter(Number.isInteger)
-    : Number.isInteger(Number(session.metadata?.bookingId))
-      ? [Number(session.metadata?.bookingId)]
-      : [];
+  // A delayed payment method can fire "completed" before the money has actually
+  // cleared (payment_status "unpaid") -- wait for the async_payment_succeeded event,
+  // which re-invokes this same handler once payment_status reads "paid". Fulfilling
+  // on "completed" alone would move a booking to pending_approval (visible to the
+  // admin, counting toward capacity) before payment was confirmed.
+  if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
+    return;
+  }
+
+  const bookingIds = parseBookingIds(session);
 
   if (bookingIds.length === 0) {
     console.error("Stripe webhook: no bookingId(s) in session metadata", session.id);
@@ -176,6 +220,13 @@ async function handleCheckoutCompleted(session: CheckoutSessionLike) {
 }
 
 async function handleCreditBundlePurchase(session: CheckoutSessionLike) {
+  // See the identical check in handleCheckoutCompleted -- a delayed payment method
+  // can fire "completed" before payment_status reads "paid". Granting credits here
+  // would hand out spendable balance before the money actually arrived.
+  if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
+    return;
+  }
+
   const venueId = Number(session.metadata?.venueId);
   const credits = Number(session.metadata?.credits);
   if (!Number.isInteger(venueId) || !Number.isInteger(credits) || credits <= 0) {

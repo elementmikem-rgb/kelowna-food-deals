@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
     ],
     success_url: `${SITE_URL}/tip/success`,
     cancel_url: `${SITE_URL}/`,
+    // Belt and braces alongside the other checkout routes -- see
+    // app/api/webhooks/stripe/route.ts's payment_status check.
+    excluded_payment_method_types: ["acss_debit"],
     // Booking checkouts always carry a bookingId; this is how the admin tip
     // calculator (lib/tips-data.ts) tells the two kinds of checkout apart.
     // regionSlug lets that same admin page scope tips by region, matching

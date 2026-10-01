@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
         },
       ],
       customer: customerId,
+      // Belt and braces alongside the webhook's own payment_status check -- see
+      // app/api/webhooks/stripe/route.ts.
+      excluded_payment_method_types: ["acss_debit"],
       metadata: {
         type: "credit_bundle",
         venueId: String(venueId),
