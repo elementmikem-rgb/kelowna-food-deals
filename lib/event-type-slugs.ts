@@ -17,8 +17,11 @@ export function eventTypeFromSlug(slug: string): EventType | null {
   return EVENT_TYPE_SLUGS[slug] ?? null;
 }
 
+// Bare nouns, not "Trivia Night" -- callers append "Nights" themselves
+// (e.g. "${areaName} ${label} Nights"), so a label already ending in "Night"
+// doubled up into "Kelowna Trivia Night Nights" on the live page title.
 const EVENT_TYPE_PAGE_LABELS: Partial<Record<EventType, string>> = {
-  trivia: "Trivia Night",
+  trivia: "Trivia",
   karaoke: "Karaoke",
   live_music: "Live Music",
 };
