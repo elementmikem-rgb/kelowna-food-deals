@@ -7,7 +7,7 @@ import { SpecialsBoard } from "@/components/SpecialsBoard";
 import { TipJar } from "@/components/TipJar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { buildSpecialsJsonLd } from "@/lib/seo";
+import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { dayFromSlug, dayLabel } from "@/lib/day-slugs";
 import { categoryFromSlug, categoryPageLabel } from "@/lib/category-slugs";
@@ -87,6 +87,11 @@ export default async function SlugPage({ params }: SlugPageProps) {
     resolved.kind === "day"
       ? `${areaName} Happy Hour & Food Specials on ${dayLabel(resolved.dow)}`
       : `${areaName} ${categoryPageLabel(resolved.category)} Deals`;
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(SITE_URL, [
+    { name: "Home", path: "/" },
+    { name: region.brandName, path: `/${region.slug}` },
+    { name: heading, path: `/${region.slug}/${slug}` },
+  ]);
   const subtitle =
     resolved.kind === "day"
       ? "What's actually running today, verified regularly -- not a stale list."
@@ -98,6 +103,11 @@ export default async function SlugPage({ params }: SlugPageProps) {
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c") }}
       />
       <SiteHeader active="specials" heading={heading} subtitle={subtitle} />
 

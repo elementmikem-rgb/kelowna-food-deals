@@ -153,6 +153,38 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>If you're in West Kelowna, Peachland, or Lake Country and you know a spot with a standing deal that isn't on here yet, <a href="/submit">tell us</a> — that's genuinely the fastest way this list gets more even.</p>
 `,
   },
+  {
+    slug: "trivia-karaoke-nights-kelowna",
+    category: "Guide",
+    title: "Trivia and Karaoke Nights in Kelowna: What's Actually Running",
+    metaDescription:
+      "Every trivia and karaoke night we've confirmed in Kelowna, sorted by day of the week -- pulled straight from our verified events database.",
+    publishedAt: "2026-10-01",
+    excerpt:
+      "Wednesday is stacked for both. Here's every trivia and karaoke night we've confirmed in Kelowna, sorted by day.",
+    contentHtml: `
+<p>Searching "trivia night Kelowna" or "karaoke Kelowna" mostly turns up venue-discovery pages that don't tell you which night anything actually runs. We pulled every trivia and karaoke night we've verified against each venue directly, sorted by day of the week.</p>
+<h2>Trivia nights</h2>
+<p><strong>Monday</strong> — The Office Brewery, 6:30pm.</p>
+<p><strong>Wednesday — the busiest trivia night in town</strong><br>
+97 Street Pub, 7pm.<br>
+Cutwater Brewing's "Epic Trivia Night," 7pm.<br>
+Original Joe's Kelowna, 7pm.</p>
+<p><strong>Friday</strong> — Creekside Pub &amp; Grill's "Friday Night Trivia," 8pm.</p>
+<h2>Karaoke nights</h2>
+<p><strong>Monday</strong> — O'Flannigan's "Karaoke Madness," 8:30pm.</p>
+<p><strong>Tuesday</strong><br>
+Kelly O'Bryan's &amp; Carlos O'Bryan's, 8pm.<br>
+Edgewater Inn Bar &amp; Grill, 7pm.</p>
+<p><strong>Wednesday</strong><br>
+O'Flannigan's runs karaoke again midweek, 8:30pm.<br>
+Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- listed as an 11am start, which is unusual enough that we'd call ahead to confirm before planning around it.</p>
+<p><strong>Saturday</strong> — Creekside Pub &amp; Grill, 8:30pm.</p>
+<h2>The pattern worth noticing</h2>
+<p>Wednesday is stacked for both -- three confirmed trivia nights and two karaoke nights, all in the same city, the same evening. If you want options without a long drive, that's the night to build around. O'Flannigan's is the only venue running karaoke twice a week (Monday and Wednesday).</p>
+<p>This is a snapshot of a database that changes as venues update their own listings. See the live, always-current <a href="/kelowna/events/trivia">trivia night page</a> and <a href="/kelowna/events/karaoke">karaoke page</a> -- both filterable by day, both re-checked against each venue's own source.</p>
+`,
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {

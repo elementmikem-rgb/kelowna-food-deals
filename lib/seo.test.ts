@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSpecialsJsonLd, buildEventsJsonLd } from "./seo";
+import { buildSpecialsJsonLd, buildEventsJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "./seo";
 import type { SpecialWithVenue } from "./data";
 import type { EventWithVenue } from "./events-data";
 
@@ -145,5 +145,38 @@ describe("buildEventsJsonLd", () => {
       "AB"
     );
     expect(jsonLd.itemListElement[0]!.item.location.address.addressRegion).toBe("AB");
+  });
+});
+
+describe("buildBreadcrumbJsonLd", () => {
+  it("builds an ordered ListItem per crumb with absolute URLs", () => {
+    const jsonLd = buildBreadcrumbJsonLd("https://todaystab.com", [
+      { name: "Home", path: "/" },
+      { name: "Kelowna Food Deals", path: "/kelowna" },
+      { name: "Wing Night", path: "/kelowna/wing-night" },
+    ]);
+    expect(jsonLd["@type"]).toBe("BreadcrumbList");
+    expect(jsonLd.itemListElement).toHaveLength(3);
+    expect(jsonLd.itemListElement[0]).toEqual({ "@type": "ListItem", position: 1, name: "Home", item: "https://todaystab.com/" });
+    expect(jsonLd.itemListElement[2]).toEqual({
+      "@type": "ListItem",
+      position: 3,
+      name: "Wing Night",
+      item: "https://todaystab.com/kelowna/wing-night",
+    });
+  });
+});
+
+describe("buildFaqJsonLd", () => {
+  it("builds a Question/Answer pair per item, preserving order", () => {
+    const jsonLd = buildFaqJsonLd([
+      { q: "How often are specials checked?", a: "Regularly." },
+      { q: "Is this free?", a: "Yes." },
+    ]);
+    expect(jsonLd["@type"]).toBe("FAQPage");
+    expect(jsonLd.mainEntity).toEqual([
+      { "@type": "Question", name: "How often are specials checked?", acceptedAnswer: { "@type": "Answer", text: "Regularly." } },
+      { "@type": "Question", name: "Is this free?", acceptedAnswer: { "@type": "Answer", text: "Yes." } },
+    ]);
   });
 });

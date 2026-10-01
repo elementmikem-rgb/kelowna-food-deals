@@ -96,6 +96,27 @@ export const strings = {
       submitTrailer: "page — every tip gets checked before it goes live.",
       seeWrong: "See something wrong, or a place we're missing? Use the",
     },
+    faq: {
+      heading: "Frequently asked questions",
+      items: [
+        {
+          q: "How often are specials checked?",
+          a: "Checked regularly, not just once -- every listing shows the date it was last verified right on the card, so you can judge freshness for yourself instead of taking it on faith.",
+        },
+        {
+          q: "What if a listing is wrong or has ended?",
+          a: "Every card has a \"Report incorrect\" link. Flag it and it gets reviewed -- this site would rather show fewer things and have them be right than show everything and have some of it be wrong.",
+        },
+        {
+          q: "Is there a cost to use this?",
+          a: "No -- browsing specials, events, and the map is free for everyone.",
+        },
+        {
+          q: "Can I add a venue or special that's missing?",
+          a: "Yes -- use the submit page with a photo of the menu, chalkboard, or sign, and it goes through the same verification process as everything else before it goes live.",
+        },
+      ],
+    },
     verified: {
       badge: "verified",
       subtitle: "What's actually on today — verified, not guessed.",
@@ -191,6 +212,27 @@ export const strings = {
       submitLink: "soumettre une mise à jour",
       submitTrailer: "— chaque suggestion est vérifiée avant d'être publiée.",
       seeWrong: "Une erreur, ou un endroit qui manque? Utilisez la page",
+    },
+    faq: {
+      heading: "Questions fréquentes",
+      items: [
+        {
+          q: "À quelle fréquence les spéciaux sont-ils vérifiés?",
+          a: "Vérifiés régulièrement, pas une seule fois -- chaque fiche affiche la date de sa dernière vérification, pour que vous puissiez juger vous-même de sa fraîcheur.",
+        },
+        {
+          q: "Et si une fiche est incorrecte ou terminée?",
+          a: "Chaque fiche a un lien « Signaler une erreur ». Signalez-la et elle sera révisée -- ce site préfère montrer moins de choses et qu'elles soient exactes plutôt que tout montrer avec des erreurs.",
+        },
+        {
+          q: "Est-ce payant d'utiliser ce site?",
+          a: "Non -- parcourir les spéciaux, les événements et la carte est gratuit pour tout le monde.",
+        },
+        {
+          q: "Puis-je ajouter un établissement ou un spécial manquant?",
+          a: "Oui -- utilisez la page de soumission avec une photo du menu, du tableau ou de l'affiche, et elle passera par le même processus de vérification que tout le reste avant d'être publiée.",
+        },
+      ],
     },
     verified: {
       badge: "vérifié",

@@ -4,6 +4,10 @@ import { todayDowInRegion, regionTodayISODate, addDaysISO, isStale } from "./tim
 
 const MAX_JSONLD_ITEMS = 80;
 
+// Same construction as app/sitemap.ts's SITE_URL -- duplicated rather than imported
+// since sitemap.ts is a route module, not a lib one.
+export const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
+
 export function buildSpecialsJsonLd(
   specials: SpecialWithVenue[],
   regionName: string,
@@ -135,5 +139,42 @@ export function buildEventsJsonLd(
         };
       })
       .filter((item) => item !== null),
+  };
+}
+
+// BreadcrumbList schema -- eligible for Google's breadcrumb rich result, which
+// replaces the raw URL in search results with a clickable path (Home > Region >
+// Page). Takes already-built {name, path} crumbs rather than deriving them, since
+// each landing page (day/category/event-type) has its own label/slug logic already
+// resolved by the time it builds this.
+export function buildBreadcrumbJsonLd(siteUrl: string, crumbs: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: `${siteUrl}${c.path}`,
+    })),
+  };
+}
+
+// FAQPage schema -- Google only honours this for content that's actually visible
+// on the page (FAQSection renders the same q/a pairs), not for hidden markup. Takes
+// the already-translated items from lib/i18n.ts's faq.items so the schema and the
+// visible text can never drift out of sync with each other.
+export function buildFaqJsonLd(items: readonly { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
   };
 }

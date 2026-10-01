@@ -8,7 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 import { getEffectiveLanguage } from "@/lib/i18n";
-import { buildEventsJsonLd } from "@/lib/seo";
+import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
 import { eventTypeFromSlug, eventTypePageLabel } from "@/lib/event-type-slugs";
 
 // Same reasoning as app/[region]/[slug]/page.tsx -- per-region correctness
@@ -60,6 +60,12 @@ export default async function EventTypeSlugPage({ params }: EventTypeSlugPagePro
     timezone,
     province.code
   );
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(SITE_URL, [
+    { name: "Home", path: "/" },
+    { name: region.brandName, path: `/${region.slug}` },
+    { name: "Events", path: `/${region.slug}/events` },
+    { name: `${label} Nights`, path: `/${region.slug}/events/${slug}` },
+  ]);
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
@@ -67,6 +73,11 @@ export default async function EventTypeSlugPage({ params }: EventTypeSlugPagePro
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c") }}
       />
       <SiteHeader
         active="events"
