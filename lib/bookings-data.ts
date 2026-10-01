@@ -177,25 +177,43 @@ export async function activateBooking(bookingId: number): Promise<void> {
     );
 
     const [existing] = await db.select().from(categorySponsors).where(scope);
+    const existingIsSameSponsor = existing !== undefined && existing.sponsorName === sponsorName && existing.sponsorUrl === sponsorUrl;
+    // null sponsorUntil is an open-ended manual grant (never expires), not "not yet
+    // set" -- treated as already covering any finite booking date, same as
+    // alreadyCovered(current, until) would if current were infinitely far out.
+    const existingCoversRequest = existing !== undefined && (existing.sponsorUntil === null || alreadyCovered(existing.sponsorUntil, until));
     // Already this booking's sponsor, running at least as long as this booking would
     // set it -- leave the row (and its id/createdAt) exactly where it is.
-    if (
-      existing &&
-      existing.sponsorName === sponsorName &&
-      existing.sponsorUrl === sponsorUrl &&
-      alreadyCovered(existing.sponsorUntil, until)
-    ) {
+    if (existingIsSameSponsor && existingCoversRequest) {
       return;
     }
 
-    await db.delete(categorySponsors).where(scope);
-    await db.insert(categorySponsors).values({
-      regionId: venue.regionId,
-      kind: booking.categoryKind,
-      category: booking.category,
-      sponsorName,
-      sponsorUrl,
-      sponsorUntil: until,
+    const existingIsLive = existing !== undefined && (existing.sponsorUntil === null || existing.sponsorUntil.getTime() > Date.now());
+    if (existing && existingIsLive && !existingIsSameSponsor) {
+      // A different sponsor (an admin-set manual grant, or a separately approved
+      // booking) already holds this slot. checkAvailability now also counts this row
+      // (see booking-availability.ts), so reaching here at all means a race let two
+      // approvals through -- don't silently evict the one that's already live; flag
+      // this booking instead so an admin resolves it by hand.
+      await db.update(bookings).set({ conflictDetected: true }).where(eq(bookings.id, bookingId));
+      return;
+    }
+
+    // Captured into locals before the closure below: TypeScript discards the outer
+    // `!== null` narrowing on booking.category/booking.categoryKind once they're
+    // accessed through a nested function boundary.
+    const category = booking.category;
+    const categoryKind = booking.categoryKind;
+    await db.transaction(async (tx) => {
+      await tx.delete(categorySponsors).where(scope);
+      await tx.insert(categorySponsors).values({
+        regionId: venue.regionId,
+        kind: categoryKind,
+        category,
+        sponsorName,
+        sponsorUrl,
+        sponsorUntil: until,
+      });
     });
   } else if (booking.productType === "chat_term_sponsor" && booking.chatTerm !== null && booking.venueId !== null) {
     const [venue] = await db.select({ regionId: venues.regionId }).from(venues).where(eq(venues.id, booking.venueId));
@@ -210,11 +228,27 @@ export async function activateBooking(bookingId: number): Promise<void> {
     if (existing && existing.venueId === booking.venueId && alreadyCovered(existing.until, until)) {
       return;
     }
+    if (existing && existing.venueId !== booking.venueId) {
+      // A different venue's live sponsorship already holds this term (admin-sold or a
+      // separately approved booking). checkAvailability now also counts this row (see
+      // booking-availability.ts), so reaching here means a race let two approvals
+      // through -- flag for admin review instead of silently overwriting someone
+      // else's paid sponsorship.
+      await db.update(bookings).set({ conflictDetected: true }).where(eq(bookings.id, bookingId));
+      return;
+    }
 
     const days = daysInclusive(booking.startDate, booking.endDate);
     const priceCentsPerDay = Math.round(booking.priceCents / days);
 
-    await db.delete(chatTermSponsors).where(scope);
+    // Soft-expire only this venue's own prior live row (if any), rather than deleting
+    // by (region, term) scope -- the old delete also wiped every soft-expired history
+    // row for this term, which the admin-direct panel deliberately preserves for
+    // revenue reporting.
+    await db
+      .update(chatTermSponsors)
+      .set({ until: new Date() })
+      .where(and(scope, eq(chatTermSponsors.venueId, booking.venueId), gt(chatTermSponsors.until, new Date())));
     await db.insert(chatTermSponsors).values({
       regionId: venue.regionId,
       term: booking.chatTerm,

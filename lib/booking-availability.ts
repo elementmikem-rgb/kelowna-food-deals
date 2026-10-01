@@ -1,4 +1,4 @@
-import { db, bookings, venues } from "@/db";
+import { db, bookings, venues, categorySponsors, chatTermSponsors } from "@/db";
 import type * as schema from "@/db/schema";
 import type { BookingProductType, SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
 import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
@@ -88,7 +88,36 @@ export async function getOccupyingBookings(
         )
       )
     );
-  return rows.filter((r) => r.id !== excludeId).map((r) => ({ startDate: r.startDate, endDate: r.endDate }));
+  const occupying = rows.filter((r) => r.id !== excludeId).map((r) => ({ startDate: r.startDate, endDate: r.endDate }));
+
+  // A live manual-panel sponsorship (set by an admin directly, outside the self-serve
+  // booking flow) also occupies this slot -- without this, checkAvailability reported
+  // a cap-1 category/term as available even while an admin-sold sponsor held it, and
+  // approving the resulting booking silently evicted the admin's sale on activation.
+  // Represented as a range spanning the full lifetime of this booking lookup (any
+  // finite requested range overlaps it) since these tables track "currently active",
+  // not a reservation window with its own start date.
+  const FAR_FUTURE = "9999-12-31";
+  const FAR_PAST = "0001-01-01";
+  if (productType === "category_sponsor" && category !== null && categoryKind !== null) {
+    const [manual] = await executor
+      .select({ sponsorUntil: categorySponsors.sponsorUntil })
+      .from(categorySponsors)
+      .where(and(eq(categorySponsors.regionId, regionId), eq(categorySponsors.category, category), eq(categorySponsors.kind, categoryKind)));
+    if (manual && (manual.sponsorUntil === null || manual.sponsorUntil.getTime() > Date.now())) {
+      occupying.push({ startDate: FAR_PAST, endDate: FAR_FUTURE });
+    }
+  } else if (productType === "chat_term_sponsor" && chatTerm) {
+    const [manual] = await executor
+      .select({ until: chatTermSponsors.until })
+      .from(chatTermSponsors)
+      .where(and(eq(chatTermSponsors.regionId, regionId), sql`lower(${chatTermSponsors.term}) = lower(${chatTerm})`, gt(chatTermSponsors.until, new Date())));
+    if (manual) {
+      occupying.push({ startDate: FAR_PAST, endDate: FAR_FUTURE });
+    }
+  }
+
+  return occupying;
 }
 
 export async function checkAvailability(

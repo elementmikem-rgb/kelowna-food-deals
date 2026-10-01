@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { sql, eq, inArray } from "drizzle-orm";
+import { sql, eq, inArray, and, gt } from "drizzle-orm";
 import { db, bookings, monetizationSettings, venues, specials, events, venueOwners } from "@/db";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 import { getStripe, getOrCreateStripeCustomerId } from "@/lib/stripe";
@@ -214,6 +214,25 @@ export async function POST(req: NextRequest) {
       for (const key of lockKeys) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${key}))`);
       }
+
+      // Retire this owner's own stale pending_payment holds before checking
+      // availability -- mirrors the anonymous checkout flow's identical guard
+      // (bookings/checkout/route.ts:122-163). Without this, repeated unpaid cart
+      // submissions accumulate unbounded 30-minute holds (up to 10 per request, no
+      // per-owner cap) with no cost, letting an owner occupy every capped slot in
+      // their own region indefinitely for free by resubmitting before each hold
+      // expires. This also fixes an owner getting a false "unavailable" from their
+      // own still-live stale hold on a resubmit.
+      await tx
+        .update(bookings)
+        .set({ status: "expired" })
+        .where(
+          and(
+            inArray(bookings.venueId, session.venueIds),
+            eq(bookings.status, "pending_payment"),
+            gt(bookings.reservedUntil, new Date(now))
+          )
+        );
 
       for (const item of priced) {
         const available = await checkAvailability(
