@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
 
   const siteUrl = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`;
   const title = `${region.brandName} — Food & Drink Deals Today`;
-  const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} — happy hours and deals, checked daily, not scraped.`;
+  const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} — happy hours and deals, checked regularly, not scraped.`;
 
   return {
     title: { default: title, template: `%s — ${region.brandName}` },

@@ -62,7 +62,7 @@ export default async function CityPickerPage() {
     regionIdBySlug.map(({ id, slug }) => [slug, specialCountByRegionId.get(id) ?? 0])
   );
 
-  // A live count is the fastest way to prove "checked daily" to a visitor who
+  // A live count is the fastest way to prove "checked regularly" to a visitor who
   // has never heard of the site before -- cheap enough to run on every request
   // (two integers, no rows returned) that it doesn't need its own cache.
   const [{ specialCount, venueCount }] = await db
@@ -82,7 +82,7 @@ export default async function CityPickerPage() {
           <span className="hand-underline">Todays</span>Tab
         </h1>
         <p className="text-muted">
-          Every listing pulled straight from the venue&apos;s own site, checked daily — no stale
+          Every listing pulled straight from the venue&apos;s own site, checked regularly — no stale
           social posts, no guessing. Pick your city.
         </p>
         {specialCount > 0 && (
@@ -108,7 +108,7 @@ export default async function CityPickerPage() {
         <div className="flex-1 flex flex-col gap-1">
           <span className="font-display text-lg text-foreground">1. Straight from the source</span>
           <span className="text-sm text-muted">
-            Every listing comes from the venue&apos;s own website or menu, checked daily — never
+            Every listing comes from the venue&apos;s own website or menu, checked regularly — never
             copied from an old social post or a stale directory.
           </span>
         </div>

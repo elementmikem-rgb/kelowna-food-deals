@@ -26,7 +26,7 @@ export function AboutSection({
       <p>
         {brandName} tracks food and drink deals, happy hours, wing nights, and live music
         {areaList && ` across ${areaList}`}. Every listing is pulled directly from a
-        venue&apos;s own website or menu, checked daily, and dropped the moment it can&apos;t be
+        venue&apos;s own website or menu, checked regularly, and dropped the moment it can&apos;t be
         backed up with an explicit price, discount, or event date — no guessing, no scraping
         social media, no stale &quot;last updated 2020&quot; pages.
       </p>

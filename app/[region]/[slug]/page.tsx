@@ -55,8 +55,8 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
       : `${areaName} ${categoryPageLabel(resolved.category)} Deals`;
   const description =
     resolved.kind === "day"
-      ? `What's actually running on ${dayLabel(resolved.dow)} in ${areaName} -- happy hours and food/drink specials, checked daily, not a stale list from last year.`
-      : `${categoryPageLabel(resolved.category)} deals actually running in ${areaName} -- checked daily, pulled from each venue's own menu, not guessed.`;
+      ? `What's actually running on ${dayLabel(resolved.dow)} in ${areaName} -- happy hours and food/drink specials, checked regularly, not a stale list from last year.`
+      : `${categoryPageLabel(resolved.category)} deals actually running in ${areaName} -- checked regularly, pulled from each venue's own menu, not guessed.`;
 
   return {
     title,
@@ -89,8 +89,8 @@ export default async function SlugPage({ params }: SlugPageProps) {
       : `${areaName} ${categoryPageLabel(resolved.category)} Deals`;
   const subtitle =
     resolved.kind === "day"
-      ? "What's actually running today, verified daily -- not a stale list."
-      : "Checked daily, pulled from each venue's own menu -- not guessed.";
+      ? "What's actually running today, verified regularly -- not a stale list."
+      : "Checked regularly, pulled from each venue's own menu -- not guessed.";
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-4 sm:py-6 gap-5 sm:gap-10">

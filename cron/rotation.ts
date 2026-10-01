@@ -22,9 +22,8 @@ export interface CadenceTier {
 // happy-hour/specials schedule rarely changes week to week, so weekly-everywhere is a
 // deliberate cost/freshness tradeoff, not an oversight -- see the 2026-10-01 cost
 // investigation. Mike's call: "each venue only needs to be checked once a week at the
-// moment." NOTE: the homepage currently reads "checked daily" -- that copy needs
-// updating to match (flagged separately, not changed here since it's content, not cron
-// behaviour).
+// moment." Site copy updated to match the same day (now reads "checked regularly"
+// across the homepage, SEO descriptions, region/category pages, and About section).
 export const CADENCE_TIERS: CadenceTier[] = [{ minActiveVenues: 0, cadenceDays: 7 }];
 
 export function cadenceDaysFor(activeVenueCount: number): number {
