@@ -13,11 +13,19 @@ export interface CadenceTier {
 }
 
 // Checked descending by minActiveVenues in cadenceDaysFor -- first match wins.
-export const CADENCE_TIERS: CadenceTier[] = [
-  { minActiveVenues: 30, cadenceDays: 3 }, // Kelowna, Penticton today: a third a night.
-  { minActiveVenues: 11, cadenceDays: 3 },
-  { minActiveVenues: 0, cadenceDays: 7 }, // small regions: already cheap, stretch to weekly.
-];
+//
+// 2026-10-01: stretched every tier to 7 days (was 3 days for any region with 11+ active
+// venues). The platform has grown past the point where the old tiering still did
+// anything -- every one of the 97 active regions now has 11+ active venues, so the old
+// "small regions already cheap, stretch to weekly" tier never fired for anyone and the
+// whole platform was effectively on a flat 3-day cadence (928 checks/night). A real
+// happy-hour/specials schedule rarely changes week to week, so weekly-everywhere is a
+// deliberate cost/freshness tradeoff, not an oversight -- see the 2026-10-01 cost
+// investigation. Mike's call: "each venue only needs to be checked once a week at the
+// moment." NOTE: the homepage currently reads "checked daily" -- that copy needs
+// updating to match (flagged separately, not changed here since it's content, not cron
+// behaviour).
+export const CADENCE_TIERS: CadenceTier[] = [{ minActiveVenues: 0, cadenceDays: 7 }];
 
 export function cadenceDaysFor(activeVenueCount: number): number {
   const tier = CADENCE_TIERS.find((t) => activeVenueCount >= t.minActiveVenues);
