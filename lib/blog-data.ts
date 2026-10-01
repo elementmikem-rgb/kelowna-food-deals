@@ -178,7 +178,7 @@ Kelly O'Bryan's &amp; Carlos O'Bryan's, 8pm.<br>
 Edgewater Inn Bar &amp; Grill, 7pm.</p>
 <p><strong>Wednesday</strong><br>
 O'Flannigan's runs karaoke again midweek, 8:30pm.<br>
-Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- listed as an 11am start, which is unusual enough that we'd call ahead to confirm before planning around it.</p>
+Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal running 11am to 11pm, not a set evening start time; Dakoda's own site frames it as wings-and-karaoke for the whole Wednesday, 18 flavors included.</p>
 <p><strong>Saturday</strong> — Creekside Pub &amp; Grill, 8:30pm.</p>
 <h2>The pattern worth noticing</h2>
 <p>Wednesday is stacked for both -- three confirmed trivia nights and two karaoke nights, all in the same city, the same evening. If you want options without a long drive, that's the night to build around. O'Flannigan's is the only venue running karaoke twice a week (Monday and Wednesday).</p>
