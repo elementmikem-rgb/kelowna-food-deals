@@ -47,6 +47,14 @@ import {
 // price for content it doesn't use.
 const MENU_ITEMS_RECHECK_DAYS = 14;
 
+// Half of extract.ts's MAX_PAGE_CHARS (60000) -- past this, a venue's page text reliably
+// produces more menu content than the 16384-token output ceiling can hold once
+// specials/events/menu items are all requested together, and a truncated response fails
+// verification completely (confirmed live 2026-10-01 against several big-chain venues
+// that hit the cap on every attempt and saved zero menu items, every time). Below this
+// threshold, specials/events alone still extract successfully on their own.
+const MENU_ITEMS_MAX_SOURCE_CHARS = 30_000;
+
 // A page whose extracted text comes back this short almost always means the
 // real content is client-rendered (a SPA menu widget, a Canva/Issuu "view"
 // embed) and a plain/headless fetch only ever saw the empty shell around it
@@ -257,7 +265,12 @@ export async function processVenue(
   // stage is never dropped from the total, win or lose.
   let tokensSpent = fetchTokens;
   try {
-    const includeMenuItems = !(await hasFreshMenuItems(venue.id, MENU_ITEMS_RECHECK_DAYS));
+    // See the identical guard + comment in queueVenueForBatch below -- a large source
+    // page reliably blows the output ceiling once menu items are requested on top of
+    // specials/events, losing the whole extraction (including specials/events) to a
+    // truncated, unparseable tool_use response.
+    const includeMenuItems =
+      normalized.length <= MENU_ITEMS_MAX_SOURCE_CHARS && !(await hasFreshMenuItems(venue.id, MENU_ITEMS_RECHECK_DAYS));
     const { specials, events, menuItems, tokensUsed, cacheCreationTokens, cacheReadTokens, outputTokens } =
       await extractVenueContent(normalized, includeMenuItems);
     tokensSpent += tokensUsed;
@@ -436,8 +449,18 @@ async function fetchVenueForBatch(
     return { kind: "logged", tokensUsed: fetchTokens };
   }
 
-  const includeMenuItems = !(await hasFreshMenuItems(venue.id, MENU_ITEMS_RECHECK_DAYS));
   const { truncated, haystack } = truncatePageText(normalized);
+  // A venue whose page text is already this large (half of MAX_PAGE_CHARS) reliably
+  // blows the 16384-token output ceiling once menu items are added on top of
+  // specials/events -- confirmed live 2026-10-01: several big-chain venues (Earls,
+  // Tap & Barrel, Merchants) hit the output cap on every single attempt and saved ZERO
+  // menu items each time, paying full output price (~$0.08/attempt) for a guaranteed
+  // loss, repeated night after night since a truncated tool_use response fails
+  // verification entirely (nothing is salvageable from incomplete JSON). Specials/events
+  // alone need far less output budget and complete successfully on their own, so large
+  // pages skip the menu-items ask rather than attempt it and lose everything.
+  const includeMenuItems =
+    truncated.length <= MENU_ITEMS_MAX_SOURCE_CHARS && !(await hasFreshMenuItems(venue.id, MENU_ITEMS_RECHECK_DAYS));
 
   return {
     kind: "queued",

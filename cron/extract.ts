@@ -118,6 +118,70 @@ MENU ITEMS rules, no exceptions:
 - description: a short one-line summary of what's included, if the text gives one (e.g. ingredients). Null if none stated.
 `;
 
+// Few-shot examples for the rules above -- genuinely improves extraction accuracy on the
+// ambiguous cases (non-qualifying menu prices, date-vs-weekday mixups, day-range
+// collapsing, French-language pages) the same way any classification prompt benefits
+// from worked examples, not just prose rules. Also has a second, unrelated benefit: this
+// text is part of the cached system-prompt block (see buildExtractionRequestParams'
+// cache_control), and Anthropic's actual minimum cacheable length for this model turned
+// out to be well above the rules-only prompt's ~3.4K tokens -- confirmed empirically
+// (2026-10-01: the rules-only prompt logged cache_creation_input_tokens: 0 on every
+// single call, meaning caching silently never engaged and every extraction paid full
+// input price; padding the same prompt past ~4.9K tokens made it cache immediately,
+// write then read, every time). Below Anthropic's own documented 2048-token minimum for
+// Haiku models, the account's actual effective floor measured noticeably higher -- rather
+// than pad with meaningless filler to clear it, this section adds real content that pays
+// for its own tokens in better extraction quality.
+const WORKED_EXAMPLES = `
+WORKED EXAMPLES:
+
+Example A -- multiple priced items under one Happy Hour heading (qualifying specials):
+Source text: "HAPPY HOUR Mon-Fri 3-6pm: $5 Wings | $1 off all Drafts | $6 Caesars"
+Correct output: THREE separate specials, each with its own evidence_quote and price_cents:
+  1. title "Wings", price_cents 500, days_of_week [1,2,3,4,5], start_time "15:00", end_time "18:00", evidence_quote "$5 Wings"
+  2. title "Drafts", price_cents null (it's a discount, not an absolute price), days_of_week [1,2,3,4,5], evidence_quote "$1 off all Drafts"
+  3. title "Caesars", price_cents 600, days_of_week [1,2,3,4,5], evidence_quote "$6 Caesars"
+Do NOT collapse these into one umbrella "Happy Hour" entry, and do NOT create five separate entries (one per weekday) for the same range.
+
+Example B -- everyday menu prices with no promotional framing (NOT a special):
+Source text: "Burgers\\nClassic Burger $16\\nBacon Burger $18\\nBlue Cheese Burger $19"
+Correct output: empty specials array. These are regular a-la-carte prices with no "Happy Hour"/"Deals"/"Promotions" heading and no time-limited or discount language anywhere nearby -- every item on a menu has a price, and a price alone is never sufficient.
+
+Example C -- one-off event with an explicit date (specific_date, NOT day_of_week):
+Source text: "Live Music: The Wanderers -- Saturday, November 14"
+Correct output: event_type "live_music", title "The Wanderers", specific_date resolved to the nearest "2026-11-14" on/after today, day_of_week null. Even though November 14 happens to be a Saturday, day_of_week stays null -- filling it in would make this one-night show incorrectly appear to repeat every Saturday.
+
+Example D -- recurring weekly event (day_of_week, NOT specific_date):
+Source text: "Trivia Night every Tuesday, 7pm, no cover"
+Correct output: event_type "trivia", title "Trivia Night", day_of_week 2, specific_date null, start_time "19:00", cover_charge_cents null.
+
+Example E -- French-language page, Quebec terminology (same rules, different language):
+Source text: "5 à 7 -- Spéciaux: Bières domestiques 5$, Vin au verre 6$"
+Correct output: TWO specials ("5 à 7" is Quebec's term for happy hour, a qualifying promotional heading, not a literal 5:00-7:00 time range unless the source also states clock times):
+  1. title "Bières domestiques", price_cents 500, evidence_quote "Bières domestiques 5$"
+  2. title "Vin au verre", price_cents 600, evidence_quote "Vin au verre 6$"
+
+Example F -- vague mention that does NOT qualify as an event:
+Source text: "Check out our events page for what's happening this week!"
+Correct output: empty events array. No day, date, or event type is stated -- "what's happening" is not an event_type, and there's nothing to resolve a date from.
+
+Example G -- month-long promotion (is_monthly, NOT a dayOfWeek/time-bound special):
+Source text: "September Special: Butternut Squash Ravioli $22, available all month long"
+Correct output: title "Butternut Squash Ravioli", price_cents 2200, is_monthly true, days_of_week null, start_time null, end_time null, evidence_quote "September Special: Butternut Squash Ravioli $22". Because is_monthly is true, the day/time fields stay null even though the page was scraped on a specific day -- the promotion itself isn't tied to a weekday or a clock time, it's tied to the calendar month.
+
+Example H -- ambiguous wording lowers confidence rather than being discarded or guessed:
+Source text: "Join us for drink specials most weeknights"
+Correct output: either omit this entirely (no stated price/discount, so SPECIALS rules already disqualify it -- "drink specials" alone isn't a priced item), or, if a nearby price IS stated but the days are vague ("most weeknights" is not a clean day range), extract the special with confidence below 0.6 and an extraction_notes explaining the ambiguity (e.g. "days stated as 'most weeknights', not an exact range") rather than guessing a specific Mon-Fri range the text doesn't actually commit to.
+
+Example I -- a menu item vs. a special sharing the same page (menu items only, when requested):
+Source text: "WINGS -- Classic Buffalo, Honey Garlic, or Dry Cajun, $17 per lb" (appearing on a page with no Happy Hour/Deals/Promotions heading anywhere near it)
+Correct output when menu items are requested: one menu item, name "Wings", description "Classic Buffalo, Honey Garlic, or Dry Cajun", price_cents 1700, evidence_quote "WINGS -- Classic Buffalo, Honey Garlic, or Dry Cajun, $17 per lb". NOT a special (category "wing_night") -- it has a price but no promotional framing, same reasoning as Example B. The same line should never appear in both the specials array and the menu_items array.
+
+Example J -- karaoke/sports-night event type disambiguation:
+Source text: "Karaoke every Thursday 9pm | Game Day Sundays -- all NFL games on the big screens"
+Correct output: TWO events: (1) event_type "karaoke", title "Karaoke Night", day_of_week 4, start_time "21:00"; (2) event_type "sports_night", title "Game Day", day_of_week 0. Each gets its own evidence_quote from its own line -- do not merge two differently-typed recurring events on the same page into one entry just because they're listed close together.
+`;
+
 // A menu changes far less often than daily specials/events -- asking for a full menu
 // re-extraction on every single "content changed" night (see hasFreshMenuItems in
 // cron/upsert.ts) mostly just re-pays for a large, near-identical block of output tokens
@@ -149,6 +213,7 @@ EVENTS rules, no exceptions:
 - event_type: "live_music" for bands/DJs/performers, "trivia" for trivia/quiz nights, "karaoke", "sports_night" for game-watching nights, "other" for anything else that qualifies.
 - cover_charge_cents: whole cents if a cover/ticket price is explicitly stated, otherwise null (null does not disqualify the event — most local live music nights are free).
 ${includeMenuItems ? MENU_ITEMS_SECTION : ""}
+${WORKED_EXAMPLES}
 Shared rules for ${includeMenuItems ? "ALL THREE (specials, events, menu items)" : "BOTH (specials, events)"}:
 - evidence_quote: for every item you report, copy a short VERBATIM substring (exact characters, no paraphrasing) directly from the provided page text proving this item is real (the price/discount language for a special; the day/date + event-type language for an event${includeMenuItems ? "; the name + price for a menu item" : ""}). If you cannot find and copy such a literal substring, do not report that item at all — this is not optional.
 - If the text contains no qualifying specials${includeMenuItems ? ", events, and/or menu items" : " and/or events"}, return empty arrays for those. Empty arrays are correct, expected answers for most pages — do not force a result.
