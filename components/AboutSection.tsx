@@ -1,6 +1,7 @@
 import { t, type Language } from "@/lib/i18n";
 import { DAY_SLUGS, dayLabel } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS, categoryPageLabel } from "@/lib/category-slugs";
+import { EVENT_TYPE_SLUGS, eventTypePageLabel } from "@/lib/event-type-slugs";
 
 export function AboutSection({
   brandName,
@@ -54,6 +55,14 @@ export function AboutSection({
         {Object.entries(CATEGORY_SLUGS).map(([slug, category]) => (
           <a key={slug} href={`/${regionSlug}/${slug}`} className="text-accent-dim underline">
             {categoryPageLabel(category)}
+          </a>
+        ))}
+      </p>
+      <p className="flex flex-wrap gap-x-1.5 gap-y-1">
+        <span>Browse events:</span>
+        {Object.entries(EVENT_TYPE_SLUGS).map(([slug, eventType]) => (
+          <a key={slug} href={`/${regionSlug}/events/${slug}`} className="text-accent-dim underline">
+            {eventTypePageLabel(eventType)}
           </a>
         ))}
       </p>

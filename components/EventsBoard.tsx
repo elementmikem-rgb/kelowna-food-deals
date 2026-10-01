@@ -54,6 +54,7 @@ export function EventsBoard({
   lang = "en",
   regionLat = null,
   regionLng = null,
+  initialType,
 }: {
   recurring: EventWithVenue[];
   upcoming: EventWithVenue[];
@@ -65,11 +66,14 @@ export function EventsBoard({
   // this comes from the region rather than being derived from venue pins.
   regionLat?: number | null;
   regionLng?: number | null;
+  // Same idea as SpecialsBoard's initialCategory, for the /[region]/events/[slug]
+  // event-type SEO landing pages (e.g. /kelowna/events/trivia).
+  initialType?: EventType;
 }) {
   const tr = t(lang);
   const today = useMemo(() => todayDowInRegion(timezone), [timezone]);
   const [selectedDay, setSelectedDay] = useState<number | "weekend">(today);
-  const [selectedType, setSelectedType] = useState<EventType | "all">("all");
+  const [selectedType, setSelectedType] = useState<EventType | "all">(initialType ?? "all");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [venueQuery, setVenueQuery] = useState("");
   const [view, setView] = useState<"list" | "map">("list");

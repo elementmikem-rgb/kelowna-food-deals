@@ -4,6 +4,7 @@ import { and, eq, isNull, max } from "drizzle-orm";
 import { BLOG_POSTS } from "@/lib/blog-data";
 import { DAY_SLUGS } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS } from "@/lib/category-slugs";
+import { EVENT_TYPE_SLUGS } from "@/lib/event-type-slugs";
 
 // Without this, Next prerenders the sitemap once at build time and it never
 // regenerates -- venues added by the nightly cron wouldn't appear until the
@@ -53,6 +54,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })),
       ...Object.keys(CATEGORY_SLUGS).map((slug) => ({
         url: `${BASE_URL}/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      })),
+      // Per-event-type landing pages (e.g. /kelowna/events/trivia) -- same reasoning
+      // as the category pages above, targeting "[event type] [region] [day]" searches
+      // (autosuggest research 2026-10-01 confirmed real day-specific demand for all three).
+      ...Object.keys(EVENT_TYPE_SLUGS).map((slug) => ({
+        url: `${BASE_URL}/events/${slug}`,
         lastModified: new Date(),
         changeFrequency: "daily" as const,
         priority: 0.7,
