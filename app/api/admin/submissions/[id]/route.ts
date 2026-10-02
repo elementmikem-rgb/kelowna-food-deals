@@ -53,6 +53,12 @@ const actionSchema = z.union([
   // create the venue -- only "dismiss" (== reject) was reachable. Confirmed live
   // 2026-09-16: two real submissions for "Kettle Valley Pub" had no path to publish.
   z.object({ action: z.literal("create_venue") }),
+  // A known-venue photo submission (the owner dashboard's "attach a photo" flow, see
+  // app/api/owner/photo-submission/route.ts) never runs AI extraction -- there's no text
+  // to parse a special/event out of, just a photo for an already-live listing. Without
+  // this action the only option was "dismiss", which (per the dismiss branch below)
+  // never calls savePhotoOnApproval -- the photo would be silently discarded, not saved.
+  z.object({ action: z.literal("approve_photo") }),
 ]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -73,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   const action = parsed.data.action;
   const baseKey =
-    action === "dismiss" || action === "create_venue"
+    action === "dismiss" || action === "create_venue" || action === "approve_photo"
       ? null
       : `${parsed.data.itemType}:${parsed.data.itemIndex}`;
   // Reject is recorded with a distinct prefix (rather than a bare "approve" always winning
@@ -154,6 +160,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         ok: true as const,
         fullyResolved,
         venueId,
+        photoData: submission.photoData,
+        photoMimeType: submission.photoMimeType,
+      };
+    }
+
+    if (action === "approve_photo") {
+      if (submission.venueId === null) {
+        return { error: "no venue resolved for this submission yet -- use create_venue first" as const, status: 400 };
+      }
+      if (!submission.photoData || !submission.photoMimeType) {
+        return { error: "submission has no photo" as const, status: 400 };
+      }
+      await tx
+        .update(submissions)
+        .set({ status: "approved", reviewedAt: now })
+        .where(eq(submissions.id, submissionId));
+      return {
+        ok: true as const,
+        fullyResolved: true,
+        venueId: submission.venueId,
         photoData: submission.photoData,
         photoMimeType: submission.photoMimeType,
       };
@@ -329,14 +355,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: outcome.error }, { status: outcome.status });
   }
 
-  if (action === "approve") {
+  if (action === "approve" || action === "approve_photo") {
     const [existingPhoto] = await db
       .select({ id: venuePhotos.id })
       .from(venuePhotos)
       .where(and(eq(venuePhotos.submissionId, submissionId)))
       .limit(1);
     // venueId is guaranteed non-null here: the approve path above always resolves
-    // (finds or creates) a real venue before this point is reached.
+    // (finds or creates) a real venue before this point is reached, and approve_photo
+    // requires it up front (see its branch above).
     if (!existingPhoto && outcome.venueId !== null) {
       await savePhotoOnApproval({
         venueId: outcome.venueId,

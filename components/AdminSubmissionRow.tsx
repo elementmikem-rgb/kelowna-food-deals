@@ -179,6 +179,52 @@ function CreateVenueButton({
   );
 }
 
+// Saves the submission's photo as a venue photo without touching any specials/events --
+// the only approve path for a known-venue, text-free submission (the owner dashboard's
+// "attach a photo" flow, see app/api/owner/photo-submission/route.ts), which never runs
+// AI extraction since there's no free text to parse a special/event out of.
+function ApprovePhotoButton({
+  submissionId,
+  onApproved,
+}: {
+  submissionId: number;
+  onApproved: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function approve() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_photo" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      onApproved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 items-start">
+      <button
+        onClick={approve}
+        disabled={loading}
+        className="press-pill rounded-full bg-accent text-background px-3 py-1 text-xs font-medium disabled:opacity-50"
+      >
+        Approve photo
+      </button>
+      {error && <p className="text-xs text-stale">{error}</p>}
+    </div>
+  );
+}
+
 export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
   const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
   const [showPhoto, setShowPhoto] = useState(false);
@@ -271,8 +317,17 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
 
       {!extracted && !extractUnreadable && (
         <>
-          <p className="text-xs text-stale">{submission.aiNotes ?? "AI review failed."}</p>
-          <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+          <p className="text-xs text-stale">
+            {submission.hasPhoto && !submission.isNewVenue
+              ? "Photo only -- no text to extract a special/event from."
+              : submission.aiNotes ?? "AI review failed."}
+          </p>
+          <div className="flex gap-2">
+            {submission.hasPhoto && !submission.isNewVenue && (
+              <ApprovePhotoButton submissionId={submission.id} onApproved={() => setDismissed(true)} />
+            )}
+            <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
+          </div>
         </>
       )}
       {extractUnreadable && (
@@ -286,6 +341,9 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
           <div className="flex gap-2">
             {submission.isNewVenue && (
               <CreateVenueButton submissionId={submission.id} onCreated={() => setDismissed(true)} />
+            )}
+            {submission.hasPhoto && !submission.isNewVenue && (
+              <ApprovePhotoButton submissionId={submission.id} onApproved={() => setDismissed(true)} />
             )}
             <DismissButton submissionId={submission.id} onDismissed={() => setDismissed(true)} />
           </div>

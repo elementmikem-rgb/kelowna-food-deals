@@ -402,12 +402,57 @@ function SectionShell({
   );
 }
 
+// Shared by SpecialForm and EventForm -- uploads a photo attached while adding/editing
+// either one to the admin review queue (specials.submissions), not live immediately.
+// Best-effort: the special/event itself has already saved successfully by the time
+// this runs, so a photo upload failure here shouldn't look like the whole save failed.
+async function submitPhotoForReview(venueId: number, note: string, file: File): Promise<string | null> {
+  try {
+    const { data, mimeType } = await fileToBase64(file);
+    const res = await fetch("/api/owner/photo-submission", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venueId, note, photoData: data, photoMimeType: mimeType }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return body?.error ?? "Photo upload failed";
+    }
+    return null;
+  } catch {
+    return "Photo upload failed";
+  }
+}
+
+function PhotoField({
+  photoFile,
+  onPhotoFile,
+}: {
+  photoFile: File | null;
+  onPhotoFile: (file: File | null) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-xs text-muted">
+      Photo (optional -- sent to the admin for review before it shows up)
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => onPhotoFile(e.target.files?.[0] ?? null)}
+        className="text-xs text-muted"
+      />
+      {photoFile && <span className="text-[11px] text-muted-2">{photoFile.name}</span>}
+    </label>
+  );
+}
+
 function SpecialForm({
   initial,
+  venueId,
   onSubmit,
   submitLabel,
 }: {
   initial: Omit<SpecialData, "id">;
+  venueId: number;
   onSubmit: (data: Omit<SpecialData, "id">) => Promise<void>;
   submitLabel: string;
 }) {
@@ -418,6 +463,7 @@ function SpecialForm({
   const [startTime, setStartTime] = useState(initial.startTime?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(initial.endTime?.slice(0, 5) ?? "");
   const [category, setCategory] = useState(initial.category);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -435,6 +481,11 @@ function SpecialForm({
         endTime: endTime || null,
         category,
       });
+      if (photoFile) {
+        const photoError = await submitPhotoForReview(venueId, `${title.trim()} (special)`, photoFile);
+        if (photoError) setError(`Saved, but photo upload failed: ${photoError}`);
+        else setPhotoFile(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -457,6 +508,7 @@ function SpecialForm({
         rows={2}
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm resize-none"
       />
+      <PhotoField photoFile={photoFile} onPhotoFile={setPhotoFile} />
       <div className="flex flex-wrap gap-2">
         <input
           value={price}
@@ -515,10 +567,12 @@ function SpecialForm({
 
 function SpecialRow({
   special,
+  venueId,
   onSaved,
   onDeleted,
 }: {
   special: SpecialData;
+  venueId: number;
   onSaved: (id: number, data: Omit<SpecialData, "id">) => void;
   onDeleted: (id: number) => void;
 }) {
@@ -536,6 +590,7 @@ function SpecialRow({
     return (
       <SpecialForm
         initial={special}
+        venueId={venueId}
         submitLabel="Save"
         onSubmit={async (data) => {
           const res = await fetch(`/api/owner/specials/${special.id}`, {
@@ -587,10 +642,12 @@ function SpecialRow({
 
 function EventForm({
   initial,
+  venueId,
   onSubmit,
   submitLabel,
 }: {
   initial: Omit<EventData, "id">;
+  venueId: number;
   onSubmit: (data: Omit<EventData, "id">) => Promise<void>;
   submitLabel: string;
 }) {
@@ -602,6 +659,7 @@ function EventForm({
   const [startTime, setStartTime] = useState(initial.startTime?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(initial.endTime?.slice(0, 5) ?? "");
   const [coverCharge, setCoverCharge] = useState(centsToDollars(initial.coverChargeCents));
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -620,6 +678,11 @@ function EventForm({
         endTime: endTime || null,
         coverChargeCents: dollarsToCents(coverCharge),
       });
+      if (photoFile) {
+        const photoError = await submitPhotoForReview(venueId, `${title.trim()} (event)`, photoFile);
+        if (photoError) setError(`Saved, but photo upload failed: ${photoError}`);
+        else setPhotoFile(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -642,6 +705,7 @@ function EventForm({
         rows={2}
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm resize-none"
       />
+      <PhotoField photoFile={photoFile} onPhotoFile={setPhotoFile} />
       <div className="flex flex-wrap gap-2">
         <select
           value={eventType}
@@ -711,10 +775,12 @@ function EventForm({
 
 function EventRow({
   event,
+  venueId,
   onSaved,
   onDeleted,
 }: {
   event: EventData;
+  venueId: number;
   onSaved: (id: number, data: Omit<EventData, "id">) => void;
   onDeleted: (id: number) => void;
 }) {
@@ -732,6 +798,7 @@ function EventRow({
     return (
       <EventForm
         initial={event}
+        venueId={venueId}
         submitLabel="Save"
         onSubmit={async (data) => {
           const res = await fetch(`/api/owner/events/${event.id}`, {
@@ -1186,6 +1253,7 @@ export function OwnerDashboard({
         addForm={
           <SpecialForm
             initial={emptySpecial}
+            venueId={venueId}
             submitLabel="Add special"
             onSubmit={async (data) => {
               const res = await fetch("/api/owner/specials", {
@@ -1205,6 +1273,7 @@ export function OwnerDashboard({
           <SpecialRow
             key={s.id}
             special={s}
+            venueId={venueId}
             onSaved={(id, data) =>
               setSpecialList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
             }
@@ -1218,6 +1287,7 @@ export function OwnerDashboard({
         addForm={
           <EventForm
             initial={emptyEvent}
+            venueId={venueId}
             submitLabel="Add event"
             onSubmit={async (data) => {
               const res = await fetch("/api/owner/events", {
@@ -1237,6 +1307,7 @@ export function OwnerDashboard({
           <EventRow
             key={e.id}
             event={e}
+            venueId={venueId}
             onSaved={(id, data) =>
               setEventList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
             }
