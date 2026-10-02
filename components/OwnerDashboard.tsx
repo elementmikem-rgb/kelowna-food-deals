@@ -5,6 +5,7 @@ import { formatPrice, CATEGORY_LABELS, EVENT_TYPE_LABELS } from "@/lib/format";
 import { OwnerCart } from "@/components/OwnerCart";
 import { OwnerCredits } from "@/components/OwnerCredits";
 import { FlashCountdown } from "@/components/FlashCountdown";
+import { fileToBase64 } from "@/lib/client-image";
 
 const FLASH_DURATIONS = [
   { minutes: 15, label: "15 min" },
@@ -299,6 +300,79 @@ function dollarsToCents(value: string): number | null {
 
 function centsToDollars(cents: number | null): string {
   return cents === null ? "" : (cents / 100).toString();
+}
+
+// Uploads straight into specials.venue_photos (same table a visitor's /submit photo
+// writes to) -- see app/api/owner/venue-photo/route.ts's comment. "Most recent wins"
+// (lib/data.ts's venuePhotoId subquery) means a successful upload here is live on the
+// specials board card and the venue detail page's photo gallery immediately, with no
+// separate "set as cover" step needed.
+function VenuePhotoUploader({ venueId, currentPhotoId }: { venueId: number; currentPhotoId: number | null }) {
+  const [photoId, setPhotoId] = useState(currentPhotoId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    setError(null);
+    setBusy(true);
+    try {
+      const { data, mimeType } = await fileToBase64(file);
+      const res = await fetch("/api/owner/venue-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId, photoData: data, photoMimeType: mimeType }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Failed");
+      setPhotoId(body.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-display text-xl text-foreground">Cover photo</h2>
+      <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4">
+        {photoId !== null ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/venue-photos/${photoId}`}
+            alt=""
+            className="h-20 w-20 rounded-lg object-cover shrink-0"
+          />
+        ) : (
+          <div className="h-20 w-20 rounded-lg bg-surface-raised shrink-0 flex items-center justify-center text-xs text-muted-2">
+            None yet
+          </div>
+        )}
+        <div className="flex flex-col gap-2 min-w-0">
+          <p className="text-sm text-muted">
+            Shows on your listing card and your venue page. A clear photo of your space,
+            menu, or a recent special works well -- the same thing a visitor's own photo
+            submission would show.
+          </p>
+          <label className="press-pill self-start rounded-full border border-border px-3 py-1.5 text-xs text-muted cursor-pointer">
+            {busy ? "Uploading…" : photoId !== null ? "Replace photo" : "Upload a photo"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={busy}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {error && <p className="text-xs text-stale">{error}</p>}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function SectionShell({
@@ -1057,6 +1131,7 @@ interface MonetizationSettings {
 
 export function OwnerDashboard({
   venueId,
+  currentPhotoId,
   specials,
   events,
   menuItems,
@@ -1071,6 +1146,7 @@ export function OwnerDashboard({
   bookings,
 }: {
   venueId: number;
+  currentPhotoId: number | null;
   specials: SpecialData[];
   events: EventData[];
   menuItems: MenuItemData[];
@@ -1102,6 +1178,8 @@ export function OwnerDashboard({
         onPosted={setFlashSpecial}
         onEnded={() => setFlashSpecial(null)}
       />
+
+      <VenuePhotoUploader venueId={venueId} currentPhotoId={currentPhotoId} />
 
       <SectionShell
         title="Specials"

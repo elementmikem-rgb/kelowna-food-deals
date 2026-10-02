@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles, bookings } from "@/db";
+import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles, bookings, venuePhotos } from "@/db";
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
@@ -39,7 +39,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
     .where(eq(venueOwners.id, session.venueOwnerId))
     .limit(1);
 
-  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows, venueBookings] = await Promise.all([
+  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows, venueBookings, latestVenuePhoto] = await Promise.all([
     db
       .select()
       .from(specials)
@@ -80,6 +80,14 @@ export default async function OwnerVenuePage({ params }: PageProps) {
       .where(and(eq(bookings.venueId, venueId), ne(bookings.status, "expired")))
       .orderBy(desc(bookings.createdAt))
       .limit(10),
+    // Same "most recent wins" rule as lib/data.ts's venuePhotoId subquery, so the
+    // dashboard's preview always matches what's actually showing on the live site.
+    db
+      .select({ id: venuePhotos.id })
+      .from(venuePhotos)
+      .where(eq(venuePhotos.venueId, venueId))
+      .orderBy(desc(venuePhotos.createdAt))
+      .limit(1),
   ]);
   if (!region) notFound();
   const { timezone } = await getRegionContext(region);
@@ -121,6 +129,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
 
       <OwnerDashboard
         venueId={venueId}
+        currentPhotoId={latestVenuePhoto[0]?.id ?? null}
         specials={venueSpecials
           // Flash specials are managed through their own widget (below), not the
           // general specials list -- a currently-live one would render oddly there
