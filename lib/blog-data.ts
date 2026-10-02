@@ -12,6 +12,15 @@ export interface BlogPost {
   // this is close to a legal disclosure requirement once one of these is actually
   // sold, not just a style choice, so it's on by default rather than opt-in.
   sponsored?: boolean;
+  // Region slug(s) this post is actually about, e.g. ["kelowna"]. Omit entirely only
+  // for a genuinely region-agnostic post (how this site's verification works, etc).
+  // Until 2026-10-02 every post rendered under every region's /[region]/blog/[slug]
+  // -- a Kelowna-specific post with real Kelowna venue names was reachable (and
+  // sitemap-submitted, and declared canonical) at 97 different region URLs
+  // simultaneously, a duplicate-content problem that let Google pick an arbitrary
+  // non-Kelowna URL as the "winning" copy instead of the real one, and almost
+  // certainly suppressed all 97 copies' ranking relative to a single canonical page.
+  regions?: string[];
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -47,6 +56,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "real-kelowna-happy-hour-guide",
     category: "Guide",
+    regions: ["kelowna"],
     title: "The Real Kelowna Happy Hour Guide",
     metaDescription:
       "A happy hour guide for Kelowna built from specials we've actually confirmed are still running — not a list from 2022.",
@@ -73,6 +83,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "best-wing-nights-kelowna",
     category: "Guide",
+    regions: ["kelowna"],
     title: "Best Wing Nights in Kelowna Right Now",
     metaDescription:
       "Every confirmed wing night special in Kelowna, with actual prices — from $0.35 wings to $12 all-you-can-handle deals.",
@@ -105,6 +116,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "cheap-eats-kelowna-under-10",
     category: "Guide",
+    regions: ["kelowna"],
     title: "Cheap Eats in Kelowna: Where $10 Still Buys You Something Real",
     metaDescription:
       "Confirmed Kelowna food and drink specials under $10 — real prices from real venues, not a generic 'budget dining' listicle.",
@@ -132,6 +144,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "kelowna-west-kelowna-peachland-deals",
     category: "Data",
+    regions: ["kelowna"],
     title: "Kelowna vs. West Kelowna vs. Peachland: What We've Actually Verified So Far",
     metaDescription:
       "An honest look at food and drink special coverage across Kelowna, West Kelowna, Peachland, and Lake Country — including where the gaps still are.",
@@ -156,6 +169,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "trivia-karaoke-nights-kelowna",
     category: "Guide",
+    regions: ["kelowna"],
     title: "Trivia and Karaoke Nights in Kelowna: What's Actually Running",
     metaDescription:
       "Every trivia and karaoke night we've confirmed in Kelowna, sorted by day of the week -- pulled straight from our verified events database.",
@@ -187,6 +201,19 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
   },
 ];
 
-export function getBlogPost(slug: string): BlogPost | undefined {
-  return BLOG_POSTS.find((p) => p.slug === slug);
+// A post with no `regions` is region-agnostic and visible everywhere; a post
+// with `regions` is only visible under one of those region slugs -- see the
+// BlogPost.regions comment for why this check exists at all.
+function isVisibleInRegion(post: BlogPost, regionSlug: string): boolean {
+  return post.regions === undefined || post.regions.includes(regionSlug);
+}
+
+export function getBlogPost(slug: string, regionSlug: string): BlogPost | undefined {
+  const post = BLOG_POSTS.find((p) => p.slug === slug);
+  if (!post || !isVisibleInRegion(post, regionSlug)) return undefined;
+  return post;
+}
+
+export function getBlogPostsForRegion(regionSlug: string): BlogPost[] {
+  return BLOG_POSTS.filter((p) => isVisibleInRegion(p, regionSlug));
 }

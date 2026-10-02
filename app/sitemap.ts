@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db, venues, specials, regions } from "@/db";
 import { and, eq, isNull, max } from "drizzle-orm";
-import { BLOG_POSTS } from "@/lib/blog-data";
+import { getBlogPostsForRegion } from "@/lib/blog-data";
 import { DAY_SLUGS } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS } from "@/lib/category-slugs";
 import { EVENT_TYPE_SLUGS } from "@/lib/event-type-slugs";
@@ -86,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    for (const p of BLOG_POSTS) {
+    for (const p of getBlogPostsForRegion(region.slug)) {
       entries.push({
         url: `${BASE_URL}/blog/${p.slug}`,
         lastModified: new Date(p.publishedAt),

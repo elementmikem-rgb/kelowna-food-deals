@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BLOG_POSTS } from "@/lib/blog-data";
+import { getBlogPostsForRegion } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getCurrentRegion, getRegionBySlug } from "@/lib/regions";
@@ -52,7 +52,7 @@ function formatDate(dateStr: string): string {
 export default async function BlogIndexPage() {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
-  const posts = [...BLOG_POSTS].sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+  const posts = getBlogPostsForRegion(region.slug).sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 
   return (
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-6 gap-8">

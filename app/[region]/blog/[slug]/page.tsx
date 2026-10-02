@@ -45,9 +45,9 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPost(slug);
-  if (!post) return { title: "Post not found" };
   const region = await getCurrentRegion();
+  const post = getBlogPost(slug, region.slug);
+  if (!post) return { title: "Post not found" };
   const url = `/${region.slug}/blog/${post.slug}`;
   return {
     title: post.title,
@@ -74,9 +74,9 @@ function formatDate(dateStr: string): string {
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
-  const post = getBlogPost(slug);
-  if (!post) notFound();
   const region = await getCurrentRegion();
+  const post = getBlogPost(slug, region.slug);
+  if (!post) notFound();
   const lang = await getEffectiveLanguage(region);
 
   const jsonLd = {
