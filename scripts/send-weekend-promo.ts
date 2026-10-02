@@ -13,7 +13,12 @@ import { sql, eq } from "drizzle-orm";
 const MIN_DELAY_MS = 10_000;
 const MAX_DELAY_MS = 25_000;
 const WINDOW_START_HOUR = 9;
-const WINDOW_END_HOUR = 20;
+// Widened from 20 (8pm) to 22 (10pm) on 2026-10-02 specifically to get the whole list
+// out same-day -- still a real cutoff (nobody gets this at 2am their time), just a
+// later one than the original 9am-8pm default. See feedback_outreach_930_local.md for
+// why there's a cutoff at all; this is a deliberate one-time widening of it, not a
+// removal.
+const WINDOW_END_HOUR = 22;
 const RECHECK_IDLE_MS = 10 * 60 * 1000;
 
 function currentLocalHour(timezone: string): number {
