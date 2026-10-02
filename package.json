@@ -18,6 +18,7 @@
     "find-emails": "tsx --require ./scripts/env.cjs scripts/find-venue-emails.ts",
     "send-first-round-outreach": "tsx --require ./scripts/env.cjs scripts/send-first-round-outreach.ts",
     "send-credit-nudge": "tsx --require ./scripts/env.cjs scripts/send-credit-nudge.ts",
+    "send-weekend-promo": "tsx --require ./scripts/env.cjs scripts/send-weekend-promo.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"

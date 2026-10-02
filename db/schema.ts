@@ -287,13 +287,14 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // sponsorship inquiry) -- still logged here so it shows up in that thread's
   // history in the admin inbox, same as a venue-matched reply does.
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
-  // "first_contact" (the original free-listing email) vs "follow_up" (a later
-  // email to the same venue, e.g. the claim-flow/credit-system campaign).
+  // "first_contact" (the original free-listing email), "follow_up" (claim-flow/
+  // credit-system campaign), or "weekend_promo" (lib/outreach-weekend-email.ts,
+  // 2026-10-02 -- goes to everyone eligible regardless of prior outreach kind).
   // Default keeps every pre-existing row correctly labeled without a backfill.
   // app/api/admin/outreach/send/route.ts's "already sent" guard checks this
-  // kind specifically, so a follow-up campaign doesn't get silently blocked
-  // by (or silently re-trigger a duplicate of) the first-contact send.
-  kind: text("kind").$type<"first_contact" | "follow_up">().notNull().default("first_contact"),
+  // kind specifically, so one campaign's send doesn't get silently blocked by
+  // (or silently re-trigger a duplicate of) a different kind's send.
+  kind: text("kind").$type<"first_contact" | "follow_up" | "weekend_promo">().notNull().default("first_contact"),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),
