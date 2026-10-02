@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRegionBySlug, getCurrentRegion } from "@/lib/regions";
+import { buildWebsiteJsonLd, SITE_URL } from "@/lib/seo";
 
 interface RegionLayoutProps {
   children: React.ReactNode;
@@ -52,11 +53,21 @@ export default async function RegionLayout({ children, params }: RegionLayoutPro
 
   const themeStyle = `:root { --accent: ${region.accentColor}; --accent-dim: ${region.accentDimColor}; --accent-soft: ${region.accentSoftColor}; --background: ${region.backgroundColor}; --foreground: ${region.foregroundColor}; --evergreen: ${region.evergreenColor}; }`;
 
+  // See app/page.tsx's comment on regions.logoUrl -- it's the same generic icon
+  // for every region today, so this uses the actual served icon path directly
+  // rather than that field.
+  const websiteJsonLd = buildWebsiteJsonLd(`${SITE_URL}/${region.slug}`, region.brandName, `${SITE_URL}/icons/icon-192.png`);
+
   return (
     <>
       {/* eslint-disable-next-line react/no-danger -- static string built entirely
           from our own regions table, never from request-supplied input */}
       <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
+      />
       {children}
     </>
   );

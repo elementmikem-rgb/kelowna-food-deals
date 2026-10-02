@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSpecialsJsonLd, buildEventsJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "./seo";
+import { buildSpecialsJsonLd, buildEventsJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd, buildWebsiteJsonLd } from "./seo";
 import type { SpecialWithVenue } from "./data";
 import type { EventWithVenue } from "./events-data";
 
@@ -178,5 +178,26 @@ describe("buildFaqJsonLd", () => {
       { "@type": "Question", name: "How often are specials checked?", acceptedAnswer: { "@type": "Answer", text: "Regularly." } },
       { "@type": "Question", name: "Is this free?", acceptedAnswer: { "@type": "Answer", text: "Yes." } },
     ]);
+  });
+});
+
+describe("buildWebsiteJsonLd", () => {
+  it("links the WebSite and Organization nodes to each other by @id", () => {
+    const jsonLd = buildWebsiteJsonLd("https://todaystab.com/kelowna", "Kelowna Food Deals", "https://todaystab.com/icons/icon-192.png");
+    const [website, org] = jsonLd["@graph"];
+    expect(website).toEqual({
+      "@type": "WebSite",
+      "@id": "https://todaystab.com/kelowna/#website",
+      url: "https://todaystab.com/kelowna",
+      name: "Kelowna Food Deals",
+      publisher: { "@id": "https://todaystab.com/kelowna/#organization" },
+    });
+    expect(org).toEqual({
+      "@type": "Organization",
+      "@id": "https://todaystab.com/kelowna/#organization",
+      name: "Kelowna Food Deals",
+      url: "https://todaystab.com/kelowna",
+      logo: "https://todaystab.com/icons/icon-192.png",
+    });
   });
 });

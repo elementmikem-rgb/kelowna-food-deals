@@ -178,3 +178,31 @@ export function buildFaqJsonLd(items: readonly { q: string; a: string }[]) {
     })),
   };
 }
+
+// WebSite + Organization schema -- establishes this region's brand as a distinct
+// entity (not just a page), which is what AI answer engines and knowledge-panel
+// style features key off of, separately from the per-page ItemList/Event/FAQ
+// schema above. One region's brand per URL prefix, same as every other per-region
+// page -- not a single sitewide identity, since each region brand is its own
+// name/logo/social presence (see db/schema.ts's regions table).
+export function buildWebsiteJsonLd(siteUrl: string, brandName: string, logoUrl: string) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: brandName,
+        publisher: { "@id": `${siteUrl}/#organization` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: brandName,
+        url: siteUrl,
+        logo: logoUrl,
+      },
+    ],
+  };
+}
