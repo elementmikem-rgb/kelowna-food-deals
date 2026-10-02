@@ -75,6 +75,8 @@ export interface BookingSelection {
   eventId: number | null;
   category: import("@/db/schema").SpecialCategory | import("@/db/schema").EventType | null;
   categoryKind: import("@/db/schema").SponsorCategoryKind | null;
+  // "chat_term_sponsor" only -- free text, see bookings.chatTerm's schema comment.
+  chatTerm: string | null;
   // "boost" only -- see db/schema.ts's pendingBookingPhotos comment for why this is a
   // staging-row id rather than the photo bytes themselves (token size).
   hasPhotoAddOn: boolean;

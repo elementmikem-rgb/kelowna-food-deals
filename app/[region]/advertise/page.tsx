@@ -36,6 +36,7 @@ interface AdvertiseCopy {
     bestFor: string;
   };
   categorySponsors: { title: string; body: string; bestFor: string };
+  chatTermSponsor: { title: string; body: string; bestFor: string };
   closingHeading: string;
   closingBody: string;
 }
@@ -49,7 +50,7 @@ const copy: Record<Language, AdvertiseCopy> = {
       `Feature your venue or promote a seasonal special to ${city} diners.`,
     intro: (city) =>
       `TodaysTab shows ${city} diners which happy hours, food specials, and events are actually running today — checked and updated daily instead of left to rot on an old social post. Here's how to get your venue in front of them.`,
-    threeWaysHeading: "Three ways to get more visibility",
+    threeWaysHeading: "Four ways to get more visibility",
     pickDatesBody:
       "Pick a venue and dates, see the price up front, pay securely — every booking is reviewed before it goes live.",
     expiredError: "That link expired — please start again below.",
@@ -77,9 +78,14 @@ const copy: Record<Language, AdvertiseCopy> = {
       bestFor:
         "owning a whole category even on days your card doesn't win the daily rotation.",
     },
+    chatTermSponsor: {
+      title: "Chat term sponsorship",
+      body: "Own a word in our Ask chat — pick a term like \"beer\" or \"trivia,\" and your venue gets mentioned alongside the real best answer whenever a visitor's question is genuinely about it. One owner per term per region at a time.",
+      bestFor: "getting named in the actual conversation, not just a sidebar.",
+    },
     closingHeading: "Not sure which one fits?",
     closingBody:
-      "Send us a quick note instead — tell us what you're trying to promote and we'll suggest the right option, or something custom if none of the three above fit.",
+      "Send us a quick note instead — tell us what you're trying to promote and we'll suggest the right option, or something custom if none of the four above fit.",
   },
   fr: {
     metaTitle: "Annoncez avec nous",
@@ -89,7 +95,7 @@ const copy: Record<Language, AdvertiseCopy> = {
       `Faites ressortir votre établissement ou faites la promotion d'un spécial saisonnier auprès des clients de ${city}.`,
     intro: (city) =>
       `TodaysTab montre aux clients de ${city} quelles heures heureuses, quels spéciaux et quels événements sont vraiment en cours aujourd'hui — vérifiés et mis à jour chaque jour, et non laissés à moisir dans un vieux message sur les réseaux sociaux. Voici comment faire apparaître votre établissement.`,
-    threeWaysHeading: "Trois façons d'augmenter votre visibilité",
+    threeWaysHeading: "Quatre façons d'augmenter votre visibilité",
     pickDatesBody:
       "Choisissez un établissement et des dates, voyez le prix à l'avance, payez en toute sécurité — chaque réservation est examinée avant d'être mise en ligne.",
     expiredError: "Ce lien a expiré — veuillez recommencer ci-dessous.",
@@ -120,9 +126,14 @@ const copy: Record<Language, AdvertiseCopy> = {
       bestFor:
         "dominer une catégorie entière, même les jours où votre fiche ne remporte pas la rotation quotidienne.",
     },
+    chatTermSponsor: {
+      title: "Commandite de terme (clavardage)",
+      body: "Possédez un mot dans notre clavardage Ask — choisissez un terme comme « bière » ou « jeu-questionnaire », et votre établissement est mentionné aux côtés de la vraie meilleure réponse chaque fois qu'une question d'un visiteur porte vraiment sur ce terme. Un seul propriétaire par terme et par région à la fois.",
+      bestFor: "être nommé directement dans la conversation, pas seulement dans une barre latérale.",
+    },
     closingHeading: "Vous ne savez pas laquelle choisir?",
     closingBody:
-      "Envoyez-nous un message — dites-nous ce que vous souhaitez promouvoir et nous vous suggérerons la bonne option, ou quelque chose de personnalisé si aucune des trois ci-dessus ne convient.",
+      "Envoyez-nous un message — dites-nous ce que vous souhaitez promouvoir et nous vous suggérerons la bonne option, ou quelque chose de personnalisé si aucune des quatre ci-dessus ne convient.",
   },
 };
 
@@ -274,6 +285,30 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
             events={eventOptions}
             settings={settingsFor("category_sponsor")}
             initialVerifiedToken={tokenFor("category_sponsor")}
+            todayISO={todayISO}
+            regionSlug={region.slug}
+          />
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="font-display text-lg text-foreground">{c.chatTermSponsor.title}</h3>
+              <span className="font-mono-tabular text-sm text-accent-dim shrink-0">
+                {formatPrice(settingsFor("chat_term_sponsor").priceCentsPerDay)}{c.perDay}
+              </span>
+            </div>
+            <p className="text-sm text-muted">{c.chatTermSponsor.body}</p>
+            <p className="text-xs text-muted-2 italic">
+              Best for: {c.chatTermSponsor.bestFor}
+            </p>
+          </div>
+          <BookingFlow
+            productType="chat_term_sponsor"
+            venues={venueOptions}
+            specials={specialOptions}
+            events={eventOptions}
+            settings={settingsFor("chat_term_sponsor")}
+            initialVerifiedToken={tokenFor("chat_term_sponsor")}
             todayISO={todayISO}
             regionSlug={region.slug}
           />

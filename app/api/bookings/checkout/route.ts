@@ -39,11 +39,14 @@ function lockKeyFor(
   regionId: number,
   productType: string,
   category: string | null,
-  categoryKind: string | null
+  categoryKind: string | null,
+  chatTerm: string | null
 ): string {
-  return category
-    ? `booking:${regionId}:${productType}:${categoryKind}:${category}`
-    : `booking:${regionId}:${productType}`;
+  if (category) return `booking:${regionId}:${productType}:${categoryKind}:${category}`;
+  // Lowercased to match getOccupyingBookings' case-insensitive term comparison --
+  // "Beer" and "beer" must serialize against the same lock, not two different ones.
+  if (chatTerm) return `booking:${regionId}:${productType}:${chatTerm.toLowerCase()}`;
+  return `booking:${regionId}:${productType}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -91,6 +94,7 @@ export async function POST(req: NextRequest) {
   }
   const category = selection.productType === "category_sponsor" ? selection.category : null;
   const categoryKind = selection.productType === "category_sponsor" ? selection.categoryKind : null;
+  const chatTerm = selection.productType === "chat_term_sponsor" ? selection.chatTerm : null;
 
   // Photo add-on only ever rides along with "boost" -- see verify-email/route.ts's same
   // guard. Re-checked here too since checkout trusts the signed token, not the client.
@@ -136,6 +140,7 @@ export async function POST(req: NextRequest) {
         eq(bookings.endDate, selection.endDate),
         category ? eq(bookings.category, category) : isNull(bookings.category),
         categoryKind ? eq(bookings.categoryKind, categoryKind) : isNull(bookings.categoryKind),
+        chatTerm ? sql`lower(${bookings.chatTerm}) = lower(${chatTerm})` : isNull(bookings.chatTerm),
         eq(bookings.status, "pending_payment"),
         gt(bookings.reservedUntil, new Date(now))
       )
@@ -164,7 +169,7 @@ export async function POST(req: NextRequest) {
 
   const booking = await db.transaction(async (tx) => {
     await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${lockKeyFor(region.id, selection.productType, category, categoryKind)}))`
+      sql`select pg_advisory_xact_lock(hashtext(${lockKeyFor(region.id, selection.productType, category, categoryKind, chatTerm)}))`
     );
 
     const available = await checkAvailability(
@@ -175,7 +180,9 @@ export async function POST(req: NextRequest) {
       settings.capCount,
       region.id,
       selection.startDate,
-      selection.endDate
+      selection.endDate,
+      undefined,
+      chatTerm
     );
     if (!available) return null;
 
@@ -188,6 +195,7 @@ export async function POST(req: NextRequest) {
         eventId: selection.eventId,
         category,
         categoryKind,
+        chatTerm,
         startDate: selection.startDate,
         endDate: selection.endDate,
         status: "pending_payment",

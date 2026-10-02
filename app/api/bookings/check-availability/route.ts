@@ -11,6 +11,7 @@ const bodySchema = z.object({
   productType: z.enum(bookingProductType),
   category: z.union([z.enum(specialCategory), z.enum(eventType)]).nullable(),
   categoryKind: z.enum(sponsorCategoryKind).nullable(),
+  chatTerm: z.string().max(40).nullable(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   // See checkout/route.ts's comment on regionSlug -- an API route has no path segment
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  const { productType, category, categoryKind, startDate, endDate, regionSlug } = parsed.data;
+  const { productType, category, categoryKind, chatTerm, startDate, endDate, regionSlug } = parsed.data;
 
   if (endDate < startDate) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
@@ -51,7 +52,9 @@ export async function POST(req: NextRequest) {
     settings.capCount,
     region.id,
     startDate,
-    endDate
+    endDate,
+    undefined,
+    productType === "chat_term_sponsor" ? chatTerm : null
   );
 
   return NextResponse.json({ available });

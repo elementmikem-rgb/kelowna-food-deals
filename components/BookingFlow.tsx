@@ -62,6 +62,7 @@ export function BookingFlow({
   const [boostTargetKey, setBoostTargetKey] = useState<string>(""); // "special:12" or "event:34"
   const [categoryKind, setCategoryKind] = useState<SponsorCategoryKind>("special");
   const [category, setCategory] = useState<SpecialCategory | EventType>("happy_hour");
+  const [chatTerm, setChatTerm] = useState("");
   const [wantsPhotoAddOn, setWantsPhotoAddOn] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [startDate, setStartDate] = useState("");
@@ -92,6 +93,7 @@ export function BookingFlow({
           productType,
           category: productType === "category_sponsor" ? category : null,
           categoryKind: productType === "category_sponsor" ? categoryKind : null,
+          chatTerm: productType === "chat_term_sponsor" ? chatTerm.trim() || null : null,
           startDate,
           endDate,
           regionSlug,
@@ -113,7 +115,7 @@ export function BookingFlow({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [productType, category, categoryKind, startDate, endDate, regionSlug]);
+  }, [productType, category, categoryKind, chatTerm, startDate, endDate, regionSlug]);
 
   const venueSpecials = specials.filter((s) => s.venueId === venueId);
   const venueEvents = events.filter((e) => e.venueId === venueId);
@@ -124,6 +126,7 @@ export function BookingFlow({
     setError(null);
     if (!venueId) return setError("Pick your venue.");
     if (productType === "boost" && !boostTargetKey) return setError("Pick a special or event to boost.");
+    if (productType === "chat_term_sponsor" && !chatTerm.trim()) return setError("Enter the term you want to sponsor.");
     if (wantsPhotoAddOn && !photoFile) return setError("Choose a photo, or uncheck the photo add-on.");
     if (!startDate || !endDate || endDate < startDate) return setError("Pick valid dates.");
     if (!email) return setError("Enter your email.");
@@ -142,6 +145,7 @@ export function BookingFlow({
           eventId: productType === "boost" && boostKind === "event" ? boostId : null,
           category: productType === "category_sponsor" ? category : null,
           categoryKind: productType === "category_sponsor" ? categoryKind : null,
+          chatTerm: productType === "chat_term_sponsor" ? chatTerm.trim() : null,
           hasPhotoAddOn,
           photoData: photo?.data ?? null,
           photoMimeType: photo?.mimeType ?? null,
@@ -323,6 +327,20 @@ export function BookingFlow({
               ))}
             </optgroup>
           </select>
+        </label>
+      )}
+
+      {productType === "chat_term_sponsor" && (
+        <label className="flex flex-col gap-1 text-sm text-muted">
+          Term (e.g. &ldquo;beer&rdquo;, &ldquo;trivia&rdquo;)
+          <input
+            type="text"
+            value={chatTerm}
+            onChange={(e) => setChatTerm(e.target.value)}
+            maxLength={40}
+            placeholder="beer"
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          />
         </label>
       )}
 

@@ -22,6 +22,9 @@ const bodySchema = z.object({
   eventId: z.number().int().positive().nullable(),
   category: z.union([z.enum(specialCategory), z.enum(eventType)]).nullable(),
   categoryKind: z.enum(sponsorCategoryKind).nullable(),
+  // "chat_term_sponsor" only -- trimmed server-side below, same spirit as the venueId/
+  // specialId existence checks: don't trust the client's trim.
+  chatTerm: z.string().max(40).nullable(),
   hasPhotoAddOn: z.boolean(),
   // Raw upload at this stage -- staged into pendingBookingPhotos below and swapped for
   // a small integer id before anything gets signed into the token (see that table's
@@ -112,6 +115,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Photo add-on is only available with Boost" }, { status: 400 });
   }
 
+  // Same split as above for category/categoryKind elsewhere in this file: chatTerm only
+  // makes sense for chat_term_sponsor, and must be non-empty there -- normalized here
+  // (trimmed) rather than trusting whatever the client already trimmed client-side.
+  let chatTerm: string | null = null;
+  if (parsed.data.productType === "chat_term_sponsor") {
+    chatTerm = parsed.data.chatTerm?.trim() || null;
+    if (!chatTerm) return NextResponse.json({ error: "Enter the term you want to sponsor" }, { status: 400 });
+  } else if (parsed.data.chatTerm) {
+    return NextResponse.json({ error: "Term is only available with Chat term sponsorship" }, { status: 400 });
+  }
+
   let photoStagingId: number | null = null;
   if (parsed.data.hasPhotoAddOn) {
     const { photoData, photoMimeType } = parsed.data;
@@ -142,8 +156,8 @@ export async function POST(req: NextRequest) {
   // it's excluded from what actually gets signed into the booking token.
   // photoData/photoMimeType are excluded too -- photoStagingId (a small integer) is
   // what actually gets signed, per pendingBookingPhotos' schema comment.
-  const { regionSlug: _regionSlug, photoData: _photoData, photoMimeType: _photoMimeType, ...rest } = parsed.data;
-  const selection = { ...rest, photoStagingId };
+  const { regionSlug: _regionSlug, photoData: _photoData, photoMimeType: _photoMimeType, chatTerm: _chatTerm, ...rest } = parsed.data;
+  const selection = { ...rest, chatTerm, photoStagingId };
   const token = await signBookingToken(selection as BookingSelection, 15 * 60 * 1000);
   // Deliberately the bare domain, not SITE_URL -- /api/bookings/confirm-email
   // is a top-level route with no region segment of its own, unlike the
