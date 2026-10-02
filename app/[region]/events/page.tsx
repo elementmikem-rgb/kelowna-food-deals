@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
+import { FAQSection } from "@/components/FAQSection";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
 
@@ -73,6 +74,7 @@ export default async function EventsPage() {
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />
+      <FAQSection lang={lang} />
       <SiteFooter />
     </div>
   );

@@ -5,6 +5,7 @@ import { getActiveCategorySponsors } from "@/lib/sponsored-data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { SpecialsBoard } from "@/components/SpecialsBoard";
 import { TipJar } from "@/components/TipJar";
+import { FAQSection } from "@/components/FAQSection";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
@@ -124,6 +125,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />
+      <FAQSection lang={lang} />
       <SiteFooter />
     </div>
   );
