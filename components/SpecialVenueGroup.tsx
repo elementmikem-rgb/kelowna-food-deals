@@ -53,39 +53,89 @@ export function SpecialVenueGroup({
       {/* Lead photo when a visitor has submitted one for this venue -- most
           venues don't have one yet (submission-driven, see lib/data.ts's
           venuePhotoId comment), so the card layout below works fine without
-          this block too. */}
+          this block too. Sized and treated like a pinned photo: tall enough
+          to carry the card, with the venue name set directly on it (dark
+          scrim for contrast) and the VERIFIED stamp pinned to its corner
+          like a label clipped to a photo, not a plain content thumbnail. */}
       {photoId !== null && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/venue-photos/${photoId}`}
-          alt=""
-          className="relative z-0 h-32 w-full object-cover pointer-events-none"
-        />
+        <div className="relative z-0 h-44 pointer-events-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/venue-photos/${photoId}`}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 pointer-events-none">
+            <div className="rounded-full bg-surface/95 px-0.5 py-0.5 shadow-sm">
+              <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 p-3 flex items-end justify-between gap-2 pointer-events-none">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <h3 className="font-display text-xl leading-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] break-words">
+                {venueName}
+              </h3>
+              {featured && (
+                <span className="shrink-0 rounded-full border border-gold/60 bg-gold/20 backdrop-blur-sm px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
+                  {t(lang).card.featured}
+                </span>
+              )}
+              {isPartner && (
+                <span className="shrink-0 rounded-full border border-evergreen/60 bg-evergreen/20 backdrop-blur-sm px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white">
+                  {t(lang).card.partner}
+                </span>
+              )}
+            </div>
+            {freshest.venueClaimedAt !== null && (
+              <div className="shrink-0">
+                <OwnerVerifiedBadge />
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="p-4 pt-5 flex flex-col gap-1">
-      <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none pb-2 border-b border-border">
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
-          {featured && (
-            <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
-              {t(lang).card.featured}
-            </span>
-          )}
-          {isPartner && (
-            <span className="shrink-0 rounded-full border border-evergreen/40 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
-              {t(lang).card.partner}
-            </span>
-          )}
+      {photoId === null ? (
+        <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none pb-2 border-b border-border">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <h3 className="font-display text-xl leading-tight text-foreground break-words">{venueName}</h3>
+            {featured && (
+              <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gold">
+                {t(lang).card.featured}
+              </span>
+            )}
+            {isPartner && (
+              <span className="shrink-0 rounded-full border border-evergreen/40 bg-evergreen/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-evergreen">
+                {t(lang).card.partner}
+              </span>
+            )}
+          </div>
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            {specials.length > 1 && (
+              <span className="text-[11px] text-muted-2 uppercase tracking-wide">
+                {specials.length} specials
+              </span>
+            )}
+            {freshest.venueClaimedAt !== null && <OwnerVerifiedBadge />}
+            <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
+            <SaveVenueButton
+              venueId={venueId}
+              venueName={venueName}
+              regionSlug={regionSlug}
+              lang={lang}
+              className="pointer-events-auto"
+            />
+          </div>
         </div>
-        <div className="shrink-0 flex flex-col items-end gap-1">
+      ) : (
+        <div className="relative z-10 flex items-center justify-end gap-2 pointer-events-none pb-2 border-b border-border">
           {specials.length > 1 && (
             <span className="text-[11px] text-muted-2 uppercase tracking-wide">
               {specials.length} specials
             </span>
           )}
-          {freshest.venueClaimedAt !== null && <OwnerVerifiedBadge />}
-          <VerifiedBadge lastVerifiedAt={freshest.lastVerifiedAt} lang={lang} />
           <SaveVenueButton
             venueId={venueId}
             venueName={venueName}
@@ -94,7 +144,7 @@ export function SpecialVenueGroup({
             className="pointer-events-auto"
           />
         </div>
-      </div>
+      )}
 
       <ul className="flex flex-col divide-y divide-border">
         {visible.map((s) => (
