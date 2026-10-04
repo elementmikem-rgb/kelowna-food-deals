@@ -96,7 +96,7 @@ export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?:
       <div className="flex items-center justify-between mt-1">
         {stale ? (
           <span className="text-[11px] text-stale">
-            stale — {formatVerifiedRelative(event.lastVerifiedAt)}
+            stale -- {formatVerifiedRelative(event.lastVerifiedAt)}
           </span>
         ) : event.venueId === null && event.sourceUrl ? (
           <a

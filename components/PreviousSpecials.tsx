@@ -39,7 +39,7 @@ export function PreviousSpecials({
                   <Link href={`/${regionSlug}/venues/${s.venueId}`} className="font-medium hover:underline">
                     {s.venueName}
                   </Link>{" "}
-                  — {s.title}
+                  -- {s.title}
                 </span>
                 <span className="text-xs text-muted-2">
                   {CATEGORY_LABELS[lang][s.category]}

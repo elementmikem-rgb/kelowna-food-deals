@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const region = await getCurrentRegion();
   const areaName = region.brandName.split(" ")[0];
   const title = `${areaName} Live Music & Events Tonight`;
-  const description = `Live music, trivia, karaoke, and sports nights happening at ${areaName} bars and restaurants — checked and verified, not a stale calendar.`;
+  const description = `Live music, trivia, karaoke, and sports nights happening at ${areaName} bars and restaurants -- checked and verified, not a stale calendar.`;
   return {
     title,
     description,
@@ -58,7 +58,7 @@ export default async function EventsPage() {
       <SiteHeader
         active="events"
         heading={`${areaName} Live Music & Events Tonight`}
-        subtitle="Live music, trivia, and karaoke nights around town — verified, not guessed."
+        subtitle="Live music, trivia, and karaoke nights around town -- verified, not guessed."
       />
 
       <SubmitEventCTA regionSlug={region.slug} />

@@ -93,7 +93,7 @@ export function EventVenueGroup({
 
       {hiddenCount > 0 && (
         <p className="relative z-10 pointer-events-none mt-1 pt-2 border-t border-dashed border-border text-xs font-medium text-accent-dim">
-          + {hiddenCount} more — view all {events.length} events →
+          + {hiddenCount} more -- view all {events.length} events →
         </p>
       )}
 

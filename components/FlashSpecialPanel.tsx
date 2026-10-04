@@ -60,7 +60,7 @@ export function FlashSpecialPanel({
         {claimState === "idle" && (soldOut ? "Claimed out" : "I'm claiming this")}
         {claimState === "sending" && "Sending…"}
         {claimState === "claimed" && "Claimed!"}
-        {claimState === "error" && "Failed — try again"}
+        {claimState === "error" && "Failed -- try again"}
       </button>
     </div>
   );

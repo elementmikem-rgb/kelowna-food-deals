@@ -202,7 +202,7 @@ export function BookingFlow({
   if (step === "checkout") {
     return (
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-3">
-        <p className="text-sm text-foreground/90">Email verified — ready to pay.</p>
+        <p className="text-sm text-foreground/90">Email verified -- ready to pay.</p>
         {error && <p className="text-sm text-stale">{error}</p>}
         <button
           onClick={goToCheckout}
@@ -218,7 +218,7 @@ export function BookingFlow({
   if (step === "sent") {
     return (
       <p className="text-sm text-muted">
-        Check {email} for a confirmation link — it expires in 15 minutes.
+        Check {email} for a confirmation link -- it expires in 15 minutes.
       </p>
     );
   }
@@ -368,7 +368,7 @@ export function BookingFlow({
 
       {availability === "checking" && <p className="text-xs text-muted-2">Checking availability…</p>}
       {availability === "unavailable" && (
-        <p className="text-xs text-stale">Not available for those dates — try a different range.</p>
+        <p className="text-xs text-stale">Not available for those dates -- try a different range.</p>
       )}
       {availability === "available" && startDate && endDate && (() => {
         const days = daysInclusive(startDate, endDate);

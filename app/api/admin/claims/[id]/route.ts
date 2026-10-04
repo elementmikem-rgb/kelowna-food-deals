@@ -173,7 +173,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         await sendOutreachEmail({
           to: outcome.email,
           subject: outcome.isNewOwner
-            ? `You're approved — manage your ${region.brandName} listing`
+            ? `You're approved -- manage your ${region.brandName} listing`
             : `New location added to your ${region.brandName} account`,
           htmlContent,
           senderName: region.brandName,

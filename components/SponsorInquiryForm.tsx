@@ -45,7 +45,7 @@ export function SponsorInquiryForm() {
   if (status === "done") {
     return (
       <div className="rounded-xl border border-border bg-surface p-6 text-center">
-        <p className="font-display text-xl text-foreground mb-1">Thanks — got it</p>
+        <p className="font-display text-xl text-foreground mb-1">Thanks -- got it</p>
         <p className="text-sm text-muted">
           We'll follow up at {email} soon. A confirmation is on its way to your inbox too.
         </p>

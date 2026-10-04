@@ -69,7 +69,7 @@ export function BoostedEventsPanel({
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground/90">
-                  {e.title} <span className="text-muted-2">— {e.venueName}</span>
+                  {e.title} <span className="text-muted-2">-- {e.venueName}</span>
                 </span>
                 <span className="text-xs text-muted-2">until {formatCheckedAt(e.boostedUntil)}</span>
               </div>

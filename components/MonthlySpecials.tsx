@@ -23,7 +23,7 @@ export function MonthlySpecials({
     return (
       <section className="flex flex-col gap-3">
         <p className="text-muted-2 text-sm py-8 text-center">
-          No {monthName.toLowerCase()} specials listed yet — check back soon, or see{" "}
+          No {monthName.toLowerCase()} specials listed yet -- check back soon, or see{" "}
           <a href={`/${regionSlug}`} className="text-accent-dim underline">
             today&apos;s specials
           </a>{" "}

@@ -93,49 +93,49 @@ export function buildFeaturedPitchHtml(p: PitchParams): { subject: string; html:
 
   if (lang === "fr") {
     const proofLineFr = p.regionMonthlyVisitors
-      ? `<p style="margin:0 0 16px;">${p.brandName} reçoit environ ${p.regionMonthlyVisitors.toLocaleString("fr-CA")} visites par mois de gens qui cherchent où sortir ce soir — en ce moment, ce trafic atterrit sur l'établissement que le tirage quotidien met au sommet.</p>`
-      : `<p style="margin:0 0 16px;">En ce moment, la position de <strong>${p.venueName}</strong> sur la page d'accueil est déterminée par un tirage quotidien — les mêmes chances que toutes les autres fiches.</p>`;
+      ? `<p style="margin:0 0 16px;">${p.brandName} reçoit environ ${p.regionMonthlyVisitors.toLocaleString("fr-CA")} visites par mois de gens qui cherchent où sortir ce soir -- en ce moment, ce trafic atterrit sur l'établissement que le tirage quotidien met au sommet.</p>`
+      : `<p style="margin:0 0 16px;">En ce moment, la position de <strong>${p.venueName}</strong> sur la page d'accueil est déterminée par un tirage quotidien -- les mêmes chances que toutes les autres fiches.</p>`;
 
     const bodyFr = `
     <p style="margin:0 0 16px;">Bonjour,</p>
     <p style="margin:0 0 16px;"><strong>${p.venueName}</strong> est déjà en ligne sur ${p.brandName} :
     <a href="${venueUrl}" style="color:${ACCENT};">votre fiche</a>.</p>
     ${proofLineFr}
-    <p style="margin:0 0 20px;">Le placement Featured épingle votre fiche en tête chaque jour pendant toute la durée de la campagne, avec un badge doré, pour 3 $/jour. Aucune conception nécessaire, pas de contrat — choisissez vos dates et c'est en ligne le jour même.</p>
+    <p style="margin:0 0 20px;">Le placement Featured épingle votre fiche en tête chaque jour pendant toute la durée de la campagne, avec un badge doré, pour 3 $/jour. Aucune conception nécessaire, pas de contrat -- choisissez vos dates et c'est en ligne le jour même.</p>
     <p style="margin:0 0 20px;">
       <a href="${advertiseUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
       padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">Voir les tarifs Featured</a>
     </p>
-    <p style="margin:0 0 16px;">Si ce n'est pas utile pour l'instant, pas de problème — je voulais juste vous le faire savoir.</p>
+    <p style="margin:0 0 16px;">Si ce n'est pas utile pour l'instant, pas de problème -- je voulais juste vous le faire savoir.</p>
     <p style="margin:24px 0 0;">Merci,<br>Mike</p>
   `;
 
     return {
-      subject: `${p.venueName} — en tête de liste?`,
+      subject: `${p.venueName} -- en tête de liste?`,
       html: wrap(p.brandName, logoUrl, bodyFr, p.mailingAddress, p.unsubscribeUrl, lang),
     };
   }
 
   const proofLine = p.regionMonthlyVisitors
-    ? `<p style="margin:0 0 16px;">${p.brandName} gets around ${p.regionMonthlyVisitors.toLocaleString()} visits a month from people deciding where to go tonight — right now that traffic lands on whichever venue the daily shuffle happens to put on top.</p>`
-    : `<p style="margin:0 0 16px;">Right now, where <strong>${p.venueName}</strong> lands on the homepage is a daily shuffle — same odds as every other listing.</p>`;
+    ? `<p style="margin:0 0 16px;">${p.brandName} gets around ${p.regionMonthlyVisitors.toLocaleString()} visits a month from people deciding where to go tonight -- right now that traffic lands on whichever venue the daily shuffle happens to put on top.</p>`
+    : `<p style="margin:0 0 16px;">Right now, where <strong>${p.venueName}</strong> lands on the homepage is a daily shuffle -- same odds as every other listing.</p>`;
 
   const body = `
     <p style="margin:0 0 16px;">Hey,</p>
     <p style="margin:0 0 16px;"><strong>${p.venueName}</strong> is already live on ${p.brandName}:
     <a href="${venueUrl}" style="color:${ACCENT};">your listing</a>.</p>
     ${proofLine}
-    <p style="margin:0 0 20px;">Featured placement pins your card to the top every day for as long as it runs, with a gold badge, for $3/day. No design work, no contract — pick your dates and it's live same day.</p>
+    <p style="margin:0 0 20px;">Featured placement pins your card to the top every day for as long as it runs, with a gold badge, for $3/day. No design work, no contract -- pick your dates and it's live same day.</p>
     <p style="margin:0 0 20px;">
       <a href="${advertiseUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
       padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">See Featured pricing</a>
     </p>
-    <p style="margin:0 0 16px;">If it's not useful right now, no worries at all — just wanted you to know it's there.</p>
+    <p style="margin:0 0 16px;">If it's not useful right now, no worries at all -- just wanted you to know it's there.</p>
     <p style="margin:24px 0 0;">Thanks,<br>Mike</p>
   `;
 
   return {
-    subject: `${p.venueName} — top of the list?`,
+    subject: `${p.venueName} -- top of the list?`,
     html: wrap(p.brandName, logoUrl, body, p.mailingAddress, p.unsubscribeUrl, lang),
   };
 }
@@ -155,44 +155,44 @@ export function buildFollowUpPitchHtml(
   if (lang === "fr") {
     const bodyFr = p.specificSpecialOrEventTitle
       ? `
-    <p style="margin:0 0 16px;">Petit suivi —</p>
-    <p style="margin:0 0 16px;">Puisque ${p.venueName} a déjà <strong>${p.specificSpecialOrEventTitle}</strong> en ligne, un Boost pourrait mettre juste cet élément en avant pour ses dates — 2 $/jour, sans engagement continu.</p>
+    <p style="margin:0 0 16px;">Petit suivi --</p>
+    <p style="margin:0 0 16px;">Puisque ${p.venueName} a déjà <strong>${p.specificSpecialOrEventTitle}</strong> en ligne, un Boost pourrait mettre juste cet élément en avant pour ses dates -- 2 $/jour, sans engagement continu.</p>
     <p style="margin:0 0 20px;">
       <a href="${advertiseUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
       padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">Jeter un coup d'oeil</a>
     </p>
-    <p style="margin:0;">Autrement, ça me va aussi — merci dans tous les cas.</p>
+    <p style="margin:0;">Autrement, ça me va aussi -- merci dans tous les cas.</p>
   `
       : `
-    <p style="margin:0 0 16px;">Petit suivi sur la note Featured de la semaine dernière —</p>
+    <p style="margin:0 0 16px;">Petit suivi sur la note Featured de la semaine dernière --</p>
     <p style="margin:0 0 20px;">Pas de problème si ce n'est pas le bon moment. Si un jour vous voulez que ${p.venueName} soit épinglé en tête, la mise en place prend deux minutes : <a href="${advertiseUrl}" style="color:${ACCENT};">${advertiseUrl}</a></p>
     <p style="margin:0;">Dans tous les cas, merci de faire partie du site.</p>
   `;
 
     return {
-      subject: `Suivi — ${p.venueName}`,
+      subject: `Suivi -- ${p.venueName}`,
       html: wrap(p.brandName, logoUrl, bodyFr, p.mailingAddress, p.unsubscribeUrl, lang),
     };
   }
 
   const body = p.specificSpecialOrEventTitle
     ? `
-    <p style="margin:0 0 16px;">Quick follow-up —</p>
-    <p style="margin:0 0 16px;">Since ${p.venueName} already has <strong>${p.specificSpecialOrEventTitle}</strong> listed, a Boost would put just that one item top billing for its dates — $2/day, no ongoing commitment.</p>
+    <p style="margin:0 0 16px;">Quick follow-up --</p>
+    <p style="margin:0 0 16px;">Since ${p.venueName} already has <strong>${p.specificSpecialOrEventTitle}</strong> listed, a Boost would put just that one item top billing for its dates -- $2/day, no ongoing commitment.</p>
     <p style="margin:0 0 20px;">
       <a href="${advertiseUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
       padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">Take a look</a>
     </p>
-    <p style="margin:0;">Otherwise, happy to leave it be — thanks either way.</p>
+    <p style="margin:0;">Otherwise, happy to leave it be -- thanks either way.</p>
   `
     : `
-    <p style="margin:0 0 16px;">Quick follow-up on the Featured note from last week —</p>
+    <p style="margin:0 0 16px;">Quick follow-up on the Featured note from last week --</p>
     <p style="margin:0 0 20px;">Totally fine if it's not the right time. If you ever want ${p.venueName} pinned to the top, it's a two-minute setup: <a href="${advertiseUrl}" style="color:${ACCENT};">${advertiseUrl}</a></p>
     <p style="margin:0;">Either way, thanks for being part of the site.</p>
   `;
 
   return {
-    subject: `Following up — ${p.venueName}`,
+    subject: `Following up -- ${p.venueName}`,
     html: wrap(p.brandName, logoUrl, body, p.mailingAddress, p.unsubscribeUrl, lang),
   };
 }

@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
   if (!region) return {};
 
   const siteUrl = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`;
-  const title = `${region.brandName} — Food & Drink Deals Today`;
-  const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} — happy hours and deals, checked regularly, not scraped.`;
+  const title = `${region.brandName} -- Food & Drink Deals Today`;
+  const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} -- happy hours and deals, checked regularly, not scraped.`;
 
   return {
-    title: { default: title, template: `%s — ${region.brandName}` },
+    title: { default: title, template: `%s -- ${region.brandName}` },
     description,
     applicationName: region.brandName,
     appleWebApp: { capable: true, statusBarStyle: "default", title: region.brandName },

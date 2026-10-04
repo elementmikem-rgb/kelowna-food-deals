@@ -310,7 +310,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
 
       {extractUnreadable && (
         <p className="text-xs text-stale">
-          Unable to display extracted data — the stored AI result doesn&apos;t match the expected
+          Unable to display extracted data -- the stored AI result doesn&apos;t match the expected
           shape.
         </p>
       )}
@@ -336,7 +336,7 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
       {extracted && totalItems === 0 && (
         <>
           <p className="text-xs text-stale">
-            {submission.aiNotes ?? "AI found nothing to auto-extract — check the raw text/photo yourself."}
+            {submission.aiNotes ?? "AI found nothing to auto-extract -- check the raw text/photo yourself."}
           </p>
           <div className="flex gap-2">
             {submission.isNewVenue && (

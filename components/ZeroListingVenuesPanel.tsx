@@ -48,7 +48,7 @@ export function ZeroListingVenuesPanel({ venues }: { venues: ZeroListingVenue[] 
                 <span className="text-[11px] text-muted-2">
                   Previously confirmed empty{" "}
                   {v.checkedNoListingsAt.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" })}
-                  {v.checkedNoListingsNote ? ` — ${v.checkedNoListingsNote}` : ""} (due for a recheck)
+                  {v.checkedNoListingsNote ? ` -- ${v.checkedNoListingsNote}` : ""} (due for a recheck)
                 </span>
               )}
             </div>
@@ -67,7 +67,7 @@ export function ZeroListingVenuesPanel({ venues }: { venues: ZeroListingVenue[] 
               disabled={busyId === v.id}
               className="press-pill shrink-0 rounded-full border border-border px-3 py-1.5 text-xs hover:border-muted disabled:opacity-50"
             >
-              Nothing to find — don&apos;t recheck
+              Nothing to find -- don&apos;t recheck
             </button>
           </div>
         </li>

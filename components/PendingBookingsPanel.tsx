@@ -41,7 +41,7 @@ export function PendingBookingsPanel({ pending }: { pending: PendingBooking[] })
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-foreground/90">
-                    {b.productType} — {b.venueName ?? "unknown venue"}
+                    {b.productType} -- {b.venueName ?? "unknown venue"}
                     {b.specialTitle ? ` (${b.specialTitle})` : ""}
                     {b.eventTitle ? ` (${b.eventTitle})` : ""}
                     {b.category ? ` (${b.category})` : ""}
@@ -53,7 +53,7 @@ export function PendingBookingsPanel({ pending }: { pending: PendingBooking[] })
                   </span>
                   {b.conflictDetected && (
                     <span className="text-xs text-stale">
-                      Conflict: another booking now overlaps these dates — check before approving.
+                      Conflict: another booking now overlaps these dates -- check before approving.
                     </span>
                   )}
                 </div>

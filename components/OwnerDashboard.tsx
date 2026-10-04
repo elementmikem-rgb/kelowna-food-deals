@@ -1027,7 +1027,7 @@ function OwnerOnboarding({ creditBalance, onDismiss }: { creditBalance: number; 
         <li className="flex gap-2">
           <span className="text-muted">1.</span>
           <span>
-            Your listing is now yours to manage — add or edit specials, events, and menu items any time from
+            Your listing is now yours to manage -- add or edit specials, events, and menu items any time from
             this page.
           </span>
         </li>
@@ -1041,7 +1041,7 @@ function OwnerOnboarding({ creditBalance, onDismiss }: { creditBalance: number; 
         <li className="flex gap-2">
           <span className="text-muted">3.</span>
           <span>
-            Spend them under <strong>Promote this venue</strong> below — pin your card to the top of the
+            Spend them under <strong>Promote this venue</strong> below -- pin your card to the top of the
             homepage, boost a specific special, or sponsor a category.
           </span>
         </li>
@@ -1087,7 +1087,7 @@ function DigestPreferenceToggle({ initialOptOut }: { initialOptOut: boolean }) {
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium text-foreground/90">Weekly stats email</span>
         <span className="text-xs text-muted">
-          {optOut ? "Off — you won't get weekly view stats." : "On — a weekly summary of your listing's views."}
+          {optOut ? "Off -- you won't get weekly view stats." : "On -- a weekly summary of your listing's views."}
         </span>
       </div>
       <button
@@ -1137,8 +1137,8 @@ function PasswordSection({ hasPassword: initialHasPassword }: { hasPassword: boo
           <span className="text-sm font-medium text-foreground/90">Password login</span>
           <span className="text-xs text-muted">
             {hasPassword
-              ? "Set — you can log in with your email and password, or still use an emailed link."
-              : "Not set — you can only log in via an emailed link right now."}
+              ? "Set -- you can log in with your email and password, or still use an emailed link."
+              : "Not set -- you can only log in via an emailed link right now."}
           </span>
         </div>
         {!editing && (

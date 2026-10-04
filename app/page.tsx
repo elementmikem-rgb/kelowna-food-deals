@@ -82,7 +82,7 @@ export default async function CityPickerPage() {
           <span className="hand-underline">Todays</span>Tab
         </h1>
         <p className="text-muted">
-          Every listing pulled straight from the venue&apos;s own site, checked regularly — no stale
+          Every listing pulled straight from the venue&apos;s own site, checked regularly -- no stale
           social posts, no guessing. Pick your city.
         </p>
         {specialCount > 0 && (
@@ -108,7 +108,7 @@ export default async function CityPickerPage() {
         <div className="flex-1 flex flex-col gap-1">
           <span className="font-display text-lg text-foreground">1. Straight from the source</span>
           <span className="text-sm text-muted">
-            Every listing comes from the venue&apos;s own website or menu, checked regularly — never
+            Every listing comes from the venue&apos;s own website or menu, checked regularly -- never
             copied from an old social post or a stale directory.
           </span>
         </div>
@@ -121,7 +121,7 @@ export default async function CityPickerPage() {
         <div className="flex-1 flex flex-col gap-1">
           <span className="font-display text-lg text-foreground">3. You keep it honest</span>
           <span className="text-sm text-muted">
-            Spot something off? Confirm or report it in one tap — the board updates from real visits.
+            Spot something off? Confirm or report it in one tap -- the board updates from real visits.
           </span>
         </div>
       </div>

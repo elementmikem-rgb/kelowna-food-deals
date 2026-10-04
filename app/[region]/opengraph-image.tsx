@@ -75,7 +75,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          What&apos;s actually on today — verified, not guessed.
+          What&apos;s actually on today -- verified, not guessed.
         </div>
       </div>
     ),

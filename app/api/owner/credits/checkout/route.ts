@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         {
           price_data: {
             currency: "cad",
-            product_data: { name: `${bundle.name} — ${bundle.credits} credits` },
+            product_data: { name: `${bundle.name} -- ${bundle.credits} credits` },
             unit_amount: bundle.priceCents,
           },
           quantity: 1,

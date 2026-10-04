@@ -9,7 +9,7 @@ export function VerifiedBadge({ lastVerifiedAt, lang = "en" }: { lastVerifiedAt:
   if (stale) {
     return (
       <span className="font-mono-tabular text-xs text-stale">
-        stale — {verifiedText}
+        stale -- {verifiedText}
       </span>
     );
   }

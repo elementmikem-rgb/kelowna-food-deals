@@ -66,7 +66,7 @@ export function SubmitForm({
       return;
     }
     if (isNewVenue && !newVenueAddress.trim()) {
-      setError("Add the venue's address — helps us find and verify it.");
+      setError("Add the venue's address -- helps us find and verify it.");
       return;
     }
     if (!text.trim() && !photo) {
@@ -115,7 +115,7 @@ export function SubmitForm({
     if (isNewVenue) {
       return (
         <div className="rounded-xl border border-border bg-surface p-6 text-center">
-          <p className="font-display text-xl text-foreground mb-1">Thanks — got it</p>
+          <p className="font-display text-xl text-foreground mb-1">Thanks -- got it</p>
           <p className="text-sm text-muted">
             We&apos;ll verify {newVenueName.trim() || "this venue"} is a real, current spot and add it
             {result.totalItems > 0
@@ -154,7 +154,7 @@ export function SubmitForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs text-muted-2 -mt-1">
-        No account needed. Takes 30 seconds — a person checks every submission before it goes
+        No account needed. Takes 30 seconds -- a person checks every submission before it goes
         live.
       </p>
       <div className="flex flex-col gap-1">
@@ -208,7 +208,7 @@ export function SubmitForm({
             />
           </div>
           <p className="text-xs text-muted-2">
-            We&apos;ll verify this is a real, current venue before adding it — new venues always
+            We&apos;ll verify this is a real, current venue before adding it -- new venues always
             get a human check first.
           </p>
         </div>
@@ -223,14 +223,14 @@ export function SubmitForm({
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
-          placeholder='e.g. "Wing night Tuesdays, $0.75 each, 4-9pm" or "Live music every Friday at 8pm, no cover" — or just add a photo below'
+          placeholder='e.g. "Wing night Tuesdays, $0.75 each, 4-9pm" or "Live music every Friday at 8pm, no cover" -- or just add a photo below'
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm resize-none"
         />
       </div>
 
       <div className="flex flex-col gap-1">
         <label className="text-sm text-muted" htmlFor="photo">
-          Or add a photo — a menu board, chalkboard, flyer, even a whole bulletin board
+          Or add a photo -- a menu board, chalkboard, flyer, even a whole bulletin board
         </label>
         <div className="flex items-center gap-3">
           <label
@@ -251,7 +251,7 @@ export function SubmitForm({
           />
         </div>
         <p className="text-xs text-muted-2">
-          We&apos;ll pull out every special, event, and menu item we can clearly see — no need to
+          We&apos;ll pull out every special, event, and menu item we can clearly see -- no need to
           pick a type, and no need to crop to just one thing.
         </p>
       </div>

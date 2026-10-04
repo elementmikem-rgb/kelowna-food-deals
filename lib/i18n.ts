@@ -40,7 +40,7 @@ export const strings = {
       confirmDeal: "Confirm this deal",
       reportIncorrect: "Report incorrect",
       checkedVerifiedToday: "✓ checked verified today",
-      fullDetails: (venueName: string) => `${venueName} — full menu, hours, and details`,
+      fullDetails: (venueName: string) => `${venueName} -- full menu, hours, and details`,
       featured: "Featured",
       partner: "Partner",
       save: "Save",
@@ -51,7 +51,7 @@ export const strings = {
       sending: "Sending…",
       confirmThanks: "Thanks!",
       reported: "Reported",
-      failedTryAgain: "Failed — try again",
+      failedTryAgain: "Failed -- try again",
       confirmEvent: "Confirm this event",
       free: "Free",
       cover: (price: string) => `${price} cover`,
@@ -93,7 +93,7 @@ export const strings = {
     about: {
       heading: "About this site",
       submitLink: "submit an update",
-      submitTrailer: "page — every tip gets checked before it goes live.",
+      submitTrailer: "page -- every tip gets checked before it goes live.",
       seeWrong: "See something wrong, or a place we're missing? Use the",
     },
     faq: {
@@ -119,7 +119,7 @@ export const strings = {
     },
     verified: {
       badge: "verified",
-      subtitle: "What's actually on today — verified, not guessed.",
+      subtitle: "What's actually on today -- verified, not guessed.",
     },
     previousSpecials: {
       heading: "Previously Featured",
@@ -127,7 +127,7 @@ export const strings = {
       replaced: "replaced",
     },
     introCallout: {
-      text: "Also tracking live music, trivia, and karaoke nights around town —",
+      text: "Also tracking live music, trivia, and karaoke nights around town --",
       link: "see what's on tonight",
       tellUs: "Spot something missing? Tell us",
     },
@@ -155,7 +155,7 @@ export const strings = {
       confirmDeal: "Confirmer cette offre",
       reportIncorrect: "Signaler une erreur",
       checkedVerifiedToday: "✓ vérifié aujourd'hui",
-      fullDetails: (venueName: string) => `${venueName} — menu complet, horaires et détails`,
+      fullDetails: (venueName: string) => `${venueName} -- menu complet, horaires et détails`,
       featured: "En vedette",
       partner: "Partenaire",
       save: "Sauvegarder",
@@ -166,7 +166,7 @@ export const strings = {
       sending: "Envoi…",
       confirmThanks: "Merci!",
       reported: "Signalé",
-      failedTryAgain: "Échec — réessayez",
+      failedTryAgain: "Échec -- réessayez",
       confirmEvent: "Confirmer cet événement",
       free: "Gratuit",
       cover: (price: string) => `${price} entrée`,
@@ -210,7 +210,7 @@ export const strings = {
     about: {
       heading: "À propos de ce site",
       submitLink: "soumettre une mise à jour",
-      submitTrailer: "— chaque suggestion est vérifiée avant d'être publiée.",
+      submitTrailer: "-- chaque suggestion est vérifiée avant d'être publiée.",
       seeWrong: "Une erreur, ou un endroit qui manque? Utilisez la page",
     },
     faq: {
@@ -236,7 +236,7 @@ export const strings = {
     },
     verified: {
       badge: "vérifié",
-      subtitle: "Ce qui se passe vraiment aujourd'hui — vérifié, pas deviné.",
+      subtitle: "Ce qui se passe vraiment aujourd'hui -- vérifié, pas deviné.",
     },
     previousSpecials: {
       heading: "Anciennement en vedette",
@@ -244,7 +244,7 @@ export const strings = {
       replaced: "remplacé",
     },
     introCallout: {
-      text: "On suit aussi la musique live, les jeux-questionnaires et les soirées karaoké en ville —",
+      text: "On suit aussi la musique live, les jeux-questionnaires et les soirées karaoké en ville --",
       link: "voir ce qui se passe ce soir",
       tellUs: "Un endroit manquant? Dites-le-nous",
     },

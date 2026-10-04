@@ -322,7 +322,7 @@ export async function POST(req: NextRequest) {
         return {
           price_data: {
             currency: "cad",
-            product_data: { name: `${b.productType} placement — ${venue?.name ?? "your venue"} (auto-renews monthly)` },
+            product_data: { name: `${b.productType} placement -- ${venue?.name ?? "your venue"} (auto-renews monthly)` },
             unit_amount: b.priceCents,
             recurring: { interval: "month" as const, interval_count: 1 },
           },
@@ -357,7 +357,7 @@ export async function POST(req: NextRequest) {
         return {
           price_data: {
             currency: "cad",
-            product_data: { name: `${b.productType} placement — ${venue?.name ?? "your venue"}` },
+            product_data: { name: `${b.productType} placement -- ${venue?.name ?? "your venue"}` },
             unit_amount: b.priceCents,
           },
           quantity: 1,

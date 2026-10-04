@@ -72,7 +72,7 @@ export function CategorySponsorPanel({
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Category sponsorship</h2>
       <p className="text-sm text-muted">
-        &ldquo;Wing Nights presented by X&rdquo; — a sponsor name shown under a category or event-type
+        &ldquo;Wing Nights presented by X&rdquo; -- a sponsor name shown under a category or event-type
         filter pill, one per region.
       </p>
 
@@ -87,7 +87,7 @@ export function CategorySponsorPanel({
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground/90">
-                  {labelFor(s.kind, s.category)} — {s.sponsorName}
+                  {labelFor(s.kind, s.category)} -- {s.sponsorName}
                 </span>
                 <span className="text-xs text-muted-2">
                   {regionNameById.get(s.regionId) ?? "region"} ·{" "}

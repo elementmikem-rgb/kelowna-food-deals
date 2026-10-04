@@ -6,7 +6,7 @@ import { getCurrentRegion } from "@/lib/regions";
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getCurrentRegion();
   return {
-    title: `Thank you — ${region.brandName}`,
+    title: `Thank you -- ${region.brandName}`,
     robots: { index: false, follow: false },
   };
 }

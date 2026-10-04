@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   const price = formatPrice(data.priceCents);
   await sendPushToRegion(venue.regionId, {
     title: `Flash deal at ${venue.name}`,
-    body: price ? `${data.title} — ${price}` : data.title,
+    body: price ? `${data.title} -- ${price}` : data.title,
     url: `/${venue.regionSlug}`,
   });
 

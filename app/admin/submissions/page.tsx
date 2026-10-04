@@ -65,12 +65,12 @@ export default async function AdminSubmissionsPage() {
       </h1>
       {priorityCount > 0 && (
         <p className="text-xs text-gold font-medium -mt-3">
-          {priorityCount} from featured venues — shown first
+          {priorityCount} from featured venues -- shown first
         </p>
       )}
 
       {rows.length === 0 ? (
-        <p className="text-muted-2 text-sm">Nothing waiting — you&apos;re caught up.</p>
+        <p className="text-muted-2 text-sm">Nothing waiting -- you&apos;re caught up.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {rows.map((r) => (

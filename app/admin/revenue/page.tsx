@@ -177,7 +177,7 @@ export default async function AdminRevenuePage({
                 <div className="flex flex-col min-w-0">
                   <span className="text-foreground/90 truncate">
                     {s.venueName ?? "Unknown venue"}
-                    {s.specialTitle ? ` — ${s.specialTitle}` : ""}
+                    {s.specialTitle ? ` -- ${s.specialTitle}` : ""}
                   </span>
                   <span className="text-xs text-muted-2">
                     {PRODUCT_LABELS[s.productType]} · next renewal {s.endDate}
@@ -215,7 +215,7 @@ export default async function AdminRevenuePage({
               <div className="flex flex-col min-w-0">
                 <span className="text-foreground/90 truncate">
                   {b.venueName ?? "Unknown venue"}
-                  {b.specialTitle ? ` — ${b.specialTitle}` : ""}
+                  {b.specialTitle ? ` -- ${b.specialTitle}` : ""}
                 </span>
                 <span className="text-xs text-muted-2">
                   {PRODUCT_LABELS[b.productType]} ·{" "}

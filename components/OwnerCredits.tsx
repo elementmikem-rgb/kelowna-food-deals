@@ -63,7 +63,7 @@ export function OwnerCredits({ venueId, balance, bundles }: { venueId: number; b
               disabled={buyingId !== null}
               className="press-pill rounded-full bg-accent text-background px-3 py-1.5 text-xs font-medium disabled:opacity-50"
             >
-              {buyingId === b.id ? "Redirecting…" : `Buy — ${formatPrice(b.priceCents)}`}
+              {buyingId === b.id ? "Redirecting…" : `Buy -- ${formatPrice(b.priceCents)}`}
             </button>
           </div>
         ))}

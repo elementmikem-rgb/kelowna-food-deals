@@ -84,7 +84,7 @@ export function ChatTermSponsorsPanel({
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground/90">
-                  &ldquo;{s.term}&rdquo; — {s.venueName}
+                  &ldquo;{s.term}&rdquo; -- {s.venueName}
                 </span>
                 <span className="text-xs text-muted-2">
                   {regionNameById.get(s.regionId) ?? "region"} · ${(s.priceCentsPerDay / 100).toFixed(2)}/day ·

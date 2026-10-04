@@ -48,13 +48,13 @@ export function FlaggedSpecialsPanel({
           <div className="flex flex-col gap-1.5 min-w-0">
             <p className="text-sm font-medium text-foreground">{f.title}</p>
             <p className="text-xs text-muted">
-              {f.venueName} — flagged {f.disputeCount} time{f.disputeCount === 1 ? "" : "s"}
+              {f.venueName} -- flagged {f.disputeCount} time{f.disputeCount === 1 ? "" : "s"}
             </p>
             <ul className="flex flex-col gap-0.5">
               {f.reasons.map((r, i) => (
                 <li key={i} className="text-xs text-muted-2">
                   {r.reason ? REASON_LABELS[r.reason] ?? r.reason : "No reason given"}
-                  {r.note ? ` — "${r.note}"` : ""}
+                  {r.note ? ` -- "${r.note}"` : ""}
                 </li>
               ))}
             </ul>

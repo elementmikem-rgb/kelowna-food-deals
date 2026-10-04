@@ -57,7 +57,7 @@ export function EventCard({
       <Link
         href={`/${regionSlug}/venues/${event.venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
-        aria-label={`${event.venueName} — ${event.title}, view full details`}
+        aria-label={`${event.venueName} -- ${event.title}, view full details`}
       />
 
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none">

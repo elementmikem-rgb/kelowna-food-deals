@@ -114,7 +114,7 @@ export default function CityFinder({ regions }: { regions: CityOption[] }) {
             const cityName = await reverseGeocodeCityName(latitude, longitude);
             setLocateError(
               cityName
-                ? `We're not in ${cityName} yet — browse the list below.`
+                ? `We're not in ${cityName} yet -- browse the list below.`
                 : "Couldn't match your location to a city we cover yet."
             );
             return;
@@ -133,7 +133,7 @@ export default function CityFinder({ regions }: { regions: CityOption[] }) {
         }
       },
       () => {
-        setLocateError("Location access was blocked — try searching instead.");
+        setLocateError("Location access was blocked -- try searching instead.");
         setLocating(false);
       },
       { timeout: 8000 }
@@ -199,7 +199,7 @@ export default function CityFinder({ regions }: { regions: CityOption[] }) {
 
       {filtered.length === 0 ? (
         <p className="text-sm text-muted text-center">
-          No city matches &ldquo;{query}&rdquo; yet — we&apos;re adding new ones all the time.
+          No city matches &ldquo;{query}&rdquo; yet -- we&apos;re adding new ones all the time.
         </p>
       ) : (
         <div className="flex flex-col gap-10">

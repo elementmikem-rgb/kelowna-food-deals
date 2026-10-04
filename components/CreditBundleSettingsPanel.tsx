@@ -40,7 +40,7 @@ export function CreditBundleSettingsPanel({ initial }: { initial: BundleRow[] })
       <h2 className="font-display text-xl text-foreground">Credit bundle settings</h2>
       <p className="text-sm text-muted">
         Prepaid credit tiers venues can buy (1 credit = $1 of spend). Currently illustrative
-        placeholder numbers — set real prices before announcing this.
+        placeholder numbers -- set real prices before announcing this.
       </p>
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (

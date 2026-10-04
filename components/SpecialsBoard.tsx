@@ -291,7 +291,7 @@ export function SpecialsBoard({
           {grouped.flash.length > 0 && (
             <section className="flex flex-col gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-danger">
-                Flash deals — happening now
+                Flash deals -- happening now
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
                 {grouped.flash.map((g) => (

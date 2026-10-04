@@ -21,7 +21,7 @@ export function ExpiringSoonPanel({ items }: { items: ExpiringSoonItem[] }) {
             <div className="flex flex-col">
               <span className="text-sm font-medium text-foreground/90">
                 {item.venueName}
-                {item.detail ? ` — ${item.detail}` : ""}
+                {item.detail ? ` -- ${item.detail}` : ""}
               </span>
               <span className="text-xs text-muted-2">{item.kind}</span>
             </div>

@@ -120,7 +120,7 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
 
       <p className="text-sm text-foreground/90">
         {claim.name}
-        {claim.role && <span className="text-muted"> — {claim.role}</span>}
+        {claim.role && <span className="text-muted"> -- {claim.role}</span>}
       </p>
       <p className="text-xs text-muted">
         {claim.email}
@@ -128,7 +128,7 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
       </p>
       {claim.venueContactEmail && claim.venueContactEmail.toLowerCase() !== claim.email.toLowerCase() ? (
         <p className="text-xs text-stale">
-          On-file contact for this venue is {claim.venueContactEmail} — doesn&apos;t match. Verify
+          On-file contact for this venue is {claim.venueContactEmail} -- doesn&apos;t match. Verify
           before approving.
         </p>
       ) : claim.venueContactEmail && (
@@ -140,14 +140,14 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
           creates a brand-new owner unless the admin explicitly picks "Link" below. */}
       {claim.chainSuggestion && (
         <p className="text-xs text-gold">
-          Part of the {claim.chainSuggestion.chainName} chain — already claimed:{" "}
+          Part of the {claim.chainSuggestion.chainName} chain -- already claimed:{" "}
           {claim.chainSuggestion.otherClaimedVenues.join(", ")}.
         </p>
       )}
       {claim.ownerMatch && !linkedOwner && (
         <p className="text-xs text-gold">
           Email/phone matches existing owner <strong>{claim.ownerMatch.name}</strong> (owns:{" "}
-          {claim.ownerMatch.venues.join(", ")}) — approving will automatically link this venue to
+          {claim.ownerMatch.venues.join(", ")}) -- approving will automatically link this venue to
           that account instead of creating a new one.
         </p>
       )}
@@ -180,7 +180,7 @@ export function AdminClaimRow({ claim }: { claim: ClaimRowData }) {
             autoFocus
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="Why? (e.g. no specials to publish yet) — optional but helps a later follow-up"
+            placeholder="Why? (e.g. no specials to publish yet) -- optional but helps a later follow-up"
             className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs"
           />
           <div className="flex gap-2">

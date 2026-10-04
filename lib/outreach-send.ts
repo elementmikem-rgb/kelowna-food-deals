@@ -74,26 +74,26 @@ function buildHasDataText(
   return language === "fr" ? `
 Bonjour,
 
-Je gère ${brandName} — un site qui répertorie les happy hours et les offres bouffe/boisson dans le coin. J'ai ajouté ${venueName} à notre liste : ${venueUrl}
+Je gère ${brandName} -- un site qui répertorie les happy hours et les offres bouffe/boisson dans le coin. J'ai ajouté ${venueName} à notre liste : ${venueUrl}
 
 C'est basé sur ce que j'ai trouvé sur votre site, mais je préfère confirmer avec vous plutôt que de me tromper. Confirmer que vos spéciaux sont exacts : ${verifyUrl}
 
 Si vous avez des spéciaux ou des événements qui ne sont pas sur votre site mais que vous voudriez faire savoir aux gens, répondez simplement ici et je les ajoute.
 
-En passant — si vous vouliez un jour que votre fiche apparaisse en tête de la page d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça : ${advertiseUrl}. Aucune pression, c'est juste pour vous le signaler.
+En passant -- si vous vouliez un jour que votre fiche apparaisse en tête de la page d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça : ${advertiseUrl}. Aucune pression, c'est juste pour vous le signaler.
 
 Merci,
 Mike
   ` : `
 Hey there,
 
-I run ${brandName} — a site that tracks happy hours and food/drink deals around the area. I've got ${venueName} listed here: ${venueUrl}
+I run ${brandName} -- a site that tracks happy hours and food/drink deals around the area. I've got ${venueName} listed here: ${venueUrl}
 
 That's built from what I could find on your site, but I'd rather double-check with you than guess wrong. Confirm your specials are accurate: ${verifyUrl}
 
 If you've got specials or events that aren't on your website but you'd want people to know about, just reply here and I'll add them.
 
-Separately — if you'd ever want your listing to pin to the top of the homepage, or push a specific special or seasonal menu, there's a paid option for that too: ${advertiseUrl}. No pressure either way, just flagging it's there.
+Separately -- if you'd ever want your listing to pin to the top of the homepage, or push a specific special or seasonal menu, there's a paid option for that too: ${advertiseUrl}. No pressure either way, just flagging it's there.
 
 Thanks,
 Mike
@@ -107,26 +107,26 @@ function buildEmptyListingText(
   return language === "fr" ? `
 Bonjour,
 
-Je gère ${brandName} — un site qui répertorie les happy hours et les offres bouffe/boisson dans le coin, et j'aimerais y ajouter ${venueName}. J'ai commencé une fiche pour vous ici : ${venueUrl}
+Je gère ${brandName} -- un site qui répertorie les happy hours et les offres bouffe/boisson dans le coin, et j'aimerais y ajouter ${venueName}. J'ai commencé une fiche pour vous ici : ${venueUrl}
 
-Je n'ai trouvé aucun happy hour, spécial du jour ou événement récurrent publié publiquement pour vous, donc la fiche est vide pour l'instant. Si vous avez quelque chose du genre — un happy hour, une soirée ailes de poulet, de la musique live, peu importe — répondez simplement ici avec les détails et je l'ajoute, gratuitement.
+Je n'ai trouvé aucun happy hour, spécial du jour ou événement récurrent publié publiquement pour vous, donc la fiche est vide pour l'instant. Si vous avez quelque chose du genre -- un happy hour, une soirée ailes de poulet, de la musique live, peu importe -- répondez simplement ici avec les détails et je l'ajoute, gratuitement.
 
-Et si vous n'avez rien de tel, pas de souci — je voulais juste vérifier avant de supposer.
+Et si vous n'avez rien de tel, pas de souci -- je voulais juste vérifier avant de supposer.
 
-En passant — si vous vouliez un jour que votre fiche apparaisse en tête de la page d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça : ${advertiseUrl}. Aucune pression, c'est juste pour vous le signaler.
+En passant -- si vous vouliez un jour que votre fiche apparaisse en tête de la page d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça : ${advertiseUrl}. Aucune pression, c'est juste pour vous le signaler.
 
 Merci,
 Mike
   ` : `
 Hey there,
 
-I run ${brandName} — a site that tracks happy hours and food/drink deals around the area, and I'd love to feature ${venueName}. I've got a page started for you here: ${venueUrl}
+I run ${brandName} -- a site that tracks happy hours and food/drink deals around the area, and I'd love to feature ${venueName}. I've got a page started for you here: ${venueUrl}
 
-I couldn't find a happy hour, daily special, or recurring event publicly posted anywhere for you yet, so the listing's sitting empty for now. If you run anything like that — a happy hour, a wing night, live music, whatever — just reply here with the details and I'll get it added, free.
+I couldn't find a happy hour, daily special, or recurring event publicly posted anywhere for you yet, so the listing's sitting empty for now. If you run anything like that -- a happy hour, a wing night, live music, whatever -- just reply here with the details and I'll get it added, free.
 
-And if you don't run anything like that, no worries at all — just figured I'd ask before assuming.
+And if you don't run anything like that, no worries at all -- just figured I'd ask before assuming.
 
-Separately — if you'd ever want your listing to pin to the top of the homepage, or push a specific special or seasonal menu, there's a paid option for that too: ${advertiseUrl}. No pressure either way, just flagging it's there.
+Separately -- if you'd ever want your listing to pin to the top of the homepage, or push a specific special or seasonal menu, there's a paid option for that too: ${advertiseUrl}. No pressure either way, just flagging it's there.
 
 Thanks,
 Mike
@@ -141,7 +141,7 @@ function buildHasDataHtml(
 ): string {
   return language === "fr" ? `
         <p style="margin:0 0 16px;">Bonjour,</p>
-        <p style="margin:0 0 16px;">Je gère ${brandName} — un site qui répertorie les happy hours et les offres
+        <p style="margin:0 0 16px;">Je gère ${brandName} -- un site qui répertorie les happy hours et les offres
         bouffe/boisson dans le coin. J'ai ajouté <strong>${venueName}</strong> à notre liste :</p>
         <p style="margin:0 0 20px;">
           <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
@@ -155,13 +155,13 @@ function buildHasDataHtml(
         </p>
         <p style="margin:0 0 16px;">Si vous avez des spéciaux ou des événements qui ne sont pas sur votre site mais
         que vous voudriez faire savoir aux gens, répondez simplement ici et je les ajoute.</p>
-        <p style="margin:0 0 16px;">En passant — si vous vouliez un jour que votre fiche apparaisse en tête de la page
+        <p style="margin:0 0 16px;">En passant -- si vous vouliez un jour que votre fiche apparaisse en tête de la page
         d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça :
         <a href="${advertiseUrl}" style="color:${ACCENT_DIM};">${advertiseUrl}</a>. Aucune pression, c'est juste pour vous le signaler.</p>
         <p style="margin:24px 0 0;">Merci,<br>Mike</p>
   ` : `
         <p style="margin:0 0 16px;">Hey there,</p>
-        <p style="margin:0 0 16px;">I run ${brandName} — a site that tracks happy hours and food/drink deals
+        <p style="margin:0 0 16px;">I run ${brandName} -- a site that tracks happy hours and food/drink deals
         around the area. I've got <strong>${venueName}</strong> listed here:</p>
         <p style="margin:0 0 20px;">
           <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
@@ -176,7 +176,7 @@ function buildHasDataHtml(
         <p style="margin:0 0 16px;">If you've got specials or events that
         aren't on your website but you'd want people to know about, just reply here and I'll add
         them.</p>
-        <p style="margin:0 0 16px;">Separately — if you'd ever want your listing to pin to the top of the homepage, or
+        <p style="margin:0 0 16px;">Separately -- if you'd ever want your listing to pin to the top of the homepage, or
         push a specific special or seasonal menu, there's a paid option for that too:
         <a href="${advertiseUrl}" style="color:${ACCENT_DIM};">${advertiseUrl}</a>. No pressure either way, just flagging it's there.</p>
         <p style="margin:24px 0 0;">Thanks,<br>Mike</p>
@@ -192,25 +192,25 @@ function buildEmptyListingHtml(
 ): string {
   return language === "fr" ? `
         <p style="margin:0 0 16px;">Bonjour,</p>
-        <p style="margin:0 0 16px;">Je gère ${brandName} — un site qui répertorie les happy hours et les offres
+        <p style="margin:0 0 16px;">Je gère ${brandName} -- un site qui répertorie les happy hours et les offres
         bouffe/boisson dans le coin, et j'aimerais y ajouter <strong>${venueName}</strong>. J'ai commencé une fiche pour vous ici :</p>
         <p style="margin:0 0 20px;">
           <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
           padding:10px 20px;border-radius:999px;font-size:14px;font-weight:bold;">Voir votre fiche</a>
         </p>
         <p style="margin:0 0 16px;">Je n'ai trouvé aucun happy hour, spécial du jour ou événement récurrent publié
-        publiquement pour vous, donc la fiche est vide pour l'instant. Si vous avez quelque chose du genre — un happy
-        hour, une soirée ailes de poulet, de la musique live, peu importe — répondez simplement ici avec les détails
+        publiquement pour vous, donc la fiche est vide pour l'instant. Si vous avez quelque chose du genre -- un happy
+        hour, une soirée ailes de poulet, de la musique live, peu importe -- répondez simplement ici avec les détails
         et je l'ajoute, gratuitement.</p>
-        <p style="margin:0 0 16px;">Et si vous n'avez rien de tel, pas de souci — je voulais juste vérifier avant de
+        <p style="margin:0 0 16px;">Et si vous n'avez rien de tel, pas de souci -- je voulais juste vérifier avant de
         supposer.</p>
-        <p style="margin:0 0 16px;">En passant — si vous vouliez un jour que votre fiche apparaisse en tête de la page
+        <p style="margin:0 0 16px;">En passant -- si vous vouliez un jour que votre fiche apparaisse en tête de la page
         d'accueil, ou mettre en avant un spécial ou un menu saisonnier, il y a une option payante pour ça :
         <a href="${advertiseUrl}" style="color:${ACCENT_DIM};">${advertiseUrl}</a>. Aucune pression, c'est juste pour vous le signaler.</p>
         <p style="margin:24px 0 0;">Merci,<br>Mike</p>
   ` : `
         <p style="margin:0 0 16px;">Hey there,</p>
-        <p style="margin:0 0 16px;">I run ${brandName} — a site that tracks happy hours and food/drink deals
+        <p style="margin:0 0 16px;">I run ${brandName} -- a site that tracks happy hours and food/drink deals
         around the area, and I'd love to feature <strong>${venueName}</strong>. I've got a page started for you here:</p>
         <p style="margin:0 0 20px;">
           <a href="${venueUrl}" style="display:inline-block;background:${ACCENT};color:#fffaf0;text-decoration:none;
@@ -218,11 +218,11 @@ function buildEmptyListingHtml(
         </p>
         <p style="margin:0 0 16px;">I couldn't find a happy hour, daily special, or recurring event
         publicly posted anywhere for you yet, so the listing's sitting empty for now. If you run
-        anything like that — a happy hour, a wing night, live music, whatever — just reply here
+        anything like that -- a happy hour, a wing night, live music, whatever -- just reply here
         with the details and I'll get it added, free.</p>
-        <p style="margin:0 0 16px;">And if you don't run anything like that, no worries at all —
+        <p style="margin:0 0 16px;">And if you don't run anything like that, no worries at all --
         just figured I'd ask before assuming.</p>
-        <p style="margin:0 0 16px;">Separately — if you'd ever want your listing to pin to the top of the homepage, or
+        <p style="margin:0 0 16px;">Separately -- if you'd ever want your listing to pin to the top of the homepage, or
         push a specific special or seasonal menu, there's a paid option for that too:
         <a href="${advertiseUrl}" style="color:${ACCENT_DIM};">${advertiseUrl}</a>. No pressure either way, just flagging it's there.</p>
         <p style="margin:24px 0 0;">Thanks,<br>Mike</p>
@@ -281,7 +281,7 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
   const footerText = buildFooterText(unsubscribeUrl, region.mailingAddress, lang);
 
   const subject = hasData
-    ? (lang === "fr" ? `Un mot rapide sur ${venue.name} — ${region.brandName}` : `Quick one about ${venue.name} on ${region.brandName}`)
+    ? (lang === "fr" ? `Un mot rapide sur ${venue.name} -- ${region.brandName}` : `Quick one about ${venue.name} on ${region.brandName}`)
     : (lang === "fr" ? `J'ai commencé une fiche pour ${venue.name} sur ${region.brandName}` : `Got a listing started for ${venue.name} on ${region.brandName}`);
 
   const verifyUrl = buildVenueVerifyUrl(venue.id, region.slug);

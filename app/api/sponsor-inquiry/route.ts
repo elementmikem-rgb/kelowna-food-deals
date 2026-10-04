@@ -41,12 +41,12 @@ export async function POST(req: NextRequest) {
   await db.insert(inboundEmails).values({
     venueId: null,
     fromEmail: email,
-    fromName: `${name} — ${business}`,
+    fromName: `${name} -- ${business}`,
     subject: "Sponsorship inquiry",
     textBody: message,
   });
 
-  const autoReplySubject = "Thanks for reaching out — Kelowna Food Deals";
+  const autoReplySubject = "Thanks for reaching out -- Kelowna Food Deals";
   const autoReplyHtml = [
     `<p>Hi ${escapeHtml(name)},</p>`,
     "<p>Thanks for your interest in advertising with Kelowna Food Deals! We've got your message and will follow up soon.</p>",

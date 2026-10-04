@@ -39,7 +39,7 @@ export function MonetizationSettingsPanel({ initial }: { initial: SettingsRow[] 
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Monetization settings</h2>
       <p className="text-sm text-muted">
-        Real prices and caps for the self-serve booking system — set these before announcing it.
+        Real prices and caps for the self-serve booking system -- set these before announcing it.
       </p>
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (

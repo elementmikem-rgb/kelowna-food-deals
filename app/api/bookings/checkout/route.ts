@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
         {
           price_data: {
             currency: "cad",
-            product_data: { name: `${selection.productType} placement — ${region.brandName}` },
+            product_data: { name: `${selection.productType} placement -- ${region.brandName}` },
             unit_amount: priceCents,
           },
           quantity: 1,

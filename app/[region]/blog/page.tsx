@@ -10,14 +10,14 @@ import { getEffectiveLanguage } from "@/lib/i18n";
 const content = {
   en: {
     metaDesc:
-      "Guides to Kelowna food and drink specials, happy hours, and wing nights — grounded in what we've actually verified, not generic filler.",
+      "Guides to Kelowna food and drink specials, happy hours, and wing nights -- grounded in what we've actually verified, not generic filler.",
     subtitle: "Guides to what's actually going on around town.",
     sponsored: "Sponsored",
     readMore: "Read more →",
   },
   fr: {
     metaDesc:
-      "Guides sur les spéciaux repas et boissons, les heures d'apéro et les soirées thématiques — vérifiés sur place, pas du contenu générique.",
+      "Guides sur les spéciaux repas et boissons, les heures d'apéro et les soirées thématiques -- vérifiés sur place, pas du contenu générique.",
     subtitle: "Guides sur ce qui se passe vraiment en ville.",
     sponsored: "Commandité",
     readMore: "Lire la suite →",

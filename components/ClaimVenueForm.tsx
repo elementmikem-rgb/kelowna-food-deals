@@ -43,7 +43,7 @@ export function ClaimVenueForm({ venueId, venueName }: { venueId: number; venueN
       <div className="rounded-xl border border-border bg-surface p-6 text-center">
         <p className="font-display text-xl text-foreground mb-1">Request sent</p>
         <p className="text-sm text-muted">
-          We&apos;ll verify this is really you and follow up by email — usually within a day or
+          We&apos;ll verify this is really you and follow up by email -- usually within a day or
           two.
         </p>
       </div>
@@ -53,7 +53,7 @@ export function ClaimVenueForm({ venueId, venueName }: { venueId: number; venueN
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs text-muted-2 -mt-1">
-        No account needed yet — we&apos;ll verify your claim on {venueName} and email you a login
+        No account needed yet -- we&apos;ll verify your claim on {venueName} and email you a login
         link once approved.
       </p>
 

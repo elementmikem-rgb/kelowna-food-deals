@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   // an ancestor template to a descendant's resolved title too, not just to
   // page-level strings. Only the region layout owns a template, for its own
   // subtree's plain-string page titles (Advertise, Archive, etc.).
-  title: "TodaysTab — Local Food & Drink Deals",
+  title: "TodaysTab -- Local Food & Drink Deals",
   description: "Real food and drink specials, checked regularly -- pick your city to see what's on today.",
   manifest: "/manifest.json",
   openGraph: { type: "website", locale: "en_CA", url: SITE_URL, siteName: "TodaysTab" },

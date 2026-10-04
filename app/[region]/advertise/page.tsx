@@ -49,18 +49,18 @@ const copy: Record<Language, AdvertiseCopy> = {
     subtitle: (city) =>
       `Feature your venue or promote a seasonal special to ${city} diners.`,
     intro: (city) =>
-      `TodaysTab shows ${city} diners which happy hours, food specials, and events are actually running today — checked and updated daily instead of left to rot on an old social post. Here's how to get your venue in front of them.`,
+      `TodaysTab shows ${city} diners which happy hours, food specials, and events are actually running today -- checked and updated daily instead of left to rot on an old social post. Here's how to get your venue in front of them.`,
     threeWaysHeading: "Four ways to get more visibility",
     pickDatesBody:
-      "Pick a venue and dates, see the price up front, pay securely — every booking is reviewed before it goes live.",
-    expiredError: "That link expired — please start again below.",
+      "Pick a venue and dates, see the price up front, pay securely -- every booking is reviewed before it goes live.",
+    expiredError: "That link expired -- please start again below.",
     perDay: "/day",
     featured: {
       title: "Featured placement",
       body: (
         <>
           Your venue&apos;s card pins to the top of the homepage specials board <em>and</em> the
-          events board — every day, for as long as the placement runs. Comes with a gold
+          events board -- every day, for as long as the placement runs. Comes with a gold
           &ldquo;Featured&rdquo; badge on both.
         </>
       ),
@@ -68,24 +68,24 @@ const copy: Record<Language, AdvertiseCopy> = {
     },
     boost: {
       title: "Seasonal boost",
-      body: "One specific special or event — a holiday menu, a game-day deal, a live music night — gets top billing for its exact date window. A one-time push instead of an ongoing commitment.",
+      body: "One specific special or event -- a holiday menu, a game-day deal, a live music night -- gets top billing for its exact date window. A one-time push instead of an ongoing commitment.",
       photoAddOn: (price) => ` Add a photo or event poster for +${price}/day.`,
       bestFor: "a one-time push around something specific, not an ongoing commitment.",
     },
     categorySponsors: {
       title: "Category sponsorship",
-      body: "Your brand attached to a specific category sitewide — a specials category (Wing Nights, Happy Hour) or an event type (Live Music, Trivia) — shown right under the filter whenever a diner picks it.",
+      body: "Your brand attached to a specific category sitewide -- a specials category (Wing Nights, Happy Hour) or an event type (Live Music, Trivia) -- shown right under the filter whenever a diner picks it.",
       bestFor:
         "owning a whole category even on days your card doesn't win the daily rotation.",
     },
     chatTermSponsor: {
       title: "Chat term sponsorship",
-      body: "Own a word in our Ask chat — pick a term like \"beer\" or \"trivia,\" and your venue gets mentioned alongside the real best answer whenever a visitor's question is genuinely about it. One owner per term per region at a time.",
+      body: "Own a word in our Ask chat -- pick a term like \"beer\" or \"trivia,\" and your venue gets mentioned alongside the real best answer whenever a visitor's question is genuinely about it. One owner per term per region at a time.",
       bestFor: "getting named in the actual conversation, not just a sidebar.",
     },
     closingHeading: "Not sure which one fits?",
     closingBody:
-      "Send us a quick note instead — tell us what you're trying to promote and we'll suggest the right option, or something custom if none of the four above fit.",
+      "Send us a quick note instead -- tell us what you're trying to promote and we'll suggest the right option, or something custom if none of the four above fit.",
   },
   fr: {
     metaTitle: "Annoncez avec nous",
@@ -94,18 +94,18 @@ const copy: Record<Language, AdvertiseCopy> = {
     subtitle: (city) =>
       `Faites ressortir votre établissement ou faites la promotion d'un spécial saisonnier auprès des clients de ${city}.`,
     intro: (city) =>
-      `TodaysTab montre aux clients de ${city} quelles heures heureuses, quels spéciaux et quels événements sont vraiment en cours aujourd'hui — vérifiés et mis à jour chaque jour, et non laissés à moisir dans un vieux message sur les réseaux sociaux. Voici comment faire apparaître votre établissement.`,
+      `TodaysTab montre aux clients de ${city} quelles heures heureuses, quels spéciaux et quels événements sont vraiment en cours aujourd'hui -- vérifiés et mis à jour chaque jour, et non laissés à moisir dans un vieux message sur les réseaux sociaux. Voici comment faire apparaître votre établissement.`,
     threeWaysHeading: "Quatre façons d'augmenter votre visibilité",
     pickDatesBody:
-      "Choisissez un établissement et des dates, voyez le prix à l'avance, payez en toute sécurité — chaque réservation est examinée avant d'être mise en ligne.",
-    expiredError: "Ce lien a expiré — veuillez recommencer ci-dessous.",
+      "Choisissez un établissement et des dates, voyez le prix à l'avance, payez en toute sécurité -- chaque réservation est examinée avant d'être mise en ligne.",
+    expiredError: "Ce lien a expiré -- veuillez recommencer ci-dessous.",
     perDay: "/jour",
     featured: {
       title: "Mise en vedette",
       body: (
         <>
           La fiche de votre établissement s&apos;affiche en haut du tableau des spéciaux{" "}
-          <em>et</em> du tableau des événements sur la page d&apos;accueil — chaque jour, pour
+          <em>et</em> du tableau des événements sur la page d&apos;accueil -- chaque jour, pour
           toute la durée du placement. Accompagnée d&apos;un badge doré{" "}
           &laquo;&nbsp;En vedette&nbsp;&raquo; sur les deux.
         </>
@@ -115,25 +115,25 @@ const copy: Record<Language, AdvertiseCopy> = {
     },
     boost: {
       title: "Coup de pouce saisonnier",
-      body: "Un spécial ou un événement précis — un menu de fête, une offre pour un grand match, une soirée de musique live — se retrouve en tête d'affiche pour sa fenêtre de dates exacte. Une mise en avant ponctuelle, sans engagement continu.",
+      body: "Un spécial ou un événement précis -- un menu de fête, une offre pour un grand match, une soirée de musique live -- se retrouve en tête d'affiche pour sa fenêtre de dates exacte. Une mise en avant ponctuelle, sans engagement continu.",
       photoAddOn: (price) => ` Ajoutez une photo ou une affiche d'événement pour +${price}/jour.`,
       bestFor:
         "une mise en avant ponctuelle autour de quelque chose de précis, sans engagement continu.",
     },
     categorySponsors: {
       title: "Commandite de catégorie",
-      body: "Votre marque associée à une catégorie précise sur tout le site — une catégorie de spéciaux (soirées ailes, happy hour) ou un type d'événement (musique live, jeu-questionnaire) — affichée juste sous le filtre dès qu'un client la sélectionne.",
+      body: "Votre marque associée à une catégorie précise sur tout le site -- une catégorie de spéciaux (soirées ailes, happy hour) ou un type d'événement (musique live, jeu-questionnaire) -- affichée juste sous le filtre dès qu'un client la sélectionne.",
       bestFor:
         "dominer une catégorie entière, même les jours où votre fiche ne remporte pas la rotation quotidienne.",
     },
     chatTermSponsor: {
       title: "Commandite de terme (clavardage)",
-      body: "Possédez un mot dans notre clavardage Ask — choisissez un terme comme « bière » ou « jeu-questionnaire », et votre établissement est mentionné aux côtés de la vraie meilleure réponse chaque fois qu'une question d'un visiteur porte vraiment sur ce terme. Un seul propriétaire par terme et par région à la fois.",
+      body: "Possédez un mot dans notre clavardage Ask -- choisissez un terme comme « bière » ou « jeu-questionnaire », et votre établissement est mentionné aux côtés de la vraie meilleure réponse chaque fois qu'une question d'un visiteur porte vraiment sur ce terme. Un seul propriétaire par terme et par région à la fois.",
       bestFor: "être nommé directement dans la conversation, pas seulement dans une barre latérale.",
     },
     closingHeading: "Vous ne savez pas laquelle choisir?",
     closingBody:
-      "Envoyez-nous un message — dites-nous ce que vous souhaitez promouvoir et nous vous suggérerons la bonne option, ou quelque chose de personnalisé si aucune des quatre ci-dessus ne convient.",
+      "Envoyez-nous un message -- dites-nous ce que vous souhaitez promouvoir et nous vous suggérerons la bonne option, ou quelque chose de personnalisé si aucune des quatre ci-dessus ne convient.",
   },
 };
 

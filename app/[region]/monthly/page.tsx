@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const region = await getCurrentRegion();
   const areaName = region.brandName.split(" ")[0];
   const title = `${areaName} Monthly Specials`;
-  const description = `Deals running all month long at ${areaName} restaurants and bars — not tied to a single day, checked and verified.`;
+  const description = `Deals running all month long at ${areaName} restaurants and bars -- not tied to a single day, checked and verified.`;
   return {
     title,
     description,
@@ -36,7 +36,7 @@ export default async function MonthlyPage() {
       <SiteHeader
         active="monthly"
         heading={`${areaName} Monthly Specials`}
-        subtitle="Running all month — not tied to a single day."
+        subtitle="Running all month -- not tied to a single day."
       />
 
       <MonthlySpecials specials={specials} timezone={timezone} regionSlug={region.slug} />

@@ -190,7 +190,7 @@ export function OwnerCart({
       endDate: autoRenew ? undefined : endDate,
       autoRenew,
       priceCents,
-      label: `${PRODUCT_LABELS[productType]}${targetLabel ? ` — ${targetLabel}` : ""} (${dateLabel})`,
+      label: `${PRODUCT_LABELS[productType]}${targetLabel ? ` -- ${targetLabel}` : ""} (${dateLabel})`,
     };
     setCart((prev) => [...prev, item]);
     setStartDate("");
@@ -355,7 +355,7 @@ export function OwnerCart({
           />
           <span className="text-xs text-muted-2">
             Whenever someone asks the Ask-chat about this term, your venue is the answer. One
-            sponsor per term at a time — if it&apos;s already taken, checkout will say so.
+            sponsor per term at a time -- if it&apos;s already taken, checkout will say so.
           </span>
         </label>
       )}

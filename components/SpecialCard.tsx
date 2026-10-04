@@ -52,7 +52,7 @@ export function SpecialCard({
       <Link
         href={`/${regionSlug}/venues/${special.venueId}`}
         className="absolute inset-0 z-0 rounded-2xl"
-        aria-label={`${special.venueName} — ${special.title}, view full details`}
+        aria-label={`${special.venueName} -- ${special.title}, view full details`}
       />
 
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 pointer-events-none">

@@ -25,7 +25,7 @@ export function RefundsNeededPanel({ refunds }: { refunds: RefundNeeded[] }) {
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-xl text-foreground">Refunds needed</h2>
       <p className="text-sm text-muted">
-        Rejected bookings that were already paid — refund these in Stripe's dashboard directly,
+        Rejected bookings that were already paid -- refund these in Stripe's dashboard directly,
         then mark done here.
       </p>
       <ul className="flex flex-col gap-2">
@@ -36,7 +36,7 @@ export function RefundsNeededPanel({ refunds }: { refunds: RefundNeeded[] }) {
           >
             <div className="flex flex-col">
               <span className="text-sm font-medium text-foreground/90">
-                {r.productType} — {formatPrice(r.priceCents)}
+                {r.productType} -- {formatPrice(r.priceCents)}
               </span>
               <span className="text-xs text-muted-2">
                 {r.buyerEmail} · payment intent: {r.stripePaymentIntentId ?? "unknown"}

@@ -219,10 +219,10 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
         {actionResult && actionResult.kind !== "forward" && (
           <span className={`text-xs ${actionResult.ok ? "text-evergreen" : "text-stale"}`}>
             {actionResult.kind === "unsubscribe" &&
-              (actionResult.ok ? "Unsubscribed." : "Unsubscribe failed — try again.")}
+              (actionResult.ok ? "Unsubscribed." : "Unsubscribe failed -- try again.")}
             {actionResult.kind === "block" &&
-              (actionResult.ok ? "Sender blocked." : "Block failed — try again.")}
-            {actionResult.kind === "delete" && "Delete failed — try again."}
+              (actionResult.ok ? "Sender blocked." : "Block failed -- try again.")}
+            {actionResult.kind === "delete" && "Delete failed -- try again."}
           </span>
         )}
       </div>
@@ -252,7 +252,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
               Send forward
             </button>
             {actionResult?.kind === "forward" && !actionResult.ok && (
-              <span className="text-xs text-stale">Forward failed — try again.</span>
+              <span className="text-xs text-stale">Forward failed -- try again.</span>
             )}
           </div>
         </div>
@@ -353,7 +353,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
               {state === "sending" ? "Sending…" : "Send"}
             </button>
             {state === "sent" && <p className="text-xs text-evergreen">Sent.</p>}
-            {state === "error" && <p className="text-xs text-stale">Failed to send — try again.</p>}
+            {state === "error" && <p className="text-xs text-stale">Failed to send -- try again.</p>}
           </div>
         </div>
       ) : (

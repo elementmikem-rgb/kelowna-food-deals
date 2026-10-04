@@ -61,7 +61,7 @@ export function SpecialRow({ special, lang = "en" }: { special: SpecialWithVenue
 
       {stale && (
         <p className="mt-1 text-[11px] text-stale">
-          stale — {formatVerifiedRelative(special.lastVerifiedAt)}
+          stale -- {formatVerifiedRelative(special.lastVerifiedAt)}
         </p>
       )}
 

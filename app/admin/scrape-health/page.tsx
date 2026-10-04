@@ -37,7 +37,7 @@ export default async function AdminScrapeHealthPage() {
         <p className="text-sm text-muted">
           Claude Haiku 4.5 usage from the nightly scrape/extraction cron, priced from tokens logged per run
           (input/output/cache read/cache write priced separately since prompt caching shipped 2026-09-16).
-          This is a floor, not the account total — it only covers runs that went through the normal cron
+          This is a floor, not the account total -- it only covers runs that went through the normal cron
           path and logged a row; a few hours of one-off backfill work in mid-September called the API
           directly and isn&apos;t counted here, which is why this reads lower than Anthropic&apos;s own
           Console for that period (confirmed 2026-09-16: Console showed $63.87 for this key over Sep 5–15,
@@ -51,7 +51,7 @@ export default async function AdminScrapeHealthPage() {
             the Anthropic Console&apos;s Cost page
           </a>
           , grouped by API key (&ldquo;Kelowna specials&rdquo;). Platform-wide, not scoped to the region
-          filter above — it&apos;s one shared job across every region.
+          filter above -- it&apos;s one shared job across every region.
         </p>
         {cronSpend.days.length === 0 ? (
           <p className="text-sm text-muted-2">No cron runs logged in the last 14 days.</p>
@@ -75,7 +75,7 @@ export default async function AdminScrapeHealthPage() {
           Recently failing ({failingVenues.length})
         </h2>
         <p className="text-sm text-muted">
-          Venues whose most recent scrape (last 3 days) errored — a genuine problem worth checking,
+          Venues whose most recent scrape (last 3 days) errored -- a genuine problem worth checking,
           not just a thin site.
         </p>
         {failingVenues.length === 0 ? (
@@ -104,7 +104,7 @@ export default async function AdminScrapeHealthPage() {
         </h2>
         <p className="text-sm text-muted">
           Active venues with no specials or events at all. Some of these genuinely have nothing
-          promotional on their site (expected) — others are a bad URL, bot-blocking, or
+          promotional on their site (expected) -- others are a bad URL, bot-blocking, or
           JS-rendered content the scraper can&apos;t see. Worth a manual spot-check periodically.
           Confirming one as &ldquo;nothing to find&rdquo; keeps it off this list for{" "}
           {ZERO_LISTING_RECHECK_DAYS} days.

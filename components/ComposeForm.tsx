@@ -59,7 +59,7 @@ export function ComposeForm({ venues }: { venues: VenueOption[] }) {
         >
           {venues.map((v) => (
             <option key={v.id} value={v.id}>
-              {v.name} — {v.contactEmail}
+              {v.name} -- {v.contactEmail}
             </option>
           ))}
           <option value={OTHER}>Other email address…</option>
@@ -108,7 +108,7 @@ export function ComposeForm({ venues }: { venues: VenueOption[] }) {
         >
           {state === "sending" ? "Sending…" : "Send"}
         </button>
-        {state === "error" && <p className="text-xs text-stale">Failed to send — try again.</p>}
+        {state === "error" && <p className="text-xs text-stale">Failed to send -- try again.</p>}
       </div>
     </div>
   );

@@ -95,7 +95,7 @@ export default async function AdminClaimsPage() {
       </h1>
 
       {rows.length === 0 ? (
-        <p className="text-muted-2 text-sm">Nothing waiting — you&apos;re caught up.</p>
+        <p className="text-muted-2 text-sm">Nothing waiting -- you&apos;re caught up.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {rowsWithSuggestions.map((r) => (

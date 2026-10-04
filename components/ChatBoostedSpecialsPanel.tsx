@@ -71,7 +71,7 @@ export function ChatBoostedSpecialsPanel({
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground/90">
-                  {s.title} <span className="text-muted-2">— {s.venueName}</span>
+                  {s.title} <span className="text-muted-2">-- {s.venueName}</span>
                 </span>
                 <span className="text-xs text-muted-2">until {formatCheckedAt(s.chatBoostedUntil)}</span>
               </div>
