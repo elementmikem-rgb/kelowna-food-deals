@@ -1,7 +1,7 @@
 {
-  "name": "Kelowna Food Deals",
-  "short_name": "KFD",
-  "description": "What food and drink specials are running in Kelowna today — verified, not guessed.",
+  "name": "TodaysTab",
+  "short_name": "TodaysTab",
+  "description": "What food and drink specials are running near you today -- verified, not guessed.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf6ef",
