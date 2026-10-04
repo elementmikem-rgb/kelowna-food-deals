@@ -216,6 +216,9 @@ export function AdminNav({
     regions
   );
 
+  const totalBadgeCount = items.reduce((sum, item) => sum + (item.badge ?? 0), 0);
+  const activeItem = items.find((item) => item.key === active);
+
   return (
     <header className="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6 bg-background/95 backdrop-blur border-b border-border">
       <div className="flex items-center justify-between gap-3 flex-wrap max-w-4xl mx-auto">
@@ -226,32 +229,31 @@ export function AdminNav({
           </span>
         </Link>
 
-        <div className="relative min-w-0 flex-1">
-          <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {items.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                data-selected={active === item.key}
-                className={`press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border whitespace-nowrap ${
-                  active === item.key
-                    ? "bg-accent text-background border-accent"
-                    : "bg-transparent text-muted border-border hover:border-muted hover:text-foreground"
-                }`}
-              >
-                {item.label}
-                {item.badge !== undefined && <Badge count={item.badge} tone={item.tone!} />}
-              </Link>
-            ))}
-          </nav>
-          {/* This row is 8 items wide and routinely overflows a phone-width
-              screen (confirmed live 2026-09-12: ~804px of content in a 390px
-              viewport) -- it already scrolls, but with no cue a mobile user
-              has no reason to think Revenue/Analytics/Flagged/Scrape health
-              exist off-screen. Same fade pattern as the public site's
-              DayTabs/CategoryFilter/CityFilter rows. */}
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent sm:hidden" />
-        </div>
+        {/* Below sm: a horizontal scroll with a fade hint turned out not to be enough --
+            confirmed live 2026-10-03 that Scrape health (a count-32 badge) sat completely
+            off-screen with no obvious cue to scroll for it. Replaced with an explicit
+            dropdown menu instead, so every section (and its badge) is always reachable
+            without guessing there's more off to the right. Desktop keeps the original
+            horizontal row -- it already fit fine there. */}
+        <MobileNavMenu items={items} active={active} totalBadgeCount={totalBadgeCount} activeLabel={activeItem?.label ?? "Menu"} />
+
+        <nav className="hidden sm:flex items-center gap-1.5 flex-1 min-w-0">
+          {items.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              data-selected={active === item.key}
+              className={`press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border whitespace-nowrap ${
+                active === item.key
+                  ? "bg-accent text-background border-accent"
+                  : "bg-transparent text-muted border-border hover:border-muted hover:text-foreground"
+              }`}
+            >
+              {item.label}
+              {item.badge !== undefined && <Badge count={item.badge} tone={item.tone!} />}
+            </Link>
+          ))}
+        </nav>
 
         <div className="flex items-center gap-2 shrink-0">
           <ScopeSwitcher
@@ -270,5 +272,65 @@ export function AdminNav({
         <span className="stamp px-2.5 py-1 text-[11px] tracking-wide">Viewing: {currentScopeLabel}</span>
       </div>
     </header>
+  );
+}
+
+function MobileNavMenu({
+  items,
+  active,
+  totalBadgeCount,
+  activeLabel,
+}: {
+  items: { key: AdminSection; href: string; label: string; badge?: number; tone?: "accent" | "evergreen" }[];
+  active: AdminSection | null;
+  totalBadgeCount: number;
+  activeLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative sm:hidden flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border border-border bg-transparent text-foreground w-full justify-between"
+      >
+        <span className="flex items-center gap-1.5 truncate">
+          {activeLabel}
+          <Badge count={totalBadgeCount} tone="accent" />
+        </span>
+        <span className="text-muted shrink-0">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <nav className="absolute left-0 right-0 top-full mt-1.5 z-20 flex flex-col gap-1 rounded-2xl border border-border bg-background p-2 shadow-lg max-h-[70vh] overflow-y-auto">
+            {items.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                data-selected={active === item.key}
+                className={`press-pill flex items-center justify-between gap-1.5 rounded-xl px-3.5 py-2 text-sm border whitespace-nowrap ${
+                  active === item.key
+                    ? "bg-accent text-background border-accent"
+                    : "bg-transparent text-muted border-transparent hover:border-muted hover:text-foreground"
+                }`}
+              >
+                {item.label}
+                {item.badge !== undefined && <Badge count={item.badge} tone={item.tone!} />}
+              </Link>
+            ))}
+          </nav>
+        </>
+      )}
+    </div>
   );
 }
