@@ -78,6 +78,9 @@ export function buildEventsJsonLd(
   regionName: string,
   timezone: string,
   provinceCode: string,
+  // Needed to build absolute image/offer/organizer URLs below -- every real
+  // caller already has region.slug in scope (see app/[region]/events/page.tsx).
+  regionSlug: string,
   // Injectable for tests (same pattern as time.ts's regionTodayISODate/
   // todayDowInRegion default `now` param) -- every real caller omits these and gets
   // the actual current date.
@@ -104,7 +107,16 @@ export function buildEventsJsonLd(
         const date =
           e.specificDate ?? (e.dayOfWeek !== null ? addDaysISO(todayISO, (e.dayOfWeek - todayDow + 7) % 7) : null);
         if (date === null) return null; // defensive -- extraction rules require one of these to be set
-        const startDate = e.startTime ? `${date}T${e.startTime}:00` : date;
+        // events.startTime/endTime are Postgres `time` columns -- Drizzle hands these
+        // back as "HH:MM:SS" strings already (confirmed via the same slice(0, 5)
+        // pattern used elsewhere, e.g. OwnerDashboard.tsx), so appending ":00" here
+        // used to double it up into an invalid "20:00:00:00" timestamp.
+        const startDate = e.startTime ? `${date}T${e.startTime}` : date;
+        // Only set when we actually have an end time -- fabricating a duration for
+        // events we never scraped one for would be worse than leaving the
+        // (non-critical) field out, per this project's no-guessing rule.
+        const endDate = e.endTime ? `${date}T${e.endTime}` : undefined;
+        const eventUrl = `${SITE_URL}/${regionSlug}/events`;
 
         return {
           "@type": "ListItem",
@@ -114,6 +126,11 @@ export function buildEventsJsonLd(
             name: e.title,
             description: e.description ?? undefined,
             startDate,
+            endDate,
+            // Our own photo if the venue/admin uploaded one for this event; never a
+            // stock or venue-logo substitute, since an inaccurate event photo is worse
+            // than none for a feature meant to show "what's actually on today."
+            image: e.hasPhoto ? `${SITE_URL}/api/events/${e.id}/photo` : undefined,
             eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
             eventStatus: "https://schema.org/EventScheduled",
             location: {
@@ -126,15 +143,26 @@ export function buildEventsJsonLd(
                 addressCountry: "CA",
               },
             },
-            offers:
-              e.coverChargeCents !== null
-                ? {
-                    "@type": "Offer",
-                    price: (e.coverChargeCents / 100).toFixed(2),
-                    priceCurrency: "CAD",
-                    availability: "https://schema.org/InStock",
-                  }
-                : undefined,
+            // The venue hosting it, not a touring act -- most events here (trivia,
+            // karaoke, sports nights) have no separate performer, and we don't have a
+            // performer field distinct from the venue to report one honestly for
+            // live_music either (title IS the act name for those, already in `name`).
+            organizer: {
+              "@type": "Organization",
+              name: e.venueName,
+              url: e.venueId !== null ? `${SITE_URL}/${regionSlug}/venues/${e.venueId}` : undefined,
+            },
+            offers: {
+              "@type": "Offer",
+              price: e.coverChargeCents !== null ? (e.coverChargeCents / 100).toFixed(2) : "0",
+              priceCurrency: "CAD",
+              availability: "https://schema.org/InStock",
+              url: eventUrl,
+              // When this listing's info was last confirmed accurate -- the honest
+              // equivalent of "when this offer became valid" for a site that verifies
+              // listings rather than selling tickets.
+              validFrom: e.lastVerifiedAt.toISOString(),
+            },
           },
         };
       })

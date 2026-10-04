@@ -84,11 +84,16 @@ describe("buildSpecialsJsonLd", () => {
 describe("buildEventsJsonLd", () => {
   it("uses specificDate directly for a one-off event", () => {
     const jsonLd = buildEventsJsonLd(
-      [fakeEvent({ specificDate: "2026-11-14", dayOfWeek: null, startTime: "20:00" })],
+      [fakeEvent({ specificDate: "2026-11-14", dayOfWeek: null, startTime: "20:00:00" })],
       "Kelowna Food Deals",
       "America/Vancouver",
-      "BC"
+      "BC",
+      "kelowna"
     );
+    // events.startTime is a Postgres `time` column -- Drizzle returns "HH:MM:SS",
+    // never "HH:MM" -- so the fixture above matches real data, not the old buggy
+    // ":00"-appending code this test caught (startDate was coming out
+    // "20:00:00:00", invalid ISO 8601).
     expect(jsonLd.itemListElement[0]!.item.startDate).toBe("2026-11-14T20:00:00");
   });
 
@@ -102,6 +107,7 @@ describe("buildEventsJsonLd", () => {
         "Kelowna Food Deals",
         "America/Vancouver",
         "BC",
+        "kelowna",
         now
       );
       const resolvedDate = jsonLd.itemListElement[0]!.item.startDate as string;
@@ -114,27 +120,100 @@ describe("buildEventsJsonLd", () => {
     }
   });
 
-  it("includes an Offer only when a cover charge is set", () => {
+  it("always includes an Offer, free (price 0) when no cover charge is set", () => {
     const withCover = buildEventsJsonLd(
-      [fakeEvent({ specificDate: "2026-11-14", coverChargeCents: 1000 })],
+      [fakeEvent({ specificDate: "2026-11-14", coverChargeCents: 1000, lastVerifiedAt: new Date("2026-10-01T00:00:00Z") })],
       "Kelowna Food Deals",
       "America/Vancouver",
-      "BC"
+      "BC",
+      "kelowna"
     );
     expect(withCover.itemListElement[0]!.item.offers).toEqual({
       "@type": "Offer",
       price: "10.00",
       priceCurrency: "CAD",
       availability: "https://schema.org/InStock",
+      url: "https://todaystab.com/kelowna/events",
+      validFrom: "2026-10-01T00:00:00.000Z",
     });
 
     const withoutCover = buildEventsJsonLd(
       [fakeEvent({ specificDate: "2026-11-14", coverChargeCents: null })],
       "Kelowna Food Deals",
       "America/Vancouver",
-      "BC"
+      "BC",
+      "kelowna"
     );
-    expect(withoutCover.itemListElement[0]!.item.offers).toBeUndefined();
+    expect(withoutCover.itemListElement[0]!.item.offers).toMatchObject({ price: "0", priceCurrency: "CAD" });
+  });
+
+  it("includes endDate only when an endTime is on file, never fabricated", () => {
+    const withEnd = buildEventsJsonLd(
+      [fakeEvent({ specificDate: "2026-11-14", startTime: "20:00:00", endTime: "23:00:00" })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    expect(withEnd.itemListElement[0]!.item.endDate).toBe("2026-11-14T23:00:00");
+
+    const withoutEnd = buildEventsJsonLd(
+      [fakeEvent({ specificDate: "2026-11-14", startTime: "20:00:00", endTime: null })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    expect(withoutEnd.itemListElement[0]!.item.endDate).toBeUndefined();
+  });
+
+  it("sets organizer to the venue, with a venue page URL when venueId is known", () => {
+    const jsonLd = buildEventsJsonLd(
+      [fakeEvent({ specificDate: "2026-11-14", venueId: 42, venueName: "The Keg" })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    expect(jsonLd.itemListElement[0]!.item.organizer).toEqual({
+      "@type": "Organization",
+      name: "The Keg",
+      url: "https://todaystab.com/kelowna/venues/42",
+    });
+  });
+
+  it("includes image only when the event has its own photo on file", () => {
+    const withPhoto = buildEventsJsonLd(
+      [fakeEvent({ id: 7, specificDate: "2026-11-14", hasPhoto: true })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    expect(withPhoto.itemListElement[0]!.item.image).toBe("https://todaystab.com/api/events/7/photo");
+
+    const withoutPhoto = buildEventsJsonLd(
+      [fakeEvent({ specificDate: "2026-11-14", hasPhoto: false })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    expect(withoutPhoto.itemListElement[0]!.item.image).toBeUndefined();
+  });
+
+  it("never double-appends seconds onto a Postgres time-column value (regression: startDate used to come out '...T20:00:00:00')", () => {
+    const jsonLd = buildEventsJsonLd(
+      [fakeEvent({ specificDate: "2026-11-14", startTime: "20:00:00" })],
+      "Kelowna Food Deals",
+      "America/Vancouver",
+      "BC",
+      "kelowna"
+    );
+    const startDate = jsonLd.itemListElement[0]!.item.startDate as string;
+    expect(startDate).toBe("2026-11-14T20:00:00");
+    expect(() => new Date(startDate).toISOString()).not.toThrow();
+    expect(Number.isNaN(new Date(startDate).getTime())).toBe(false);
   });
 
   it("uses the passed provinceCode in the event location address", () => {
@@ -142,7 +221,8 @@ describe("buildEventsJsonLd", () => {
       [fakeEvent({ specificDate: "2026-11-14" })],
       "Calgary Food Deals",
       "America/Edmonton",
-      "AB"
+      "AB",
+      "calgary"
     );
     expect(jsonLd.itemListElement[0]!.item.location.address.addressRegion).toBe("AB");
   });

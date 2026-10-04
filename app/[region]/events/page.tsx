@@ -36,7 +36,7 @@ export default async function EventsPage() {
     getRecurringEvents(region.id),
     getUpcomingOneOffEvents(region.id, timezone),
   ]);
-  const jsonLd = buildEventsJsonLd([...recurring, ...upcoming], region.brandName, timezone, province.code);
+  const jsonLd = buildEventsJsonLd([...recurring, ...upcoming], region.brandName, timezone, province.code, region.slug);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(SITE_URL, [
     { name: "Home", path: "/" },
     { name: region.brandName, path: `/${region.slug}` },

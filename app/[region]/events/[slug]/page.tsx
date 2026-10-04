@@ -59,7 +59,8 @@ export default async function EventTypeSlugPage({ params }: EventTypeSlugPagePro
     allEvents.filter((e) => e.eventType === eventType),
     region.brandName,
     timezone,
-    province.code
+    province.code,
+    region.slug
   );
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(SITE_URL, [
     { name: "Home", path: "/" },
