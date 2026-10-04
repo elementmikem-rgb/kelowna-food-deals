@@ -20,15 +20,16 @@ export default function NotFound() {
       </header>
 
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-surface p-10 text-center">
-        <p className="font-display text-3xl text-foreground">Page not found</p>
+        <p className="font-display text-3xl text-foreground">This deal expired a while ago</p>
         <p className="text-sm text-muted max-w-sm">
-          That page doesn't exist, or the venue may have closed. Try today's specials instead.
+          That page is gone, or the venue closed up shop. The specials that are
+          actually running today are one click away.
         </p>
         <Link
           href="/"
           className="press-pill rounded-full bg-accent text-background px-5 py-2 text-sm font-medium"
         >
-          Back to specials
+          Back to today's specials
         </Link>
       </div>
 
