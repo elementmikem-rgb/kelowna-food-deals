@@ -420,6 +420,12 @@ export const eventType = [
 ] as const;
 export type EventType = (typeof eventType)[number];
 
+// Mirrored as a local literal type in lib/time.ts (same reasoning as that file's
+// other duplicated-not-imported enums) so client components resolving a monthly
+// date never pull this server module's drizzle/postgres dependencies.
+export const monthlyOccurrence = ["1st", "2nd", "3rd", "4th", "last"] as const;
+export type MonthlyOccurrence = (typeof monthlyOccurrence)[number];
+
 export const events = specialsSchema.table("events", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }), // null for events at a place not in our venues table (e.g. a winery hosting a concert)
@@ -433,6 +439,13 @@ export const events = specialsSchema.table("events", {
   eventType: text("event_type").$type<EventType>().notNull(),
   dayOfWeek: smallint("day_of_week"), // recurring weekly event; null if one-off
   specificDate: date("specific_date"), // one-off event on this exact date; null if recurring
+  // Only meaningful alongside a non-null dayOfWeek -- narrows "every Wednesday" down
+  // to a single week of the month (e.g. a venue's "Open Mic, last Saturday of the
+  // month" night). Null means the plain weekly case: every occurrence of dayOfWeek.
+  // There's no column for "every 2nd and 4th Tuesday"-style multi-week patterns --
+  // that's rare enough to handle as two separate rows if it ever comes up, same as
+  // a special that runs on multiple non-adjacent days already gets split.
+  monthlyOccurrence: text("monthly_occurrence").$type<MonthlyOccurrence>(),
   startTime: time("start_time"),
   endTime: time("end_time"),
   coverChargeCents: integer("cover_charge_cents"), // null = free / not stated

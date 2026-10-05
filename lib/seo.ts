@@ -1,6 +1,6 @@
 import type { SpecialWithVenue } from "./data";
 import type { EventWithVenue } from "./events-data";
-import { todayDowInRegion, regionTodayISODate, addDaysISO, isStale } from "./time";
+import { todayDowInRegion, regionTodayISODate, addDaysISO, isStale, resolveMonthlyOccurrenceISODate } from "./time";
 
 const MAX_JSONLD_ITEMS = 80;
 
@@ -104,8 +104,16 @@ export function buildEventsJsonLd(
         // "Trivia every Tuesday") gets the SOONEST upcoming occurrence of that
         // weekday, same simplification most sites make for structured data (the
         // page's own copy still says "every Tuesday" for a human reader).
+        // A monthly-pinned recurrence (e.g. "last Saturday of the month") needs the
+        // real matching calendar date, not just the next occurrence of that weekday
+        // -- otherwise structured data claims it's happening this week every week.
         const date =
-          e.specificDate ?? (e.dayOfWeek !== null ? addDaysISO(todayISO, (e.dayOfWeek - todayDow + 7) % 7) : null);
+          e.specificDate ??
+          (e.dayOfWeek !== null
+            ? e.monthlyOccurrence !== null
+              ? resolveMonthlyOccurrenceISODate(e.dayOfWeek, e.monthlyOccurrence, todayISO)
+              : addDaysISO(todayISO, (e.dayOfWeek - todayDow + 7) % 7)
+            : null);
         if (date === null) return null; // defensive -- extraction rules require one of these to be set
         // events.startTime/endTime are Postgres `time` columns -- Drizzle hands these
         // back as "HH:MM:SS" strings already (confirmed via the same slice(0, 5)

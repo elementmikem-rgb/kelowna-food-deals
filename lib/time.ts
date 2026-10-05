@@ -130,6 +130,86 @@ export function dowFullName(dow: number, lang: Language = "en"): string {
   return dowFullNameLocalized(dow, lang);
 }
 
+export type MonthlyOccurrence = "1st" | "2nd" | "3rd" | "4th" | "last";
+
+const OCCURRENCE_INDEX: Record<Exclude<MonthlyOccurrence, "last">, number> = {
+  "1st": 0,
+  "2nd": 1,
+  "3rd": 2,
+  "4th": 3,
+};
+
+// The one candidate date in a given month matching "Nth/last <weekday>" -- e.g.
+// (2026, 9, 5 /* Saturday */, "last") -> the last Saturday of October 2026. Returns
+// null for an "Nth" occurrence that doesn't exist that month (a 5th-Tuesday month
+// has no "4th Tuesday" after the... no, a "4th" always exists; only a hypothetical
+// future "5th" slot would miss some months -- kept as a null-returning guard anyway
+// since the caller already has to loop to the next month for "last" near a month
+// boundary, so handling "doesn't exist" the same way costs nothing extra).
+function monthlyOccurrenceCandidate(
+  year: number,
+  monthIndex0: number,
+  dayOfWeek: number,
+  occurrence: MonthlyOccurrence
+): Date | null {
+  if (occurrence === "last") {
+    const nextMonthFirst = new Date(Date.UTC(year, monthIndex0 + 1, 1));
+    const lastOfMonth = new Date(nextMonthFirst.getTime() - 24 * 60 * 60 * 1000);
+    const diff = (lastOfMonth.getUTCDay() - dayOfWeek + 7) % 7;
+    return new Date(Date.UTC(year, monthIndex0, lastOfMonth.getUTCDate() - diff));
+  }
+  const firstOfMonth = new Date(Date.UTC(year, monthIndex0, 1));
+  const offset = (dayOfWeek - firstOfMonth.getUTCDay() + 7) % 7;
+  const date = new Date(Date.UTC(year, monthIndex0, 1 + offset + OCCURRENCE_INDEX[occurrence] * 7));
+  return date.getUTCMonth() === monthIndex0 ? date : null;
+}
+
+// Resolves a "Nth/last <weekday> of the month" recurrence (e.g. "Open Mic, last
+// Saturday of the month") to the next real calendar date on or after fromISODate --
+// the monthly-aware counterpart to the plain weekly case's addDaysISO((dow - today
+// + 7) % 7). Structured data and any "upcoming" display need a real date, not just
+// a day-of-week, or a monthly event reads as happening every week it doesn't.
+export function resolveMonthlyOccurrenceISODate(
+  dayOfWeek: number,
+  occurrence: MonthlyOccurrence,
+  fromISODate: string
+): string {
+  const from = new Date(`${fromISODate}T00:00:00Z`);
+  let year = from.getUTCFullYear();
+  let month = from.getUTCMonth();
+  // At most 2 months out: this month's occurrence may have already passed, and an
+  // "Nth" occurrence can't fail to exist for more than one month running.
+  for (let i = 0; i < 3; i++) {
+    const candidate = monthlyOccurrenceCandidate(year, month, dayOfWeek, occurrence);
+    if (candidate && candidate.getTime() >= from.getTime()) {
+      return candidate.toISOString().slice(0, 10);
+    }
+    month += 1;
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+  }
+  // Unreachable in practice (every month has a "last" and at least a "1st" through
+  // "4th" of any weekday) -- falls back to the month-start search origin rather than
+  // throwing inside a display/SEO path.
+  return fromISODate;
+}
+
+export function monthlyOccurrenceLabel(
+  occurrence: MonthlyOccurrence,
+  dow: number,
+  lang: Language = "en"
+): string {
+  const day = dowFullNameLocalized(dow, lang);
+  if (lang === "fr") {
+    const prefix = occurrence === "last" ? "dernier" : occurrence;
+    return `${day} -- ${prefix} du mois`;
+  }
+  const prefix = occurrence === "last" ? "Last" : `${occurrence}`;
+  return `${prefix} ${day} of the month`;
+}
+
 const STALE_DAYS = 60;
 
 export function daysSince(date: Date, now: Date = new Date()): number {

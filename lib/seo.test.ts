@@ -50,6 +50,7 @@ function fakeEvent(overrides: Partial<EventWithVenue> = {}): EventWithVenue {
     description: null,
     eventType: "trivia",
     dayOfWeek: null,
+    monthlyOccurrence: null,
     specificDate: null,
     startTime: null,
     endTime: null,
@@ -214,6 +215,21 @@ describe("buildEventsJsonLd", () => {
     expect(startDate).toBe("2026-11-14T20:00:00");
     expect(() => new Date(startDate).toISOString()).not.toThrow();
     expect(Number.isNaN(new Date(startDate).getTime())).toBe(false);
+  });
+
+  it("resolves a monthly-pinned recurring event to the real matching date, not just the next weekday", () => {
+    // Oct 31 2026 is the last Saturday of October -- a plain weekly resolution from
+    // an Oct 5 "now" would wrongly land on Oct 10 (the very next Saturday).
+    const now = new Date("2026-10-05T12:00:00-07:00");
+    const jsonLd = buildEventsJsonLd(
+      [fakeEvent({ dayOfWeek: 6, monthlyOccurrence: "last", specificDate: null })],
+      "Edmonton Food Deals",
+      "America/Edmonton",
+      "AB",
+      "edmonton",
+      now
+    );
+    expect(jsonLd.itemListElement[0]!.item.startDate).toBe("2026-10-31");
   });
 
   it("uses the passed provinceCode in the event location address", () => {

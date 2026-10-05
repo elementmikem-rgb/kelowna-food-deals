@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, formatEventDate } from "@/lib/format";
-import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
+import { formatTimeWindow, formatVerifiedRelative, isStale, monthlyOccurrenceLabel } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
 import { ConfirmedBadges } from "./ConfirmedBadges";
 import { EventInterestButton } from "./EventInterestButton";
@@ -53,6 +53,11 @@ export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?:
               </span>
             )}
           </div>
+          {event.monthlyOccurrence !== null && event.dayOfWeek !== null && (
+            <p className="text-[11px] text-accent-dim">
+              {monthlyOccurrenceLabel(event.monthlyOccurrence, event.dayOfWeek, lang)}
+            </p>
+          )}
           {event.description && (
             <p className="text-xs text-muted">{event.description}</p>
           )}

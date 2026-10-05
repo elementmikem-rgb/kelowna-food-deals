@@ -1,6 +1,6 @@
 import { db, events, venues } from "@/db";
 import { and, asc, eq, gte, isNull, lte, sql } from "drizzle-orm";
-import type { EventType } from "@/db/schema";
+import type { EventType, MonthlyOccurrence } from "@/db/schema";
 import { regionTodayISODate, toDateOrNull } from "@/lib/time";
 
 export interface EventWithVenue {
@@ -12,6 +12,8 @@ export interface EventWithVenue {
   description: string | null;
   eventType: EventType;
   dayOfWeek: number | null;
+  // Only meaningful alongside a non-null dayOfWeek -- see db/schema.ts's column comment.
+  monthlyOccurrence: MonthlyOccurrence | null;
   specificDate: string | null;
   startTime: string | null;
   endTime: string | null;
@@ -64,6 +66,7 @@ const recurringColumns = {
   description: events.description,
   eventType: events.eventType,
   dayOfWeek: events.dayOfWeek,
+  monthlyOccurrence: events.monthlyOccurrence,
   specificDate: events.specificDate,
   startTime: events.startTime,
   endTime: events.endTime,
@@ -127,6 +130,7 @@ export async function getUpcomingOneOffEvents(
       description: events.description,
       eventType: events.eventType,
       dayOfWeek: events.dayOfWeek,
+      monthlyOccurrence: events.monthlyOccurrence,
       specificDate: events.specificDate,
       startTime: events.startTime,
       endTime: events.endTime,
@@ -165,6 +169,7 @@ export async function getUpcomingOneOffEvents(
       description: r.description,
       eventType: r.eventType,
       dayOfWeek: r.dayOfWeek,
+      monthlyOccurrence: r.monthlyOccurrence,
       specificDate: r.specificDate,
       startTime: r.startTime,
       endTime: r.endTime,

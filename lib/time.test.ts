@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { endOfDayPacific, regionTodayISODate } from "./time";
+import { endOfDayPacific, regionTodayISODate, resolveMonthlyOccurrenceISODate } from "./time";
 
 // 2026 US/Canada DST transitions: PST -> PDT on Mar 8, PDT -> PST on Nov 1.
 describe("endOfDayPacific", () => {
@@ -34,6 +34,39 @@ describe("endOfDayPacific", () => {
       const end = endOfDayPacific(d);
       expect(regionTodayISODate("America/Vancouver", end)).toBe(d);
       expect(regionTodayISODate("America/Vancouver", new Date(end.getTime() + 1))).not.toBe(d);
+    }
+  });
+});
+
+describe("resolveMonthlyOccurrenceISODate", () => {
+  it("resolves 'last <weekday>' to this month's date when it hasn't passed yet", () => {
+    // Oct 31 2026 is the last Saturday of October; Oct 5 is still before it.
+    expect(resolveMonthlyOccurrenceISODate(6, "last", "2026-10-05")).toBe("2026-10-31");
+  });
+
+  it("rolls to next month once this month's 'last <weekday>' has already passed", () => {
+    // Last Saturday of November 2026 is the 28th; asking from the 29th must roll to December.
+    expect(resolveMonthlyOccurrenceISODate(6, "last", "2026-11-29")).toBe("2026-12-26");
+  });
+
+  it("resolves 'Nth <weekday>' within the current month when it hasn't passed yet", () => {
+    expect(resolveMonthlyOccurrenceISODate(3, "1st", "2026-10-01")).toBe("2026-10-07");
+  });
+
+  it("rolls to next month once this month's 'Nth <weekday>' has already passed", () => {
+    expect(resolveMonthlyOccurrenceISODate(3, "1st", "2026-10-10")).toBe("2026-11-04");
+  });
+
+  it("never returns a date before fromISODate, for every occurrence/weekday combination", () => {
+    const occurrences = ["1st", "2nd", "3rd", "4th", "last"] as const;
+    for (const occ of occurrences) {
+      for (let dow = 0; dow <= 6; dow++) {
+        const result = resolveMonthlyOccurrenceISODate(dow, occ, "2026-10-05");
+        expect(new Date(`${result}T00:00:00Z`).getTime()).toBeGreaterThanOrEqual(
+          new Date("2026-10-05T00:00:00Z").getTime()
+        );
+        expect(new Date(`${result}T00:00:00Z`).getUTCDay()).toBe(dow);
+      }
     }
   });
 });

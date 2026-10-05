@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."events" ADD COLUMN "monthly_occurrence" text;
