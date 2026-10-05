@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { AdminSubmissionRow } from "@/components/AdminSubmissionRow";
 import { AdminShell } from "@/components/AdminShell";
 import { getSelectedAdminScope } from "@/lib/admin-region";
+import { findSimilarVenues, type SimilarVenue } from "@/lib/string-similarity";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ export default async function AdminSubmissionsPage() {
       venueName: sql<string>`coalesce(${venues.name}, ${submissions.venueName})`,
       venueAddress: submissions.venueAddress,
       isNewVenue: sql<boolean>`${submissions.venueId} is null`,
+      // Region to scope the duplicate-venue similarity check against below -- an
+      // existing-venue submission uses that venue's own region; a new-venue one uses
+      // submissions.regionId directly (set from the region-aware /submit page).
+      submissionRegionId: sql<number | null>`coalesce(${venues.regionId}, ${submissions.regionId})`,
       // A currently-featured venue's own submissions jump the queue -- sold
       // alongside featured placement, not as a separate purchase.
       isPriority: sql<boolean>`${venues.featuredUntil} is not null and ${venues.featuredUntil} > now()`,
@@ -57,6 +62,38 @@ export default async function AdminSubmissionsPage() {
 
   const priorityCount = rows.filter((r) => r.isPriority).length;
 
+  // Duplicate-venue warning for new-venue submissions: compare the submitter's free-text
+  // name against every active venue already in that same region, so an admin can catch a
+  // near-miss (typo, missing/extra word) before clicking "Create venue" and ending up with
+  // two rows for the same real place -- findOrCreateVenue only does an exact
+  // case-insensitive match, so anything short of that currently sails through unflagged.
+  const newVenueRegionIds = [
+    ...new Set(
+      rows
+        .filter((r) => r.isNewVenue && r.submissionRegionId !== null)
+        .map((r) => r.submissionRegionId as number)
+    ),
+  ];
+  const candidatesByRegion = new Map<number, { id: number; name: string }[]>();
+  if (newVenueRegionIds.length > 0) {
+    const candidateVenues = await db
+      .select({ id: venues.id, name: venues.name, regionId: venues.regionId })
+      .from(venues)
+      .where(and(eq(venues.active, true), inArray(venues.regionId, newVenueRegionIds)));
+    for (const v of candidateVenues) {
+      const list = candidatesByRegion.get(v.regionId) ?? [];
+      list.push({ id: v.id, name: v.name });
+      candidatesByRegion.set(v.regionId, list);
+    }
+  }
+  const similarVenuesBySubmission = new Map<number, SimilarVenue[]>();
+  for (const r of rows) {
+    if (!r.isNewVenue || r.submissionRegionId === null) continue;
+    const candidates = candidatesByRegion.get(r.submissionRegionId) ?? [];
+    const matches = findSimilarVenues(r.venueName, candidates);
+    if (matches.length > 0) similarVenuesBySubmission.set(r.id, matches);
+  }
+
   return (
     <AdminShell active="submissions" maxWidth="max-w-3xl">
       <h1 className="font-display text-2xl text-foreground">
@@ -76,7 +113,20 @@ export default async function AdminSubmissionsPage() {
           {rows.map((r) => (
             <AdminSubmissionRow
               key={r.id}
-              submission={{ ...r, createdAt: r.createdAt.toISOString() }}
+              submission={{
+                id: r.id,
+                venueName: r.venueName,
+                venueAddress: r.venueAddress,
+                isNewVenue: r.isNewVenue,
+                isPriority: r.isPriority,
+                rawText: r.rawText,
+                hasPhoto: r.hasPhoto,
+                aiExtracted: r.aiExtracted,
+                aiNotes: r.aiNotes,
+                resolvedItemKeys: r.resolvedItemKeys,
+                createdAt: r.createdAt.toISOString(),
+              }}
+              similarVenues={similarVenuesBySubmission.get(r.id) ?? []}
             />
           ))}
         </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { reviewResultSchema } from "@/lib/submission-review-schema";
 import { formatPrice } from "@/lib/format";
+import type { SimilarVenue } from "@/lib/string-similarity";
 
 interface SubmissionRowData {
   id: number;
@@ -133,6 +134,187 @@ function DismissButton({ submissionId, onDismissed }: { submissionId: number; on
   );
 }
 
+// Editable name/address for a new-venue submission, plus a "possible existing venue"
+// warning computed server-side (lib/string-similarity.ts) against every active venue
+// already in this region. Previously the submitter's free-text name/address was
+// read-only here -- a typo or shortened name either had to be fixed directly in the DB
+// after the fact, or (worse) slipped past findOrCreateVenue's exact-match check and
+// created a duplicate venue row for a place that was already listed.
+function NewVenueInfo({
+  submissionId,
+  venueName,
+  venueAddress,
+  similarVenues,
+  onLinked,
+}: {
+  submissionId: number;
+  venueName: string;
+  venueAddress: string | null;
+  similarVenues: SimilarVenue[];
+  onLinked: (fullyResolved: boolean) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(venueName);
+  const [address, setAddress] = useState(venueAddress ?? "");
+  const [savedName, setSavedName] = useState(venueName);
+  const [savedAddress, setSavedAddress] = useState(venueAddress);
+  const [saving, setSaving] = useState(false);
+  const [linking, setLinking] = useState<number | null>(null);
+  const [linkedToName, setLinkedToName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Once the admin edits the name, the server-computed similarity list (based on the
+  // ORIGINAL submitted name) may no longer be relevant -- hide it rather than show
+  // stale suggestions for a name that's since changed.
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+
+  async function save() {
+    if (!name.trim()) {
+      setError("Name can't be empty.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_venue_info",
+          venueName: name.trim(),
+          venueAddress: address.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setSavedName(name.trim());
+      setSavedAddress(address.trim() || null);
+      setSuggestionsDismissed(true);
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function linkExisting(targetVenueId: number) {
+    setLinking(targetVenueId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "link_existing_venue", venueId: targetVenueId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      const target = similarVenues.find((v) => v.id === targetVenueId);
+      setLinkedToName(target?.name ?? "the existing venue");
+      onLinked(!!data.fullyResolved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+      setLinking(null);
+    }
+  }
+
+  if (linkedToName) {
+    return <p className="text-xs text-muted-2">Linked to existing venue: {linkedToName}.</p>;
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-2" htmlFor={`name-${submissionId}`}>
+            Venue name
+          </label>
+          <input
+            id={`name-${submissionId}`}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-2" htmlFor={`address-${submissionId}`}>
+            Address
+          </label>
+          <input
+            id={`address-${submissionId}`}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
+          />
+        </div>
+        {error && <p className="text-xs text-stale">{error}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="press-pill rounded-full bg-accent text-background px-3 py-1 text-xs font-medium disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={() => {
+              setName(savedName);
+              setAddress(savedAddress ?? "");
+              setEditing(false);
+              setError(null);
+            }}
+            disabled={saving}
+            className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        {savedAddress && <p className="text-xs text-muted-2">{savedAddress}</p>}
+        <button
+          onClick={() => setEditing(true)}
+          className="press-pill rounded-full border border-border px-2 py-0.5 text-[10px] text-muted"
+        >
+          Edit name/address
+        </button>
+      </div>
+      {error && <p className="text-xs text-stale">{error}</p>}
+      {!suggestionsDismissed && similarVenues.length > 0 && (
+        <div className="flex flex-col gap-1.5 rounded-lg border border-gold/40 bg-gold/10 p-3">
+          <p className="text-xs text-gold font-medium">
+            Possible duplicate -- this region already has a similarly-named venue:
+          </p>
+          {similarVenues.map((v) => (
+            <div key={v.id} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-foreground/90">
+                {v.name} <span className="text-muted-2">({Math.round(v.score * 100)}% match)</span>
+              </span>
+              <button
+                onClick={() => linkExisting(v.id)}
+                disabled={linking !== null}
+                className="press-pill rounded-full border border-gold px-2 py-0.5 text-[10px] text-gold disabled:opacity-50"
+              >
+                {linking === v.id ? "Linking…" : "Use this venue instead"}
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setSuggestionsDismissed(true)}
+            className="self-start text-[10px] text-muted-2 underline"
+          >
+            Not a duplicate, dismiss
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // The only way to publish a new-venue submission that has no specific special/event/menu
 // item attached (a submitter who just wants the venue itself added) -- "approve" only
 // exists per-item, so without this action there was no way to create the venue at all,
@@ -225,7 +407,13 @@ function ApprovePhotoButton({
   );
 }
 
-export function AdminSubmissionRow({ submission }: { submission: SubmissionRowData }) {
+export function AdminSubmissionRow({
+  submission,
+  similarVenues = [],
+}: {
+  submission: SubmissionRowData;
+  similarVenues?: SimilarVenue[];
+}) {
   const [resolvedKeys, setResolvedKeys] = useState<string[]>(submission.resolvedItemKeys);
   const [showPhoto, setShowPhoto] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -283,8 +471,16 @@ export function AdminSubmissionRow({ submission }: { submission: SubmissionRowDa
         <span className="text-xs text-muted-2">{remaining} pending</span>
       </div>
 
-      {submission.isNewVenue && submission.venueAddress && (
-        <p className="text-xs text-muted-2">{submission.venueAddress}</p>
+      {submission.isNewVenue && (
+        <NewVenueInfo
+          submissionId={submission.id}
+          venueName={submission.venueName}
+          venueAddress={submission.venueAddress}
+          similarVenues={similarVenues}
+          onLinked={(fullyResolved) => {
+            if (fullyResolved) setDismissed(true);
+          }}
+        />
       )}
 
       {submission.rawText && (

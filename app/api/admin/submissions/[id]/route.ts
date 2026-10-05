@@ -59,6 +59,22 @@ const actionSchema = z.union([
   // this action the only option was "dismiss", which (per the dismiss branch below)
   // never calls savePhotoOnApproval -- the photo would be silently discarded, not saved.
   z.object({ action: z.literal("approve_photo") }),
+  // Lets an admin fix a new-venue submitter's free-text name/address (typo, shortened
+  // name, missing unit number) before create_venue/approve ever runs findOrCreateVenue
+  // against it -- previously that text was read-only in the queue, so a typo either had
+  // to be fixed directly in the DB after the fact or slipped through as a near-duplicate
+  // venue row. Only valid while venueId is still null (see the branch below).
+  z.object({
+    action: z.literal("update_venue_info"),
+    venueName: z.string().trim().min(1).max(200),
+    venueAddress: z.string().trim().min(1).max(300).nullable(),
+  }),
+  // Routes a new-venue submission to an EXISTING venue the admin recognizes it as,
+  // instead of creating a duplicate row -- the counterpart to the similar-venue
+  // suggestions surfaced in the admin UI (lib/string-similarity.ts). Resolves venueId
+  // exactly like the lazy-create path does, just pointed at a chosen id instead of
+  // findOrCreateVenue's own exact-match lookup.
+  z.object({ action: z.literal("link_existing_venue"), venueId: z.number().int().positive() }),
 ]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +95,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   const action = parsed.data.action;
   const baseKey =
-    action === "dismiss" || action === "create_venue" || action === "approve_photo"
+    action === "dismiss" ||
+    action === "create_venue" ||
+    action === "approve_photo" ||
+    action === "update_venue_info" ||
+    action === "link_existing_venue"
       ? null
       : `${parsed.data.itemType}:${parsed.data.itemIndex}`;
   // Reject is recorded with a distinct prefix (rather than a bare "approve" always winning
@@ -160,6 +180,59 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         ok: true as const,
         fullyResolved,
         venueId,
+        photoData: submission.photoData,
+        photoMimeType: submission.photoMimeType,
+      };
+    }
+
+    if (action === "update_venue_info") {
+      if (submission.venueId !== null) {
+        return { error: "venue already resolved for this submission -- nothing to edit" as const, status: 409 };
+      }
+      await tx
+        .update(submissions)
+        .set({ venueName: parsed.data.venueName, venueAddress: parsed.data.venueAddress })
+        .where(eq(submissions.id, submissionId));
+      return {
+        ok: true as const,
+        fullyResolved: false,
+        venueId: null,
+        photoData: null,
+        photoMimeType: null,
+      };
+    }
+
+    if (action === "link_existing_venue") {
+      if (submission.venueId !== null) {
+        return { error: "venue already resolved for this submission" as const, status: 409 };
+      }
+      const [target] = await tx
+        .select({ id: venues.id })
+        .from(venues)
+        .where(eq(venues.id, parsed.data.venueId))
+        .limit(1);
+      if (!target) {
+        return { error: "that venue doesn't exist" as const, status: 400 };
+      }
+      const extractedForCount = submission.aiExtracted as SubmissionReviewResult | null;
+      const totalItems = extractedForCount
+        ? extractedForCount.specials.length + extractedForCount.events.length + extractedForCount.menu_items.length
+        : 0;
+      // Same "nothing left to review once the venue itself is resolved and there were
+      // never any structured items" logic as create_venue above.
+      const fullyResolved = totalItems === 0;
+      await tx
+        .update(submissions)
+        .set({
+          venueId: target.id,
+          status: fullyResolved ? "approved" : "needs_review",
+          reviewedAt: fullyResolved ? now : null,
+        })
+        .where(eq(submissions.id, submissionId));
+      return {
+        ok: true as const,
+        fullyResolved,
+        venueId: target.id,
         photoData: submission.photoData,
         photoMimeType: submission.photoMimeType,
       };
