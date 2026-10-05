@@ -177,16 +177,26 @@ export function EventsBoard({
         <EventTypeFilter selected={selectedType} onSelect={setSelectedType} lang={lang} />
 
         {activeSponsor && (
-          <p className="-mt-2 text-xs text-muted-2">
-            {EVENT_TYPE_LABELS[lang][activeSponsor.category]} presented by{" "}
-            {activeSponsor.sponsorUrl ? (
-              <a href={activeSponsor.sponsorUrl} target="_blank" rel="noopener noreferrer" className="text-accent-dim underline">
-                {activeSponsor.sponsorName}
-              </a>
-            ) : (
-              <span className="font-medium text-foreground/80">{activeSponsor.sponsorName}</span>
-            )}
-          </p>
+          <div className="-mt-1 flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/15 px-4 py-2.5">
+            <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-dim">
+              {t(lang).card.sponsoredBadge}
+            </span>
+            <p className="text-sm text-foreground/90">
+              {EVENT_TYPE_LABELS[lang][activeSponsor.category]} {t(lang).card.presentedBy}{" "}
+              {activeSponsor.sponsorUrl ? (
+                <a
+                  href={activeSponsor.sponsorUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-accent-dim underline"
+                >
+                  {activeSponsor.sponsorName}
+                </a>
+              ) : (
+                <span className="font-semibold text-foreground">{activeSponsor.sponsorName}</span>
+              )}
+            </p>
+          </div>
         )}
 
         <p className="text-sm text-muted">

@@ -67,13 +67,20 @@ function pinIcon(variant: "regular" | "boosted" | "flash"): L.DivIcon {
   const size = variant === "regular" ? 24 : 34;
   const color = variant === "flash" ? "#a83232" : variant === "boosted" ? "#c14a1f" : "#8a7f5f";
   const pulseClass = variant === "flash" ? "live-dot" : "";
+  // Boosted gets a star glyph on top of the bigger/orange circle -- same ⭐ the
+  // "Featured" section header on the list view uses, so the two paid-placement
+  // signals read as visually related. Without this a boosted pin was only
+  // distinguishable from a regular one by size/color, easy to miss at a glance
+  // and indistinguishable once zoomed out enough to shrink both equally.
+  const glyph = variant === "boosted" ? '<span style="color:#fffaf0;font-size:16px;line-height:1;">★</span>' : "";
   return L.divIcon({
     className: "",
     html: `<div class="${pulseClass}" style="
       width:${size}px;height:${size}px;border-radius:50%;
       background:${color};border:2px solid #fffaf0;
       box-shadow:0 1px 4px rgba(0,0,0,0.35);
-    "></div>`,
+      display:flex;align-items:center;justify-content:center;
+    ">${glyph}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -size / 2],
@@ -265,7 +272,76 @@ export function MapView({
     return [...localSpecialsPins, ...remotePins.filter((p) => !localVenueIds.has(p.venueId))];
   }, [layer, localSpecialsPins, remotePins, localVenueIds]);
 
+  // Split so flash/boosted pins (see the MarkerClusterGroup comment below) never end up
+  // folded into a cluster count bubble -- only plain pins get clustered.
+  const clusteredPins = useMemo(() => allPins.filter((p) => !p.hasFlash && !p.boosted), [allPins]);
+  const standalonePins = useMemo(() => allPins.filter((p) => p.hasFlash || p.boosted), [allPins]);
+
   const fallbackCenter: [number, number] = [regionLat ?? 49.0, regionLng ?? -119.5];
+
+  function renderPin(pin: Pin) {
+    const visible = pin.items.slice(0, MAX_VISIBLE_IN_POPUP);
+    const hiddenCount = pin.items.length - visible.length;
+    return (
+      <Marker
+        key={pin.venueId}
+        position={[pin.lat, pin.lng]}
+        icon={pin.hasFlash ? FLASH_ICON : pin.boosted ? BOOSTED_ICON : REGULAR_ICON}
+      >
+        <Popup maxWidth={260}>
+          <div className="flex flex-col gap-1.5" style={{ maxWidth: 240 }}>
+            <div className="flex items-center gap-1.5">
+              <strong>{pin.venueName}</strong>
+              {pin.hasFlash ? (
+                <span
+                  style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
+                  className="text-danger font-semibold"
+                >
+                  Flash deal
+                </span>
+              ) : (
+                pin.boosted && (
+                  <span
+                    style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
+                    className="text-accent-dim"
+                  >
+                    Featured
+                  </span>
+                )
+              )}
+            </div>
+            <div
+              className="flex flex-col divide-y divide-border"
+              style={{ maxHeight: POPUP_MAX_HEIGHT_PX, overflowY: "auto" }}
+            >
+              {visible.map((item) => (
+                <div key={item.id} className="py-1 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{item.title}</span>
+                    {formatPrice(item.priceCents) && (
+                      <span className="text-accent-dim font-mono-tabular shrink-0">
+                        {formatPrice(item.priceCents)}
+                      </span>
+                    )}
+                  </div>
+                  {(item.startTime || item.endTime) && (
+                    <span className="text-muted-2" style={{ fontSize: 11 }}>
+                      {item.startTime?.slice(0, 5)}
+                      {item.endTime ? `–${item.endTime.slice(0, 5)}` : ""}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {hiddenCount > 0 && <span className="text-xs text-muted-2">+ {hiddenCount} more</span>}
+            <Link href={`/${pin.regionSlug}/venues/${pin.venueId}`} className="text-xs text-accent-dim underline">
+              View full listing →
+            </Link>
+          </div>
+        </Popup>
+      </Marker>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -321,75 +397,14 @@ export function MapView({
             onPins={setRemotePins}
           />
           <MarkerClusterGroup chunkedLoading>
-            {allPins.map((pin) => {
-                const visible = pin.items.slice(0, MAX_VISIBLE_IN_POPUP);
-                const hiddenCount = pin.items.length - visible.length;
-                return (
-                  <Marker
-                    key={pin.venueId}
-                    position={[pin.lat, pin.lng]}
-                    icon={pin.hasFlash ? FLASH_ICON : pin.boosted ? BOOSTED_ICON : REGULAR_ICON}
-                  >
-                    <Popup maxWidth={260}>
-                      <div className="flex flex-col gap-1.5" style={{ maxWidth: 240 }}>
-                        <div className="flex items-center gap-1.5">
-                          <strong>{pin.venueName}</strong>
-                          {pin.hasFlash ? (
-                            <span
-                              style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
-                              className="text-danger font-semibold"
-                            >
-                              Flash deal
-                            </span>
-                          ) : (
-                            pin.boosted && (
-                              <span
-                                style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
-                                className="text-accent-dim"
-                              >
-                                Featured
-                              </span>
-                            )
-                          )}
-                        </div>
-                        <div
-                          className="flex flex-col divide-y divide-border"
-                          style={{ maxHeight: POPUP_MAX_HEIGHT_PX, overflowY: "auto" }}
-                        >
-                          {visible.map((item) => (
-                            <div key={item.id} className="py-1 text-xs">
-                              <div className="flex items-center justify-between gap-2">
-                                <span>{item.title}</span>
-                                {formatPrice(item.priceCents) && (
-                                  <span className="text-accent-dim font-mono-tabular shrink-0">
-                                    {formatPrice(item.priceCents)}
-                                  </span>
-                                )}
-                              </div>
-                              {(item.startTime || item.endTime) && (
-                                <span className="text-muted-2" style={{ fontSize: 11 }}>
-                                  {item.startTime?.slice(0, 5)}
-                                  {item.endTime ? `–${item.endTime.slice(0, 5)}` : ""}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        {hiddenCount > 0 && (
-                          <span className="text-xs text-muted-2">+ {hiddenCount} more</span>
-                        )}
-                        <Link
-                          href={`/${pin.regionSlug}/venues/${pin.venueId}`}
-                          className="text-xs text-accent-dim underline"
-                        >
-                          View full listing →
-                        </Link>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-            </MarkerClusterGroup>
+            {clusteredPins.map((pin) => renderPin(pin))}
+          </MarkerClusterGroup>
+          {/* Flash and boosted pins render OUTSIDE the cluster group -- a paid map-pin
+              boost (or an urgent flash deal) that's buried inside a cluster count bubble
+              defeats the point of paying for it. cap_count on the map_pin product keeps
+              this to at most a handful of standalone pins per region at once, so this
+              can't itself turn into visual clutter. */}
+          {standalonePins.map((pin) => renderPin(pin))}
           </MapContainer>
       </div>
     </div>

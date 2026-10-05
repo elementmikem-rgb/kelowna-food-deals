@@ -56,6 +56,8 @@ export const strings = {
       free: "Free",
       cover: (price: string) => `${price} cover`,
       details: "Details ↗",
+      sponsoredBadge: "Sponsored",
+      presentedBy: "presented by",
       reportDialog: {
         heading: "What's wrong?",
         priceWrong: "Price is wrong",
@@ -171,6 +173,8 @@ export const strings = {
       free: "Gratuit",
       cover: (price: string) => `${price} entrée`,
       details: "Détails ↗",
+      sponsoredBadge: "Commandité",
+      presentedBy: "présenté par",
       reportDialog: {
         heading: "Qu'est-ce qui ne va pas?",
         priceWrong: "Le prix est erroné",
