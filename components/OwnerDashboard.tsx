@@ -1232,6 +1232,17 @@ export function OwnerDashboard({
   const [menuItemList, setMenuItemList] = useState(menuItems);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [flashSpecial, setFlashSpecial] = useState(liveFlashSpecial);
+  // "Overview" is the default landing tab specifically so Promote/credits stay the
+  // first thing an owner sees -- same reasoning as moving OwnerCart to the top of the
+  // page (see that comment's history): hiding it behind a non-default tab click would
+  // reintroduce the exact burial problem that produced 0/18 conversions.
+  const [tab, setTab] = useState<"overview" | "manage" | "account">("overview");
+
+  const TABS: { key: typeof tab; label: string }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "manage", label: "Manage listing" },
+    { key: "account", label: "Account" },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -1239,145 +1250,169 @@ export function OwnerDashboard({
         <OwnerOnboarding creditBalance={creditBalance} onDismiss={() => setOnboardingDismissed(true)} />
       )}
 
-      {/* Moved ahead of every content-entry section (Flash Special/Photo/Specials/Events/Menu)
-          -- this is the only place the free trial credits (or any purchase) actually convert
-          into visibility, and it was previously 6th on the page behind empty-state forms that
-          demanded real work first. 0 of 18 claimed owners ever placed a booking with it buried
-          there (see the 2026-10-05 funnel audit). */}
-      <OwnerCart
-        venueId={venueId}
-        specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
-        events={eventList.map((e) => ({ id: e.id, title: e.title }))}
-        settings={promoteSettings}
-        todayISO={todayISO}
-        creditBalance={creditBalance}
-      />
-
-      <FlashSpecialWidget
-        venueId={venueId}
-        live={flashSpecial}
-        onPosted={setFlashSpecial}
-        onEnded={() => setFlashSpecial(null)}
-      />
-
-      <VenuePhotoUploader venueId={venueId} currentPhotoId={currentPhotoId} />
-
-      <SectionShell
-        title="Specials"
-        addForm={
-          <SpecialForm
-            initial={emptySpecial}
-            venueId={venueId}
-            submitLabel="Add special"
-            onSubmit={async (data) => {
-              const res = await fetch("/api/owner/specials", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ venueId, ...data }),
-              });
-              const body = await res.json();
-              if (!res.ok) throw new Error(body.error ?? "Failed");
-              setSpecialList((prev) => [...prev, { id: body.id, ...data }]);
-            }}
-          />
-        }
-      >
-        {specialList.length === 0 && <p className="text-sm text-muted-2">No specials yet.</p>}
-        {specialList.map((s) => (
-          <SpecialRow
-            key={s.id}
-            special={s}
-            venueId={venueId}
-            onSaved={(id, data) =>
-              setSpecialList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
-            }
-            onDeleted={(id) => setSpecialList((prev) => prev.filter((x) => x.id !== id))}
-          />
+      <div className="flex gap-1 rounded-full border border-border p-0.5 text-sm self-start">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`press-pill rounded-full px-4 py-1.5 ${tab === t.key ? "bg-accent text-background" : "text-muted"}`}
+          >
+            {t.label}
+          </button>
         ))}
-      </SectionShell>
+      </div>
 
-      <SectionShell
-        title="Events"
-        addForm={
-          <EventForm
-            initial={emptyEvent}
+      {tab === "overview" && (
+        <>
+          {/* Moved ahead of every content-entry section (Flash Special/Photo/Specials/Events/Menu)
+              -- this is the only place the free trial credits (or any purchase) actually convert
+              into visibility, and it was previously 6th on the page behind empty-state forms that
+              demanded real work first. 0 of 18 claimed owners ever placed a booking with it buried
+              there (see the 2026-10-05 funnel audit). */}
+          <OwnerCart
             venueId={venueId}
-            submitLabel="Add event"
-            onSubmit={async (data) => {
-              const res = await fetch("/api/owner/events", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ venueId, ...data }),
-              });
-              const body = await res.json();
-              if (!res.ok) throw new Error(body.error ?? "Failed");
-              setEventList((prev) => [...prev, { id: body.id, ...data }]);
-            }}
+            specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
+            events={eventList.map((e) => ({ id: e.id, title: e.title }))}
+            settings={promoteSettings}
+            todayISO={todayISO}
+            creditBalance={creditBalance}
           />
-        }
-      >
-        {eventList.length === 0 && <p className="text-sm text-muted-2">No events yet.</p>}
-        {eventList.map((e) => (
-          <EventRow
-            key={e.id}
-            event={e}
+          <BookingHistoryList bookings={bookings} />
+          <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
+        </>
+      )}
+
+      {tab === "manage" && (
+        <>
+          <FlashSpecialWidget
             venueId={venueId}
-            onSaved={(id, data) =>
-              setEventList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
-            }
-            onDeleted={(id) => setEventList((prev) => prev.filter((x) => x.id !== id))}
+            live={flashSpecial}
+            onPosted={setFlashSpecial}
+            onEnded={() => setFlashSpecial(null)}
           />
-        ))}
-      </SectionShell>
 
-      <SectionShell
-        title="Menu"
-        addForm={
-          <MenuItemForm
-            initial={emptyMenuItem}
-            submitLabel="Add item"
-            onSubmit={async (data) => {
-              const res = await fetch("/api/owner/menu-items", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ venueId, ...data }),
-              });
-              const body = await res.json();
-              if (!res.ok) throw new Error(body.error ?? "Failed");
-              setMenuItemList((prev) => [...prev, { id: body.id, ...data }]);
-            }}
-          />
-        }
-      >
-        {menuItemList.length === 0 && <p className="text-sm text-muted-2">No menu items yet.</p>}
-        {menuItemList.map((m) => (
-          <MenuItemRow
-            key={m.id}
-            item={m}
-            onSaved={(id, data) =>
-              setMenuItemList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
-            }
-            onDeleted={(id) => setMenuItemList((prev) => prev.filter((x) => x.id !== id))}
-          />
-        ))}
-      </SectionShell>
+          <VenuePhotoUploader venueId={venueId} currentPhotoId={currentPhotoId} />
 
-      <BookingHistoryList bookings={bookings} />
-      <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
-      <PasswordSection hasPassword={hasPassword} />
-      <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-foreground/90">Billing</span>
-          <span className="text-xs text-muted">Manage your saved card and view invoices.</span>
-        </div>
-        <a
-          href="/api/owner/billing-portal"
-          className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted"
-        >
-          Manage billing
-        </a>
-      </section>
-      <DigestPreferenceToggle initialOptOut={weeklyDigestOptOut} />
+          <SectionShell
+            title="Specials"
+            addForm={
+              <SpecialForm
+                initial={emptySpecial}
+                venueId={venueId}
+                submitLabel="Add special"
+                onSubmit={async (data) => {
+                  const res = await fetch("/api/owner/specials", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ venueId, ...data }),
+                  });
+                  const body = await res.json();
+                  if (!res.ok) throw new Error(body.error ?? "Failed");
+                  setSpecialList((prev) => [...prev, { id: body.id, ...data }]);
+                }}
+              />
+            }
+          >
+            {specialList.length === 0 && <p className="text-sm text-muted-2">No specials yet.</p>}
+            {specialList.map((s) => (
+              <SpecialRow
+                key={s.id}
+                special={s}
+                venueId={venueId}
+                onSaved={(id, data) =>
+                  setSpecialList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
+                }
+                onDeleted={(id) => setSpecialList((prev) => prev.filter((x) => x.id !== id))}
+              />
+            ))}
+          </SectionShell>
+
+          <SectionShell
+            title="Events"
+            addForm={
+              <EventForm
+                initial={emptyEvent}
+                venueId={venueId}
+                submitLabel="Add event"
+                onSubmit={async (data) => {
+                  const res = await fetch("/api/owner/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ venueId, ...data }),
+                  });
+                  const body = await res.json();
+                  if (!res.ok) throw new Error(body.error ?? "Failed");
+                  setEventList((prev) => [...prev, { id: body.id, ...data }]);
+                }}
+              />
+            }
+          >
+            {eventList.length === 0 && <p className="text-sm text-muted-2">No events yet.</p>}
+            {eventList.map((e) => (
+              <EventRow
+                key={e.id}
+                event={e}
+                venueId={venueId}
+                onSaved={(id, data) =>
+                  setEventList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
+                }
+                onDeleted={(id) => setEventList((prev) => prev.filter((x) => x.id !== id))}
+              />
+            ))}
+          </SectionShell>
+
+          <SectionShell
+            title="Menu"
+            addForm={
+              <MenuItemForm
+                initial={emptyMenuItem}
+                submitLabel="Add item"
+                onSubmit={async (data) => {
+                  const res = await fetch("/api/owner/menu-items", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ venueId, ...data }),
+                  });
+                  const body = await res.json();
+                  if (!res.ok) throw new Error(body.error ?? "Failed");
+                  setMenuItemList((prev) => [...prev, { id: body.id, ...data }]);
+                }}
+              />
+            }
+          >
+            {menuItemList.length === 0 && <p className="text-sm text-muted-2">No menu items yet.</p>}
+            {menuItemList.map((m) => (
+              <MenuItemRow
+                key={m.id}
+                item={m}
+                onSaved={(id, data) =>
+                  setMenuItemList((prev) => prev.map((x) => (x.id === id ? { id, ...data } : x)))
+                }
+                onDeleted={(id) => setMenuItemList((prev) => prev.filter((x) => x.id !== id))}
+              />
+            ))}
+          </SectionShell>
+        </>
+      )}
+
+      {tab === "account" && (
+        <>
+          <PasswordSection hasPassword={hasPassword} />
+          <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground/90">Billing</span>
+              <span className="text-xs text-muted">Manage your saved card and view invoices.</span>
+            </div>
+            <a
+              href="/api/owner/billing-portal"
+              className="press-pill rounded-full border border-border px-3 py-1 text-xs text-muted"
+            >
+              Manage billing
+            </a>
+          </section>
+          <DigestPreferenceToggle initialOptOut={weeklyDigestOptOut} />
+        </>
+      )}
     </div>
   );
 }

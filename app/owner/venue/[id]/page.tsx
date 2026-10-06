@@ -105,7 +105,16 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
       <header className="flex flex-col gap-1">
-        <span className="stamp px-2 py-0.5 text-[10px] self-start">Owner</span>
+        <div className="flex items-center gap-2">
+          <span className="stamp px-2 py-0.5 text-[10px]">Owner</span>
+          {/* Always visible regardless of which tab is selected -- unlike the detailed
+              balance inside the Overview tab's Promote card, this is just a persistent
+              reminder the owner has value sitting unspent, however deep in "Manage
+              listing" or "Account" they are. */}
+          <span className="press-pill rounded-full border border-accent/40 bg-accent-soft/15 px-2.5 py-0.5 text-[11px] font-medium text-accent-dim">
+            {venue.creditBalance} credit{venue.creditBalance === 1 ? "" : "s"} (${venue.creditBalance})
+          </span>
+        </div>
         {ownedVenues.length > 1 && (
           <nav className="flex flex-wrap gap-1.5 -mt-1 mb-1">
             {ownedVenues.map((v) => (
