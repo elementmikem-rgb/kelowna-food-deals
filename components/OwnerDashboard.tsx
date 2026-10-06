@@ -1002,11 +1002,80 @@ const emptyEvent: Omit<EventData, "id"> = {
 
 const emptyMenuItem: Omit<MenuItemData, "id"> = { name: "", description: null, priceCents: null };
 
+// A free, organic backlink -- deliberately nothing is exchanged for it (no credit
+// bonus), which is what keeps it a real, uncompromised link in Google's eyes instead
+// of a "paid link" that would need rel="sponsored" and lose most of its SEO value (see
+// the 2026-10-06 conversation this came out of). No live confirm count on the badge
+// itself -- a brand new claim has zero confirms, and "0 people confirmed" is a worse
+// look than no number at all; the badge is a static, generically-true trust mark, not
+// a live stat.
+function WebsiteBadgeWidget({
+  venueId,
+  regionSlug,
+  siteUrl,
+}: {
+  venueId: number;
+  regionSlug: string;
+  siteUrl: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const venueUrl = `${siteUrl}/${regionSlug}/venues/${venueId}`;
+  const badgeUrl = `${siteUrl}/api/badge/venue/${venueId}`;
+  const snippet = `<a href="${venueUrl}" target="_blank" rel="noopener"><img src="${badgeUrl}" alt="Verified on TodaysTab" width="220" height="48" /></a>`;
+
+  function copy() {
+    navigator.clipboard
+      .writeText(snippet)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        // Clipboard access can be blocked (permissions, non-HTTPS, browser quirk) --
+        // the code is already selected in the textarea below as a fallback, so the
+        // owner can still copy it manually with Ctrl/Cmd+C.
+      });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* eslint-disable-next-line @next/next/no-img-element -- an SVG from our own
+          API, not a page the Next.js Image optimizer can reach into either way. */}
+      <img src={badgeUrl} alt="Verified on TodaysTab" width={220} height={48} className="self-start rounded-full" />
+      <textarea
+        readOnly
+        value={snippet}
+        rows={2}
+        onClick={(e) => e.currentTarget.select()}
+        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-mono resize-none text-muted"
+      />
+      <button
+        onClick={copy}
+        className="press-pill rounded-full border border-border px-3 py-1.5 text-xs text-foreground/90 self-start"
+      >
+        {copied ? "Copied!" : "Copy code"}
+      </button>
+    </div>
+  );
+}
+
 // One-time welcome banner on an owner's first dashboard visit after their claim is
 // approved -- dismissal is per owner ACCOUNT (venueOwners.onboardingSeenAt), not per
 // venue, so an owner with multiple claimed venues only sees this once total, not once
 // per venue switched to.
-function OwnerOnboarding({ creditBalance, onDismiss }: { creditBalance: number; onDismiss: () => void }) {
+function OwnerOnboarding({
+  creditBalance,
+  venueId,
+  regionSlug,
+  siteUrl,
+  onDismiss,
+}: {
+  creditBalance: number;
+  venueId: number;
+  regionSlug: string;
+  siteUrl: string;
+  onDismiss: () => void;
+}) {
   const [dismissing, setDismissing] = useState(false);
 
   async function dismiss() {
@@ -1044,6 +1113,18 @@ function OwnerOnboarding({ creditBalance, onDismiss }: { creditBalance: number; 
             Spend them under <strong>Promote this venue</strong> below -- pin your card to the top of the
             homepage, boost a specific special, or sponsor a category.
           </span>
+        </li>
+        <li className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <span className="text-muted">4.</span>
+            <span>
+              Optional: add this badge to your own website -- a quick way to show you&apos;re listed here, and it
+              links back to your page.
+            </span>
+          </div>
+          <div className="pl-5">
+            <WebsiteBadgeWidget venueId={venueId} regionSlug={regionSlug} siteUrl={siteUrl} />
+          </div>
         </li>
       </ol>
       <div className="flex items-center gap-2">
@@ -1211,6 +1292,8 @@ export function OwnerDashboard({
   showOnboarding,
   liveFlashSpecial,
   bookings,
+  regionSlug,
+  siteUrl,
 }: {
   venueId: number;
   currentPhotoId: number | null;
@@ -1226,6 +1309,8 @@ export function OwnerDashboard({
   showOnboarding: boolean;
   liveFlashSpecial: LiveFlashSpecial | null;
   bookings: BookingData[];
+  regionSlug: string;
+  siteUrl: string;
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
@@ -1247,7 +1332,13 @@ export function OwnerDashboard({
   return (
     <div className="flex flex-col gap-8">
       {showOnboarding && !onboardingDismissed && (
-        <OwnerOnboarding creditBalance={creditBalance} onDismiss={() => setOnboardingDismissed(true)} />
+        <OwnerOnboarding
+          creditBalance={creditBalance}
+          venueId={venueId}
+          regionSlug={regionSlug}
+          siteUrl={siteUrl}
+          onDismiss={() => setOnboardingDismissed(true)}
+        />
       )}
 
       <div className="flex gap-1 rounded-full border border-border p-0.5 text-sm self-start">
@@ -1397,6 +1488,16 @@ export function OwnerDashboard({
 
       {tab === "account" && (
         <>
+          <section className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground/90">Website badge</span>
+              <span className="text-xs text-muted">
+                Free, optional -- add this to your own website to show you&apos;re listed here. Same code shown
+                when you first claimed this venue.
+              </span>
+            </div>
+            <WebsiteBadgeWidget venueId={venueId} regionSlug={regionSlug} siteUrl={siteUrl} />
+          </section>
           <PasswordSection hasPassword={hasPassword} />
           <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
             <div className="flex flex-col gap-0.5">

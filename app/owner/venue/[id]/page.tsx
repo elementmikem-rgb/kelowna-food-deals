@@ -202,6 +202,8 @@ export default async function OwnerVenuePage({ params }: PageProps) {
         creditBundles={creditBundleRows}
         bookings={venueBookings}
         showOnboarding={owner?.onboardingSeenAt == null}
+        regionSlug={region.slug}
+        siteUrl={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`}
       />
     </div>
   );

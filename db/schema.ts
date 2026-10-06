@@ -976,3 +976,22 @@ export const chatQueries = specialsSchema.table("chat_queries", {
   ip: text("ip").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One row per time the website-badge image (app/api/badge/venue/[id]/route.ts) is
+// requested -- that request only ever happens because a browser rendered an <img> tag
+// pointing at it, so this is the actual, passive signal for "is this venue's badge
+// live on their own site," without needing to crawl anyone's website. `referrer` is
+// the embedding page's own URL (the Referer header browsers send on an image
+// sub-request) -- a referrer on the venue's own website domain is the real proof of
+// the backlink; todaystab.com itself shows up here too (the dashboard's own live
+// preview), which the admin view filters out rather than this table excluding it, so
+// the raw log stays a complete, unfiltered record.
+export const badgeImpressions = specialsSchema.table("badge_impressions", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
