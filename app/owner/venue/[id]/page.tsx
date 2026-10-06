@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, creditBundles, bookings, venuePhotos } from "@/db";
+import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, addOnSettings, bundleDiscountTiers, creditBundles, bookings, venuePhotos } from "@/db";
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
@@ -39,7 +39,7 @@ export default async function OwnerVenuePage({ params }: PageProps) {
     .where(eq(venueOwners.id, session.venueOwnerId))
     .limit(1);
 
-  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, region, creditBundleRows, venueBookings, latestVenuePhoto] = await Promise.all([
+  const [venueSpecials, venueEvents, venueMenuItems, promoteSettingsRows, photoAddOnRows, bundleDiscountTierRows, region, creditBundleRows, venueBookings, latestVenuePhoto] = await Promise.all([
     db
       .select()
       .from(specials)
@@ -53,6 +53,8 @@ export default async function OwnerVenuePage({ params }: PageProps) {
       .from(menuItems)
       .where(and(eq(menuItems.venueId, venueId), isNull(menuItems.archivedAt))),
     db.select().from(monetizationSettings),
+    db.select().from(addOnSettings).where(eq(addOnSettings.addOnType, "photo")),
+    db.select({ minVenues: bundleDiscountTiers.minVenues, discountPercent: bundleDiscountTiers.discountPercent }).from(bundleDiscountTiers),
     getRegionById(venue.regionId),
     db
       .select({ id: creditBundles.id, name: creditBundles.name, priceCents: creditBundles.priceCents, credits: creditBundles.credits })
@@ -101,6 +103,9 @@ export default async function OwnerVenuePage({ params }: PageProps) {
       maxDays: row?.maxDays ?? 30,
     };
   }
+  // Undefined (not configured) hides the add-on entirely rather than offering it at
+  // $0 -- same convention as every other settings-row lookup on this page.
+  const photoAddOn = photoAddOnRows[0] ? { priceCentsPerDay: photoAddOnRows[0].priceCentsPerDay } : undefined;
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
@@ -204,6 +209,9 @@ export default async function OwnerVenuePage({ params }: PageProps) {
         showOnboarding={owner?.onboardingSeenAt == null}
         regionSlug={region.slug}
         siteUrl={`https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`}
+        photoAddOn={photoAddOn}
+        ownedVenues={ownedVenues.map((v) => ({ id: v.id, name: v.name }))}
+        bundleDiscountTiers={bundleDiscountTierRows}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { and, eq, isNull, isNotNull } from "drizzle-orm";
+import { and, eq, isNull, isNotNull, sql } from "drizzle-orm";
 import { db, venues, specials, events, pendingBookingPhotos } from "@/db";
 import { bookingProductType, specialCategory, eventType, sponsorCategoryKind } from "@/db/schema";
 import { signBookingToken, type BookingSelection } from "@/lib/booking-token";
@@ -15,9 +15,55 @@ import { isSafeImageMimeType } from "@/lib/safe-image-types";
 // upload should never be near this; it's a backstop against a crafted request.
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
+// Reuses an existing sponsor-only placeholder for the same business name in this
+// region (case-insensitive) rather than minting a fresh venues row every time the
+// same brewery/tourism board sponsors again -- same "find before create" shape as
+// app/api/admin/submissions/[id]/route.ts's findOrCreateVenue, scoped to sponsorOnly
+// rows specifically so this can never match (or silently reuse) a real listing.
+async function findOrCreateSponsorOnlyVenue(
+  regionId: number,
+  businessName: string,
+  businessUrl: string | null
+): Promise<number> {
+  const [existing] = await db
+    .select({ id: venues.id })
+    .from(venues)
+    .where(
+      and(
+        eq(venues.regionId, regionId),
+        eq(venues.sponsorOnly, true),
+        sql`lower(${venues.name}) = lower(${businessName})`
+      )
+    )
+    .limit(1);
+  if (existing) return existing.id;
+
+  const [created] = await db
+    .insert(venues)
+    .values({
+      name: businessName,
+      address: "N/A -- non-venue sponsor",
+      website: businessUrl || null,
+      regionId,
+      active: false,
+      sponsorOnly: true,
+    })
+    .returning({ id: venues.id });
+  return created.id;
+}
+
 const bodySchema = z.object({
   productType: z.enum(bookingProductType),
-  venueId: z.number().int().positive(),
+  // Exactly one of venueId or businessName is required -- enforced below, not by the
+  // schema itself, since which one applies depends on productType (see the check
+  // right after this parses). businessName/businessUrl let a non-venue advertiser (a
+  // brewery, tourism board, rideshare company) sponsor a category without being a
+  // listed bar/restaurant -- categorySponsors itself has no venueId at all (see its
+  // schema comment), the only reason this still creates a venues row is that
+  // lib/bookings-data.ts's activation step reads sponsorName/sponsorUrl off a venue.
+  venueId: z.number().int().positive().nullable().default(null),
+  businessName: z.string().trim().min(1).max(200).nullable().default(null),
+  businessUrl: z.string().trim().max(300).nullable().default(null),
   specialId: z.number().int().positive().nullable(),
   eventId: z.number().int().positive().nullable(),
   category: z.union([z.enum(specialCategory), z.enum(eventType)]).nullable(),
@@ -60,17 +106,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Start date can't be in the past" }, { status: 400 });
   }
 
-  // Zod only proves these are positive integers. Confirm they name real, live rows
-  // before we sign a token that checkout will trust: an unknown venueId would blow
-  // up as a foreign-key violation inside the checkout transaction (after the buyer
-  // has already verified their email), and an unchecked specialId would let a
-  // crafted request pay to boost a special belonging to some other venue.
-  const [venue] = await db
-    .select({ id: venues.id })
-    .from(venues)
-    .where(and(eq(venues.id, parsed.data.venueId), eq(venues.active, true)));
-  if (!venue) {
-    return NextResponse.json({ error: "That venue isn't available for booking" }, { status: 400 });
+  // Exactly one of venueId (a real, listed venue) or businessName (a non-venue
+  // advertiser) is expected, and businessName only ever makes sense for
+  // category_sponsor -- categorySponsors has no venueId column at all (see its schema
+  // comment), so a sponsor with no real listing fits it naturally; every other product
+  // (Featured pins a venue card, Boost targets a specific special/event, map_pin boosts
+  // a map marker, chat_term_sponsor funnels chat traffic to a real place) inherently
+  // needs a real listing to point to.
+  if (parsed.data.businessName !== null && parsed.data.productType !== "category_sponsor") {
+    return NextResponse.json(
+      { error: "Sponsoring without a listed venue is only available for category sponsorship" },
+      { status: 400 }
+    );
+  }
+  if ((parsed.data.venueId === null) === (parsed.data.businessName === null)) {
+    return NextResponse.json({ error: "Pick your venue, or enter a business name" }, { status: 400 });
+  }
+
+  let resolvedVenueId: number;
+  if (parsed.data.businessName !== null) {
+    resolvedVenueId = await findOrCreateSponsorOnlyVenue(
+      region.id,
+      parsed.data.businessName,
+      parsed.data.businessUrl
+    );
+  } else {
+    // Zod only proves this is a positive integer. Confirm it names a real, live row
+    // before we sign a token that checkout will trust: an unknown venueId would blow
+    // up as a foreign-key violation inside the checkout transaction (after the buyer
+    // has already verified their email), and an unchecked specialId would let a
+    // crafted request pay to boost a special belonging to some other venue.
+    const [venue] = await db
+      .select({ id: venues.id })
+      .from(venues)
+      .where(and(eq(venues.id, parsed.data.venueId!), eq(venues.active, true)));
+    if (!venue) {
+      return NextResponse.json({ error: "That venue isn't available for booking" }, { status: 400 });
+    }
+    resolvedVenueId = venue.id;
   }
 
   if (parsed.data.productType === "boost") {
@@ -86,7 +159,7 @@ export async function POST(req: NextRequest) {
         .select({ id: specials.id })
         .from(specials)
         .where(
-          and(eq(specials.id, specialId), eq(specials.venueId, parsed.data.venueId), isNull(specials.archivedAt))
+          and(eq(specials.id, specialId), eq(specials.venueId, resolvedVenueId), isNull(specials.archivedAt))
         );
       if (!special) {
         return NextResponse.json({ error: "That special isn't available for boosting" }, { status: 400 });
@@ -98,7 +171,7 @@ export async function POST(req: NextRequest) {
         .where(
           and(
             eq(events.id, eventId),
-            eq(events.venueId, parsed.data.venueId),
+            eq(events.venueId, resolvedVenueId),
             isNotNull(events.venueId),
             isNull(events.archivedAt)
           )
@@ -155,9 +228,21 @@ export async function POST(req: NextRequest) {
   // email link has no page context to carry it through any other way), so
   // it's excluded from what actually gets signed into the booking token.
   // photoData/photoMimeType are excluded too -- photoStagingId (a small integer) is
-  // what actually gets signed, per pendingBookingPhotos' schema comment.
-  const { regionSlug: _regionSlug, photoData: _photoData, photoMimeType: _photoMimeType, chatTerm: _chatTerm, ...rest } = parsed.data;
-  const selection = { ...rest, chatTerm, photoStagingId };
+  // what actually gets signed, per pendingBookingPhotos' schema comment. venueId/
+  // businessName/businessUrl are excluded too -- resolvedVenueId (whichever path
+  // produced it) is what actually gets signed as venueId, same shape checkout already
+  // expects either way.
+  const {
+    regionSlug: _regionSlug,
+    photoData: _photoData,
+    photoMimeType: _photoMimeType,
+    chatTerm: _chatTerm,
+    venueId: _venueId,
+    businessName: _businessName,
+    businessUrl: _businessUrl,
+    ...rest
+  } = parsed.data;
+  const selection = { ...rest, venueId: resolvedVenueId, chatTerm, photoStagingId };
   const token = await signBookingToken(selection as BookingSelection, 15 * 60 * 1000);
   // Deliberately the bare domain, not SITE_URL -- /api/bookings/confirm-email
   // is a top-level route with no region segment of its own, unlike the

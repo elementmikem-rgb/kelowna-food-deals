@@ -59,6 +59,13 @@ export function BookingFlow({
 }) {
   const [open, setOpen] = useState(initialVerifiedToken !== null);
   const [venueId, setVenueId] = useState<number | "">("");
+  // "category_sponsor" only -- categorySponsors itself has no venueId column at all,
+  // so a business that isn't a listed bar/restaurant (a brewery, tourism board,
+  // rideshare company) can still sponsor a category. See verify-email/route.ts's
+  // findOrCreateSponsorOnlyVenue for what actually happens with these server-side.
+  const [noVenue, setNoVenue] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+  const [businessUrl, setBusinessUrl] = useState("");
   const [boostTargetKey, setBoostTargetKey] = useState<string>(""); // "special:12" or "event:34"
   const [categoryKind, setCategoryKind] = useState<SponsorCategoryKind>("special");
   const [category, setCategory] = useState<SpecialCategory | EventType>("happy_hour");
@@ -124,7 +131,11 @@ export function BookingFlow({
 
   async function requestVerification() {
     setError(null);
-    if (!venueId) return setError("Pick your venue.");
+    if (noVenue) {
+      if (!businessName.trim()) return setError("Enter your business name.");
+    } else if (!venueId) {
+      return setError("Pick your venue.");
+    }
     if (productType === "boost" && !boostTargetKey) return setError("Pick a special or event to boost.");
     if (productType === "chat_term_sponsor" && !chatTerm.trim()) return setError("Enter the term you want to sponsor.");
     if (wantsPhotoAddOn && !photoFile) return setError("Choose a photo, or uncheck the photo add-on.");
@@ -140,7 +151,9 @@ export function BookingFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productType,
-          venueId,
+          venueId: noVenue ? null : venueId,
+          businessName: noVenue ? businessName.trim() : null,
+          businessUrl: noVenue ? businessUrl.trim() || null : null,
           specialId: productType === "boost" && boostKind === "special" ? boostId : null,
           eventId: productType === "boost" && boostKind === "event" ? boostId : null,
           category: productType === "category_sponsor" ? category : null,
@@ -229,21 +242,65 @@ export function BookingFlow({
         {formatPrice(settings.priceCentsPerDay)}/day &middot; {settings.minDays}&ndash;{settings.maxDays}{" "}
         days &middot; exact total shown once you pick dates below.
       </p>
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        Venue
-        <select
-          value={venueId}
-          onChange={(e) => setVenueId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-        >
-          <option value="">Select a venue…</option>
-          {venues.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {noVenue ? (
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-sm text-muted">
+            Business name
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="e.g. your brewery, tourism board, or company name"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-muted">
+            Website (optional)
+            <input
+              type="text"
+              value={businessUrl}
+              onChange={(e) => setBusinessUrl(e.target.value)}
+              placeholder="https://yoursite.com"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setNoVenue(false)}
+            className="text-xs text-accent-dim underline self-start"
+          >
+            I have a listed venue instead
+          </button>
+        </div>
+      ) : (
+        <label className="flex flex-col gap-1 text-sm text-muted">
+          Venue
+          <select
+            value={venueId}
+            onChange={(e) => setVenueId(e.target.value ? Number(e.target.value) : "")}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          >
+            <option value="">Select a venue…</option>
+            {venues.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+          {/* category_sponsor only -- this is the one product that doesn't need a real
+              listing, since categorySponsors itself has no venueId column (see
+              verify-email/route.ts's comment). */}
+          {productType === "category_sponsor" && (
+            <button
+              type="button"
+              onClick={() => setNoVenue(true)}
+              className="text-xs text-accent-dim underline self-start mt-0.5"
+            >
+              I don&apos;t have a venue listed here
+            </button>
+          )}
+        </label>
+      )}
 
       {productType === "boost" && (
         <label className="flex flex-col gap-1 text-sm text-muted">

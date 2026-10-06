@@ -477,6 +477,20 @@
       "when": 1791255617951,
       "tag": "0067_kind_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1791257735306,
+      "tag": "0068_motionless_thaddeus_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1791258226348,
+      "tag": "0069_wild_master_chief",
+      "breakpoints": true
     }
   ]
 }

@@ -1294,6 +1294,9 @@ export function OwnerDashboard({
   bookings,
   regionSlug,
   siteUrl,
+  photoAddOn,
+  ownedVenues,
+  bundleDiscountTiers,
 }: {
   venueId: number;
   currentPhotoId: number | null;
@@ -1311,6 +1314,12 @@ export function OwnerDashboard({
   bookings: BookingData[];
   regionSlug: string;
   siteUrl: string;
+  // "boost" only -- ported from the public advertise page's checkout, see OwnerCart's
+  // own comment. Absent means the add-on isn't configured server-side, not $0.
+  photoAddOn?: { priceCentsPerDay: number };
+  // See OwnerCart's own comments on both.
+  ownedVenues: { id: number; name: string }[];
+  bundleDiscountTiers: { minVenues: number; discountPercent: number }[];
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
@@ -1362,9 +1371,12 @@ export function OwnerDashboard({
               there (see the 2026-10-05 funnel audit). */}
           <OwnerCart
             venueId={venueId}
+            ownedVenues={ownedVenues}
+            bundleDiscountTiers={bundleDiscountTiers}
             specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
             events={eventList.map((e) => ({ id: e.id, title: e.title }))}
             settings={promoteSettings}
+            photoAddOn={photoAddOn}
             todayISO={todayISO}
             creditBalance={creditBalance}
           />

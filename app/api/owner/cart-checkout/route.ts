@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { sql, eq, inArray, and, gt } from "drizzle-orm";
-import { db, bookings, monetizationSettings, venues, specials, events, venueOwners } from "@/db";
+import { sql, eq, inArray, and, gt, desc, lte } from "drizzle-orm";
+import { db, bookings, monetizationSettings, addOnSettings, bundleDiscountTiers, venues, specials, events, venueOwners } from "@/db";
 import { getOwnerSession } from "@/lib/venue-owner-auth";
 import { getStripe, getOrCreateStripeCustomerId } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/request-rate-limit";
@@ -40,6 +40,14 @@ const itemSchema = z
     // optional rather than required so the client doesn't have to fabricate one.
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     autoRenew: z.boolean().default(false),
+    // "boost" only -- ported from app/api/bookings/checkout/route.ts's same add-on.
+    // No staging-table indirection here (unlike that anonymous flow): the owner
+    // session already proves identity, so the client can just send the base64 bytes
+    // directly in this request instead of needing a separate upload-then-reference
+    // step across an email-verification gap that doesn't exist on this path.
+    hasPhotoAddOn: z.boolean().default(false),
+    photoData: z.string().nullable().default(null),
+    photoMimeType: z.string().nullable().default(null),
   })
   .refine((item) => item.autoRenew || (item.endDate && item.endDate >= item.startDate), {
     message: "endDate must be on or after startDate",
@@ -117,6 +125,9 @@ export async function POST(req: NextRequest) {
   const settingsRows = await db.select().from(monetizationSettings);
   const settingsByType = new Map(settingsRows.map((s) => [s.productType, s]));
 
+  const [photoAddOn] = await db.select().from(addOnSettings).where(eq(addOnSettings.addOnType, "photo"));
+  const photoAddOnPriceCentsPerDay = photoAddOn?.priceCentsPerDay ?? 0;
+
   // Ownership checks for boost targets -- a signed-in owner could otherwise name any
   // specialId/eventId in the platform, not just one on a venue they actually control.
   const specialIds = items.filter((i) => i.specialId !== null).map((i) => i.specialId!);
@@ -142,6 +153,9 @@ export async function POST(req: NextRequest) {
     priceCents: number;
     capCount: number | null;
     autoRenew: boolean;
+    hasPhotoAddOn: boolean;
+    photoData: string | null;
+    photoMimeType: string | null;
   };
   const priced: PricedItem[] = [];
 
@@ -173,6 +187,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Mirrors app/api/bookings/checkout/route.ts's same guard -- re-checked server-side
+    // rather than trusted from the client either way.
+    const hasPhotoAddOn = item.productType === "boost" && item.hasPhotoAddOn;
+    if (hasPhotoAddOn && !item.photoData) {
+      return NextResponse.json({ error: "photo add-on selected but no photo was sent" }, { status: 400 });
+    }
+
     const category = item.productType === "category_sponsor" ? (item.category as SpecialCategory | EventType | null) : null;
     const categoryKind = item.productType === "category_sponsor" ? item.categoryKind : null;
     if (item.productType === "category_sponsor" && (!category || !categoryKind)) {
@@ -195,10 +216,45 @@ export async function POST(req: NextRequest) {
       chatTerm,
       startDate: item.startDate,
       endDate,
-      priceCents: settings.priceCentsPerDay * days,
+      priceCents: (settings.priceCentsPerDay + (hasPhotoAddOn ? photoAddOnPriceCentsPerDay : 0)) * days,
       capCount: settings.capCount,
       autoRenew: item.autoRenew,
+      hasPhotoAddOn,
+      photoData: hasPhotoAddOn ? item.photoData : null,
+      photoMimeType: hasPhotoAddOn ? item.photoMimeType : null,
     });
+  }
+
+  // Multi-location bundle discount -- how many distinct venues does this whole cart
+  // touch (across every product type, not just one), not how many of any single
+  // product. A chain buying Featured for 3 locations qualifies the same as one buying
+  // Featured for 2 plus a Boost on a 3rd. Applied here, after priced[] is built but
+  // before anything is inserted/charged, so the discount flows through credits spend,
+  // Stripe line items, and the stored priceCents uniformly -- no second place has to
+  // remember to apply it.
+  const distinctVenueCount = new Set(priced.map((p) => p.venueId)).size;
+  const [discountTier] = await db
+    .select({ discountPercent: bundleDiscountTiers.discountPercent })
+    .from(bundleDiscountTiers)
+    .where(lte(bundleDiscountTiers.minVenues, distinctVenueCount))
+    .orderBy(desc(bundleDiscountTiers.minVenues))
+    .limit(1);
+  const discountPercent = discountTier?.discountPercent ?? 0;
+  if (discountPercent > 0) {
+    for (const item of priced) {
+      const discounted = (item.priceCents * (100 - discountPercent)) / 100;
+      // Credits are a whole-dollar unit throughout this entire system (see
+      // lib/credits.ts's CENTS_PER_CREDIT=100, no fractional-credit concept exists
+      // anywhere) -- a straight percentage discount routinely lands on a fractional
+      // dollar (e.g. $3/day Featured x 10% off = $2.70), which centsToCredits() used
+      // to just throw on, uncaught, deep inside the transaction -- an empty 500
+      // response the client couldn't even parse. Card payment has no such
+      // constraint (Stripe accepts any cent amount), so only the credits path needs
+      // this: round down to the nearest whole dollar, which is never more than the
+      // advertised discount, just occasionally a little better for the buyer -- the
+      // safe direction to round when forced to choose one.
+      item.priceCents = payWithCredits ? Math.floor(discounted / 100) * 100 : Math.round(discounted);
+    }
   }
 
   const [owner] = await db.select({ email: venueOwners.email }).from(venueOwners).where(eq(venueOwners.id, session.venueOwnerId)).limit(1);
@@ -273,6 +329,9 @@ export async function POST(req: NextRequest) {
             buyerEmail: owner.email,
             buyerVerifiedAt: new Date(now),
             autoRenew: item.autoRenew,
+            hasPhotoAddOn: item.hasPhotoAddOn,
+            photoData: item.photoData,
+            photoMimeType: item.photoMimeType,
           }))
         )
         .returning();

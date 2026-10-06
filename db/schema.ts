@@ -139,6 +139,18 @@ export const venues = specialsSchema.table(
     contactEmail: text("contact_email"),
     sourceUrls: text("source_urls").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
+    // A placeholder venue row created for a non-venue advertiser (a brewery, tourism
+    // board, rideshare company -- anyone who wants to sponsor a category without being
+    // a listed bar/restaurant). Always paired with active = false -- it must never
+    // appear on the public board, map, venue detail page, or sitemap (every one of
+    // those already filters on active = true), but category_sponsor's checkout
+    // (app/api/bookings/verify-email/route.ts) specifically allows an inactive venue
+    // through when this is also true, since categorySponsors itself has no venueId at
+    // all (see its own schema comment) -- this row only ever exists to carry a
+    // name/website for lib/bookings-data.ts's activation step to read from. Distinct
+    // from an ordinary active = false venue (a real listing taken down for being
+    // closed/wrong), which must stay un-bookable.
+    sponsorOnly: boolean("sponsor_only").notNull().default(false),
     // Some venue sites (e.g. O'Flannigan's) load their specials/events board
     // via client-side JS, invisible to a plain HTTP fetch. Set true once
     // that's confirmed so the cron uses a headless-browser fetch for this
@@ -921,6 +933,19 @@ export const creditBundles = specialsSchema.table("credit_bundles", {
   credits: integer("credits").notNull(),
   active: boolean("active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
+});
+
+// A chain owner (one login managing several venues via venueOwnerVenues) buying the
+// same product across multiple of their locations in one dashboard-cart checkout gets
+// a discount on the combined total, based on how many distinct venues the whole cart
+// touches -- e.g. 10% off at 3+ venues, 20% off at 5+. The highest minVenues tier the
+// cart's distinct-venue count clears wins (app/api/owner/cart-checkout/route.ts picks
+// it with `order by min_venues desc limit 1`). Seeded empty -- Mike confirmed the real
+// tiers (10%/3, 20%/5) 2026-10-06; see scripts/seed-bundle-discount-tiers.ts.
+export const bundleDiscountTiers = specialsSchema.table("bundle_discount_tiers", {
+  id: serial("id").primaryKey(),
+  minVenues: integer("min_venues").notNull(),
+  discountPercent: integer("discount_percent").notNull(),
 });
 
 // A resized photo can be hundreds of KB of base64 -- far too large to embed in the
