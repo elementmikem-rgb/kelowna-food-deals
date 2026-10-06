@@ -1,7 +1,7 @@
 // One-off: nudge claimed venue owners who have unused free-trial credits and have
 // never logged back in (or logged in once and never spent). Real send to real owners --
 // run with: npm run send-credit-nudge -- --ids=474,358,... (comma-separated venue ids)
-import { db, venues, venueOwners, venueOwnerVenues, creditLedger } from "../db";
+import { db, venues, venueOwners, venueOwnerVenues, creditLedger, outreachSends } from "../db";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { sendOutreachEmail } from "../lib/outreach-email";
 import { wrapOutreachHtml } from "../lib/outreach-send";
@@ -101,6 +101,16 @@ async function main() {
     const htmlContent = wrapOutreachHtml(bodyHtml, footer, region.brandName, logoUrl);
     const textContent = `${bodyText}\n\n--\n${footerText}`;
 
+    // Logged the same way lib/outreach-followup-email.ts and lib/outreach-weekend-email.ts
+    // log theirs -- a "queued" row inserted before the send (so its id is available for
+    // the Brevo tag), updated to "sent"/"failed" after. Without this the send still works,
+    // but it's invisible to the admin inbox and gets no open/click tracking (confirmed
+    // missing entirely for the 2026-10-06 run of this script, before this fix).
+    const [sendRow] = await db
+      .insert(outreachSends)
+      .values({ venueId: row.venueId, kind: "credit_nudge", toEmail: row.ownerEmail, subject, htmlBody: htmlContent, status: "queued" })
+      .returning({ id: outreachSends.id });
+
     try {
       const { messageId } = await sendOutreachEmail({
         to: row.ownerEmail,
@@ -115,11 +125,14 @@ async function main() {
           "List-Unsubscribe": `<${unsubscribeUrl}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
-        tags: [`credit-nudge-venue-${row.venueId}`],
+        tags: [`send-${sendRow.id}`],
       });
+      await db.update(outreachSends).set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() }).where(eq(outreachSends.id, sendRow.id));
       console.log(`[${row.venueId}] ${row.venueName} -> ${row.ownerEmail}: sent (${messageId})`);
     } catch (err) {
-      console.error(`[${row.venueId}] ${row.venueName} -> ${row.ownerEmail}: FAILED - ${err instanceof Error ? err.message : String(err)}`);
+      const message = err instanceof Error ? err.message : String(err);
+      await db.update(outreachSends).set({ status: "failed", errorMessage: message }).where(eq(outreachSends.id, sendRow.id));
+      console.error(`[${row.venueId}] ${row.venueName} -> ${row.ownerEmail}: FAILED - ${message}`);
     }
   }
 
