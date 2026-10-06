@@ -252,11 +252,14 @@ export function OwnerCart({
   const autoRenewItems = cart.filter((i) => i.autoRenew);
 
   return (
-    <section id="promote" className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
+    <section id="promote" className="flex flex-col gap-3 rounded-lg border border-accent/30 bg-accent-soft/10 p-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium text-foreground/90">Promote this venue</span>
-        <span className="text-xs text-muted">
+        <h2 className="font-display text-xl text-foreground">Promote this venue</h2>
+        <span className="text-sm text-muted">
           Pin your card to the top, boost a specific special or event, or sponsor a whole category.
+          {creditBalance !== undefined && creditBalance > 0 && (
+            <> You have <strong className="text-foreground/90">{creditBalance} credits</strong> (${creditBalance}) ready to spend below.</>
+          )}
         </span>
       </div>
 

@@ -1239,6 +1239,20 @@ export function OwnerDashboard({
         <OwnerOnboarding creditBalance={creditBalance} onDismiss={() => setOnboardingDismissed(true)} />
       )}
 
+      {/* Moved ahead of every content-entry section (Flash Special/Photo/Specials/Events/Menu)
+          -- this is the only place the free trial credits (or any purchase) actually convert
+          into visibility, and it was previously 6th on the page behind empty-state forms that
+          demanded real work first. 0 of 18 claimed owners ever placed a booking with it buried
+          there (see the 2026-10-05 funnel audit). */}
+      <OwnerCart
+        venueId={venueId}
+        specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
+        events={eventList.map((e) => ({ id: e.id, title: e.title }))}
+        settings={promoteSettings}
+        todayISO={todayISO}
+        creditBalance={creditBalance}
+      />
+
       <FlashSpecialWidget
         venueId={venueId}
         live={flashSpecial}
@@ -1348,14 +1362,6 @@ export function OwnerDashboard({
         ))}
       </SectionShell>
 
-      <OwnerCart
-        venueId={venueId}
-        specials={specialList.map((s) => ({ id: s.id, title: s.title }))}
-        events={eventList.map((e) => ({ id: e.id, title: e.title }))}
-        settings={promoteSettings}
-        todayISO={todayISO}
-        creditBalance={creditBalance}
-      />
       <BookingHistoryList bookings={bookings} />
       <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
       <PasswordSection hasPassword={hasPassword} />
