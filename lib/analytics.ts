@@ -177,7 +177,13 @@ export async function getAnalyticsStats(
   const priorVisitorIds = db
     .select({ visitorId: analyticsEvents.visitorId })
     .from(analyticsEvents)
-    .where(and(isPageview, lt(analyticsEvents.createdAt, window.from)));
+    .where(
+      and(
+        isPageview,
+        lt(analyticsEvents.createdAt, window.from),
+        regionScopeCondition(analyticsEvents.regionId, regionIds)
+      )
+    );
   const [returningVisitorCount] = await db
     .select({ count: sql<number>`count(distinct ${analyticsEvents.visitorId})::int` })
     .from(analyticsEvents)
