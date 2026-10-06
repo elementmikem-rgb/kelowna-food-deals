@@ -302,13 +302,19 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // "first_contact" (the original free-listing email), "follow_up" (claim-flow/
   // credit-system campaign), "weekend_promo" (lib/outreach-weekend-email.ts,
   // 2026-10-02 -- goes to everyone eligible regardless of prior outreach kind),
-  // or "credit_nudge" (scripts/send-credit-nudge.ts, 2026-10-06 -- a claimed
-  // owner reminder about unspent free-trial credit).
+  // "credit_nudge" (scripts/send-credit-nudge.ts, 2026-10-06 -- a claimed owner
+  // reminder about unspent free-trial credit), "weekly_digest"
+  // (lib/weekly-digest.ts, 2026-10-06 -- the recurring Monday view-count email to
+  // every opted-in claimed owner; see cron/index.ts's weekly guard), or
+  // "claim_approved" (app/api/admin/claims/[id]/route.ts, 2026-10-06 -- the
+  // "you're in, here's your login link" email, the very first touchpoint a brand
+  // new owner ever gets -- worth tracking specifically because a low open rate
+  // here would explain downstream funnel drop-off before anything else can).
   // Default keeps every pre-existing row correctly labeled without a backfill.
   // app/api/admin/outreach/send/route.ts's "already sent" guard checks this
   // kind specifically, so one campaign's send doesn't get silently blocked by
   // (or silently re-trigger a duplicate of) a different kind's send.
-  kind: text("kind").$type<"first_contact" | "follow_up" | "weekend_promo" | "credit_nudge">().notNull().default("first_contact"),
+  kind: text("kind").$type<"first_contact" | "follow_up" | "weekend_promo" | "credit_nudge" | "weekly_digest" | "claim_approved">().notNull().default("first_contact"),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),

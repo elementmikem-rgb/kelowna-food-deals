@@ -1,4 +1,4 @@
-import { db, venues, venueOwners, venueOwnerVenues, regions } from "@/db";
+import { db, venues, venueOwners, venueOwnerVenues, regions, outreachSends } from "@/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { getRegionVenueWeeklyViews } from "@/lib/analytics";
 import { sendOutreachEmail } from "@/lib/outreach-email";
@@ -180,8 +180,18 @@ export async function sendWeeklyDigests(): Promise<void> {
         .limit(1);
       if (!owner) continue;
 
+      // Logged the same way every other campaign in this codebase is -- a "queued" row
+      // inserted before the send (its id becomes the send-<id> Brevo tag the webhook
+      // matches on), updated to "sent"/"failed" after. This recurring weekly send had
+      // no outreach_sends row at all until 2026-10-06, same gap credit_nudge had: it
+      // worked fine but was invisible in the admin inbox and had zero open/click data.
+      const [sendRow] = await db
+        .insert(outreachSends)
+        .values({ venueId: venue.venueId, kind: "weekly_digest", toEmail: owner.email, subject, htmlBody, status: "queued" })
+        .returning({ id: outreachSends.id });
+
       try {
-        await sendOutreachEmail({
+        const { messageId } = await sendOutreachEmail({
           to: owner.email,
           subject,
           htmlContent: htmlBody,
@@ -190,8 +200,12 @@ export async function sendWeeklyDigests(): Promise<void> {
           replyTo: region.domain
             ? `reply@reply.${region.domain}`
             : `reply@reply.${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`,
+          tags: [`send-${sendRow.id}`],
         });
+        await db.update(outreachSends).set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() }).where(eq(outreachSends.id, sendRow.id));
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await db.update(outreachSends).set({ status: "failed", errorMessage: message }).where(eq(outreachSends.id, sendRow.id));
         console.error(`[weekly-digest] failed to send to venue ${venue.venueId}:`, err);
       }
     }

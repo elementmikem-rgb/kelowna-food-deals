@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, venueClaimRequests, venueOwners, venueOwnerVenues, venues } from "@/db";
+import { db, venueClaimRequests, venueOwners, venueOwnerVenues, venues, outreachSends } from "@/db";
 import { eq, and, or, sql, isNotNull } from "drizzle-orm";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { createOwnerSession } from "@/lib/venue-owner-auth";
@@ -169,19 +169,34 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       `;
       const footer = `${region.mailingAddress}`;
       const htmlContent = wrapOutreachHtml(bodyHtml, footer, region.brandName, logoUrl);
+      const subject = outcome.isNewOwner
+        ? `You're approved -- manage your ${region.brandName} listing`
+        : `New location added to your ${region.brandName} account`;
+
+      // Logged the same way every other campaign in this codebase is -- see
+      // outreachSends.kind's "claim_approved" comment for why this specific email is
+      // worth tracking even though it's a one-off transactional send, not a bulk
+      // campaign.
+      const [sendRow] = await db
+        .insert(outreachSends)
+        .values({ venueId: outcome.venueId, kind: "claim_approved", toEmail: outcome.email, subject, htmlBody: htmlContent, status: "queued" })
+        .returning({ id: outreachSends.id });
+
       try {
-        await sendOutreachEmail({
+        const { messageId } = await sendOutreachEmail({
           to: outcome.email,
-          subject: outcome.isNewOwner
-            ? `You're approved -- manage your ${region.brandName} listing`
-            : `New location added to your ${region.brandName} account`,
+          subject,
           htmlContent,
           senderName: region.brandName,
           replyTo: region.domain
             ? `reply@reply.${region.domain}`
             : `reply@reply.${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`,
+          tags: [`send-${sendRow.id}`],
         });
+        await db.update(outreachSends).set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() }).where(eq(outreachSends.id, sendRow.id));
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await db.update(outreachSends).set({ status: "failed", errorMessage: message }).where(eq(outreachSends.id, sendRow.id));
         console.error("Failed to send owner login email:", err);
       }
     }
