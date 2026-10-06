@@ -9,6 +9,7 @@ import { checkAvailability } from "@/lib/booking-availability";
 import { daysInclusive, addDaysISO } from "@/lib/time";
 import { stripeFeeCents } from "@/lib/stripe-fee";
 import { spendCredits, centsToCredits, InsufficientCreditsError } from "@/lib/credits";
+import { isSafeImageMimeType } from "@/lib/safe-image-types";
 import type { BookingProductType, BookingStatus, SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schema";
 
 // Same 30-min hold used by the anonymous checkout path (app/api/bookings/checkout/route.ts)
@@ -24,6 +25,10 @@ const STRIPE_EXPIRY_MARGIN_MS = 60_000;
 // redirect) per differently-sized item. 30 days keeps every auto-renew item on one
 // shared monthly cadence so they can still be bundled into a single checkout.
 const AUTO_RENEW_WINDOW_DAYS = 30;
+// Same pre-base64 ceiling as app/api/bookings/verify-email/route.ts's own photo
+// upload -- the client already downscales through lib/client-image.ts's
+// fileToBase64, so a legitimate upload should never be near this.
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
 const itemSchema = z
   .object({
@@ -187,11 +192,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Mirrors app/api/bookings/checkout/route.ts's same guard -- re-checked server-side
-    // rather than trusted from the client either way.
+    // Mirrors app/api/bookings/checkout/route.ts's same guards -- re-checked
+    // server-side rather than trusted from the client either way. The MIME check
+    // matters even though the owner session already proves identity: without it, a
+    // crafted request could set photoMimeType to something like text/html, which
+    // later gets served back as this booking's stored Content-Type -- a stored-XSS
+    // path, not just a trust issue. A real client-side upload always produces one of
+    // the allowlisted image types via lib/client-image.ts's fileToBase64.
     const hasPhotoAddOn = item.productType === "boost" && item.hasPhotoAddOn;
     if (hasPhotoAddOn && !item.photoData) {
       return NextResponse.json({ error: "photo add-on selected but no photo was sent" }, { status: 400 });
+    }
+    if (hasPhotoAddOn && (!item.photoMimeType || !isSafeImageMimeType(item.photoMimeType))) {
+      return NextResponse.json({ error: "Unsupported image type" }, { status: 400 });
+    }
+    // Same pre-decode size ceiling as verify-email/route.ts's own photo upload.
+    if (hasPhotoAddOn && item.photoData && (item.photoData.length * 3) / 4 > MAX_PHOTO_BYTES) {
+      return NextResponse.json({ error: "Photo is too large" }, { status: 400 });
     }
 
     const category = item.productType === "category_sponsor" ? (item.category as SpecialCategory | EventType | null) : null;

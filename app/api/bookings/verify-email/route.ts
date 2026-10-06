@@ -63,7 +63,24 @@ const bodySchema = z.object({
   // lib/bookings-data.ts's activation step reads sponsorName/sponsorUrl off a venue.
   venueId: z.number().int().positive().nullable().default(null),
   businessName: z.string().trim().min(1).max(200).nullable().default(null),
-  businessUrl: z.string().trim().max(300).nullable().default(null),
+  // Stored as-is into venues.website, which lib/bookings-data.ts's activation step
+  // copies straight into categorySponsors.sponsorUrl -- rendered as a real <a href>
+  // on the public board for every visitor (components/SpecialsBoard.tsx,
+  // EventsBoard.tsx's sponsor banner). An unvalidated value here is a stored XSS/
+  // open-redirect path (a "website" of "javascript:..." or similar), not just a
+  // trust issue -- same reasoning as venueUrl.ts's SAFE_IMAGE_MIME_TYPES allowlist
+  // for photo uploads. Empty string normalizes to null (an optional field left
+  // blank client-side) rather than failing the regex.
+  businessUrl: z
+    .string()
+    .trim()
+    .max(300)
+    .nullable()
+    .default(null)
+    .transform((v) => (v === "" ? null : v))
+    .refine((v) => v === null || /^https:\/\/[^\s]+$|^http:\/\/[^\s]+$/i.test(v), {
+      message: "Website must be a valid http(s) URL",
+    }),
   specialId: z.number().int().positive().nullable(),
   eventId: z.number().int().positive().nullable(),
   category: z.union([z.enum(specialCategory), z.enum(eventType)]).nullable(),
