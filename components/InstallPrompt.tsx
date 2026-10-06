@@ -77,11 +77,31 @@ export function InstallPrompt() {
       // install prompt shown -- two competing install UIs would be confusing.
       e.preventDefault();
       const evt = e as BeforeInstallPromptEvent;
-      setEligible({ kind: "android", prompt: () => void evt.prompt() });
+      setEligible({
+        kind: "android",
+        // Fires only on an actual "Install" tap in Chrome's own native dialog --
+        // dismissing that dialog (as opposed to dismissing this banner without
+        // ever opening it) does NOT fire appinstalled, so this stays accurate
+        // even though prompt()'s own userChoice result is discarded below.
+        prompt: () => void evt.prompt(),
+      });
       setVisible(true);
     }
+    // The only reliable "they actually installed it" signal that exists for any
+    // platform -- iOS has no equivalent event at all (see isStandaloneAlready's
+    // comment), so install tracking is Android-only by platform limitation, not
+    // an oversight. Listened for globally (not just while this banner is open)
+    // since Chrome's own mini-infobar or address-bar install icon can also
+    // trigger a real install without this banner ever being shown.
+    function onAppInstalled() {
+      window.kdsTrack?.("pwa_install", "android");
+    }
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
   }, []);
 
   function dismiss() {

@@ -1,5 +1,5 @@
 import { db, analyticsEvents } from "@/db";
-import { and, gte, lt, eq, sql } from "drizzle-orm";
+import { and, gte, lt, eq, sql, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
 
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
@@ -111,6 +111,14 @@ export function buildPreviousWindow(window: AnalyticsWindow): AnalyticsWindow {
 export interface AnalyticsStats {
   pageviews: number;
   uniqueVisitors: number;
+  // Of uniqueVisitors, how many also have a pageview from before this window --
+  // i.e. kds_vid (a browser-local, indefinitely-persistent id) was already seen
+  // at some earlier point, not bounded to any fixed lookback period. Undercounts
+  // true repeat visits whenever someone clears storage, switches devices, or uses
+  // a private window -- there's no cross-device identity here, same ceiling every
+  // localStorage-based visitor id has.
+  returningVisitors: number;
+  returningVisitorRate: number; // returningVisitors / uniqueVisitors * 100, 0 if no visitors
   sessions: number;
   bounceRate: number; // % of sessions with exactly one pageview
   // Sessions with exactly one pageview and no referrer at all -- the signature of a
@@ -160,6 +168,20 @@ export async function getAnalyticsStats(
     .select({ count: sql<number>`count(distinct ${analyticsEvents.visitorId})::int` })
     .from(analyticsEvents)
     .where(and(inWindow, isPageview));
+
+  // Subquery (compiles to visitor_id IN (SELECT ...)) rather than a correlated EXISTS
+  // with a hand-aliased table -- drizzle's sql`` only emits a raw alias's name, not its
+  // "table AS alias" definition, when that alias is never introduced via an actual
+  // .from()/.join() call, so a raw EXISTS against it fails with "relation does not
+  // exist". inArray() accepts a sub-select natively and sidesteps that entirely.
+  const priorVisitorIds = db
+    .select({ visitorId: analyticsEvents.visitorId })
+    .from(analyticsEvents)
+    .where(and(isPageview, lt(analyticsEvents.createdAt, window.from)));
+  const [returningVisitorCount] = await db
+    .select({ count: sql<number>`count(distinct ${analyticsEvents.visitorId})::int` })
+    .from(analyticsEvents)
+    .where(and(inWindow, isPageview, inArray(analyticsEvents.visitorId, priorVisitorIds)));
 
   const [sessionCount] = await db
     .select({ count: sql<number>`count(distinct ${analyticsEvents.sessionId})::int` })
@@ -257,6 +279,9 @@ export async function getAnalyticsStats(
   return {
     pageviews: pageviewCount.count,
     uniqueVisitors: uniqueVisitorCount.count,
+    returningVisitors: returningVisitorCount.count,
+    returningVisitorRate:
+      uniqueVisitorCount.count > 0 ? (returningVisitorCount.count / uniqueVisitorCount.count) * 100 : 0,
     sessions: sessionCount.count,
     bounceRate,
     likelyBotSessions,

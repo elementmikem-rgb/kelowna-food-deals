@@ -129,7 +129,7 @@ export default async function AdminAnalyticsPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <StatCard label="Pageviews" value={stats.pageviews} previous={stats.previous.pageviews} />
         <StatCard
           label="Unique visitors"
@@ -138,7 +138,19 @@ export default async function AdminAnalyticsPage({
         />
         <StatCard label="Sessions" value={stats.sessions} previous={stats.previous.sessions} />
         <StatCard label="Bounce rate" value={`${stats.bounceRate.toFixed(0)}%`} />
+        <StatCard
+          label="Returning visitors"
+          value={`${stats.returningVisitorRate.toFixed(0)}%`}
+        />
       </div>
+      {stats.uniqueVisitors > 0 && (
+        <p className="text-xs text-muted-2 -mt-2">
+          {stats.returningVisitors} of {stats.uniqueVisitors} visitor
+          {stats.uniqueVisitors === 1 ? "" : "s"} in this window were seen on an earlier visit too
+          (based on a browser-local id, so this undercounts anyone who cleared storage or switched
+          devices).
+        </p>
+      )}
 
       {stats.likelyBotSessions > 0 && (
         <p className="text-xs text-stale -mt-2">
