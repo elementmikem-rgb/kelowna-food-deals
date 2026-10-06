@@ -43,7 +43,7 @@ const content = {
     noPhotosTrail: "and help other visitors picture the place.",
     fullMenuHeading: "Full Menu",
     fullMenuDesc: "Regular menu items spotted by visitors -- not deals, just what’s on offer.",
-    claimVenue: "Is this your venue? Claim it",
+    claimVenue: "Own this venue? Claim your free listing",
   },
   fr: {
     metaDesc: (name: string, addr: string) =>
@@ -65,7 +65,7 @@ const content = {
     noPhotosTrail: "et aidez les autres visiteurs à s’imaginer l’endroit.",
     fullMenuHeading: "Menu complet",
     fullMenuDesc: "Articles du menu repérés par des visiteurs -- pas des offres spéciales, juste ce qui est proposé.",
-    claimVenue: "Est-ce votre établissement? Réclamez-le",
+    claimVenue: "C'est votre établissement? Réclamez votre fiche gratuite",
   },
 } as const;
 
@@ -305,6 +305,20 @@ export default async function VenuePage({ params }: PageProps) {
           >
             {content[lang].mapsLabel}
           </a>
+          {/* Moved up to 2nd position (from last, after Website/Menu/Phone/Reviews) and
+              given the same bold filled style as Directions above -- it was previously a
+              dashed, muted-color link below four outbound-link buttons that have nothing
+              to do with being the owner, and data showed only ~7.5% of people who clicked
+              through from an outreach email into this page ever found it (see the
+              2026-10-06 claim-funnel analysis). */}
+          {venue.claimedAt === null && (
+            <Link
+              href={`/${region.slug}/venues/${venue.id}/claim`}
+              className="press-pill rounded-full bg-evergreen px-4 py-2.5 text-sm font-medium text-background text-center hover:bg-evergreen/90"
+            >
+              {content[lang].claimVenue}
+            </Link>
+          )}
           {venue.website && (
             <a
               href={venue.website}
@@ -341,14 +355,6 @@ export default async function VenuePage({ params }: PageProps) {
           >
             {content[lang].reviewsLabel}
           </a>
-          {venue.claimedAt === null && (
-            <Link
-              href={`/${region.slug}/venues/${venue.id}/claim`}
-              className="press-pill rounded-full border border-dashed border-evergreen text-evergreen px-4 py-2.5 text-sm text-center hover:bg-evergreen/10"
-            >
-              {content[lang].claimVenue}
-            </Link>
-          )}
 
           <div className="rounded-xl overflow-hidden border border-border h-48 mt-2">
             <iframe

@@ -44,7 +44,9 @@ export default async function ClaimVenuePage({ params }: PageProps) {
         <h1 className="font-display text-2xl sm:text-3xl text-foreground">Claim this listing</h1>
         <p className="text-sm text-muted">
           Are you the owner or manager of {venue.name}? Claim it to edit your specials, events, and
-          menu directly.
+          menu directly -- plus get <strong className="text-foreground/90">$10 in free credit</strong>{" "}
+          to pin your listing to the top of the homepage or boost a specific special or event. No
+          card required.
         </p>
       </header>
 
