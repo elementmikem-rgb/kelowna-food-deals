@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllSpecialsWithVenue } from "@/lib/data";
+import { getSpecialsWithVenueForDay } from "@/lib/data";
+import { todayDowInRegion } from "@/lib/time";
 import { getActiveCategorySponsors } from "@/lib/sponsored-data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { SpecialsBoard } from "@/components/SpecialsBoard";
@@ -75,8 +76,13 @@ export default async function SlugPage({ params }: SlugPageProps) {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
+  // Category pages (e.g. /kelowna/wing-night) have no day of their own -- SpecialsBoard
+  // defaults selectedDay to "today" whenever initialDay isn't passed, so that's the day
+  // actually rendered/hydrated either way. Only a day page (e.g. /kelowna/saturday)
+  // overrides this with the specific day the page is about.
+  const dayToLoad = resolved.kind === "day" ? resolved.dow : todayDowInRegion(timezone);
   const [specials, categorySponsors] = await Promise.all([
-    getAllSpecialsWithVenue(region.id),
+    getSpecialsWithVenueForDay(region.id, dayToLoad),
     getActiveCategorySponsors([region.id]),
   ]);
 

@@ -152,6 +152,52 @@ export async function getAllSpecialsWithVenue(regionId: number): Promise<Special
   return fixLastConfirmedAt(rows) as SpecialWithVenue[];
 }
 
+// Scoped to one day-of-week (plus every "every day" row, dayOfWeek null) instead of
+// the region's entire special set -- SpecialsBoard only ever shows one day at a time
+// by default, but every page using it (the home page and every /[region]/[day] or
+// /[region]/[category] SEO landing page) was fetching and hydrating all ~7 days' worth
+// of data regardless, bloating the page with a client-hydration payload most of which
+// was never shown. Confirmed on todaystab.com/kelowna 2026-10-06: 1.5MB of HTML, 80%
+// of it one inline script tag carrying the full specials array a second time for React
+// hydration. isMonthly excluded -- SpecialsBoard's own filtering already drops every
+// isMonthly row unconditionally (see components/SpecialsBoard.tsx's `filtered` memo),
+// so shipping them here would be dead weight with zero behavior change either way.
+export async function getSpecialsWithVenueForDay(
+  regionId: number,
+  dayOfWeek: number
+): Promise<SpecialWithVenue[]> {
+  const rows = await db
+    .select(baseColumns)
+    .from(specials)
+    .innerJoin(venues, eq(specials.venueId, venues.id))
+    .where(
+      and(
+        eq(venues.active, true),
+        eq(venues.regionId, regionId),
+        isNull(specials.archivedAt),
+        notExpiredFlash,
+        eq(specials.isMonthly, false),
+        or(isNull(specials.dayOfWeek), eq(specials.dayOfWeek, dayOfWeek))
+      )
+    );
+
+  return fixLastConfirmedAt(rows) as SpecialWithVenue[];
+}
+
+// Cheap standalone query for AboutSection's "serving X, Y, and Z" blurb -- previously
+// this list was derived from the full specials array (every city with a live special,
+// any day of the week), which doesn't exist as a single fetch anymore now that the
+// home page only loads one day at a time. Deriving it from venues directly instead of
+// specials also means a city isn't dropped from the list just because its one venue's
+// special happens to run on a different day than whichever one is currently loaded.
+export async function getActiveVenueCities(regionId: number): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ city: venues.city })
+    .from(venues)
+    .where(and(eq(venues.active, true), eq(venues.regionId, regionId)));
+  return rows.map((r) => r.city).filter((c): c is string => !!c).sort();
+}
+
 export async function getMonthlySpecials(regionId: number): Promise<SpecialWithVenue[]> {
   const rows = await db
     .select(baseColumns)

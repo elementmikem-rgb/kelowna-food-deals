@@ -1,4 +1,4 @@
-import { getAllSpecialsWithVenue } from "@/lib/data";
+import { getSpecialsWithVenueForDay, getActiveVenueCities } from "@/lib/data";
 import { getActiveCategorySponsors } from "@/lib/sponsored-data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { SpecialsBoard } from "@/components/SpecialsBoard";
@@ -12,6 +12,7 @@ import { PushOptIn } from "@/components/PushOptIn";
 import { RegionChatBox } from "@/components/RegionChatBox";
 import { buildSpecialsJsonLd } from "@/lib/seo";
 import { t, getEffectiveLanguage } from "@/lib/i18n";
+import { todayDowInRegion } from "@/lib/time";
 
 // Per-region correctness requires reading the request's own domain
 // (getCurrentRegion, via proxy.ts's x-region-id header) rather than a single
@@ -23,15 +24,14 @@ export default async function Home() {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
-  const [specials, categorySponsors] = await Promise.all([
-    getAllSpecialsWithVenue(region.id),
+  const today = todayDowInRegion(timezone);
+  const [specials, categorySponsors, areas] = await Promise.all([
+    getSpecialsWithVenueForDay(region.id, today),
     getActiveCategorySponsors([region.id]),
+    getActiveVenueCities(region.id),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code);
-  const areas = Array.from(
-    new Set(specials.map((s) => s.venueCity).filter((c): c is string => !!c))
-  ).sort();
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-4 sm:py-6 gap-5 sm:gap-10">

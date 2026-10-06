@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { SpecialWithVenue } from "@/lib/data";
+import { reviveSpecialWithVenueDates } from "@/lib/special-dates";
 import type { SpecialCategory } from "@/db/schema";
 import type { CategorySponsor } from "@/lib/sponsored-data";
 import { todayDowInRegion, dowFullName, regionTodayISODate } from "@/lib/time";
@@ -86,7 +87,8 @@ export function SpecialsBoard({
   // left open overnight rolls itself over to the right day.
   const initialToday = useMemo(() => todayDowInRegion(timezone), [timezone]);
   const [today, setToday] = useState(initialToday);
-  const [selectedDay, setSelectedDay] = useState(initialDay ?? initialToday);
+  const serverLoadedDay = initialDay ?? initialToday;
+  const [selectedDay, setSelectedDay] = useState(serverLoadedDay);
   const [selectedCategory, setSelectedCategory] = useState<SpecialCategory | "all">(
     initialCategory ?? "all"
   );
@@ -98,13 +100,36 @@ export function SpecialsBoard({
   // view back to whatever day it actually is, defeating the point of the page.
   const dayPickedByUser = useRef(initialDay !== undefined);
 
+  // The server only ever hydrates this page with ONE day's specials (see
+  // lib/data.ts's getSpecialsWithVenueForDay) -- shipping all 7 days' worth
+  // unconditionally was the entire reason the page was 1.5MB, 80% of it a single
+  // inline script re-serializing data for React hydration that almost never got
+  // looked at (visitors only ever see one day by default). Picking a different day
+  // fetches it here instead, and both the newly-fetched set and anything fetched
+  // earlier this session stay cached in extraSpecialsByDay so flipping back to an
+  // already-seen day is instant, no re-fetch.
+  const [extraSpecialsByDay, setExtraSpecialsByDay] = useState<Map<number, SpecialWithVenue[]>>(
+    new Map()
+  );
+  const [loadingDay, setLoadingDay] = useState<number | null>(null);
+  const loadedDaysRef = useRef<Set<number>>(new Set([serverLoadedDay]));
+
+  const allSpecials = useMemo(() => {
+    if (extraSpecialsByDay.size === 0) return specials;
+    const byId = new Map(specials.map((s) => [s.id, s]));
+    for (const daySpecials of extraSpecialsByDay.values()) {
+      for (const s of daySpecials) byId.set(s.id, s);
+    }
+    return Array.from(byId.values());
+  }, [specials, extraSpecialsByDay]);
+
   // Derived from this region's own specials rather than a hardcoded list --
   // a static city list would be wrong for every region but the one it was
   // written for.
   const cities = useMemo(
     () =>
-      Array.from(new Set(specials.map((s) => s.venueCity).filter((c): c is string => !!c))).sort(),
-    [specials]
+      Array.from(new Set(allSpecials.map((s) => s.venueCity).filter((c): c is string => !!c))).sort(),
+    [allSpecials]
   );
 
   useEffect(() => {
@@ -123,12 +148,28 @@ export function SpecialsBoard({
   function handleSelectDay(day: number) {
     dayPickedByUser.current = true;
     setSelectedDay(day);
+    if (loadedDaysRef.current.has(day)) return;
+    loadedDaysRef.current.add(day);
+    setLoadingDay(day);
+    fetch(`/api/specials/by-day?region=${regionSlug}&day=${day}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("fetch failed"))))
+      .then((data: { specials: Record<string, unknown>[] }) => {
+        setExtraSpecialsByDay((prev) =>
+          new Map(prev).set(day, reviveSpecialWithVenueDates(data.specials))
+        );
+      })
+      .catch(() => {
+        // Leave the day marked as loaded-attempted rather than retrying forever on
+        // every render -- worst case that day's board is missing a few items not
+        // already covered by the "every day" rows already in hand, not empty.
+      })
+      .finally(() => setLoadingDay((d) => (d === day ? null : d)));
   }
 
   const normalizedQuery = venueQuery.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    return specials
+    return allSpecials
       .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
@@ -156,7 +197,7 @@ export function SpecialsBoard({
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [specials, selectedDay, selectedCategory, selectedCity, normalizedQuery]);
+  }, [allSpecials, selectedDay, selectedCategory, selectedCity, normalizedQuery]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -248,9 +289,10 @@ export function SpecialsBoard({
       <p className="text-sm text-muted flex items-center justify-between gap-3 flex-wrap">
         <span>
           {dowFullName(selectedDay, lang)}
-          {selectedDay === today ? tr.card.todaySuffix : ""} · {filtered.length} special
-          {filtered.length === 1 ? "" : "s"} at {grouped.all.length} place
-          {grouped.all.length === 1 ? "" : "s"}
+          {selectedDay === today ? tr.card.todaySuffix : ""}
+          {loadingDay === selectedDay
+            ? " · loading…"
+            : ` · ${filtered.length} special${filtered.length === 1 ? "" : "s"} at ${grouped.all.length} place${grouped.all.length === 1 ? "" : "s"}`}
           {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
         </span>
         {/* A condensed nudge here so the tip jar isn't only reachable by
@@ -290,7 +332,14 @@ export function SpecialsBoard({
         />
       )}
 
-      {view === "list" && (grouped.all.length === 0 ? (
+      {/* While the just-picked day's data is still in flight, the grid below would
+          otherwise render against allSpecials' partial state for that day (every-day
+          rows only, the day-specific ones not in hand yet) -- a flash of an
+          incomplete-looking board for a moment, then the rest popping in once the
+          fetch resolves. A plain loading state reads better than that. */}
+      {view === "list" && loadingDay === selectedDay ? (
+        <p className="text-muted-2 text-sm py-8 text-center">Loading…</p>
+      ) : view === "list" && (grouped.all.length === 0 ? (
         <p className="text-muted-2 text-sm py-8 text-center">
           {normalizedQuery
             ? tr.emptyState.noSpecialsSearch(venueQuery.trim())
