@@ -1,7 +1,7 @@
 import { db, venues, specials, events, regions, scrapeRuns } from "@/db";
 import { eq, and, isNull, isNotNull, notInArray, sql, desc, gt } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
-import { estimateCostUsd } from "@/lib/anthropic-pricing";
+import { estimateCostUsd, HAIKU_5_5_CUTOVER_AT } from "@/lib/anthropic-pricing";
 
 // A venue manually confirmed to have nothing promotional isn't checked again
 // for this long -- long enough to stop the same dive bar resurfacing every
@@ -141,11 +141,16 @@ export interface CronSpendSummary {
 // a real, separately-billed thing the way "specials for Kelowna" is. This is a platform-
 // wide operational cost, always shown in full regardless of the admin's region filter.
 export async function getCronSpend(days = 14): Promise<CronSpendSummary> {
+  // Also grouped by whether a row ran before/after the Haiku 5.5 price cutover
+  // (lib/anthropic-pricing.ts) -- a single calendar day can straddle the cutover
+  // (the switch happened mid-morning Pacific on 2026-10-08), and summing tokens across
+  // two different per-token rates before pricing would blend them into a wrong number.
+  // Grouping this way instead yields up to two sub-rows for that one day, each priced
+  // correctly at its own rate, merged back into one daySummaries entry below.
   const rows = await db
     .select({
-      // Group by Pacific calendar day, not UTC -- the cron fires at 6am Pacific, so a
-      // UTC grouping would sometimes split one night's run across two UTC dates.
       day: sql<string>`(${scrapeRuns.ranAt} AT TIME ZONE 'America/Vancouver')::date::text`,
+      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT}`,
       venueRuns: sql<number>`count(*)::int`,
       totalTokens: sql<number>`coalesce(sum(${scrapeRuns.tokensUsed}), 0)::bigint`,
       cacheCreationTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheCreationTokens}), 0)::bigint`,
@@ -154,23 +159,35 @@ export async function getCronSpend(days = 14): Promise<CronSpendSummary> {
     })
     .from(scrapeRuns)
     .where(gt(scrapeRuns.ranAt, sql`now() - (${days} || ' days')::interval`))
-    .groupBy(sql`1`)
+    .groupBy(sql`1, 2`)
     .orderBy(sql`1 desc`);
 
-  const daySummaries = rows.map((r) => ({
-    day: r.day,
-    venueRuns: r.venueRuns,
-    totalTokens: Number(r.totalTokens),
-    costUsd: estimateCostUsd({
-      totalTokens: Number(r.totalTokens),
-      cacheCreationTokens: Number(r.cacheCreationTokens),
-      cacheReadTokens: Number(r.cacheReadTokens),
-      outputTokens: Number(r.outputTokens),
-    }),
-  }));
+  const byDay = new Map<string, { venueRuns: number; totalTokens: number; costUsd: number }>();
+  for (const r of rows) {
+    const representativeTime = r.isPostCutover ? HAIKU_5_5_CUTOVER_AT : new Date(HAIKU_5_5_CUTOVER_AT.getTime() - 1);
+    const cost = estimateCostUsd(
+      {
+        totalTokens: Number(r.totalTokens),
+        cacheCreationTokens: Number(r.cacheCreationTokens),
+        cacheReadTokens: Number(r.cacheReadTokens),
+        outputTokens: Number(r.outputTokens),
+      },
+      representativeTime
+    );
+    const existing = byDay.get(r.day);
+    byDay.set(r.day, {
+      venueRuns: (existing?.venueRuns ?? 0) + r.venueRuns,
+      totalTokens: (existing?.totalTokens ?? 0) + Number(r.totalTokens),
+      costUsd: (existing?.costUsd ?? 0) + cost,
+    });
+  }
+  const daySummaries = [...byDay.entries()]
+    .map(([day, v]) => ({ day, ...v }))
+    .sort((a, b) => (a.day < b.day ? 1 : -1));
 
-  const [monthRow] = await db
+  const monthRows = await db
     .select({
+      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT}`,
       totalTokens: sql<number>`coalesce(sum(${scrapeRuns.tokensUsed}), 0)::bigint`,
       cacheCreationTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheCreationTokens}), 0)::bigint`,
       cacheReadTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheReadTokens}), 0)::bigint`,
@@ -182,16 +199,24 @@ export async function getCronSpend(days = 14): Promise<CronSpendSummary> {
         scrapeRuns.ranAt,
         sql`date_trunc('month', now() AT TIME ZONE 'America/Vancouver') AT TIME ZONE 'America/Vancouver'`
       )
-    );
+    )
+    .groupBy(sql`1`);
 
-  const monthToDateUsd = monthRow
-    ? estimateCostUsd({
-        totalTokens: Number(monthRow.totalTokens),
-        cacheCreationTokens: Number(monthRow.cacheCreationTokens),
-        cacheReadTokens: Number(monthRow.cacheReadTokens),
-        outputTokens: Number(monthRow.outputTokens),
-      })
-    : 0;
+  const monthToDateUsd = monthRows.reduce((sum, r) => {
+    const representativeTime = r.isPostCutover ? HAIKU_5_5_CUTOVER_AT : new Date(HAIKU_5_5_CUTOVER_AT.getTime() - 1);
+    return (
+      sum +
+      estimateCostUsd(
+        {
+          totalTokens: Number(r.totalTokens),
+          cacheCreationTokens: Number(r.cacheCreationTokens),
+          cacheReadTokens: Number(r.cacheReadTokens),
+          outputTokens: Number(r.outputTokens),
+        },
+        representativeTime
+      )
+    );
+  }, 0);
 
   return { days: daySummaries, monthToDateUsd };
 }
