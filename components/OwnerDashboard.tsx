@@ -815,6 +815,15 @@ function EventRow({
     );
   }
 
+  // A one-off event (specificDate set) past its own date never actually shows to a
+  // visitor -- the public venue page already filters these out (lib/venues-data.ts).
+  // This dashboard never applied that same filter, so an owner scanning "Manage
+  // listing" had no way to tell a long-past game/concert apart from something still
+  // live, and no reason to realize it was invisible to customers already. Flagging it
+  // here rather than hiding it -- the owner may still want to see/remove it.
+  const isExpiredOneOff =
+    event.dayOfWeek === null && event.specificDate !== null && event.specificDate < new Date().toISOString().slice(0, 10);
+
   return (
     <div className="rounded-lg border border-border bg-surface p-3 flex items-start justify-between gap-3">
       <div className="flex flex-col gap-0.5 min-w-0">
@@ -826,6 +835,7 @@ function EventRow({
           ]
             .filter(Boolean)
             .join(" · ")}
+          {isExpiredOneOff && <span className="text-stale"> · Past -- not shown to visitors</span>}
         </span>
       </div>
       <div className="flex gap-2 shrink-0">
