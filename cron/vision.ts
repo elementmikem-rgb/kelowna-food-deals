@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { db, imageTranscriptions } from "@/db";
 import { eq } from "drizzle-orm";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-5-5";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -96,6 +96,9 @@ export async function transcribeImageText(
     const response = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 2048,
+      // Disabled for the same reason as cron/extract.ts: plain transcription has nothing
+      // to reason about, and Haiku 5.5 does adaptive thinking by default otherwise.
+      thinking: { type: "disabled" as const },
       // 0, not the default -- this call's job is transcription of a static
       // image, not creative generation, so the correct output barely varies
       // run to run at temperature 0. Left at default, minor wording drift

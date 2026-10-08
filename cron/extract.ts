@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { SpecialCategory, EventType } from "@/db/schema";
 import { pacificTodayISODate } from "@/lib/time";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-5-5";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -311,6 +311,12 @@ export function buildExtractionRequestParams(truncated: string, includeMenuItems
     // Raised from 8192: menu_items can add dozens of extra items to the
     // output on a venue with a big menu page, on top of specials/events.
     max_tokens: 16384,
+    // Haiku 5.5 does adaptive thinking by default (medium effort) -- disabled here since
+    // tool_choice already forces exactly one tool call with a fixed schema, leaving
+    // nothing for the model to reason about. Confirmed via Anthropic's own docs: Haiku 5.5
+    // supports thinking: {type: "disabled"} at any effort level, recommended for "chat,
+    // short tool tasks, and simple, high-volume requests" -- this call is all three.
+    thinking: { type: "disabled" as const },
     // Cached: this prompt (plus the tool schema right below it, same cached prefix per
     // Anthropic's tools -> system -> messages render order) is identical on every one of
     // the thousands of nightly extraction calls -- only the per-venue page text in

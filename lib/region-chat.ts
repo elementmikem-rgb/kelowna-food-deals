@@ -7,11 +7,14 @@ import { formatEventDate } from "./format";
 import { isPromotionActive } from "./promotion";
 import { getChatTermSponsorsForRegion } from "./sponsored-data";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-5-5";
 const MAX_QUESTION_LENGTH = 200;
-// Raised from 100 -- a Promoted mention adds a second short clause onto an otherwise
-// tight answer, and 100 was cutting it off before it consistently got the room to appear.
-const MAX_ANSWER_TOKENS = 130;
+// Raised from 130 to 1024 on the Haiku 5.5 switch -- 5.5 does extended thinking by
+// default (no opt-in needed), and 130 was consumed entirely by thinking tokens before any
+// answer text could be produced, confirmed by a real test returning a lone "thinking"
+// block with no text block at all. 1024 leaves real headroom for both; the answer itself
+// still stays short since the system prompt instructs a brief reply.
+const MAX_ANSWER_TOKENS = 1024;
 // A large region (Kelowna: 89 active venues) can have far more today-matching items than
 // a short answer ever needs to mention -- capping keeps both the answer focused and the
 // per-query token cost bounded (a live test against Kelowna's full uncapped list ran
@@ -233,6 +236,11 @@ export async function answerRegionQuestion(
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_ANSWER_TOKENS,
+    // Disabled -- a short, latency-sensitive visitor-facing chat answer has nothing to
+    // reason about, and Haiku 5.5 does adaptive thinking by default otherwise (this was
+    // the root cause of MAX_ANSWER_TOKENS being too small above: thinking alone consumed
+    // the old 130-token budget before any answer text could be produced).
+    thinking: { type: "disabled" as const },
     system: [
       { type: "text", text: buildSystemPrompt(brandName, language) },
       // Identical across every visitor's question in this region today -- caching it

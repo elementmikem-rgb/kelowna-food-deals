@@ -8,7 +8,7 @@ import {
 } from "./submission-review-schema";
 import { pacificTodayISODate } from "./time";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-5-5";
 
 // This client is reachable from an unauthenticated public route (app/api/submit), so unlike
 // an internal/admin-only Anthropic call, SDK defaults (10-minute timeout, 2 automatic retries)
@@ -110,6 +110,10 @@ export async function reviewSubmission(
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 8192,
+    // Disabled for the same reason as cron/extract.ts: tool_choice forces a fixed-schema
+    // tool call, leaving nothing to reason about, and Haiku 5.5 does adaptive thinking by
+    // default otherwise.
+    thinking: { type: "disabled" as const },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content }],
     tools: [

@@ -14,6 +14,11 @@ export function LanguageToggle({ lang, returnPath }: { lang: Language; returnPat
   return (
     <a
       href={`/api/lang/set?lang=${target}&to=${encodeURIComponent(returnPath)}`}
+      // nofollow -- this is an action endpoint (sets a cookie, then redirects), not a
+      // content page. Without this Googlebot crawls it like any other link and Search
+      // Console logs it under "Page with redirect," wasting crawl budget on a URL that
+      // was never meant to be indexed.
+      rel="nofollow"
       className="press-pill inline-flex items-center rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-muted hover:text-foreground"
       aria-label={target === "fr" ? "Passer au français" : "Switch to English"}
     >

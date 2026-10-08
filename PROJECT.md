@@ -23,7 +23,7 @@ A password-protected admin area handles submission review, venue outreach email 
 | Styling | Tailwind CSS v4 (`@tailwindcss/postcss`) |
 | Database | PostgreSQL (schema `specials`), `postgres` driver |
 | ORM / migrations | Drizzle ORM 0.45 + drizzle-kit 0.31 |
-| AI extraction | Anthropic SDK, model `claude-haiku-4-5-20251001` |
+| AI extraction | Anthropic SDK, model `claude-haiku-5-5` |
 | Validation | Zod v4 |
 | Scraping | `fetch` + cheerio, `pdf-parse`, `robots-parser`; `playwright-core` + system Chromium for JS-rendered sites |
 | Email | Brevo (transactional send + inbound parse webhook) |
