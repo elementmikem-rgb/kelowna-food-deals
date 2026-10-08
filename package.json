@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "cron": "tsx --require ./scripts/env.cjs cron/index.ts",
+    "cron:timezone-outreach": "tsx --require ./scripts/env.cjs cron/timezoneOutreach.ts",
     "seed": "tsx --require ./scripts/env.cjs scripts/seed-venues.ts",
     "seed:chains": "tsx --require ./scripts/env.cjs scripts/seed-venue-chains.ts",
     "find-emails": "tsx --require ./scripts/env.cjs scripts/find-venue-emails.ts",
