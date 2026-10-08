@@ -1297,6 +1297,8 @@ export function OwnerDashboard({
   photoAddOn,
   ownedVenues,
   bundleDiscountTiers,
+  freeTrialGrantedAt,
+  beforeDuringViews,
 }: {
   venueId: number;
   currentPhotoId: number | null;
@@ -1320,6 +1322,10 @@ export function OwnerDashboard({
   // See OwnerCart's own comments on both.
   ownedVenues: { id: number; name: string }[];
   bundleDiscountTiers: { minVenues: number; discountPercent: number }[];
+  // Null when this venue never got a free-trial credit grant (e.g. claimed before the
+  // credit system existed, or only ever bought credits directly) -- see OwnerCredits.
+  freeTrialGrantedAt: string | null;
+  beforeDuringViews: { before: number; during: number } | null;
 }) {
   const [specialList, setSpecialList] = useState(specials);
   const [eventList, setEventList] = useState(events);
@@ -1381,7 +1387,13 @@ export function OwnerDashboard({
             creditBalance={creditBalance}
           />
           <BookingHistoryList bookings={bookings} />
-          <OwnerCredits venueId={venueId} balance={creditBalance} bundles={creditBundles} />
+          <OwnerCredits
+            venueId={venueId}
+            balance={creditBalance}
+            bundles={creditBundles}
+            freeTrialGrantedAt={freeTrialGrantedAt}
+            beforeDuringViews={beforeDuringViews}
+          />
         </>
       )}
 

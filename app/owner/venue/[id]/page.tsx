@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, addOnSettings, bundleDiscountTiers, creditBundles, bookings, venuePhotos } from "@/db";
+import { db, venues, specials, events, menuItems, venueOwners, monetizationSettings, addOnSettings, bundleDiscountTiers, creditBundles, bookings, venuePhotos, creditLedger } from "@/db";
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { getOwnerSessionFromCookies } from "@/lib/venue-owner-auth";
 import { OwnerDashboard } from "@/components/OwnerDashboard";
 import { getRegionById, getRegionContext } from "@/lib/regions";
 import { regionTodayISODate } from "@/lib/time";
+import { getVenueBeforeDuringViews } from "@/lib/analytics";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -94,6 +95,19 @@ export default async function OwnerVenuePage({ params }: PageProps) {
   if (!region) notFound();
   const { timezone } = await getRegionContext(region);
   const todayISO = regionTodayISODate(timezone);
+
+  // Powers the "before/during" trial number and the soft day-count nudge in
+  // OwnerCredits -- both null when this venue never got a free-trial grant (e.g. a
+  // venue that only ever bought credits directly), in which case the UI just shows
+  // neither rather than a fabricated/zeroed trial state.
+  const [freeTrialGrant] = await db
+    .select({ createdAt: creditLedger.createdAt })
+    .from(creditLedger)
+    .where(and(eq(creditLedger.venueId, venueId), eq(creditLedger.reason, "free_trial")))
+    .limit(1);
+  const beforeDuringViews = freeTrialGrant
+    ? await getVenueBeforeDuringViews(venueId, freeTrialGrant.createdAt)
+    : null;
 
   function settingsFor(productType: "featured" | "boost" | "category_sponsor" | "chat_term_sponsor" | "map_pin") {
     const row = promoteSettingsRows.find((r) => r.productType === productType);
@@ -212,6 +226,8 @@ export default async function OwnerVenuePage({ params }: PageProps) {
         photoAddOn={photoAddOn}
         ownedVenues={ownedVenues.map((v) => ({ id: v.id, name: v.name }))}
         bundleDiscountTiers={bundleDiscountTierRows}
+        freeTrialGrantedAt={freeTrialGrant?.createdAt.toISOString() ?? null}
+        beforeDuringViews={beforeDuringViews}
       />
     </div>
   );

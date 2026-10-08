@@ -337,3 +337,37 @@ export async function getRegionVenueWeeklyViews(
 
   return new Map(rows.map((r) => [r.venueId, r.views]));
 }
+
+// Powers the owner dashboard's "before/during" trial-credit number (see
+// OwnerCredits.tsx) -- the one concrete thing the founder pack's panel run
+// identified as the actual missing piece in the paid-placement pitch: real proof a
+// promotion increases views, not just a trust-me claim. `since` is the free-trial
+// grant's own createdAt (see lib/credits.ts's grantFreeTrialCredits), so "before"
+// covers all pageviews ever recorded for this venue up to that moment and "during"
+// covers everything from then until now -- not a fixed day-count window, since a
+// venue claimed last month and one claimed yesterday should each see their own real
+// before/after, not an arbitrary trailing N days that may predate the venue even
+// existing in analytics_events.
+export async function getVenueBeforeDuringViews(
+  venueId: number,
+  since: Date
+): Promise<{ before: number; during: number }> {
+  const venuePageCondition = and(
+    eq(analyticsEvents.eventType, "pageview"),
+    sql`${analyticsEvents.page} ~ ${VENUE_DETAIL_PAGE_RE}`,
+    sql`substring(${analyticsEvents.page} from '/venues/([0-9]+)$')::int = ${venueId}`
+  );
+
+  const [[beforeCount], [duringCount]] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(analyticsEvents)
+      .where(and(venuePageCondition, lt(analyticsEvents.createdAt, since))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(analyticsEvents)
+      .where(and(venuePageCondition, gte(analyticsEvents.createdAt, since))),
+  ]);
+
+  return { before: beforeCount.count, during: duringCount.count };
+}
