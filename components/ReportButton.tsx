@@ -87,7 +87,13 @@ export function ReportButton({
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-lg flex flex-col gap-3"
+            // max-h + overflow-y-auto -- without these the dialog had no limit on its own
+            // height, so on a small screen (especially with the mobile keyboard open while
+            // typing the note) it could grow taller than the viewport with no way to scroll
+            // back up to the heading/first option, stranding whatever renders above
+            // whatever's left on-screen. A real visitor hit exactly this on the Ethel's
+            // Lounge "Wing Night" report (2026-10-07).
+            className="w-full max-w-sm max-h-[85vh] overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-lg flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-lg text-foreground">{tr.card.reportDialog.heading}</h3>
