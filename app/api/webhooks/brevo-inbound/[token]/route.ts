@@ -127,6 +127,30 @@ export async function POST(
       venueId = originalSend?.venueId ?? null;
     }
 
+    // Flip the original send to "replied" so reply rate is actually measurable
+    // (e.g. the A/B test's variant comparison groups on this). Prefer the exact
+    // row this message is In-Reply-To; fall back to the venue's most recent
+    // "sent" row when the reply doesn't carry a matching header (e.g. a forward,
+    // or a mail client that drops In-Reply-To) -- best-effort attribution beats
+    // leaving every reply unlinked.
+    if (inReplyTo) {
+      await db
+        .update(outreachSends)
+        .set({ status: "replied" })
+        .where(sql`${outreachSends.brevoMessageId} = ${inReplyTo} and ${outreachSends.status} = 'sent'`);
+    } else if (venueId !== null) {
+      await db.execute(sql`
+        update specials.outreach_sends
+        set status = 'replied'
+        where id = (
+          select id from specials.outreach_sends
+          where venue_id = ${venueId} and status = 'sent'
+          order by sent_at desc nulls last
+          limit 1
+        )
+      `);
+    }
+
     const [inserted] = await db
       .insert(inboundEmails)
       .values({
