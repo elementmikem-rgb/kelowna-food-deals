@@ -50,6 +50,26 @@ export function wrapOutreachHtml(bodyHtml: string, footer: string, brandName: st
   `;
 }
 
+// A/B test (2026-10-09): plain-text-style alternative to the branded HTML card
+// below. Cold-email deliverability research (plain-text cold emails get ~2x the
+// reply rate of designed HTML in controlled studies -- heavy HTML reads as bulk
+// mail to both spam filters and human recipients) motivated this variant: no
+// logo, no colored pill buttons, no card background, a single link instead of
+// multiple CTAs, and the paid-advertise pitch dropped entirely from first
+// contact (save it for a reply/second touch, not a cold open). Minimal inline
+// styling only -- just enough that broken HTML doesn't render as a wall of raw
+// markup in clients that ignore plain-text parts.
+export function wrapPlainOutreachHtml(bodyHtml: string, footer: string): string {
+  return `
+<div style="font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a;max-width:560px;">
+  ${bodyHtml}
+  <div style="margin-top:24px;font-size:12px;color:#767676;line-height:1.6;">
+    ${footer}
+  </div>
+</div>
+  `;
+}
+
 function buildFooter(unsubscribeUrl: string, mailingAddress: string, language: Language): string {
   return language === "fr"
     ? `${mailingAddress}<br>
@@ -229,6 +249,116 @@ function buildEmptyListingHtml(
   `;
 }
 
+// --- "plain" A/B variant (2026-10-09) -------------------------------------
+// Single link, question-based close, no advertise upsell in the cold open.
+// See wrapPlainOutreachHtml's comment for why.
+
+function buildHasDataPlainSubject(venueName: string, language: Language): string {
+  return language === "fr" ? `une question rapide sur ${venueName}` : `quick question about ${venueName}`;
+}
+
+function buildEmptyListingPlainSubject(venueName: string, language: Language): string {
+  return language === "fr"
+    ? `${venueName} offre-t-il un happy hour ou des spéciaux?`
+    : `does ${venueName} run a happy hour or specials?`;
+}
+
+function buildHasDataPlainText(venueName: string, venueUrl: string, brandName: string, language: Language): string {
+  return language === "fr" ? `
+Bonjour,
+
+J'ai ajouté ${venueName} à ${brandName}, un site de happy hours et spéciaux bouffe/boisson du coin, basé sur ce que j'ai trouvé sur votre site : ${venueUrl}
+
+Est-ce encore exact, ou est-ce que ça a changé?
+
+Si vous avez des spéciaux ou événements qui ne sont pas affichés ailleurs, répondez simplement et je les ajoute.
+
+Merci,
+Mike
+  ` : `
+Hey,
+
+I listed ${venueName} on ${brandName}, a local happy hour/specials site, based on what I found on your website: ${venueUrl}
+
+Is that still accurate, or has anything changed?
+
+If you've got specials or events that aren't posted anywhere, just reply and I'll add them.
+
+Thanks,
+Mike
+  `;
+}
+
+function buildEmptyListingPlainText(venueName: string, venueUrl: string, brandName: string, language: Language): string {
+  return language === "fr" ? `
+Bonjour,
+
+Je gère ${brandName}, un site de happy hours et spéciaux bouffe/boisson du coin, et j'ai commencé une fiche pour ${venueName} ici : ${venueUrl}
+
+Je n'ai trouvé aucun happy hour, spécial ou événement récurrent publié pour vous -- avez-vous quelque chose du genre?
+
+Si oui, répondez avec les détails et je l'ajoute, gratuitement. Sinon, pas de souci, je voulais juste vérifier.
+
+Merci,
+Mike
+  ` : `
+Hey,
+
+I run ${brandName}, a local happy hour/specials site, and started a page for ${venueName} here: ${venueUrl}
+
+I couldn't find a happy hour, daily special, or recurring event posted anywhere for you -- do you run anything like that?
+
+If so, just reply with the details and I'll add it, free. If not, no worries, just wanted to check.
+
+Thanks,
+Mike
+  `;
+}
+
+function buildHasDataPlainHtml(venueName: string, venueUrl: string, brandName: string, language: Language): string {
+  return language === "fr" ? `
+    <p style="margin:0 0 16px;">Bonjour,</p>
+    <p style="margin:0 0 16px;">J'ai ajouté <strong>${venueName}</strong> à ${brandName}, un site de happy hours et
+    spéciaux bouffe/boisson du coin, basé sur ce que j'ai trouvé sur votre site :
+    <a href="${venueUrl}" style="color:#1a1a1a;">${venueUrl}</a></p>
+    <p style="margin:0 0 16px;">Est-ce encore exact, ou est-ce que ça a changé?</p>
+    <p style="margin:0 0 16px;">Si vous avez des spéciaux ou événements qui ne sont pas affichés ailleurs, répondez
+    simplement et je les ajoute.</p>
+    <p style="margin:16px 0 0;">Merci,<br>Mike</p>
+  ` : `
+    <p style="margin:0 0 16px;">Hey,</p>
+    <p style="margin:0 0 16px;">I listed <strong>${venueName}</strong> on ${brandName}, a local happy hour/specials
+    site, based on what I found on your website: <a href="${venueUrl}" style="color:#1a1a1a;">${venueUrl}</a></p>
+    <p style="margin:0 0 16px;">Is that still accurate, or has anything changed?</p>
+    <p style="margin:0 0 16px;">If you've got specials or events that aren't posted anywhere, just reply and I'll
+    add them.</p>
+    <p style="margin:16px 0 0;">Thanks,<br>Mike</p>
+  `;
+}
+
+function buildEmptyListingPlainHtml(venueName: string, venueUrl: string, brandName: string, language: Language): string {
+  return language === "fr" ? `
+    <p style="margin:0 0 16px;">Bonjour,</p>
+    <p style="margin:0 0 16px;">Je gère ${brandName}, un site de happy hours et spéciaux bouffe/boisson du coin, et
+    j'ai commencé une fiche pour <strong>${venueName}</strong> ici :
+    <a href="${venueUrl}" style="color:#1a1a1a;">${venueUrl}</a></p>
+    <p style="margin:0 0 16px;">Je n'ai trouvé aucun happy hour, spécial ou événement récurrent publié pour vous --
+    avez-vous quelque chose du genre?</p>
+    <p style="margin:0 0 16px;">Si oui, répondez avec les détails et je l'ajoute, gratuitement. Sinon, pas de souci,
+    je voulais juste vérifier.</p>
+    <p style="margin:16px 0 0;">Merci,<br>Mike</p>
+  ` : `
+    <p style="margin:0 0 16px;">Hey,</p>
+    <p style="margin:0 0 16px;">I run ${brandName}, a local happy hour/specials site, and started a page for
+    <strong>${venueName}</strong> here: <a href="${venueUrl}" style="color:#1a1a1a;">${venueUrl}</a></p>
+    <p style="margin:0 0 16px;">I couldn't find a happy hour, daily special, or recurring event posted anywhere for
+    you -- do you run anything like that?</p>
+    <p style="margin:0 0 16px;">If so, just reply with the details and I'll add it, free. If not, no worries, just
+    wanted to check.</p>
+    <p style="margin:16px 0 0;">Thanks,<br>Mike</p>
+  `;
+}
+
 export interface OutreachSendOutcome {
   ok: boolean;
   reason?: string;
@@ -280,24 +410,47 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
   const footer = buildFooter(unsubscribeUrl, region.mailingAddress, lang);
   const footerText = buildFooterText(unsubscribeUrl, region.mailingAddress, lang);
 
-  const subject = hasData
-    ? (lang === "fr" ? `Un mot rapide sur ${venue.name} -- ${region.brandName}` : `Quick one about ${venue.name} on ${region.brandName}`)
-    : (lang === "fr" ? `J'ai commencé une fiche pour ${venue.name} sur ${region.brandName}` : `Got a listing started for ${venue.name} on ${region.brandName}`);
+  // A/B test (2026-10-09): deterministic by venue id parity, not random per
+  // call -- a retried send (e.g. after a transient Brevo failure) must land
+  // the same variant it would have gotten the first time, not re-roll into
+  // the other bucket. See wrapPlainOutreachHtml's comment for why "plain"
+  // exists; see outreachSends.variant's schema comment for how results get
+  // compared later.
+  const variant: "branded" | "plain" = venue.id % 2 === 0 ? "branded" : "plain";
 
   const verifyUrl = buildVenueVerifyUrl(venue.id, region.slug);
-  const bodyHtml = hasData
-    ? buildHasDataHtml(venue.name, venueUrl, verifyUrl, advertiseUrl, region.brandName, lang)
-    : buildEmptyListingHtml(venue.name, venueUrl, advertiseUrl, region.brandName, lang);
-  const bodyText = hasData
-    ? buildHasDataText(venue.name, venueUrl, verifyUrl, advertiseUrl, region.brandName, lang)
-    : buildEmptyListingText(venue.name, venueUrl, advertiseUrl, region.brandName, lang);
 
-  const htmlBody = wrapOutreachHtml(bodyHtml, footer, region.brandName, logoUrl);
+  let subject: string;
+  let bodyHtml: string;
+  let bodyText: string;
+  if (variant === "branded") {
+    subject = hasData
+      ? (lang === "fr" ? `Un mot rapide sur ${venue.name} -- ${region.brandName}` : `Quick one about ${venue.name} on ${region.brandName}`)
+      : (lang === "fr" ? `J'ai commencé une fiche pour ${venue.name} sur ${region.brandName}` : `Got a listing started for ${venue.name} on ${region.brandName}`);
+    bodyHtml = hasData
+      ? buildHasDataHtml(venue.name, venueUrl, verifyUrl, advertiseUrl, region.brandName, lang)
+      : buildEmptyListingHtml(venue.name, venueUrl, advertiseUrl, region.brandName, lang);
+    bodyText = hasData
+      ? buildHasDataText(venue.name, venueUrl, verifyUrl, advertiseUrl, region.brandName, lang)
+      : buildEmptyListingText(venue.name, venueUrl, advertiseUrl, region.brandName, lang);
+  } else {
+    subject = hasData
+      ? buildHasDataPlainSubject(venue.name, lang)
+      : buildEmptyListingPlainSubject(venue.name, lang);
+    bodyHtml = hasData
+      ? buildHasDataPlainHtml(venue.name, venueUrl, region.brandName, lang)
+      : buildEmptyListingPlainHtml(venue.name, venueUrl, region.brandName, lang);
+    bodyText = hasData
+      ? buildHasDataPlainText(venue.name, venueUrl, region.brandName, lang)
+      : buildEmptyListingPlainText(venue.name, venueUrl, region.brandName, lang);
+  }
+
+  const htmlBody = variant === "branded" ? wrapOutreachHtml(bodyHtml, footer, region.brandName, logoUrl) : wrapPlainOutreachHtml(bodyHtml, footer);
   const textBody = `${bodyText.trim()}\n\n--\n${footerText}`;
 
   const [sendRow] = await db
     .insert(outreachSends)
-    .values({ venueId: venue.id, toEmail: venue.contactEmail, subject, htmlBody, status: "queued" })
+    .values({ venueId: venue.id, toEmail: venue.contactEmail, subject, htmlBody, status: "queued", variant })
     .returning({ id: outreachSends.id });
 
   try {

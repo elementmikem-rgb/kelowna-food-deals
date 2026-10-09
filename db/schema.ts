@@ -339,6 +339,15 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // for a second cold outreach email) and so /admin/outreach's send history
   // stays intact.
   hiddenFromInbox: boolean("hidden_from_inbox").notNull().default(false),
+  // A/B test (2026-10-09) of the first-contact template: "branded" is the
+  // original logo+button HTML card, "plain" is a stripped-down plain-text-style
+  // version (no images, no colored buttons, single question-based CTA, no
+  // advertise upsell) -- cold-email deliverability research shows plain-text
+  // reads as a real person rather than a marketing blast and gets meaningfully
+  // higher reply rates. Null for every send kind other than first_contact and
+  // for rows that predate this column. Assigned deterministically by venue id
+  // parity (see sendVenueOutreachEmail) so a retried send doesn't flip variants.
+  variant: text("variant").$type<"branded" | "plain">(),
 });
 
 export const inboundEmails = specialsSchema.table("inbound_emails", {

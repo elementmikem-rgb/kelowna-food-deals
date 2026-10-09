@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."outreach_sends" ADD COLUMN "variant" text;
