@@ -2,6 +2,7 @@ import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
 import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import type { EventWithVenue } from "./events-data";
+import { recurringColumns } from "./events-data";
 import { regionTodayISODate, toDateOrNull } from "./time";
 
 export interface VenueDetail {
@@ -180,26 +181,7 @@ export async function getVenueMenuItems(venueId: number): Promise<VenueMenuItem[
 export async function getVenueEvents(venueId: number, timezone: string): Promise<EventWithVenue[]> {
   const today = regionTodayISODate(timezone);
   const rows = await db
-    .select({
-      id: events.id,
-      venueId: events.venueId,
-      venueName: venues.name,
-      locationAddress: events.locationAddress,
-      title: events.title,
-      description: events.description,
-      eventType: events.eventType,
-      dayOfWeek: events.dayOfWeek,
-      specificDate: events.specificDate,
-      startTime: events.startTime,
-      endTime: events.endTime,
-      coverChargeCents: events.coverChargeCents,
-      lastVerifiedAt: events.lastVerifiedAt,
-      confidence: events.confidence,
-      sourceUrl: events.sourceUrl,
-      venueFeaturedUntil: venues.featuredUntil,
-      boostedUntil: events.boostedUntil,
-      hasPhoto: sql<boolean>`${events.photoData} is not null`,
-    })
+    .select(recurringColumns)
     .from(events)
     .innerJoin(venues, eq(events.venueId, venues.id))
     .where(
@@ -213,5 +195,7 @@ export async function getVenueEvents(venueId: number, timezone: string): Promise
       )
     );
 
-  return rows as EventWithVenue[];
+  // See lib/time.ts's toDateOrNull comment -- lastConfirmedAt is a raw SQL
+  // subquery, so the driver hands it back as a plain string, not a real Date.
+  return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) })) as EventWithVenue[];
 }

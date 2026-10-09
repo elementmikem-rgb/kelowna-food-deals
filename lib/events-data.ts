@@ -57,7 +57,7 @@ const CONFIRM_COLUMNS = {
   )`,
 };
 
-const recurringColumns = {
+export const recurringColumns = {
   id: events.id,
   venueId: events.venueId,
   venueName: venues.name,
