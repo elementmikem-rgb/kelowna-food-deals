@@ -132,13 +132,16 @@ export async function POST(
     // row this message is In-Reply-To; fall back to the venue's most recent
     // "sent" row when the reply doesn't carry a matching header (e.g. a forward,
     // or a mail client that drops In-Reply-To) -- best-effort attribution beats
-    // leaving every reply unlinked.
-    if (inReplyTo) {
+    // leaving every reply unlinked. Skipped for a blocked sender, same as the
+    // inboundEmails row below gets archivedAt instead of landing in the live
+    // inbox -- a blocklisted address shouldn't be able to pollute reply-rate
+    // metrics any more than it can post into the inbox.
+    if (!blocked && inReplyTo) {
       await db
         .update(outreachSends)
         .set({ status: "replied" })
         .where(sql`${outreachSends.brevoMessageId} = ${inReplyTo} and ${outreachSends.status} = 'sent'`);
-    } else if (venueId !== null) {
+    } else if (!blocked && venueId !== null) {
       await db.execute(sql`
         update specials.outreach_sends
         set status = 'replied'
