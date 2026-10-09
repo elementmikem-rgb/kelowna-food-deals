@@ -150,7 +150,7 @@ export async function getCronSpend(days = 14): Promise<CronSpendSummary> {
   const rows = await db
     .select({
       day: sql<string>`(${scrapeRuns.ranAt} AT TIME ZONE 'America/Vancouver')::date::text`,
-      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT}`,
+      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT.toISOString()}::timestamptz`,
       venueRuns: sql<number>`count(*)::int`,
       totalTokens: sql<number>`coalesce(sum(${scrapeRuns.tokensUsed}), 0)::bigint`,
       cacheCreationTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheCreationTokens}), 0)::bigint`,
@@ -187,7 +187,7 @@ export async function getCronSpend(days = 14): Promise<CronSpendSummary> {
 
   const monthRows = await db
     .select({
-      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT}`,
+      isPostCutover: sql<boolean>`${scrapeRuns.ranAt} >= ${HAIKU_5_5_CUTOVER_AT.toISOString()}::timestamptz`,
       totalTokens: sql<number>`coalesce(sum(${scrapeRuns.tokensUsed}), 0)::bigint`,
       cacheCreationTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheCreationTokens}), 0)::bigint`,
       cacheReadTokens: sql<number>`coalesce(sum(${scrapeRuns.cacheReadTokens}), 0)::bigint`,
