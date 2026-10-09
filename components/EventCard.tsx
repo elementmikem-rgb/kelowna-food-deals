@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, formatEventDate } from "@/lib/format";
-import { formatTimeWindow, isStale } from "@/lib/time";
+import { formatTimeWindow, isStale, monthlyOccurrenceLabel } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
 import { EventInterestButton } from "./EventInterestButton";
@@ -14,10 +14,12 @@ import { ReportButton } from "./ReportButton";
 
 export function EventCard({
   event,
+  dayLabel,
   regionSlug,
   lang = "en",
 }: {
   event: EventWithVenue;
+  dayLabel?: string | null;
   regionSlug: string;
   lang?: Language;
 }) {
@@ -37,6 +39,16 @@ export function EventCard({
   const coverLabel =
     event.coverChargeCents === null ? null : event.coverChargeCents === 0 ? tr.card.free : tr.card.cover(cover!);
   const timeWindow = formatTimeWindow(event.startTime, event.endTime);
+  // Monthly ("Last Wednesday") takes priority over a plain day-range label --
+  // a monthly event's dayOfWeek is always a single day, so the two labels
+  // would otherwise say almost the same thing, and "Last Wednesday" carries
+  // the info "Wed" alone doesn't (not every Wednesday).
+  const scheduleLabel =
+    event.monthlyOccurrence !== null && event.dayOfWeek !== null
+      ? monthlyOccurrenceLabel(event.monthlyOccurrence, event.dayOfWeek, lang)
+      : dayLabel && dayLabel !== "Daily"
+        ? dayLabel
+        : null;
 
   async function handleConfirm() {
     setConfirmState("sending");
@@ -103,6 +115,11 @@ export function EventCard({
         )}
         {coverLabel && (
           <span className="font-mono-tabular text-sm text-muted">{coverLabel}</span>
+        )}
+        {scheduleLabel && (
+          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-2">
+            {scheduleLabel}
+          </span>
         )}
       </div>
 

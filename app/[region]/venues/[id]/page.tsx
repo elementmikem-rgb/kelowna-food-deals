@@ -19,7 +19,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { SaveVenueButton } from "@/components/SaveVenueButton";
 import { MembersOnlyBadge } from "@/components/MembersOnlyBadge";
 import { formatPrice } from "@/lib/format";
-import { groupByDayRange } from "@/lib/group-days";
+import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
 
@@ -241,8 +241,8 @@ export default async function VenuePage({ params }: PageProps) {
             <section className="flex flex-col gap-3">
               <h2 className="font-display text-2xl text-foreground">{content[lang].eventsHeading}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {venueEvents.map((e) => (
-                  <EventCard key={e.id} event={e} regionSlug={region.slug} lang={lang} />
+                {groupEventsByDayRange(venueEvents).map((e) => (
+                  <EventCard key={e.id} event={e} dayLabel={e.dayLabel} regionSlug={region.slug} lang={lang} />
                 ))}
               </div>
             </section>
