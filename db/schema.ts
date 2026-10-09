@@ -193,6 +193,14 @@ export const venues = specialsSchema.table(
     // transaction as the matching ledger insert (see lib/credits.ts), so the two can
     // never drift. Units: whole dollar-credits (1 credit = $1, see lib/credits.ts).
     creditBalance: integer("credit_balance").notNull().default(0),
+    // A real private club (e.g. a yacht/golf/country club's own dining room) that
+    // requires membership to dine, as opposed to a golf-course restaurant that's
+    // open to the public despite the course itself being members-only. Shows a
+    // "Members only" badge on the venue card/page so a visitor doesn't show up
+    // expecting to walk in -- set manually once confirmed (e.g. via the venue's own
+    // website), never inferred from the name alone ("Yacht Club"/"Golf Club" in a
+    // name is not a reliable signal on its own).
+    membersOnly: boolean("members_only").notNull().default(false),
   },
   (table) => [uniqueIndex("venues_name_unique").on(table.name)]
 );

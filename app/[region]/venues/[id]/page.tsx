@@ -17,6 +17,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 import { ShareButton } from "@/components/ShareButton";
 import { SaveVenueButton } from "@/components/SaveVenueButton";
+import { MembersOnlyBadge } from "@/components/MembersOnlyBadge";
 import { formatPrice } from "@/lib/format";
 import { groupByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
@@ -215,6 +216,11 @@ export default async function VenuePage({ params }: PageProps) {
                 />
               </div>
             </div>
+            {venue.membersOnly && (
+              <div>
+                <MembersOnlyBadge />
+              </div>
+            )}
             <p className="text-muted text-sm">{venue.address}</p>
           </header>
 

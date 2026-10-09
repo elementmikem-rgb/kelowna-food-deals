@@ -1,0 +1,1 @@
+ALTER TABLE "specials"."venues" ADD COLUMN "members_only" boolean DEFAULT false NOT NULL;

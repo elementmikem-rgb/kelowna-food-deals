@@ -17,6 +17,7 @@ export interface VenueDetail {
   menuUrl: string | null;
   instagramHandle: string | null;
   claimedAt: Date | null;
+  membersOnly: boolean;
 }
 
 export async function getVenueById(id: number): Promise<VenueDetail | null> {
@@ -34,6 +35,7 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
       menuUrl: venues.menuUrl,
       instagramHandle: venues.instagramHandle,
       claimedAt: venues.claimedAt,
+      membersOnly: venues.membersOnly,
     })
     .from(venues)
     .where(and(eq(venues.id, id), eq(venues.active, true)))
