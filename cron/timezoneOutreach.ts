@@ -18,10 +18,14 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 import { db, venues, outreachSends, regions, provinces } from "@/db";
-import { and, eq, isNull, notExists, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, notExists, sql } from "drizzle-orm";
 import { sendVenueOutreachEmail } from "@/lib/outreach-send";
 
 const DRY_RUN = process.env.DRY_RUN !== "0";
+// IGNORE_WINDOW=1 sends to everyone eligible right now, regardless of local time. One-off use only.
+const IGNORE_WINDOW = process.env.IGNORE_WINDOW === "1";
+// EXCLUDE_VENUE_IDS="1,2,3" skips those venue ids this run (e.g. known-bad addresses).
+const EXCLUDE_VENUE_IDS = new Set((process.env.EXCLUDE_VENUE_IDS ?? "").split(",").map((s) => Number(s.trim())).filter(Boolean));
 
 // Local-time-of-day window (minutes since midnight) a venue must currently be in
 // to be sent to this run. 9:15-10:15 local -- wide enough that a 15-20 min cron
@@ -110,7 +114,7 @@ async function main() {
               .where(
                 and(
                   sql`lower(${outreachSends.toEmail}) = lower(${venues.contactEmail})`,
-                  eq(outreachSends.status, "sent")
+                  inArray(outreachSends.status, ["sent", "replied", "bounced"])
                 )
               )
           )
@@ -137,8 +141,9 @@ async function main() {
     }
 
     const inWindow = dedupedTargets.filter((v) => {
+      if (EXCLUDE_VENUE_IDS.has(v.id)) return false;
       const minutes = minutesSinceMidnightInZone(v.timezone, now);
-      return minutes >= WINDOW_START_MIN && minutes < WINDOW_END_MIN;
+      return IGNORE_WINDOW || (minutes >= WINDOW_START_MIN && minutes < WINDOW_END_MIN);
     });
 
     console.log(

@@ -1,5 +1,5 @@
-import { db, venues, outreachSends, specials, events } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { db, venues, outreachSends, specials, events, inboundEmails, blockedSenders } from "@/db";
+import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 import { buildVenueVerifyUrl } from "@/lib/venue-verify";
@@ -390,12 +390,36 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
   const region = await getRegionById(venue.regionId);
   if (!region) return { ok: false, reason: "venue has no valid region" };
 
-  const [alreadySent] = await db
+  // Never send a second first-contact email to the same INBOX. Matches by address (not just
+  // venue id) because chains and near-duplicate venue rows share one contactEmail, and counts
+  // "replied" and "bounced" as already-contacted -- a webhook flips a "sent" row to "replied",
+  // so checking only status "sent" would re-email people who wrote back (and re-send to
+  // addresses that bounced).
+  const [alreadyContacted] = await db
     .select({ id: outreachSends.id })
     .from(outreachSends)
-    .where(and(eq(outreachSends.venueId, venue.id), eq(outreachSends.status, "sent")))
+    .where(
+      and(
+        or(eq(outreachSends.venueId, venue.id), sql`lower(${outreachSends.toEmail}) = lower(${venue.contactEmail})`),
+        inArray(outreachSends.status, ["sent", "replied", "bounced"])
+      )
+    )
     .limit(1);
-  if (alreadySent) return { ok: false, reason: "already sent outreach to this venue" };
+  if (alreadyContacted) return { ok: false, reason: "already contacted (sent, replied or bounced) at this venue or email address" };
+
+  const [wroteToUs] = await db
+    .select({ id: inboundEmails.id })
+    .from(inboundEmails)
+    .where(sql`lower(${inboundEmails.fromEmail}) = lower(${venue.contactEmail})`)
+    .limit(1);
+  if (wroteToUs) return { ok: false, reason: "this address has already written to us" };
+
+  const [blocked] = await db
+    .select({ id: blockedSenders.id })
+    .from(blockedSenders)
+    .where(sql`lower(${blockedSenders.email}) = lower(${venue.contactEmail})`)
+    .limit(1);
+  if (blocked) return { ok: false, reason: "this address is on the blocked senders list" };
 
   const [hasSpecial] = await db.select({ id: specials.id }).from(specials).where(eq(specials.venueId, venue.id)).limit(1);
   const [hasEvent] = await db.select({ id: events.id }).from(events).where(eq(events.venueId, venue.id)).limit(1);
