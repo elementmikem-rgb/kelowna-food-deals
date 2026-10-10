@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
   getVenueById,
@@ -9,7 +9,8 @@ import {
   getVenuePhotos,
   getVenueMenuItems,
 } from "@/lib/venues-data";
-import { getCurrentRegion, getRegionContext } from "@/lib/regions";
+import { getCurrentRegion, getRegionById, getRegionContext } from "@/lib/regions";
+import { decideVenueRegionRouting, wasEmailedLinkTo } from "@/lib/legacy-region-link";
 import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
@@ -104,8 +105,20 @@ export default async function VenuePage({ params }: PageProps) {
   const venue = await getVenueById(venueId);
   // A venue that exists but belongs to a different region must 404 here too --
   // otherwise a deep link (or a search-engine-indexed URL) from one domain
-  // could still reach another region's venue page directly.
-  if (!venue || venue.regionId !== region.id) notFound();
+  // could still reach another region's venue page directly. The one exception: if we emailed
+  // this venue a link to THIS address and the venue was moved to another region afterwards,
+  // send the visitor to its current page instead of a dead link (see lib/legacy-region-link.ts).
+  if (!venue) notFound();
+  if (venue.regionId !== region.id) {
+    const routing = decideVenueRegionRouting({
+      venueRegionId: venue.regionId,
+      requestRegionId: region.id,
+      wasEmailedThisLink: await wasEmailedLinkTo(venue.id, region.slug),
+    });
+    const venueRegion = routing === "redirect" ? await getRegionById(venue.regionId) : null;
+    if (!venueRegion) notFound();
+    redirect(`/${venueRegion.slug}/venues/${venue.id}`);
+  }
   const lang = await getEffectiveLanguage(region);
 
   const { timezone } = await getRegionContext(region);

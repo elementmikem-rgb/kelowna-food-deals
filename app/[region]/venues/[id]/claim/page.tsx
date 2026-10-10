@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getVenueById } from "@/lib/venues-data";
-import { getCurrentRegion } from "@/lib/regions";
+import { getCurrentRegion, getRegionById } from "@/lib/regions";
+import { decideVenueRegionRouting, wasEmailedLinkTo } from "@/lib/legacy-region-link";
 import { ClaimVenueForm } from "@/components/ClaimVenueForm";
 
 // Same dynamic-rendering requirement as the venue page: per-region correctness
@@ -27,7 +28,18 @@ export default async function ClaimVenuePage({ params }: PageProps) {
 
   const region = await getCurrentRegion();
   const venue = await getVenueById(venueId);
-  if (!venue || venue.regionId !== region.id) notFound();
+  if (!venue) notFound();
+  if (venue.regionId !== region.id) {
+    // Same exception as the venue page: only repair a link we emailed to this exact address.
+    const routing = decideVenueRegionRouting({
+      venueRegionId: venue.regionId,
+      requestRegionId: region.id,
+      wasEmailedThisLink: await wasEmailedLinkTo(venue.id, region.slug),
+    });
+    const venueRegion = routing === "redirect" ? await getRegionById(venue.regionId) : null;
+    if (!venueRegion) notFound();
+    redirect(`/${venueRegion.slug}/venues/${venue.id}/claim`);
+  }
 
   return (
     <div className="flex flex-col flex-1 max-w-md mx-auto w-full px-4 py-6 gap-6">
