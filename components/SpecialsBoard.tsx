@@ -14,6 +14,7 @@ import { CityFilter } from "./CityFilter";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
+import { sortByDistance, formatDistance, type Point } from "@/lib/nearest";
 
 // Leaflet reads `window`/`document` at module load, so it can never run during
 // Next.js's server render -- ssr:false defers loading the whole map bundle
@@ -95,6 +96,36 @@ export function SpecialsBoard({
   const [selectedCity, setSelectedCity] = useState<string | "all">("all");
   const [venueQuery, setVenueQuery] = useState("");
   const [view, setView] = useState<"list" | "map">("list");
+  // "Sort by nearest": the visitor's position lives only in this component's memory -- it is never
+  // sent to the server or stored. Until they tap the button, the daily-rotation order is unchanged.
+  const [userPos, setUserPos] = useState<Point | null>(null);
+  const [sortNearest, setSortNearest] = useState(false);
+  const [geoState, setGeoState] = useState<"idle" | "locating" | "denied" | "unavailable">("idle");
+
+  function handleSortNearest() {
+    if (sortNearest) {
+      setSortNearest(false);
+      return;
+    }
+    if (userPos) {
+      setSortNearest(true);
+      return;
+    }
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoState("unavailable");
+      return;
+    }
+    setGeoState("locating");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setSortNearest(true);
+        setGeoState("idle");
+      },
+      (err) => setGeoState(err.code === 1 ? "denied" : "unavailable"),
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
+    );
+  }
   // A fixed initialDay counts as a deliberate pick from the start -- otherwise the
   // today-sync effect below would immediately snap a /kelowna/saturday visitor's
   // view back to whatever day it actually is, defeating the point of the page.
@@ -220,8 +251,27 @@ export function SpecialsBoard({
       .filter((g) => !g.items.some((s) => isPromotionActive(s.boostedUntil)))
       .slice()
       .sort((a, b) => dailyRandom(a.venueId ?? 0, today) - dailyRandom(b.venueId ?? 0, today));
-    return { flash, featured, boosted, plain, all: [...flash, ...featured, ...boosted, ...plain] };
-  }, [filtered]);
+    // Distance only counts for venues with a real geocoded address -- the region-center stand-in
+    // (venueApproxCoords) is skipped so we never show a made-up distance.
+    const pointOf = (g: (typeof groups)[number]): Point | null => {
+      const first = g.items[0];
+      if (!first || first.venueApproxCoords || first.venueLat == null || first.venueLng == null) return null;
+      return { lat: first.venueLat, lng: first.venueLng };
+    };
+    const distances = new Map<string, number>();
+    let plainOrdered = plain;
+    if (userPos && sortNearest) {
+      const sorted = sortByDistance(plain, pointOf, userPos);
+      plainOrdered = sorted.map((x) => x.item);
+      for (const x of sorted) if (x.distanceKm !== null) distances.set(x.item.key, x.distanceKm);
+      // Paid and flash groups keep their position but still show how far they are.
+      for (const g of [...flash, ...featured, ...boosted]) {
+        const p = pointOf(g);
+        if (p) distances.set(g.key, sortByDistance([g], () => p, userPos)[0].distanceKm ?? 0);
+      }
+    }
+    return { flash, featured, boosted, plain: plainOrdered, distances, all: [...flash, ...featured, ...boosted, ...plainOrdered] };
+  }, [filtered, userPos, sortNearest]);
 
   const activeSponsor =
     selectedCategory !== "all" ? categorySponsors.find((s) => s.category === selectedCategory) : undefined;
@@ -249,6 +299,22 @@ export function SpecialsBoard({
             ✕
           </button>
         )}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={handleSortNearest}
+          disabled={geoState === "locating"}
+          aria-pressed={sortNearest}
+          className={`self-start rounded-full border px-4 py-1.5 text-sm transition-colors ${
+            sortNearest ? "border-accent bg-accent/10 text-foreground" : "border-border bg-surface text-muted hover:text-foreground"
+          }`}
+        >
+          {geoState === "locating" ? tr.filters.locating : sortNearest ? tr.filters.sortDailyMix : tr.filters.sortNearest}
+        </button>
+        {geoState === "denied" && <p className="text-xs text-muted-2">{tr.filters.locationDenied}</p>}
+        {geoState === "unavailable" && <p className="text-xs text-muted-2">{tr.filters.locationUnavailable}</p>}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -361,6 +427,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
               </div>
@@ -381,6 +448,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
               </div>
@@ -401,6 +469,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
               </div>
@@ -423,6 +492,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
               </div>

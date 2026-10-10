@@ -35,6 +35,11 @@ export const strings = {
       allCategories: "All",
       allCities: "All areas",
       allTypes: "All",
+      sortNearest: "Sort by nearest",
+      sortDailyMix: "Showing nearest first -- switch to daily mix",
+      locating: "Finding you…",
+      locationDenied: "Location is blocked. Allow it in your browser settings to sort by nearest.",
+      locationUnavailable: "Couldn't get your location right now. Try again in a moment.",
     },
     card: {
       confirmDeal: "Confirm this deal",
@@ -152,6 +157,11 @@ export const strings = {
       allCategories: "Tous",
       allCities: "Tous les secteurs",
       allTypes: "Tous",
+      sortNearest: "Trier par proximité",
+      sortDailyMix: "Les plus proches en premier -- revenir au mélange du jour",
+      locating: "Recherche de votre position…",
+      locationDenied: "La localisation est bloquée. Autorisez-la dans les réglages de votre navigateur pour trier par proximité.",
+      locationUnavailable: "Impossible d'obtenir votre position pour le moment. Réessayez dans un instant.",
     },
     card: {
       confirmDeal: "Confirmer cette offre",

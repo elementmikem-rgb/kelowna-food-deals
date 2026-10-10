@@ -20,12 +20,15 @@ export function SpecialVenueGroup({
   specials,
   regionSlug,
   lang = "en",
+  distanceLabel,
 }: {
   venueId: number;
   venueName: string;
   specials: SpecialWithVenue[];
   regionSlug: string;
   lang?: Language;
+  // e.g. "1.2 km" -- only passed when the visitor chose "Sort by nearest" and we know this venue's real location.
+  distanceLabel?: string;
 }) {
   const freshest = specials.reduce((latest, s) =>
     s.lastVerifiedAt > latest.lastVerifiedAt ? s : latest
@@ -49,6 +52,10 @@ export function SpecialVenueGroup({
         className="absolute inset-0 z-0"
         aria-label={t(lang).card.fullDetails(venueName)}
       />
+
+      {distanceLabel && (
+        <p className="relative z-10 px-3 pt-2 text-[11px] font-medium text-muted-2 pointer-events-none">{distanceLabel}</p>
+      )}
 
       {/* Lead photo when a visitor has submitted one for this venue -- most
           venues don't have one yet (submission-driven, see lib/data.ts's
