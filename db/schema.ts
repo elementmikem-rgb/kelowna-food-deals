@@ -11,6 +11,7 @@ import {
   doublePrecision,
   date,
   uniqueIndex,
+  index,
   jsonb,
 } from "drizzle-orm/pg-core";
 
@@ -878,6 +879,11 @@ export const bookings = specialsSchema.table("bookings", {
   buyerEmail: text("buyer_email").notNull(),
   buyerVerifiedAt: timestamp("buyer_verified_at", { withTimezone: true }),
   refundNeeded: boolean("refund_needed").notNull().default(false),
+  // Set when an admin marks a cash refund as done (lib/bookings-data.ts's markRefunded):
+  // the amount paid back and when. Null until then. The matching negative row in
+  // `payments` is what the income report reads; these two are the booking's own record.
+  refundedCents: integer("refunded_cents"),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
   // Set by the Stripe webhook if payment succeeded but the dates now conflict with an
   // approved booking made in the interim -- surfaced for manual admin resolution.
   conflictDetected: boolean("conflict_detected").notNull().default(false),
@@ -1043,3 +1049,54 @@ export const badgeImpressions = specialsSchema.table("badge_impressions", {
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const paymentKind = ["tip", "booking", "credit_bundle", "renewal", "refund"] as const;
+export type PaymentKind = (typeof paymentKind)[number];
+
+// One row per real money event, written by the Stripe webhook (lib/payments.ts) and by
+// an admin marking a cash refund done. This is the only table the daily income report
+// (lib/income.ts's getIncomeForDay) reads, so it never has to guess from bookings or
+// from the Stripe API, and it never sees credits (credits spent on a booking and free
+// trial credits are not cash and never produce a row here).
+//
+// The Stripe account is shared with Photaro and Callova: rows are only ever written for
+// sessions/invoices that carry this site's own metadata or that match a local booking.
+// amount_cents is signed (a refund is negative). stripe_object_id is the idempotency
+// key: the Checkout Session id for tips/bookings/credit bundles, the invoice id for a
+// renewal, the Stripe refund id for a refund ("manual-refund-booking-N" for a refund an
+// admin recorded by hand before Stripe's webhook reported it).
+export const payments = specialsSchema.table(
+  "payments",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").$type<PaymentKind>().notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("cad"),
+    // Null until Stripe's balance transaction reports it; see `note`.
+    stripeFeeCents: integer("stripe_fee_cents"),
+    // GST/tax collected on this payment. 0 today (no tax is collected yet).
+    taxCents: integer("tax_cents").notNull().default(0),
+    stripeObjectId: text("stripe_object_id").notNull(),
+    stripeEventId: text("stripe_event_id"),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    stripeChargeId: text("stripe_charge_id"),
+    // bookingId is set when exactly one booking was paid; a cart covers several, listed
+    // comma-joined in bookingIds (same convention as the checkout metadata).
+    bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    bookingIds: text("booking_ids"),
+    venueId: integer("venue_id").references(() => venues.id, { onDelete: "set null" }),
+    // A refund row points at the payment it reverses.
+    relatedPaymentId: integer("related_payment_id"),
+    livemode: boolean("livemode").notNull(),
+    // When the money actually moved, not when a booking row was created.
+    paidAt: timestamp("paid_at", { withTimezone: true }).notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("payments_stripe_object_id_uniq").on(t.stripeObjectId),
+    index("payments_paid_at_idx").on(t.paidAt),
+    index("payments_payment_intent_idx").on(t.stripePaymentIntentId),
+  ]
+);

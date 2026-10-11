@@ -4,6 +4,7 @@ import type { SpecialCategory, EventType, SponsorCategoryKind } from "@/db/schem
 import { endOfDayPacific, pacificTodayISODate, daysInclusive } from "@/lib/time";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { refundCredits, centsToCredits } from "@/lib/credits";
+import { recordManualRefund } from "@/lib/payments";
 import { getStripe } from "@/lib/stripe";
 
 export interface PendingBooking {
@@ -327,6 +328,13 @@ export async function rejectBooking(bookingId: number): Promise<void> {
   }
 }
 
-export async function markRefunded(bookingId: number): Promise<void> {
-  await db.update(bookings).set({ refundNeeded: false }).where(eq(bookings.id, bookingId));
+// Called when an admin has issued the Stripe refund by hand and clicks "mark refunded".
+// Saves the amount and date on the booking and records a negative row in the payments
+// table (lib/payments.ts's recordManualRefund). amountCents defaults to everything the
+// buyer paid; pass it for a partial refund.
+export async function markRefunded(
+  bookingId: number,
+  opts: { amountCents?: number; refundedAt?: Date } = {}
+): Promise<{ recorded: boolean; amountCents: number }> {
+  return recordManualRefund(bookingId, opts);
 }

@@ -149,7 +149,9 @@ export default async function AdminRevenuePage({
         {isAllScope ? (
           <span className="text-xs text-muted-2">
             {centsToDisplay(summary.tips.totalCents)} in tips + {centsToDisplay(summary.bookings.totalCents)} in
-            sponsorship
+            sponsorship and renewals + {centsToDisplay(summary.creditBundles.totalCents)} in prepaid credit bundles
+            - {centsToDisplay(summary.refunds.totalCents)} refunded. Cash actually received (live Stripe payments);
+            credits spent on bookings and free trial credits are not counted.
           </span>
         ) : (
           <span className="text-xs text-muted-2">
@@ -219,7 +221,7 @@ export default async function AdminRevenuePage({
                 </span>
                 <span className="text-xs text-muted-2">
                   {PRODUCT_LABELS[b.productType]} ·{" "}
-                  {b.createdAt.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" })}
+                  {b.paidAt.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" })}
                 </span>
               </div>
               <span className="font-mono-tabular text-muted shrink-0">{centsToDisplay(b.priceCents)}</span>

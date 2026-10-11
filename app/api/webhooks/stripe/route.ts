@@ -6,6 +6,8 @@ import { checkAvailability } from "@/lib/booking-availability";
 import { addDaysISO } from "@/lib/time";
 import { sendReportEmail } from "@/lib/brevo";
 import { grantPurchasedCredits } from "@/lib/credits";
+import { recordSessionPayment, recordRenewalPayment, recordChargeRefunds } from "@/lib/payments";
+import type { EventFacts, CheckoutSessionFacts, InvoiceFacts } from "@/lib/payments-core";
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
+  const eventFacts: EventFacts = { id: event.id, created: event.created, livemode: event.livemode };
+
   switch (event.type) {
     case "checkout.session.completed":
     // "completed" fires as soon as the customer finishes the checkout form -- for an
@@ -36,13 +40,31 @@ export async function POST(req: NextRequest) {
     // "paid"/"no_payment_required" -- see handleCheckoutCompleted and
     // handleCreditBundlePurchase.
     case "checkout.session.async_payment_succeeded":
+      // Money ledger first, then the existing fulfilment, which is unchanged. The ledger
+      // write never blocks fulfilment (see recordPaymentSafely).
+      await recordPaymentSafely("session", event.id, () =>
+        recordSessionPayment(event.data.object as unknown as CheckoutSessionFacts, eventFacts)
+      );
       await handleCheckoutCompleted(event.data.object as CheckoutSessionLike);
       break;
     case "checkout.session.async_payment_failed":
       await handleAsyncPaymentFailed(event.data.object as CheckoutSessionLike);
       break;
-    case "invoice.paid":
-      await handleInvoicePaid(event.data.object as InvoiceLike);
+    case "invoice.paid": {
+      const invoice = event.data.object as InvoiceLike;
+      await recordPaymentSafely("renewal", event.id, () =>
+        recordRenewalPayment(invoiceFacts(invoice), invoiceSubscriptionId(invoice), eventFacts)
+      );
+      await handleInvoicePaid(invoice);
+      break;
+    }
+    case "charge.refunded":
+      await recordPaymentSafely("refund", event.id, () =>
+        recordChargeRefunds(
+          event.data.object as unknown as { id: string; payment_intent: string | null },
+          eventFacts
+        )
+      );
       break;
     case "invoice.payment_failed":
       await handleInvoicePaymentFailed(event.data.object as InvoiceLike);
@@ -73,9 +95,51 @@ interface CheckoutSessionLike {
 interface InvoiceLike {
   id: string;
   billing_reason: string | null;
+  // Read only by the payments ledger (invoiceFacts), never by fulfilment.
+  amount_paid?: number;
+  currency?: string | null;
+  status_transitions?: { paid_at?: number | null } | null;
+  total_taxes?: { amount: number }[] | null;
   // This API version moved subscription off the top-level Invoice object into
   // parent.subscription_details.subscription -- see node_modules/stripe's Invoices.d.ts.
   parent: { subscription_details?: { subscription: string | Record<string, unknown> | null } | null } | null;
+}
+
+function invoiceFacts(invoice: InvoiceLike): InvoiceFacts {
+  return {
+    id: invoice.id,
+    amount_paid: invoice.amount_paid ?? 0,
+    currency: invoice.currency ?? null,
+    billing_reason: invoice.billing_reason,
+    paid_at: invoice.status_transitions?.paid_at ?? null,
+    tax: (invoice.total_taxes ?? []).reduce((sum, t) => sum + t.amount, 0),
+  };
+}
+
+// The payments ledger is a record of money, not part of fulfilment: a bug or a missing
+// migration here must never stop a paid booking being moved to pending_approval or
+// credits being granted, and must never make Stripe retry (invoice.paid's date
+// extension is not idempotent). So a failure is logged and emailed, not thrown. The
+// trade-off is that a failed write is not retried by Stripe; the email is the alarm.
+async function recordPaymentSafely(label: string, eventId: string, fn: () => Promise<unknown>) {
+  try {
+    await fn();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`payments ledger: failed to record ${label} for event ${eventId}: ${message}`);
+    try {
+      await sendReportEmail({
+        subject: `Payments ledger write failed (${label})`,
+        textContent: `Stripe event ${eventId} was processed normally but its row in the payments table could not be written.
+
+${message}
+
+The row will be missing from the daily income report until it is added by hand.`,
+      });
+    } catch {
+      // Nothing more to do; the console.error above is already in the logs.
+    }
+  }
 }
 
 function invoiceSubscriptionId(invoice: InvoiceLike): string | null {
