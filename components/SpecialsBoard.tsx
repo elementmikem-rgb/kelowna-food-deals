@@ -97,10 +97,29 @@ export function SpecialsBoard({
   const [venueQuery, setVenueQuery] = useState("");
   const [view, setView] = useState<"list" | "map">("list");
   // "Sort by nearest": the visitor's position lives only in this component's memory -- it is never
-  // sent to the server or stored. Until they tap the button, the daily-rotation order is unchanged.
+  // sent to the server or stored. Closest-first is requested on load; if location is unavailable the daily-rotation order is used.
   const [userPos, setUserPos] = useState<Point | null>(null);
   const [sortNearest, setSortNearest] = useState(false);
   const [geoState, setGeoState] = useState<"idle" | "locating" | "denied" | "unavailable">("idle");
+
+  // Ask the browser for the visitor's position. `auto` is the on-load attempt: if it fails (denied,
+  // no GPS, timeout) we quietly stay on the daily mix instead of showing an error they never asked for.
+  function locate(auto: boolean) {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      if (!auto) setGeoState("unavailable");
+      return;
+    }
+    setGeoState("locating");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setSortNearest(true);
+        setGeoState("idle");
+      },
+      (err) => setGeoState(auto ? "idle" : err.code === 1 ? "denied" : "unavailable"),
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
+    );
+  }
 
   function handleSortNearest() {
     if (sortNearest) {
@@ -111,21 +130,14 @@ export function SpecialsBoard({
       setSortNearest(true);
       return;
     }
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGeoState("unavailable");
-      return;
-    }
-    setGeoState("locating");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setSortNearest(true);
-        setGeoState("idle");
-      },
-      (err) => setGeoState(err.code === 1 ? "denied" : "unavailable"),
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
-    );
+    locate(false);
   }
+
+  // Closest-first is the default: ask for location once on load.
+  useEffect(() => {
+    locate(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // A fixed initialDay counts as a deliberate pick from the start -- otherwise the
   // today-sync effect below would immediately snap a /kelowna/saturday visitor's
   // view back to whatever day it actually is, defeating the point of the page.
