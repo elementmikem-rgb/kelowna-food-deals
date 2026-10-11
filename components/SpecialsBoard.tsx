@@ -104,7 +104,7 @@ export function SpecialsBoard({
 
   // Ask the browser for the visitor's position. `auto` is the on-load attempt: if it fails (denied,
   // no GPS, timeout) we quietly stay on the daily mix instead of showing an error they never asked for.
-  function locate(auto: boolean) {
+  function locate(auto: boolean, retriesLeft = auto ? 1 : 0) {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       if (!auto) setGeoState("unavailable");
       return;
@@ -116,8 +116,16 @@ export function SpecialsBoard({
         setSortNearest(true);
         setGeoState("idle");
       },
-      (err) => setGeoState(auto ? "idle" : err.code === 1 ? "denied" : "unavailable"),
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
+      (err) => {
+        // Someone who already allowed location can still hit a slow first GPS fix (timeout or
+        // temporarily unavailable). Try once more before giving up; a real "denied" never retries.
+        if (err.code !== 1 && retriesLeft > 0) {
+          locate(auto, retriesLeft - 1);
+          return;
+        }
+        setGeoState(auto ? "idle" : err.code === 1 ? "denied" : "unavailable");
+      },
+      { enableHighAccuracy: false, timeout: auto ? 20_000 : 10_000, maximumAge: 5 * 60_000 }
     );
   }
 
