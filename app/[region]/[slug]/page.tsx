@@ -1,3 +1,4 @@
+import { areaNameFromBrand } from "@/lib/page-titles";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSpecialsWithVenueForDay } from "@/lib/data";
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   if (!resolved) return {};
 
   const region = await getCurrentRegion();
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
 
   const title =
     resolved.kind === "day"
@@ -86,7 +87,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
     getActiveCategorySponsors([region.id]),
   ]);
 
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const dow = resolved.kind === "day" ? resolved.dow : undefined;
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code, dow);
 

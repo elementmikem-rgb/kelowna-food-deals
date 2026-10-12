@@ -1,3 +1,4 @@
+import { areaNameFromBrand } from "@/lib/page-titles";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRecurringEvents, getUpcomingOneOffEvents } from "@/lib/events-data";
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: EventTypeSlugPageProps): Prom
   if (!eventType) return {};
 
   const region = await getCurrentRegion();
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const label = eventTypePageLabel(eventType);
 
   const title = `${areaName} ${label} Nights`;
@@ -48,7 +49,7 @@ export default async function EventTypeSlugPage({ params }: EventTypeSlugPagePro
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const label = eventTypePageLabel(eventType);
   const [recurring, upcoming] = await Promise.all([
     getRecurringEvents(region.id),

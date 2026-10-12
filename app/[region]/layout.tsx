@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRegionBySlug, getCurrentRegion } from "@/lib/regions";
 import { buildWebsiteJsonLd, SITE_URL } from "@/lib/seo";
+import { regionHomeTitle } from "@/lib/page-titles";
 
 interface RegionLayoutProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
   if (!region) return {};
 
   const siteUrl = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}`;
-  const title = `${region.brandName} -- Food & Drink Deals Today`;
+  const title = regionHomeTitle(region.brandName, region.language);
   const description = `Food and drink specials actually running today in ${region.brandName.replace(" Food Deals", "")} -- happy hours and deals, checked regularly, not scraped.`;
 
   return {

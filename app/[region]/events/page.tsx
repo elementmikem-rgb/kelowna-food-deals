@@ -1,3 +1,4 @@
+import { areaNameFromBrand } from "@/lib/page-titles";
 import type { Metadata } from "next";
 import { getRecurringEvents, getUpcomingOneOffEvents } from "@/lib/events-data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
@@ -16,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getCurrentRegion();
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const title = `${areaName} Live Music & Events Tonight`;
   const description = `Live music, trivia, karaoke, and sports nights happening at ${areaName} bars and restaurants -- checked and verified, not a stale calendar.`;
   return {
@@ -31,7 +32,7 @@ export default async function EventsPage() {
   const region = await getCurrentRegion();
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const [recurring, upcoming] = await Promise.all([
     getRecurringEvents(region.id),
     getUpcomingOneOffEvents(region.id, timezone),

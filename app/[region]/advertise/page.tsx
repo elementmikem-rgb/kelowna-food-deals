@@ -1,3 +1,4 @@
+import { areaNameFromBrand } from "@/lib/page-titles";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -192,7 +193,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
   // client-side `new Date()` would use the visitor's local/UTC date instead,
   // which can disagree with the region's timezone for several hours a day.
   const todayISO = regionTodayISODate(timezone);
-  const city = region.brandName.split(" ")[0];
+  const city = areaNameFromBrand(region.brandName);
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-8">

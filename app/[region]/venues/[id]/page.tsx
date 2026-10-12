@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/format";
 import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
+import { venueTitle, areaNameFromBrand } from "@/lib/page-titles";
 
 const content = {
   en: {
@@ -85,14 +86,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const region = await getCurrentRegion();
   if (!venue || venue.regionId !== region.id) return { title: "Venue not found" };
   const lang = region.language as Language;
-  const title = venue.name;
+  const [specialsOnFile, menuOnFile] = await Promise.all([getVenueSpecials(venue.id), getVenueMenuItems(venue.id)]);
+  const title = venueTitle({
+    name: venue.name,
+    brandName: region.brandName,
+    language: region.language,
+    hasSpecialsOrMenu: specialsOnFile.length > 0 || menuOnFile.length > 0,
+  });
+  const ogTitle = typeof title === "string" ? venue.name : title.absolute;
   const description = content[lang].metaDesc(venue.name, venue.address);
   const url = `/${region.slug}/venues/${venue.id}`;
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title, description, url },
+    openGraph: { title: ogTitle, description, url },
   };
 }
 
@@ -132,7 +140,7 @@ export default async function VenuePage({ params }: PageProps) {
       getVenueMenuItems(venueId),
     ]);
 
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const mapQuery = encodeURIComponent(venue.address);
   const reviewsQuery = encodeURIComponent(`${venue.name} ${areaName} reviews`);
 

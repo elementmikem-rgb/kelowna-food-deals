@@ -1,3 +1,4 @@
+import { areaNameFromBrand } from "@/lib/page-titles";
 import type { Metadata } from "next";
 import { getMonthlySpecials } from "@/lib/data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getCurrentRegion();
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
   const title = `${areaName} Monthly Specials`;
   const description = `Deals running all month long at ${areaName} restaurants and bars -- not tied to a single day, checked and verified.`;
   return {
@@ -29,7 +30,7 @@ export default async function MonthlyPage() {
   const lang = await getEffectiveLanguage(region);
   const { timezone } = await getRegionContext(region);
   const specials = await getMonthlySpecials(region.id);
-  const areaName = region.brandName.split(" ")[0];
+  const areaName = areaNameFromBrand(region.brandName);
 
   return (
     <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full px-4 py-6 gap-10">
