@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 type AdminSection =
   | "submissions"
@@ -220,14 +220,6 @@ export function AdminNav({
 
   const totalBadgeCount = items.reduce((sum, item) => sum + (item.badge ?? 0), 0);
   const activeItem = items.find((item) => item.key === active);
-  const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
-
-  // The nav row now scrolls horizontally instead of overlapping (see note below), so
-  // without this the active section's pill can land off-screen on load -- e.g. landing
-  // on Flagged with no visual cue it's selected until the user happens to scroll right.
-  useEffect(() => {
-    activeLinkRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
-  }, [active]);
 
   return (
     <header className="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6 bg-background/95 backdrop-blur border-b border-border">
@@ -247,20 +239,16 @@ export function AdminNav({
             horizontal row -- it already fit fine there. */}
         <MobileNavMenu items={items} active={active} totalBadgeCount={totalBadgeCount} activeLabel={activeItem?.label ?? "Menu"} />
 
-        {/* flex-1 min-w-0 lets this shrink below its content's natural width when the row
-            runs out of room (logo + 11 pills + scope switcher regularly exceeds the
-            max-w-4xl row on desktop) -- without overflow-x-auto + shrink-0 per pill, the
-            pills themselves got squeezed narrower than their text, which doesn't wrap or
-            clip, just visually overlaps the neighbouring pill. Confirmed live 2026-10-06:
-            "Analytics"/"Flagged" overlapping "Claims"/badge count. Scrolling (same
-            no-scrollbar + fade pattern as CityFilter/CategoryFilter) keeps every pill at
-            its natural width instead. */}
-        <nav className="hidden sm:flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto no-scrollbar">
+        {/* Logo + 11 pills + scope switcher never fit on one max-w-4xl row. Squeezing the
+            pills made them overlap (live 2026-10-06), and scrolling the row with the
+            scrollbar hidden clipped the first and last pills (live 2026-10-12). So on
+            desktop the pills sit on their own full-width row (order-last basis-full under
+            the logo and scope switcher) and wrap if needed, with every pill always visible. */}
+        <nav className="hidden sm:flex flex-wrap items-center gap-1.5 order-last basis-full">
           {items.map((item) => (
             <Link
               key={item.key}
               href={item.href}
-              ref={active === item.key ? activeLinkRef : undefined}
               data-selected={active === item.key}
               className={`press-pill flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border whitespace-nowrap shrink-0 ${
                 active === item.key
