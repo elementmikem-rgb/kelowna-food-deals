@@ -49,6 +49,8 @@ export function SpecialVenueGroup({
     >
       <Link
         href={`/${regionSlug}/venues/${venueId}`}
+        data-venue-action="card_special"
+        data-venue-id={venueId}
         className="absolute inset-0 z-0"
         aria-label={t(lang).card.fullDetails(venueName)}
       />

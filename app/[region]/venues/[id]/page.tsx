@@ -23,7 +23,6 @@ import { formatPrice } from "@/lib/format";
 import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
-import { VenueActionTracker } from "@/components/VenueActionTracker";
 import { venueTitle, areaNameFromBrand } from "@/lib/page-titles";
 
 const content = {
@@ -205,7 +204,6 @@ export default async function VenuePage({ params }: PageProps) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <VenueActionTracker venueId={venue.id} />
       <div>
         <Link href={`/${region.slug}`} className="text-sm text-accent-dim hover:underline">
           {content[lang].backLink}
@@ -329,6 +327,7 @@ export default async function VenuePage({ params }: PageProps) {
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
             data-venue-action="directions"
+            data-venue-id={venue.id}
             target="_blank"
             rel="noopener noreferrer"
             className="press-pill rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-background text-center hover:bg-accent-dim"
@@ -345,6 +344,7 @@ export default async function VenuePage({ params }: PageProps) {
             <Link
               href={`/${region.slug}/venues/${venue.id}/claim`}
             data-venue-action="claim"
+            data-venue-id={venue.id}
               className="press-pill rounded-full bg-evergreen px-4 py-2.5 text-sm font-medium text-background text-center hover:bg-evergreen/90"
             >
               {content[lang].claimVenue}
@@ -354,6 +354,7 @@ export default async function VenuePage({ params }: PageProps) {
             <a
               href={venue.website}
             data-venue-action="website"
+            data-venue-id={venue.id}
               target="_blank"
               rel="noopener noreferrer"
               className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
@@ -365,6 +366,7 @@ export default async function VenuePage({ params }: PageProps) {
             <a
               href={venue.menuUrl}
             data-venue-action="menu"
+            data-venue-id={venue.id}
               target="_blank"
               rel="noopener noreferrer"
               className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
@@ -376,6 +378,7 @@ export default async function VenuePage({ params }: PageProps) {
             <a
               href={`tel:${venue.phone}`}
             data-venue-action="phone"
+            data-venue-id={venue.id}
               className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
             >
               {venue.phone}
@@ -384,6 +387,7 @@ export default async function VenuePage({ params }: PageProps) {
           <a
             href={`https://www.google.com/search?q=${reviewsQuery}`}
             data-venue-action="reviews"
+            data-venue-id={venue.id}
             target="_blank"
             rel="noopener noreferrer"
             className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"

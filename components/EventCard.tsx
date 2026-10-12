@@ -68,6 +68,8 @@ export function EventCard({
     >
       <Link
         href={`/${regionSlug}/venues/${event.venueId}`}
+        data-venue-action="card_event"
+        data-venue-id={event.venueId}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${event.venueName} -- ${event.title}, view full details`}
       />

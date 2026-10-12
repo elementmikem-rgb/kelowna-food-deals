@@ -51,6 +51,8 @@ export function SpecialCard({
     >
       <Link
         href={`/${regionSlug}/venues/${special.venueId}`}
+        data-venue-action="card_special"
+        data-venue-id={special.venueId}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${special.venueName} -- ${special.title}, view full details`}
       />

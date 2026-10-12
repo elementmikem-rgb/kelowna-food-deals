@@ -11,6 +11,11 @@ describe("venueActionEvent", () => {
     expect(venueActionEvent("claim")).toBe("venue_claim_click");
   });
 
+  it("maps taps on list cards, so list traffic can be told apart from button taps", () => {
+    expect(venueActionEvent("card_special")).toBe("venue_special_card_click");
+    expect(venueActionEvent("card_event")).toBe("venue_event_card_click");
+  });
+
   it("returns null for anything not on the list, so markup can never invent event names", () => {
     expect(venueActionEvent("pageview")).toBeNull();
     expect(venueActionEvent("")).toBeNull();

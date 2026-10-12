@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getRegionBySlug, getCurrentRegion } from "@/lib/regions";
 import { buildWebsiteJsonLd, SITE_URL } from "@/lib/seo";
 import { regionHomeTitle } from "@/lib/page-titles";
+import { VenueActionTracker } from "@/components/VenueActionTracker";
 
 interface RegionLayoutProps {
   children: React.ReactNode;
@@ -69,6 +70,7 @@ export default async function RegionLayout({ children, params }: RegionLayoutPro
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
       />
+      <VenueActionTracker />
       {children}
     </>
   );

@@ -8,6 +8,9 @@ export const VENUE_ACTION_EVENTS = {
   phone: "venue_phone_click",
   reviews: "venue_reviews_click",
   claim: "venue_claim_click",
+  // Taps on the cards in the specials / events lists.
+  card_special: "venue_special_card_click",
+  card_event: "venue_event_card_click",
 } as const;
 
 export function venueActionEvent(action: string | null | undefined): string | null {
