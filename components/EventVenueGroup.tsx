@@ -37,6 +37,7 @@ export function EventVenueGroup({
 
   return (
     <article
+      data-venue-impression={venueId}
       className={`pin-card ${
         tiltSeed % 2 === 0 ? "tilt-a" : "tilt-b"
       } break-inside-avoid-column mb-3 rounded-2xl border ${

@@ -62,6 +62,7 @@ export function EventCard({
 
   return (
     <article
+      data-venue-impression={event.venueId}
       className={`pin-card ${event.id % 2 === 0 ? "tilt-a" : "tilt-b"} rounded-2xl border border-border bg-surface p-4 pt-5 flex flex-col gap-2 shadow-[0_2px_10px_rgba(42,40,24,0.06)] ${
         stale ? "opacity-50" : ""
       }`}
