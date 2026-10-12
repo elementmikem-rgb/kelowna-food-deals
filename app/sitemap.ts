@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
-import { db, venues, specials, regions } from "@/db";
+import { db, venues, specials, events, regions } from "@/db";
 import { and, eq, isNull, max } from "drizzle-orm";
 import { getBlogPostsForRegion } from "@/lib/blog-data";
+import { selectSitemapVenues } from "@/lib/sitemap-venues";
 import { DAY_SLUGS } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS } from "@/lib/category-slugs";
 import { EVENT_TYPE_SLUGS } from "@/lib/event-type-slugs";
@@ -25,8 +26,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from(specials)
     .where(isNull(specials.archivedAt))
     .groupBy(specials.venueId);
-  const lastVerifiedByVenue = new Map(
-    lastVerifiedRows.map((r) => [r.venueId, r.lastVerifiedAt ? new Date(r.lastVerifiedAt) : new Date()])
+  const lastVerifiedByVenue = new Map<number, Date>(
+    lastVerifiedRows.flatMap((r) => (r.venueId !== null && r.lastVerifiedAt ? [[r.venueId, new Date(r.lastVerifiedAt)] as [number, Date]] : []))
+  );
+  const eventVerifiedRows = await db
+    .select({ venueId: events.venueId, lastVerifiedAt: max(events.lastVerifiedAt) })
+    .from(events)
+    .where(isNull(events.archivedAt))
+    .groupBy(events.venueId);
+  const eventVerifiedByVenue = new Map<number, Date>(
+    eventVerifiedRows.flatMap((r) => (r.venueId !== null && r.lastVerifiedAt ? [[r.venueId, new Date(r.lastVerifiedAt)] as [number, Date]] : []))
   );
 
   const entries: MetadataRoute.Sitemap = [];
@@ -77,10 +86,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.2 }
     );
 
-    for (const v of activeVenues) {
+    for (const v of selectSitemapVenues(activeVenues, lastVerifiedByVenue, eventVerifiedByVenue)) {
       entries.push({
         url: `${BASE_URL}/venues/${v.id}`,
-        lastModified: lastVerifiedByVenue.get(v.id) ?? new Date(),
+        lastModified: v.lastModified,
         changeFrequency: "daily",
         priority: 0.6,
       });
