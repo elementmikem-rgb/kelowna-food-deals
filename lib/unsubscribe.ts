@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import { signLink, verifyLinkSignature } from "@/lib/link-secrets";
 
 /**
  * Stateless, unguessable per-venue unsubscribe token (HMAC over the venue id), so an
@@ -6,16 +6,11 @@ import crypto from "crypto";
  * comparing, never stored.
  */
 export function buildUnsubscribeToken(venueId: number): string {
-  const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret) throw new Error("ADMIN_SESSION_SECRET is not set");
-  return crypto.createHmac("sha256", secret).update(String(venueId)).digest("hex");
+  return signLink(String(venueId));
 }
 
 export function verifyUnsubscribeToken(venueId: number, token: string): boolean {
-  const expected = buildUnsubscribeToken(venueId);
-  const a = Buffer.from(expected);
-  const b = Buffer.from(token);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return verifyLinkSignature(String(venueId), token);
 }
 
 // /api/unsubscribe is a top-level route with no region segment of its own
