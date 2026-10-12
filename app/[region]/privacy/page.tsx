@@ -57,7 +57,7 @@ const copy: Record<Language, PrivacyCopy> = {
     whoRunsFeedbackLabel: "feedback form",
     analyticsHeading: "Basic site analytics",
     analyticsBody:
-      "Page views are logged with a randomly generated session ID and visitor ID (not tied to your name or email), the page you visited, the referring site, UTM campaign parameters if present, and a country code (from Cloudflare's edge network, not your exact location). This is used only to understand which pages get used and where traffic comes from -- never sold or shared with advertisers.",
+      "Page views and interactions (such as tapping directions, a menu or a special, and which listings were shown on screen) are logged with a randomly generated session ID and visitor ID (not tied to your name or email), the page you visited, the referring site, UTM campaign parameters if present, your browser type, and a country code (from Cloudflare's edge network, not your exact location). We keep this for up to 400 days. It is used to understand which pages get used and where traffic comes from, and to show a venue owner combined counts of how many people viewed or tapped their own listing -- never sold or shared with advertisers, and never tied to you personally.",
     submissionsHeading: "If you submit a special, event, or sponsorship inquiry",
     submissionsBody:
       "A submitted photo or description is stored so it can be reviewed and published. A sponsorship inquiry's name, business, and email are stored so we can follow up, and trigger one automatic confirmation email back to you. None of this is sold or shared beyond what's needed to respond to you.",
@@ -66,7 +66,7 @@ const copy: Record<Language, PrivacyCopy> = {
       "The tip jar redirects to Stripe's own checkout page -- this site never sees or stores your card details.",
     cookiesHeading: "Cookies",
     cookiesBody:
-      "A cookie stores your session/visitor ID for the analytics described above. No third-party advertising or tracking cookies are used.",
+      "Your visitor and session IDs for the analytics described above are kept in your browser's local storage, not in cookies. The only analytics-related cookie is one we use to leave our own team's visits out of the numbers. No third-party advertising or tracking cookies are used.",
     sponsoredHeading: "Featured & sponsored content",
     sponsoredBody:
       "A venue can pay to be featured, boost a specific special, or sponsor a category -- this never changes whether a listing is accurate, only where it sorts on the page, and it's always marked with a badge. A sponsored blog post is a paid feature and is always labeled “Sponsored” -- it's never presented as independent coverage.",
