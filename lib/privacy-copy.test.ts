@@ -30,6 +30,11 @@ describe("English privacy copy: analytics", () => {
     expect(analytics).toMatch(/venue owner/i);
     expect(analytics).toMatch(/own listing/i);
   });
+
+  it("does not over-promise anonymity: a random visitor ID can still be personal information", () => {
+    expect(analytics).not.toMatch(/tied to you personally/i);
+    expect(analytics).toMatch(/not used to identify you/i);
+  });
 });
 
 describe("English privacy copy: storage", () => {
@@ -62,6 +67,11 @@ describe("French privacy copy", () => {
   it("says venue owners see combined counts for their own listing", () => {
     expect(analytics).toMatch(/propriétaire d'établissement/i);
     expect(analytics).toMatch(/propre fiche/i);
+  });
+
+  it("does not over-promise anonymity", () => {
+    expect(analytics).not.toMatch(/liées à vous personnellement/i);
+    expect(analytics).toMatch(/ne servent pas à vous identifier/i);
   });
 
   it("says the ids live in local storage and the only cookie excludes our own visits", () => {
