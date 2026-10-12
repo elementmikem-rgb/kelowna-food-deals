@@ -42,3 +42,31 @@ describe("English privacy copy: storage", () => {
     expect(cookies).not.toMatch(/A cookie stores your session\/visitor ID/);
   });
 });
+
+describe("French privacy copy", () => {
+  const fr = source.slice(source.indexOf("  fr: {"));
+  const analytics = fr.slice(fr.indexOf("analyticsBody:"), fr.indexOf("submissionsHeading:"));
+  const cookies = fr.slice(fr.indexOf("cookiesBody:"), fr.indexOf("sponsoredHeading:"));
+
+  it("covers interactions and on-screen listings", () => {
+    expect(analytics).toMatch(/appuyer/i);
+    expect(analytics).toMatch(/affichées à l'écran/i);
+  });
+
+  it("discloses the browser type and the retention period", () => {
+    expect(analytics).toMatch(/type de navigateur/i);
+    const lib = readFileSync(join(__dirname, "analytics.ts"), "utf8");
+    expect(analytics).toContain(`${lib.match(/RETENTION_DAYS = (\d+)/)![1]} jours`);
+  });
+
+  it("says venue owners see combined counts for their own listing", () => {
+    expect(analytics).toMatch(/propriétaire d'établissement/i);
+    expect(analytics).toMatch(/propre fiche/i);
+  });
+
+  it("says the ids live in local storage and the only cookie excludes our own visits", () => {
+    expect(cookies).toMatch(/stockage local/i);
+    expect(cookies).toMatch(/notre propre équipe/i);
+    expect(cookies).not.toMatch(/Un témoin \(cookie\) enregistre/);
+  });
+});

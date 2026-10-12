@@ -105,7 +105,7 @@ const copy: Record<Language, PrivacyCopy> = {
     whoRunsFeedbackLabel: "formulaire de commentaires",
     analyticsHeading: "Analyses de base du site",
     analyticsBody:
-      "Les pages visitées sont enregistrées avec un identifiant de session et un identifiant de visiteur générés aléatoirement (sans lien avec votre nom ni votre adresse courriel), la page consultée, le site référant, les paramètres de campagne UTM s'il y en a, et un code de pays (fourni par le réseau Cloudflare, et non votre position exacte). Ces données servent uniquement à comprendre quelles pages sont utilisées et d'où provient le trafic -- elles ne sont jamais vendues ni partagées avec des annonceurs.",
+      "Les pages visitées et les interactions (par exemple, appuyer sur l'itinéraire, un menu ou un spécial, et les fiches affichées à l'écran) sont enregistrées avec un identifiant de session et un identifiant de visiteur générés aléatoirement (sans lien avec votre nom ni votre adresse courriel), la page consultée, le site référant, les paramètres de campagne UTM s'il y en a, le type de navigateur, et un code de pays (fourni par le réseau Cloudflare, et non votre position exacte). Ces données sont conservées jusqu'à 400 jours. Elles servent à comprendre quelles pages sont utilisées et d'où provient le trafic, ainsi qu'à montrer à un propriétaire d'établissement des totaux combinés du nombre de personnes qui ont consulté ou touché sa propre fiche -- elles ne sont jamais vendues ni partagées avec des annonceurs, et jamais liées à vous personnellement.",
     submissionsHeading:
       "Si vous soumettez un spécial, un événement ou une demande de commandite",
     submissionsBody:
@@ -115,7 +115,7 @@ const copy: Record<Language, PrivacyCopy> = {
       "Le pot à pourboires redirige vers la page de paiement de Stripe -- ce site ne voit ni ne stocke jamais vos coordonnées bancaires.",
     cookiesHeading: "Témoins (cookies)",
     cookiesBody:
-      "Un témoin (cookie) enregistre votre identifiant de session et de visiteur pour les analyses décrites ci-dessus. Aucun témoin publicitaire ou de suivi tiers n'est utilisé.",
+      "Vos identifiants de session et de visiteur pour les analyses décrites ci-dessus sont conservés dans le stockage local de votre navigateur, et non dans des témoins. Le seul témoin lié aux analyses sert à exclure les visites de notre propre équipe des statistiques. Aucun témoin publicitaire ou de suivi tiers n'est utilisé.",
     sponsoredHeading: "Contenu mis en vedette et commandité",
     sponsoredBody:
       "Un établissement peut payer pour être mis en vedette, pour amplifier un spécial précis ou pour commanditer une catégorie -- cela ne modifie jamais l'exactitude d'une fiche, seulement son emplacement sur la page, et c'est toujours indiqué par un badge. Un article de blogue commandité est un contenu payant et est toujours étiqueté « Commandité » -- il n'est jamais présenté comme une couverture indépendante.",
