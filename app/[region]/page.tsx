@@ -6,6 +6,10 @@ import { TipJar } from "@/components/TipJar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
+import { AreaLinks } from "@/components/AreaLinks";
+import { getTownsForRegion } from "@/lib/towns";
+import { getNearbyRegions } from "@/lib/nearby-regions";
+import { areaNameFromBrand } from "@/lib/page-titles";
 import { FAQSection } from "@/components/FAQSection";
 import { HomeIntroCallout } from "@/components/HomeIntroCallout";
 import { PushOptIn } from "@/components/PushOptIn";
@@ -25,10 +29,12 @@ export default async function Home() {
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
   const today = todayDowInRegion(timezone);
-  const [specials, categorySponsors, areas] = await Promise.all([
+  const [specials, categorySponsors, areas, towns, nearby] = await Promise.all([
     getSpecialsWithVenueForDay(region.id, today),
     getActiveCategorySponsors([region.id]),
     getActiveVenueCities(region.id),
+    getTownsForRegion(region.id, region.slug, areaNameFromBrand(region.brandName)),
+    getNearbyRegions(region),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code);
@@ -60,6 +66,7 @@ export default async function Home() {
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />
+      <AreaLinks regionSlug={region.slug} regionBrand={region.brandName} towns={towns} nearby={nearby} lang={lang} />
       <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
       <FAQSection lang={lang} />
       <SiteFooter />

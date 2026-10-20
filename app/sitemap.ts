@@ -6,6 +6,8 @@ import { selectSitemapVenues } from "@/lib/sitemap-venues";
 import { DAY_SLUGS } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS } from "@/lib/category-slugs";
 import { EVENT_TYPE_SLUGS } from "@/lib/event-type-slugs";
+import { getTownsByRegion } from "@/lib/towns";
+import { areaNameFromBrand } from "@/lib/page-titles";
 
 // Without this, Next prerenders the sitemap once at build time and it never
 // regenerates -- venues added by the nightly cron wouldn't appear until the
@@ -20,6 +22,10 @@ const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 // its own /{slug}/... prefix instead of just one.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activeRegions = await db.select().from(regions).where(eq(regions.active, true));
+  // Town landing pages (/kelowna/west-kelowna) -- one query for every region, not one each.
+  const townsByRegion = await getTownsByRegion(
+    activeRegions.map((r) => ({ id: r.id, slug: r.slug, areaName: areaNameFromBrand(r.brandName) }))
+  );
 
   const lastVerifiedRows = await db
     .select({ venueId: specials.venueId, lastVerifiedAt: max(specials.lastVerifiedAt) })
@@ -47,6 +53,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select({ id: venues.id })
       .from(venues)
       .where(and(eq(venues.active, true), eq(venues.regionId, region.id)));
+
+    for (const town of townsByRegion.get(region.id) ?? []) {
+      entries.push({ url: `${BASE_URL}/${town.slug}`, lastModified: new Date(), changeFrequency: "daily", priority: 0.7 });
+    }
 
     entries.push(
       { url: BASE_URL, lastModified: new Date(), changeFrequency: "hourly", priority: 1 },

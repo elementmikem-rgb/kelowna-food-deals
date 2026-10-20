@@ -56,6 +56,7 @@ export function SpecialsBoard({
   lang = "en",
   initialDay,
   initialCategory,
+  initialCity,
   regionLat = null,
   regionLng = null,
 }: {
@@ -75,6 +76,9 @@ export function SpecialsBoard({
   // to drift from, so it just seeds the filter -- the visitor can still
   // switch categories freely from there.
   initialCategory?: SpecialCategory;
+  // Seeds the "area" chip for a town landing page (/kelowna/west-kelowna) so the town's own
+  // specials are what's server-rendered; the visitor can still widen it to all areas.
+  initialCity?: string;
   // Map view's initial center -- the region's own lat/lng, not derived from
   // venue pins, so the map is centered sensibly even before/without any pins
   // in view (e.g. a filter that matches zero venues in one corner of town).
@@ -93,7 +97,7 @@ export function SpecialsBoard({
   const [selectedCategory, setSelectedCategory] = useState<SpecialCategory | "all">(
     initialCategory ?? "all"
   );
-  const [selectedCity, setSelectedCity] = useState<string | "all">("all");
+  const [selectedCity, setSelectedCity] = useState<string | "all">(initialCity ?? "all");
   const [venueQuery, setVenueQuery] = useState("");
   const [view, setView] = useState<"list" | "map">("list");
   // "Sort by nearest": the visitor's position lives only in this component's memory -- it is never
