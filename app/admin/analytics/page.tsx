@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats } from "@/lib/analytics";
+import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats } from "@/lib/analytics";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { AdminShell } from "@/components/AdminShell";
 import { pacificTodayISODate } from "@/lib/time";
@@ -58,6 +58,7 @@ export default async function AdminAnalyticsPage({
       : buildWindow(days);
   const scope = await getSelectedAdminScope();
   const stats = await getAnalyticsStats(window, scope.regionIds);
+  const installs = await getAppInstallStats(window, scope.regionIds);
 
   // Defaults for the custom picker: whatever's already active, so reopening it
   // (or tweaking one side) starts from the range currently on screen.
@@ -173,6 +174,42 @@ export default async function AdminAnalyticsPage({
           </span>
         </div>
         <AnalyticsChart data={stats.dailyTrend} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-lg text-foreground">App installs</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Android installs" value={installs.androidInstalls} />
+          <StatCard label="Opened from home screen (iPhone)" value={installs.appOpens.ios} />
+          <StatCard label="Opened from home screen (Android)" value={installs.appOpens.android} />
+          <StatCard label="Install taps" value={installs.installTaps} />
+        </div>
+        <div className="rounded-xl border border-border bg-surface divide-y divide-border text-sm">
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-foreground/90">Install banner shown (Android / iPhone)</span>
+            <span className="font-mono-tabular text-muted shrink-0 ml-2">
+              {installs.bannerShown.android} / {installs.bannerShown.ios}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-foreground/90">Banner dismissed (Android / iPhone)</span>
+            <span className="font-mono-tabular text-muted shrink-0 ml-2">
+              {installs.bannerDismissed.android} / {installs.bannerDismissed.ios}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-foreground/90">All time, every region (Android installs / home-screen opens)</span>
+            <span className="font-mono-tabular text-muted shrink-0 ml-2">
+              {installs.allTime.androidInstalls} / {installs.allTime.appOpenVisitors}
+            </span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-2">
+          Counts are distinct visitors. Android installs come from Chrome&apos;s install event. iPhone gives
+          no install event, so a home-screen open stands in for it: it shows people who added the site and
+          opened it from the icon, not everyone who added it. Banner and home-screen counts start from the
+          day this tracking shipped.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

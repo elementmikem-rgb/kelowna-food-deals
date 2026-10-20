@@ -15,12 +15,10 @@ const bodySchema = z.object({
   photoMimeType: z.string(),
 });
 
-// Inserts straight into venue_photos with submissionId: null -- the same table visitor
-// submissions write to (see db/schema.ts's venue_photos comment and lib/data.ts's
-// venuePhotoId subquery, which already picks the most recently created row for every
-// specials-board card and the venue detail page's full gallery). An owner's own upload
-// needs no new display plumbing: it becomes the new "most recent" and shows up
-// everywhere a venue photo already renders, the moment this insert commits.
+// Inserts straight into venue_photos with submissionId: null and source "owner" -- the
+// same table visitor submissions write to. Owner photos rank first (lib/data.ts's
+// venuePhotoId subquery and lib/venues-data.ts's gallery), so an owner's upload becomes
+// the card cover everywhere a venue photo already renders, the moment this insert commits.
 export async function POST(req: NextRequest) {
   const session = await getOwnerSession(req);
   if (!session) {
@@ -49,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const [created] = await db
     .insert(venuePhotos)
-    .values({ venueId, photoData, photoMimeType })
+    .values({ venueId, photoData, photoMimeType, source: "owner" })
     .returning({ id: venuePhotos.id });
 
   return NextResponse.json({ ok: true, id: created.id });

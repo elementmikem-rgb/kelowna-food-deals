@@ -1,5 +1,5 @@
 import { db, venuePhotos } from "@/db";
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 
 const MAX_PHOTOS_PER_VENUE = 12;
 
@@ -26,7 +26,10 @@ export async function savePhotoOnApproval(params: {
       .select({ id: venuePhotos.id })
       .from(venuePhotos)
       .where(eq(venuePhotos.venueId, venueId))
-      .orderBy(desc(venuePhotos.createdAt));
+      .orderBy(
+        sql`case ${venuePhotos.source} when 'owner' then 0 when 'google' then 1 else 2 end`,
+        desc(venuePhotos.createdAt)
+      );
     const stale = rows.slice(MAX_PHOTOS_PER_VENUE).map((r) => r.id);
     if (stale.length > 0) {
       await tx.delete(venuePhotos).where(inArray(venuePhotos.id, stale));

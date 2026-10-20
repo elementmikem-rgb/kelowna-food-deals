@@ -371,3 +371,75 @@ export async function getVenueBeforeDuringViews(
 
   return { before: beforeCount.count, during: duringCount.count };
 }
+
+export interface AppInstallStats {
+  // Distinct visitors per signal. installs = Chrome's appinstalled event (Android only,
+  // iOS has none); appOpens = visitors who opened the site from a home-screen icon,
+  // the only iPhone install signal there is. Visitor ids are per browser storage, and
+  // an installed iOS app has its own storage, so each iOS install counts as its own id.
+  bannerShown: { android: number; ios: number };
+  bannerDismissed: { android: number; ios: number };
+  installTaps: number;
+  androidInstalls: number;
+  appOpens: { android: number; ios: number };
+  // Same signals, all time and every region -- a small number worth always showing.
+  allTime: { androidInstalls: number; appOpenVisitors: number };
+}
+
+export async function getAppInstallStats(
+  window: AnalyticsWindow,
+  regionIds: number[] | "all"
+): Promise<AppInstallStats> {
+  const inWindow = and(
+    gte(analyticsEvents.createdAt, window.from),
+    lt(analyticsEvents.createdAt, window.to),
+    regionScopeCondition(analyticsEvents.regionId, regionIds)
+  );
+  const visitors = sql<number>`count(distinct ${analyticsEvents.visitorId})::int`;
+
+  const rows = await db
+    .select({
+      eventType: analyticsEvents.eventType,
+      label: analyticsEvents.eventLabel,
+      visitors,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        inWindow,
+        inArray(analyticsEvents.eventType, [
+          "pwa_banner_shown",
+          "pwa_banner_dismiss",
+          "pwa_install_tap",
+          "pwa_install",
+          "pwa_app_open",
+        ])
+      )
+    )
+    .groupBy(analyticsEvents.eventType, analyticsEvents.eventLabel);
+
+  const pick = (type: string, label?: string) =>
+    rows
+      .filter((r) => r.eventType === type && (label === undefined || r.label === label))
+      .reduce((n, r) => n + r.visitors, 0);
+
+  const [allTime] = await db
+    .select({
+      androidInstalls: sql<number>`count(distinct ${analyticsEvents.visitorId}) filter (where ${analyticsEvents.eventType} = 'pwa_install')::int`,
+      appOpenVisitors: sql<number>`count(distinct ${analyticsEvents.visitorId}) filter (where ${analyticsEvents.eventType} = 'pwa_app_open')::int`,
+    })
+    .from(analyticsEvents)
+    .where(inArray(analyticsEvents.eventType, ["pwa_install", "pwa_app_open"]));
+
+  return {
+    bannerShown: { android: pick("pwa_banner_shown", "android"), ios: pick("pwa_banner_shown", "ios") },
+    bannerDismissed: {
+      android: pick("pwa_banner_dismiss", "android"),
+      ios: pick("pwa_banner_dismiss", "ios"),
+    },
+    installTaps: pick("pwa_install_tap"),
+    androidInstalls: pick("pwa_install"),
+    appOpens: { android: pick("pwa_app_open", "android"), ios: pick("pwa_app_open", "ios") },
+    allTime: allTime ?? { androidInstalls: 0, appOpenVisitors: 0 },
+  };
+}

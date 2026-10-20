@@ -46,7 +46,7 @@ export interface SpecialWithVenue {
   // image bytes most cards don't even show (only rendered while boostedUntil is active,
   // via /api/specials/[id]/photo).
   hasPhoto: boolean;
-  // Most recent visitor-submitted venue photo (specials.venue_photos), if any -- shown
+  // Best-ranked venue photo (specials.venue_photos: owner, then Google, then visitor, newest first), if any -- shown
   // as the card's lead image on the region board. Distinct from hasPhoto above, which
   // is the paid boost photo add-on tied to this specific special. Most venues have none
   // yet (submission-driven), so consumers must handle null gracefully.
@@ -115,7 +115,7 @@ const baseColumns = {
   venuePhotoId: sql<number | null>`(
     select id from specials.venue_photos
     where venue_id = ${venues.id}
-    order by created_at desc
+    order by case source when 'owner' then 0 when 'google' then 1 else 2 end, created_at desc
     limit 1
   )`,
   venueLat: venues.lat,

@@ -17,6 +17,29 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
 }
 
+// track.js loads after hydration, so window.kdsTrack can still be undefined when this
+// component's first effect runs -- retry briefly rather than silently losing the event.
+function track(eventType: string, label: string, triesLeft = 6) {
+  if (window.kdsTrack) {
+    window.kdsTrack(eventType, label);
+  } else if (triesLeft > 0) {
+    setTimeout(() => track(eventType, label, triesLeft - 1), 1000);
+  }
+}
+
+// Once per browser session, so a visitor tapping around the site doesn't inflate
+// banner-shown / app-open counts with every page they land on.
+function trackOncePerSession(eventType: string, label: string) {
+  try {
+    const key = `todaystab_tracked_${eventType}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    // Storage blocked: fall through and track anyway.
+  }
+  track(eventType, label);
+}
+
 function isStandaloneAlready(): boolean {
   try {
     return (
@@ -59,9 +82,19 @@ export function InstallPrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!isMobileDevice() || isStandaloneAlready() || recentlyDismissed()) return;
-
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const platform = isIOS ? "ios" : "android";
+
+    // Opened from the home-screen icon. This is the only install signal iOS gives us
+    // (there is no appinstalled event there): a visit in standalone mode means the
+    // site was added to the home screen. Counted before the early returns below,
+    // since an installed app should never show the banner.
+    if (isMobileDevice() && isStandaloneAlready()) {
+      trackOncePerSession("pwa_app_open", platform);
+      return;
+    }
+    if (!isMobileDevice() || recentlyDismissed()) return;
+
     // iOS Safari has no programmatic install trigger at all -- only Share menu
     // → "Add to Home Screen", done by the person, never by a script. Show the
     // instructional banner immediately rather than waiting for an event that
@@ -69,6 +102,7 @@ export function InstallPrompt() {
     if (isIOS) {
       setEligible({ kind: "ios" });
       setVisible(true);
+      trackOncePerSession("pwa_banner_shown", "ios");
       return;
     }
 
@@ -86,6 +120,7 @@ export function InstallPrompt() {
         prompt: () => void evt.prompt(),
       });
       setVisible(true);
+      trackOncePerSession("pwa_banner_shown", "android");
     }
     // The only reliable "they actually installed it" signal that exists for any
     // platform -- iOS has no equivalent event at all (see isStandaloneAlready's
@@ -94,7 +129,7 @@ export function InstallPrompt() {
     // since Chrome's own mini-infobar or address-bar install icon can also
     // trigger a real install without this banner ever being shown.
     function onAppInstalled() {
-      window.kdsTrack?.("pwa_install", "android");
+      track("pwa_install", "android");
     }
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
@@ -104,7 +139,7 @@ export function InstallPrompt() {
     };
   }, []);
 
-  function dismiss() {
+  function close() {
     setVisible(false);
     try {
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
@@ -113,9 +148,17 @@ export function InstallPrompt() {
     }
   }
 
+  function dismiss() {
+    track("pwa_banner_dismiss", eligible?.kind ?? "unknown");
+    close();
+  }
+
   function install() {
-    if (eligible?.kind === "android") eligible.prompt();
-    dismiss();
+    if (eligible?.kind === "android") {
+      track("pwa_install_tap", "android");
+      eligible.prompt();
+    }
+    close();
   }
 
   if (!visible || !eligible) return null;

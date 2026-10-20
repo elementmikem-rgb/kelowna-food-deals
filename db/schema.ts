@@ -374,6 +374,11 @@ export const specialCategory = [
 ] as const;
 export type SpecialCategory = (typeof specialCategory)[number];
 
+// Where a venue photo came from, in display priority order: the venue's own upload
+// first, a Google Places photo second, a visitor submission last (see lib/venue-photos.ts).
+export const venuePhotoSource = ["owner", "google", "visitor"] as const;
+export type VenuePhotoSource = (typeof venuePhotoSource)[number];
+
 export const gameScope = ["home", "all"] as const;
 export type GameScope = (typeof gameScope)[number];
 
@@ -588,6 +593,9 @@ export const venuePhotos = specialsSchema.table(
     photoData: text("photo_data").notNull(), // base64-encoded image
     photoMimeType: text("photo_mime_type").notNull(),
     caption: text("caption"),
+    // Defaults to "visitor" so the visitor-approval path needs no change; owner uploads
+    // and Google backfills set theirs explicitly.
+    source: text("source").$type<VenuePhotoSource>().notNull().default("visitor"),
     submissionId: integer("submission_id").references(() => submissions.id, {
       onDelete: "set null",
     }),

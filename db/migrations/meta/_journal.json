@@ -519,6 +519,13 @@
       "when": 1792468081742,
       "tag": "0073_game_day_deals",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792554481742,
+      "tag": "0074_venue_photo_source",
+      "breakpoints": true
     }
   ]
 }

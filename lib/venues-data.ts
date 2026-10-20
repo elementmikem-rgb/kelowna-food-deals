@@ -156,7 +156,10 @@ export async function getVenuePhotos(venueId: number): Promise<VenuePhoto[]> {
     })
     .from(venuePhotos)
     .where(eq(venuePhotos.venueId, venueId))
-    .orderBy(desc(venuePhotos.createdAt));
+    .orderBy(
+      sql`case ${venuePhotos.source} when 'owner' then 0 when 'google' then 1 else 2 end`,
+      desc(venuePhotos.createdAt)
+    );
 
   return rows;
 }
