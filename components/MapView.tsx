@@ -12,6 +12,7 @@ import type { MapPin as ApiMapPin, EventMapPin as ApiEventMapPin } from "@/lib/m
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
 import { MapVenueStrip, type StripVenue } from "./MapVenueStrip";
+import { MapLocateControl } from "./MapLocateControl";
 import { pickStripPins, type StripBounds } from "@/lib/map-strip";
 import { getSavedVenues, toggleSavedVenue } from "@/lib/saved-venues";
 import type { SpecialCategory } from "@/db/schema";
@@ -475,6 +476,7 @@ export function MapView({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ViewTracker onView={handleView} quiet={quiet} mapRef={mapRef} />
+          <MapLocateControl lang={lang === "fr" ? "fr" : "en"} />
           <RemotePins
             layer={layer}
             excludeVenueIds={localVenueIds}
