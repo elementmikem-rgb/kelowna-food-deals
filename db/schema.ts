@@ -374,6 +374,9 @@ export const specialCategory = [
 ] as const;
 export type SpecialCategory = (typeof specialCategory)[number];
 
+export const gameScope = ["home", "all"] as const;
+export type GameScope = (typeof gameScope)[number];
+
 export const specials = specialsSchema.table("specials", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id")
@@ -410,6 +413,12 @@ export const specials = specialsSchema.table("specials", {
   // extracts content matching its identity, it stays archived instead of being
   // silently reinserted as a new active row.
   archivedManually: boolean("archived_manually").notNull().default(false),
+  // Game-day deal: NHL team codes (e.g. {"VAN","EDM"}) whose games this special runs
+  // during. Null = not a game-day deal. gameScope says which of those teams' games
+  // count: "home" (only when the team plays at home) or "all" (every game). The next
+  // matching game is looked up from events.teamCode/gameHome, see lib/game-day.ts.
+  gameTeams: text("game_teams").array(),
+  gameScope: text("game_scope").$type<GameScope>(),
   // Paid seasonal boost: while now() < boostedUntil, this specific special sorts
   // first within its venue's card and gets a "Featured" badge. Same lapses-itself
   // design as venues.featuredUntil.
@@ -495,6 +504,12 @@ export const events = specialsSchema.table("events", {
   // See specials.archivedManually -- same meaning, same cron.upsert.ts contract,
   // for events.
   archivedManually: boolean("archived_manually").notNull().default(false),
+  // Pro-sports game rows (see lib/nhl-schedule.ts): teamCode is the team whose schedule
+  // the row came from (a game between two tracked teams exists once per team, in each
+  // team's own region), gameHome is true when that team is the home side. Both null for
+  // every other kind of event.
+  teamCode: text("team_code"),
+  gameHome: boolean("game_home"),
   // Paid "boost" placement -- same meaning and same lapses-itself design as
   // specials.boostedUntil. Only ever set for a venue-owned event (bookings.eventId
   // requires a non-null venues.id to resolve a region for capacity scoping -- see

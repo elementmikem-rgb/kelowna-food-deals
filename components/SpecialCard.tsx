@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
-import { formatPrice } from "@/lib/format";
-import { formatTimeWindow, isStale } from "@/lib/time";
+import { formatPrice, formatEventDate } from "@/lib/format";
+import { formatTimeWindow, formatTimeOfDay, isStale } from "@/lib/time";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
 import { FlashSpecialPanel } from "./FlashSpecialPanel";
@@ -66,6 +66,11 @@ export function SpecialCard({
           <span className="rounded-full border border-evergreen/30 bg-evergreen/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-evergreen">
             {CATEGORY_LABELS[lang][special.category]}
           </span>
+          {special.gameTeams && special.gameTeams.length > 0 && (
+            <span className="rounded-full border border-accent-dim/40 bg-accent-dim/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent-dim">
+              {t(lang).card.gameDay}
+            </span>
+          )}
           {boosted && (
             <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gold">
               {t(lang).card.featured}
@@ -82,6 +87,14 @@ export function SpecialCard({
       {special.description && (
         <p className="relative z-10 text-sm text-muted pointer-events-none">
           {special.description}
+        </p>
+      )}
+
+      {special.nextGame && (
+        <p className="relative z-10 text-sm text-accent-dim pointer-events-none">
+          {t(lang).card.nextGame}: {special.nextGame.title},{" "}
+          {formatEventDate(special.nextGame.date, lang)}
+          {special.nextGame.time ? `, ${formatTimeOfDay(special.nextGame.time)}` : ""}
         </p>
       )}
 

@@ -1,6 +1,7 @@
 import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
 import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
+import { attachNextGames } from "./game-day";
 import type { EventWithVenue } from "./events-data";
 import { recurringColumns } from "./events-data";
 import { regionTodayISODate, toDateOrNull } from "./time";
@@ -79,6 +80,8 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
       flashExpiresAt: specials.flashExpiresAt,
       flashClaimLimit: specials.flashClaimLimit,
       flashClaimCount: specials.flashClaimCount,
+      gameTeams: specials.gameTeams,
+      gameScope: specials.gameScope,
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
@@ -95,7 +98,9 @@ export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenu
 
   // See lib/time.ts's toDateOrNull comment -- lastConfirmedAt is a raw SQL subquery,
   // so the driver hands it back as a plain string, not a real Date.
-  return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) })) as SpecialWithVenue[];
+  return (await attachNextGames(
+    rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) }))
+  )) as SpecialWithVenue[];
 }
 
 export async function getVenuePreviousSpecials(venueId: number): Promise<PreviousSpecial[]> {

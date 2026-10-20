@@ -2,6 +2,7 @@ import { db, events, venues } from "@/db";
 import { and, asc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import type { EventType, MonthlyOccurrence } from "@/db/schema";
 import { regionTodayISODate, toDateOrNull } from "@/lib/time";
+import { getGameDayDealsByTeam, dealsForGame, type GameDayDeal } from "@/lib/game-day";
 
 export interface EventWithVenue {
   id: number;
@@ -39,6 +40,11 @@ export interface EventWithVenue {
   // -- all-time count, no rolling window (unlike confirmCount), since interest is meant to
   // accumulate over an event's whole life, not just recent activity.
   interestedCount: number;
+  // NHL game rows only (events.teamCode/gameHome, lib/nhl-schedule.ts), else null.
+  teamCode: string | null;
+  gameHome: boolean | null;
+  // Venues with a game-day deal for this game's team, filled in for game rows only.
+  gameDayDeals?: GameDayDeal[];
 }
 
 const CONFIRM_COLUMNS = {
@@ -79,6 +85,8 @@ export const recurringColumns = {
   boostedUntil: events.boostedUntil,
   chatBoostedUntil: events.chatBoostedUntil,
   hasPhoto: sql<boolean>`${events.photoData} is not null`,
+  teamCode: events.teamCode,
+  gameHome: events.gameHome,
   ...CONFIRM_COLUMNS,
 };
 
@@ -142,6 +150,8 @@ export async function getUpcomingOneOffEvents(
       chatBoostedUntil: events.chatBoostedUntil,
       hasPhoto: sql<boolean>`${events.photoData} is not null`,
       venueActive: venues.active,
+      teamCode: events.teamCode,
+      gameHome: events.gameHome,
       venueFeaturedUntil: venues.featuredUntil,
       venueClaimedAt: venues.claimedAt,
       ...CONFIRM_COLUMNS,
@@ -157,6 +167,10 @@ export async function getUpcomingOneOffEvents(
       )
     )
     .orderBy(asc(events.specificDate));
+
+  const dealsByTeam = await getGameDayDealsByTeam([
+    ...new Set(rows.map((r) => r.teamCode).filter((c): c is string => !!c)),
+  ]);
 
   return rows
     .filter((r) => r.venueId === null || r.venueActive === true)
@@ -186,5 +200,8 @@ export async function getUpcomingOneOffEvents(
       // See lib/time.ts's toDateOrNull comment.
       lastConfirmedAt: toDateOrNull(r.lastConfirmedAt),
       interestedCount: r.interestedCount,
+      teamCode: r.teamCode,
+      gameHome: r.gameHome,
+      gameDayDeals: dealsForGame(dealsByTeam, r.teamCode, r.gameHome),
     }));
 }

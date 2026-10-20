@@ -36,6 +36,8 @@ function fakeSpecial(overrides: Partial<SpecialWithVenue> = {}): SpecialWithVenu
     flashExpiresAt: null,
     flashClaimLimit: null,
     flashClaimCount: 0,
+    gameTeams: null,
+    gameScope: null,
     ...overrides,
   };
 }
@@ -66,6 +68,8 @@ function fakeEvent(overrides: Partial<EventWithVenue> = {}): EventWithVenue {
     confirmCount: 0,
     lastConfirmedAt: null,
     interestedCount: 0,
+    teamCode: null,
+    gameHome: null,
     ...overrides,
   };
 }

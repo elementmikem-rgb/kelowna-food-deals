@@ -512,6 +512,13 @@
       "when": 1791760415277,
       "tag": "0072_payments_table",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792468081742,
+      "tag": "0073_game_day_deals",
+      "breakpoints": true
     }
   ]
 }

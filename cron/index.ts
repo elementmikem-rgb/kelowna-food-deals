@@ -2,6 +2,7 @@ import { fetchAndExtractText, fetchAndExtractTextViaBrowser, type FetchResult } 
 import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
+import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { sendWeeklyDigests } from "@/lib/weekly-digest";
 import { normalizeText, hashText } from "./hash";
@@ -893,6 +894,18 @@ async function runScrapeCycle() {
     console.log(`604Now events: refreshed ${inserted} nightlife-adjacent event(s)`);
   } catch (err) {
     console.error("604Now scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // Pure public-API data refresh (no emails, no scraping, no model calls): keeps the
+    // NHL game rows that game-day deals point at current -- see lib/nhl-schedule.ts.
+    const nhl = await withTimeout(refreshNhlSchedule(), 120_000, "NHL schedule refresh");
+    console.log(
+      `NHL schedule: ${nhl.inserted} added, ${nhl.updated} updated, ${nhl.archived} archived` +
+        (nhl.teamsFailed.length ? ` (failed: ${nhl.teamsFailed.join(", ")})` : "")
+    );
+  } catch (err) {
+    console.error("NHL schedule refresh failed:", err instanceof Error ? err.message : err);
   }
 
   try {

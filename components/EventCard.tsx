@@ -97,6 +97,23 @@ export function EventCard({
         </p>
       )}
 
+      {event.gameDayDeals && event.gameDayDeals.length > 0 && (
+        <div className="relative z-10 text-sm text-muted">
+          <span className="text-accent-dim">{tr.card.gameDayDeals}:</span>{" "}
+          {event.gameDayDeals.map((d, i) => (
+            <span key={d.venueId}>
+              {i > 0 ? ", " : ""}
+              <Link
+                href={`/${d.regionSlug}/venues/${d.venueId}`}
+                className="underline hover:text-foreground"
+              >
+                {d.venueName}
+              </Link>
+            </span>
+          ))}
+        </div>
+      )}
+
       {boosted && event.hasPhoto && (
         // eslint-disable-next-line @next/next/no-img-element
         <img

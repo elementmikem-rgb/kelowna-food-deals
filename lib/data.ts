@@ -2,7 +2,8 @@ import { db, specials, venues, dealFeedback } from "@/db";
 import { and, desc, eq, gt, isNull, isNotNull, notExists, or, sql } from "drizzle-orm";
 import { toDateOrNull } from "@/lib/time";
 import { alias } from "drizzle-orm/pg-core";
-import type { SpecialCategory } from "@/db/schema";
+import type { SpecialCategory, GameScope } from "@/db/schema";
+import { attachNextGames, type NextGame } from "@/lib/game-day";
 
 export interface SpecialWithVenue {
   id: number;
@@ -68,6 +69,12 @@ export interface SpecialWithVenue {
   flashExpiresAt: Date | null;
   flashClaimLimit: number | null;
   flashClaimCount: number;
+  // Game-day deal (db/schema.ts gameTeams/gameScope): NHL team codes whose games this
+  // special runs during, null when it's an ordinary special. nextGame is filled in by
+  // attachNextGames (lib/game-day.ts) on the queries below that feed a public page.
+  gameTeams: string[] | null;
+  gameScope: GameScope | null;
+  nextGame?: NextGame | null;
 }
 
 export interface PreviousSpecial extends SpecialWithVenue {
@@ -118,6 +125,8 @@ const baseColumns = {
   flashExpiresAt: specials.flashExpiresAt,
   flashClaimLimit: specials.flashClaimLimit,
   flashClaimCount: specials.flashClaimCount,
+  gameTeams: specials.gameTeams,
+  gameScope: specials.gameScope,
 };
 
 // A flash special stops being a "deal" the moment it expires -- unlike a normal
@@ -149,7 +158,7 @@ export async function getAllSpecialsWithVenue(regionId: number): Promise<Special
       )
     );
 
-  return fixLastConfirmedAt(rows) as SpecialWithVenue[];
+  return (await attachNextGames(fixLastConfirmedAt(rows))) as SpecialWithVenue[];
 }
 
 // Scoped to one day-of-week (plus every "every day" row, dayOfWeek null) instead of
@@ -181,7 +190,7 @@ export async function getSpecialsWithVenueForDay(
       )
     );
 
-  return fixLastConfirmedAt(rows) as SpecialWithVenue[];
+  return (await attachNextGames(fixLastConfirmedAt(rows))) as SpecialWithVenue[];
 }
 
 // Cheap standalone query for AboutSection's "serving X, Y, and Z" blurb -- previously
