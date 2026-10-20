@@ -96,6 +96,107 @@ export function chatDetail(description: string | null): string {
   return ` -- ${text.length > MAX_DETAIL_CHARS ? `${text.slice(0, MAX_DETAIL_CHARS - 1)}...` : text}`;
 }
 
+// --- Question-aware extras -------------------------------------------------------------
+// The shared context above is identical for every visitor (so it can be prompt-cached) and
+// capped at 3 specials per venue / 60 lines, which in a big region leaves most venues out
+// entirely. A question that names a venue ("original joe's") or an item ("wings") should
+// still reach its answer, so those matches ride in a small separate block per question.
+const QUESTION_STOPWORDS = new Set([
+  "the", "and", "for", "what", "whats", "where", "which", "who", "how", "are", "any", "there", "near",
+  "nearby", "best", "cheap", "cheapest", "good", "great", "some", "tonight", "today", "now", "right",
+  "have", "has", "with", "from", "that", "this", "can", "you", "get", "find", "place", "places", "spot",
+  "spots", "deal", "deals", "special", "specials", "happy", "hour", "hours", "drink", "drinks", "food",
+  "does", "doing", "open", "when", "time", "around", "town", "tell", "about", "show", "list", "give",
+]);
+// Words that appear in many venue names and so say nothing about which venue was meant.
+const VENUE_NAME_GENERIC = new Set([
+  "the", "and", "bar", "grill", "pub", "restaurant", "kitchen", "cafe", "lounge", "house", "west",
+  "east", "north", "south", "kelowna", "downtown", "tavern", "bistro", "eatery",
+]);
+const MAX_EXTRA_LINES = 30;
+const EXTRA_PER_VENUE_NAMED = 12;
+const EXTRA_PER_VENUE_OTHER = 4;
+
+function singular(word: string): string {
+  return word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word;
+}
+
+function wordsOf(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3)
+    .map(singular);
+}
+
+export function questionTokens(question: string): Set<string> {
+  return new Set(wordsOf(question).filter((w) => !QUESTION_STOPWORDS.has(w)));
+}
+
+// A venue counts as named when the question carries its distinctive name words ("original
+// joe" for "Original Joe's West Kelowna") -- at least two of them, or its only one.
+export function venueNamed(venueName: string, tokens: Set<string>): boolean {
+  const distinctive = wordsOf(venueName).filter((w) => !VENUE_NAME_GENERIC.has(w));
+  if (distinctive.length === 0) return false;
+  const hits = distinctive.filter((w) => tokens.has(w)).length;
+  return hits >= Math.min(2, distinctive.length);
+}
+
+// Specials relevant to the question, best first: every special of a named venue, then
+// specials whose title/description carry a word from the question. Nothing relevant (a
+// generic "best happy hour?") returns an empty list so no extra block is added.
+export function selectMatchingSpecials<
+  T extends { venueId: number; venueName: string; title: string; description: string | null },
+>(specials: T[], question: string): T[] {
+  const tokens = questionTokens(question);
+  if (tokens.size === 0) return [];
+
+  const named = new Map<number, boolean>();
+  const scored = specials
+    .map((s, index) => {
+      if (!named.has(s.venueId)) named.set(s.venueId, venueNamed(s.venueName, tokens));
+      const itemWords = new Set(wordsOf(`${s.title} ${s.description ?? ""}`));
+      let hits = 0;
+      for (const t of tokens) if (itemWords.has(t)) hits++;
+      return { s, index, score: (named.get(s.venueId) ? 100 : 0) + hits * 10 };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const perVenue = new Map<number, number>();
+  const out: T[] = [];
+  for (const { s } of scored) {
+    const seen = perVenue.get(s.venueId) ?? 0;
+    if (seen >= (named.get(s.venueId) ? EXTRA_PER_VENUE_NAMED : EXTRA_PER_VENUE_OTHER)) continue;
+    perVenue.set(s.venueId, seen + 1);
+    out.push(s);
+    if (out.length >= MAX_EXTRA_LINES) break;
+  }
+  return out;
+}
+
+function specialLine(
+  s: { venueName: string; title: string; priceCents: number | null; category: string; description: string | null },
+  featured: boolean
+): string {
+  return `${s.venueName}: ${s.title}${featured ? " (Promoted)" : ""}${formatPrice(s.priceCents)} (${s.category})${chatDetail(s.description)}`;
+}
+
+// The matching specials not already in the shared context, as a small per-question block.
+export async function buildQuestionExtras(
+  regionId: number,
+  timezone: string,
+  question: string,
+  baseContext: string
+): Promise<string> {
+  const today = todayDowInRegion(timezone);
+  const running = runningToday(await getAllSpecialsWithVenue(regionId), today);
+  const lines = selectMatchingSpecials(running, question)
+    .map((s) => specialLine(s, isPromotionActive(s.chatBoostedUntil)))
+    .filter((line) => !baseContext.includes(line));
+  return lines.join("\n");
+}
+
 // A paid-Promoted item shouldn't be at the mercy of arbitrary DB order the way the
 // specials-per-venue and recurring-vs-one-off-events crowding bugs were -- someone paid
 // for visibility, so it has to actually survive whichever cap applies to its list. Stably
@@ -152,8 +253,7 @@ export async function buildTodayContext(regionId: number, timezone: string): Pro
 
   const lines: string[] = [];
   for (const s of diverseSpecials.slice(0, MAX_SPECIALS_ITEMS)) {
-    const featured = isFeatured(s) ? " (Promoted)" : "";
-    lines.push(`${s.venueName}: ${s.title}${featured}${formatPrice(s.priceCents)} (${s.category})${chatDetail(s.description)}`);
+    lines.push(specialLine(s, isFeatured(s)));
   }
   for (const e of recurringEvents.slice(0, MAX_RECURRING_EVENTS_ITEMS)) {
     const time = e.startTime ? ` at ${e.startTime}` : "";
@@ -234,6 +334,9 @@ export async function answerRegionQuestion(
   const trimmed = validateQuestion(question);
 
   const context = await buildTodayContext(regionId, timezone);
+  // Not cached: it differs per question, and sits after the shared cached block so that
+  // block's cache still hits for every visitor.
+  const extras = await buildQuestionExtras(regionId, timezone, trimmed, context);
 
   // Unlike the today's-context block above, history is different per visitor and grows
   // every turn, so it can't be cached -- only the last few turns are sent, both to bound
@@ -259,6 +362,9 @@ export async function answerRegionQuestion(
       // means the 2nd+ query only pays cache-read price on this block instead of full
       // input price. Same caching concept cron/extract.ts already uses.
       { type: "text", text: `This region's specials and events:\n${context}`, cache_control: { type: "ephemeral" } },
+      ...(extras
+        ? [{ type: "text" as const, text: `More of this region's specials that match this question (also part of the list above):\n${extras}` }]
+        : []),
     ],
     messages: [...historyMessages, { role: "user", content: trimmed }],
   });

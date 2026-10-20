@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runningToday, formatPrice, validateQuestion, QuestionTooLongError, sortFeaturedFirst, chatDetail } from "./region-chat";
+import { runningToday, formatPrice, validateQuestion, QuestionTooLongError, sortFeaturedFirst, chatDetail, questionTokens, venueNamed, selectMatchingSpecials } from "./region-chat";
 
 const fresh = new Date();
 
@@ -109,5 +109,47 @@ describe("chatDetail", () => {
     const out = chatDetail("x".repeat(400));
     expect(out.length).toBeLessThan(170);
     expect(out.endsWith("...")).toBe(true);
+  });
+});
+
+describe("question-aware matching", () => {
+  const sp = (venueId: number, venueName: string, title: string, description: string | null = null) => ({
+    venueId, venueName, title, description,
+  });
+
+  it("drops filler words and singularizes", () => {
+    expect([...questionTokens("What are the cheapest wings near me?")]).toEqual(["wing"]);
+  });
+
+  it("recognises a venue named in the question", () => {
+    const tokens = questionTokens("cheapest drinks at Original Joe's in West Kelowna");
+    expect(venueNamed("Original Joe's West Kelowna", tokens)).toBe(true);
+    expect(venueNamed("Turtle Jack's Kitchen & Bar", tokens)).toBe(false);
+  });
+
+  it("does not treat a generic word as naming a venue", () => {
+    expect(venueNamed("The Pub", questionTokens("any good pub tonight"))).toBe(false);
+  });
+
+  it("puts every special of a named venue first, capped per venue", () => {
+    const rows = [
+      sp(1, "Other Bar", "Wing Night", "half price wings"),
+      ...Array.from({ length: 20 }, (_, i) => sp(2, "Original Joe's West Kelowna", `Deal ${i}`)),
+    ];
+    const out = selectMatchingSpecials(rows, "what does Original Joe's have");
+    expect(out[0].venueId).toBe(2);
+    expect(out.filter((r) => r.venueId === 2)).toHaveLength(12);
+  });
+
+  it("matches items by words in the title or description", () => {
+    const rows = [
+      sp(1, "A", "Happy Hour Drinks", "House wine $5, Lawn Mower Lager $5.50"),
+      sp(2, "B", "Taco Tuesday", "tacos"),
+    ];
+    expect(selectMatchingSpecials(rows, "cheapest lager?").map((r) => r.venueId)).toEqual([1]);
+  });
+
+  it("returns nothing for a generic question", () => {
+    expect(selectMatchingSpecials([sp(1, "A", "Happy Hour")], "best happy hour tonight?")).toEqual([]);
   });
 });
