@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
@@ -12,19 +11,12 @@ import type { SpecialWithVenue } from "@/lib/data";
 import type { MapPin as ApiMapPin, EventMapPin as ApiEventMapPin } from "@/lib/map-data";
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
-import { formatPrice } from "@/lib/format";
+import { MapVenueStrip, type StripVenue } from "./MapVenueStrip";
+import { pickStripPins, type StripBounds } from "@/lib/map-strip";
+import { getSavedVenues, toggleSavedVenue } from "@/lib/saved-venues";
 import type { SpecialCategory } from "@/db/schema";
 import type { Language } from "@/lib/i18n";
 
-// Popups must never grow to fill the screen -- a venue with a big menu (BNA
-// Brewing, Cutwater, etc. routinely run 10+ specials, see SpecialVenueGroup's
-// own MAX_VISIBLE=5 comment) would otherwise turn one map click into an
-// unreadable wall of rows. Smaller cap than the card view's 5: a Leaflet
-// popup has far less real screen real estate than a full-width card, and the
-// maxHeight+overflow below is a hard backstop even for these 3 if any one
-// special's text wraps to several lines.
-const MAX_VISIBLE_IN_POPUP = 3;
-const POPUP_MAX_HEIGHT_PX = 260;
 // How long to wait after the visitor stops panning/zooming before fetching
 // pins for the new viewport -- long enough that a quick pan-past doesn't fire
 // a request that's immediately thrown away, short enough that panning still
@@ -49,6 +41,7 @@ interface Pin {
   lat: number;
   lng: number;
   boosted: boolean;
+  photoId: number | null;
   // Local specials pins only (built from the already-loaded `specials` prop) -- the
   // /api/map-pins route used for remote/cross-region pins doesn't carry flash data,
   // so a flash special only shows this way for the visitor's current region. That
@@ -60,36 +53,54 @@ interface Pin {
 
 type Layer = "specials" | "events";
 
+type PinVariant = "regular" | "boosted" | "flash";
+
 // Flash outranks boosted -- a pulsing red pin has to read as "more urgent than paid
 // placement" for the same reason flash deals sort above Featured on the list view
-// (see SpecialsBoard's grouped.flash comment).
-function pinIcon(variant: "regular" | "boosted" | "flash"): L.DivIcon {
-  const size = variant === "regular" ? 24 : 34;
-  const color = variant === "flash" ? "#a83232" : variant === "boosted" ? "#c14a1f" : "#8a7f5f";
+// (see SpecialsBoard's grouped.flash comment). A saved venue ("My Spots") is a solid,
+// non-pulsing red with a heart, so it never reads as an urgent flash deal; the selected
+// venue (the card showing in the strip) is bigger with a dark ring.
+function pinIcon(variant: PinVariant, saved: boolean, selected: boolean): L.DivIcon {
+  const base = variant === "regular" && !saved ? 24 : 34;
+  const size = selected ? base + 8 : base;
+  const color =
+    variant === "flash" ? "#a83232" : saved ? "#d62839" : variant === "boosted" ? "#c14a1f" : "#8a7f5f";
   const pulseClass = variant === "flash" ? "live-dot" : "";
-  // Boosted gets a star glyph on top of the bigger/orange circle -- same ⭐ the
-  // "Featured" section header on the list view uses, so the two paid-placement
-  // signals read as visually related. Without this a boosted pin was only
+  // Saved shows a heart; boosted gets a star glyph on top of the bigger/orange circle -- same
+  // star the "Featured" section header on the list view uses, so the two paid-placement
+  // signals read as visually related. Without a glyph a boosted pin was only
   // distinguishable from a regular one by size/color, easy to miss at a glance
   // and indistinguishable once zoomed out enough to shrink both equally.
-  const glyph = variant === "boosted" ? '<span style="color:#fffaf0;font-size:16px;line-height:1;">★</span>' : "";
+  const glyph = saved
+    ? '<span style="color:#fffaf0;font-size:17px;line-height:1;">♥</span>'
+    : variant === "boosted"
+      ? '<span style="color:#fffaf0;font-size:16px;line-height:1;">★</span>'
+      : "";
+  const ring = selected ? "0 0 0 3px #2a2818, 0 2px 8px rgba(0,0,0,0.5)" : "0 1px 4px rgba(0,0,0,0.35)";
   return L.divIcon({
     className: "",
     html: `<div class="${pulseClass}" style="
       width:${size}px;height:${size}px;border-radius:50%;
       background:${color};border:2px solid #fffaf0;
-      box-shadow:0 1px 4px rgba(0,0,0,0.35);
+      box-shadow:${ring};
       display:flex;align-items:center;justify-content:center;
     ">${glyph}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2],
   });
 }
 
-const REGULAR_ICON = pinIcon("regular");
-const BOOSTED_ICON = pinIcon("boosted");
-const FLASH_ICON = pinIcon("flash");
+const iconCache = new Map<string, L.DivIcon>();
+function iconFor(pin: { hasFlash: boolean; boosted: boolean }, saved: boolean, selected: boolean): L.DivIcon {
+  const variant: PinVariant = pin.hasFlash ? "flash" : pin.boosted ? "boosted" : "regular";
+  const key = `${variant}-${saved}-${selected}`;
+  let icon = iconCache.get(key);
+  if (!icon) {
+    icon = pinIcon(variant, saved, selected);
+    iconCache.set(key, icon);
+  }
+  return icon;
+}
 
 // Lives inside <MapContainer> (needs the Leaflet map context from
 // useMapEvents/useMap, which only exists inside one). For the Specials layer,
@@ -153,6 +164,7 @@ function RemotePins({
               lat: p.lat,
               lng: p.lng,
               boosted: p.boosted,
+              photoId: p.photoId,
               hasFlash: false,
               items: p.specials,
             }))
@@ -167,6 +179,7 @@ function RemotePins({
             lat: p.lat,
             lng: p.lng,
             boosted: p.boosted,
+            photoId: p.photoId,
             hasFlash: false,
             items: p.events.map((e) => ({
               id: e.id,
@@ -196,10 +209,51 @@ function RemotePins({
   return null;
 }
 
+// Reports the map's visible area after every user-driven pan/zoom, so the card strip can list
+// the venues in view. A move the strip itself caused (swiping to a card pans the map to it)
+// is ignored -- re-sorting the strip under the visitor's thumb would make the card they just
+// landed on jump away.
+function ViewTracker({
+  onView,
+  quiet,
+  mapRef,
+}: {
+  onView: (view: { center: { lat: number; lng: number }; bounds: StripBounds }) => void;
+  quiet: React.MutableRefObject<boolean>;
+  mapRef: React.MutableRefObject<L.Map | null>;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    mapRef.current = map;
+    report();
+    return () => {
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  function report() {
+    const c = map.getCenter();
+    const b = map.getBounds();
+    onView({
+      center: { lat: c.lat, lng: c.lng },
+      bounds: { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() },
+    });
+  }
+
+  useMapEvents({
+    moveend: () => {
+      if (quiet.current) return;
+      report();
+    },
+  });
+  return null;
+}
+
 export function MapView({
   specials,
   regionSlug,
-  lang: _lang = "en",
+  lang = "en",
   regionLat,
   regionLng,
   selectedDay,
@@ -223,6 +277,24 @@ export function MapView({
 }) {
   const [layer, setLayer] = useState<Layer>(allowedLayers[0]!);
   const [remotePins, setRemotePins] = useState<Pin[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectSource, setSelectSource] = useState<"map" | "strip" | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const [view, setView] = useState<{ center: { lat: number; lng: number }; bounds: StripBounds } | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const quiet = useRef(false);
+
+  // Saved venues live in localStorage (lib/saved-venues.ts, the same "My Spots" list the
+  // venue pages use), so they're read after mount rather than during render, and again on
+  // focus so a save made on another page shows up when the visitor comes back.
+  useEffect(() => {
+    function refreshSaved() {
+      setSavedIds(new Set(getSavedVenues().map((v) => v.venueId)));
+    }
+    refreshSaved();
+    window.addEventListener("focus", refreshSaved);
+    return () => window.removeEventListener("focus", refreshSaved);
+  }, []);
 
   const localSpecialsPins = useMemo<Pin[]>(() => {
     const groups = groupByVenue(specials);
@@ -241,6 +313,7 @@ export function MapView({
         lat: first.venueLat,
         lng: first.venueLng,
         boosted: isPromotionActive(first.venueMapPinBoostedUntil),
+        photoId: first.venuePhotoId,
         hasFlash: g.items.some((s) => s.flashExpiresAt !== null),
         items: g.items.map((s) => ({
           id: s.id,
@@ -273,73 +346,71 @@ export function MapView({
   }, [layer, localSpecialsPins, remotePins, localVenueIds]);
 
   // Split so flash/boosted pins (see the MarkerClusterGroup comment below) never end up
-  // folded into a cluster count bubble -- only plain pins get clustered.
-  const clusteredPins = useMemo(() => allPins.filter((p) => !p.hasFlash && !p.boosted), [allPins]);
-  const standalonePins = useMemo(() => allPins.filter((p) => p.hasFlash || p.boosted), [allPins]);
+  // folded into a cluster count bubble -- only plain pins get clustered. Saved and selected
+  // pins stay out of clusters too: a venue the visitor saved, or is looking at the card of,
+  // must never be hidden inside a count bubble.
+  const clusteredPins = useMemo(
+    () => allPins.filter((p) => !(p.hasFlash || p.boosted || savedIds.has(p.venueId) || p.venueId === selectedId)),
+    [allPins, savedIds, selectedId]
+  );
+  const standalonePins = useMemo(
+    () => allPins.filter((p) => p.hasFlash || p.boosted || savedIds.has(p.venueId) || p.venueId === selectedId),
+    [allPins, savedIds, selectedId]
+  );
+
+  const stripPins = useMemo(() => pickStripPins(allPins, view, selectedId), [allPins, view, selectedId]);
+  const stripVenues = useMemo<StripVenue[]>(
+    () =>
+      stripPins.map((p) => ({
+        venueId: p.venueId,
+        venueName: p.venueName,
+        regionSlug: p.regionSlug,
+        photoId: p.photoId,
+        items: p.items,
+      })),
+    [stripPins]
+  );
 
   const fallbackCenter: [number, number] = [regionLat ?? 49.0, regionLng ?? -119.5];
 
+  function select(venueId: number, source: "map" | "strip") {
+    setSelectedId(venueId);
+    setSelectSource(source);
+    if (source === "strip") {
+      const pin = allPins.find((p) => p.venueId === venueId);
+      const map = mapRef.current;
+      if (pin && map) {
+        // The pan below fires its own moveend; keep it from re-sorting the strip.
+        quiet.current = true;
+        setTimeout(() => {
+          quiet.current = false;
+        }, 1200);
+        map.panTo([pin.lat, pin.lng], { animate: true });
+      }
+    }
+  }
+
+  function toggleSave(v: StripVenue) {
+    const nowSaved = toggleSavedVenue({ venueId: v.venueId, venueName: v.venueName, regionSlug: v.regionSlug });
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (nowSaved) next.add(v.venueId);
+      else next.delete(v.venueId);
+      return next;
+    });
+  }
+
   function renderPin(pin: Pin) {
-    const visible = pin.items.slice(0, MAX_VISIBLE_IN_POPUP);
-    const hiddenCount = pin.items.length - visible.length;
+    const saved = savedIds.has(pin.venueId);
+    const selected = pin.venueId === selectedId;
     return (
       <Marker
         key={pin.venueId}
         position={[pin.lat, pin.lng]}
-        icon={pin.hasFlash ? FLASH_ICON : pin.boosted ? BOOSTED_ICON : REGULAR_ICON}
-      >
-        <Popup maxWidth={260}>
-          <div className="flex flex-col gap-1.5" style={{ maxWidth: 240 }}>
-            <div className="flex items-center gap-1.5">
-              <strong>{pin.venueName}</strong>
-              {pin.hasFlash ? (
-                <span
-                  style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
-                  className="text-danger font-semibold"
-                >
-                  Flash deal
-                </span>
-              ) : (
-                pin.boosted && (
-                  <span
-                    style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}
-                    className="text-accent-dim"
-                  >
-                    Featured
-                  </span>
-                )
-              )}
-            </div>
-            <div
-              className="flex flex-col divide-y divide-border"
-              style={{ maxHeight: POPUP_MAX_HEIGHT_PX, overflowY: "auto" }}
-            >
-              {visible.map((item) => (
-                <div key={item.id} className="py-1 text-xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>{item.title}</span>
-                    {formatPrice(item.priceCents) && (
-                      <span className="text-accent-dim font-mono-tabular shrink-0">
-                        {formatPrice(item.priceCents)}
-                      </span>
-                    )}
-                  </div>
-                  {(item.startTime || item.endTime) && (
-                    <span className="text-muted-2" style={{ fontSize: 11 }}>
-                      {item.startTime?.slice(0, 5)}
-                      {item.endTime ? `–${item.endTime.slice(0, 5)}` : ""}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            {hiddenCount > 0 && <span className="text-xs text-muted-2">+ {hiddenCount} more</span>}
-            <Link href={`/${pin.regionSlug}/venues/${pin.venueId}`} className="text-xs text-accent-dim underline">
-              View full listing →
-            </Link>
-          </div>
-        </Popup>
-      </Marker>
+        icon={iconFor(pin, saved, selected)}
+        zIndexOffset={selected ? 1000 : saved ? 500 : 0}
+        eventHandlers={{ click: () => select(pin.venueId, "map") }}
+      />
     );
   }
 
@@ -371,7 +442,7 @@ export function MapView({
           map here would also unmount RemotePins, whose useEffect is what
           actually fires that fetch. Instead the empty state overlays the
           still-live map so it can populate itself once data arrives. */}
-      <div className="relative rounded-2xl overflow-hidden border border-border" style={{ height: 480 }}>
+      <div className="relative rounded-2xl overflow-hidden border border-border" style={{ height: 520 }}>
         {allPins.length === 0 && (
           <p className="absolute inset-0 z-[1000] flex items-center justify-center bg-surface/90 text-muted-2 text-sm px-8 text-center">
             {layer === "events"
@@ -389,6 +460,7 @@ export function MapView({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <ViewTracker onView={setView} quiet={quiet} mapRef={mapRef} />
           <RemotePins
             layer={layer}
             excludeVenueIds={localVenueIds}
@@ -399,13 +471,22 @@ export function MapView({
           <MarkerClusterGroup chunkedLoading>
             {clusteredPins.map((pin) => renderPin(pin))}
           </MarkerClusterGroup>
-          {/* Flash and boosted pins render OUTSIDE the cluster group -- a paid map-pin
-              boost (or an urgent flash deal) that's buried inside a cluster count bubble
+          {/* Flash, boosted, saved and selected pins render OUTSIDE the cluster group -- a paid
+              map-pin boost (or an urgent flash deal) that's buried inside a cluster count bubble
               defeats the point of paying for it. cap_count on the map_pin product keeps
               this to at most a handful of standalone pins per region at once, so this
               can't itself turn into visual clutter. */}
           {standalonePins.map((pin) => renderPin(pin))}
-          </MapContainer>
+        </MapContainer>
+        <MapVenueStrip
+          venues={stripVenues}
+          selectedId={selectedId}
+          selectSource={selectSource}
+          savedIds={savedIds}
+          onSelect={select}
+          onToggleSave={toggleSave}
+          lang={lang === "fr" ? "fr" : "en"}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
-import { db, specials, venues, regions, events } from "@/db";
-import { and, eq, isNull, isNotNull, gte, lte, or, sql } from "drizzle-orm";
+import { db, specials, venues, regions, events, venuePhotos } from "@/db";
+import { and, eq, inArray, isNull, isNotNull, gte, lte, or, sql, desc } from "drizzle-orm";
 import type { SpecialCategory, EventType } from "@/db/schema";
 
 export interface MapPinSpecial {
@@ -18,10 +18,30 @@ export interface MapPin {
   lat: number;
   lng: number;
   boosted: boolean;
+  // Best-ranked cover photo (owner > Google > visitor), served from /api/venue-photos/[id].
+  photoId: number | null;
   specials: MapPinSpecial[];
 }
 
 const MAX_PINS = 300;
+
+// One cover-photo id per venue, using the same owner > Google > visitor rank as the
+// cards. Selects ids only (never the base64 blobs) and runs once per request over the
+// venues already chosen, rather than as a subquery per joined row.
+async function topPhotoIds(venueIds: number[]): Promise<Map<number, number>> {
+  const out = new Map<number, number>();
+  if (venueIds.length === 0) return out;
+  const rows = await db
+    .select({ venueId: venuePhotos.venueId, id: venuePhotos.id })
+    .from(venuePhotos)
+    .where(inArray(venuePhotos.venueId, venueIds))
+    .orderBy(
+      sql`case ${venuePhotos.source} when 'owner' then 0 when 'google' then 1 else 2 end`,
+      desc(venuePhotos.createdAt)
+    );
+  for (const r of rows) if (!out.has(r.venueId)) out.set(r.venueId, r.id);
+  return out;
+}
 
 // Powers the map view's cross-region panning (components/MapView.tsx): a
 // visitor who zooms out from /kelowna sees venues from Penticton, Vancouver,
@@ -87,6 +107,7 @@ export async function getMapPinsInBounds(
         lat: r.lat,
         lng: r.lng,
         boosted: r.mapPinBoostedUntil !== null && r.mapPinBoostedUntil.getTime() > Date.now(),
+        photoId: null,
         specials: [],
       };
       byVenue.set(r.venueId, pin);
@@ -100,7 +121,10 @@ export async function getMapPinsInBounds(
       category: r.specialCategory,
     });
   }
-  return Array.from(byVenue.values());
+  const pins = Array.from(byVenue.values());
+  const photos = await topPhotoIds(pins.map((p) => p.venueId));
+  for (const p of pins) p.photoId = photos.get(p.venueId) ?? null;
+  return pins;
 }
 
 export interface MapPinEvent {
@@ -119,6 +143,7 @@ export interface EventMapPin {
   lat: number;
   lng: number;
   boosted: boolean;
+  photoId: number | null;
   events: MapPinEvent[];
 }
 
@@ -183,6 +208,7 @@ export async function getEventMapPinsInBounds(
         lat: r.lat,
         lng: r.lng,
         boosted: r.mapPinBoostedUntil !== null && r.mapPinBoostedUntil.getTime() > Date.now(),
+        photoId: null,
         events: [],
       };
       byVenue.set(r.venueId, pin);
@@ -196,5 +222,8 @@ export async function getEventMapPinsInBounds(
       eventType: r.eventType,
     });
   }
-  return Array.from(byVenue.values());
+  const pins = Array.from(byVenue.values());
+  const photos = await topPhotoIds(pins.map((p) => p.venueId));
+  for (const p of pins) p.photoId = photos.get(p.venueId) ?? null;
+  return pins;
 }
