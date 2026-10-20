@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { EventWithVenue } from "@/lib/events-data";
 import { formatPrice, formatEventDate } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale, monthlyOccurrenceLabel } from "@/lib/time";
@@ -60,6 +61,22 @@ export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?:
           )}
           {event.description && (
             <p className="text-xs text-muted">{event.description}</p>
+          )}
+          {event.gameDayDeals && event.gameDayDeals.length > 0 && (
+            <p className="text-xs text-muted">
+              <span className="text-accent-dim">{tr.card.gameDayDeals}:</span>{" "}
+              {event.gameDayDeals.map((d, i) => (
+                <span key={d.venueId}>
+                  {i > 0 ? ", " : ""}
+                  <Link
+                    href={`/${d.regionSlug}/venues/${d.venueId}`}
+                    className="underline hover:text-foreground"
+                  >
+                    {d.venueName}
+                  </Link>
+                </span>
+              ))}
+            </p>
           )}
         </div>
         <div className="shrink-0 text-right flex flex-col items-end gap-0.5">
