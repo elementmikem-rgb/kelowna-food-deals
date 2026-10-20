@@ -4,6 +4,7 @@ import { getRegionBySlug, getCurrentRegion } from "@/lib/regions";
 import { buildWebsiteJsonLd, SITE_URL } from "@/lib/seo";
 import { regionHomeTitle } from "@/lib/page-titles";
 import { VenueActionTracker } from "@/components/VenueActionTracker";
+import { NearbyRegionPrompt } from "@/components/NearbyRegionPrompt";
 
 interface RegionLayoutProps {
   children: React.ReactNode;
@@ -71,6 +72,7 @@ export default async function RegionLayout({ children, params }: RegionLayoutPro
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
       />
       <VenueActionTracker />
+      <NearbyRegionPrompt currentSlug={region.slug} lang={region.language} />
       {children}
     </>
   );

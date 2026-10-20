@@ -37,7 +37,10 @@ export async function SiteHeader({
           (not absolutely positioned) so it never overlaps Share or anything
           else regardless of how tall the brand/subtitle block ends up on a
           given page. */}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-xs text-muted hover:text-foreground">
+          {lang === "fr" ? "Changer de ville" : "Switch city"}
+        </Link>
         <LanguageToggle lang={lang} returnPath={returnPath} />
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
