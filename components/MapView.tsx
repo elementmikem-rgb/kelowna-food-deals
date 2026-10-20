@@ -281,6 +281,8 @@ export function MapView({
   const [selectSource, setSelectSource] = useState<"map" | "strip" | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [view, setView] = useState<{ center: { lat: number; lng: number }; bounds: StripBounds } | null>(null);
+  // Bumped on every user pan/zoom so the strip jumps back to the start of its new list.
+  const [resetTick, setResetTick] = useState(0);
   const mapRef = useRef<L.Map | null>(null);
   const quiet = useRef(false);
 
@@ -373,6 +375,18 @@ export function MapView({
 
   const fallbackCenter: [number, number] = [regionLat ?? 49.0, regionLng ?? -119.5];
 
+  // The visitor panned or zoomed: show the venues now nearest the middle of the screen,
+  // starting at the first card, which is also selected (a "map" selection, so it highlights
+  // the pin without panning the map again). Without this the previously selected card stays
+  // pinned to the front of the list and the strip looks like it never changed.
+  function handleView(v: { center: { lat: number; lng: number }; bounds: StripBounds }) {
+    setView(v);
+    const first = pickStripPins(allPins, v, null)[0];
+    setSelectedId(first ? first.venueId : null);
+    setSelectSource("map");
+    setResetTick((t) => t + 1);
+  }
+
   function select(venueId: number, source: "map" | "strip") {
     setSelectedId(venueId);
     setSelectSource(source);
@@ -460,7 +474,7 @@ export function MapView({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <ViewTracker onView={setView} quiet={quiet} mapRef={mapRef} />
+          <ViewTracker onView={handleView} quiet={quiet} mapRef={mapRef} />
           <RemotePins
             layer={layer}
             excludeVenueIds={localVenueIds}
@@ -482,6 +496,7 @@ export function MapView({
           venues={stripVenues}
           selectedId={selectedId}
           selectSource={selectSource}
+          resetTick={resetTick}
           savedIds={savedIds}
           onSelect={select}
           onToggleSave={toggleSave}

@@ -44,6 +44,7 @@ export function MapVenueStrip({
   venues,
   selectedId,
   selectSource,
+  resetTick,
   savedIds,
   onSelect,
   onToggleSave,
@@ -54,6 +55,9 @@ export function MapVenueStrip({
   // Where the current selection came from: only a selection made on the map scrolls the strip,
   // otherwise the strip would fight the visitor's own swipe.
   selectSource: "map" | "strip" | null;
+  // Changes whenever the visitor moves the map, so the strip scrolls back to the selected
+  // (first) card of its freshly ordered list even when the selection itself didn't change.
+  resetTick: number;
   savedIds: Set<number>;
   onSelect: (venueId: number, source: "map" | "strip") => void;
   onToggleSave: (venue: StripVenue) => void;
@@ -83,7 +87,7 @@ export function MapVenueStrip({
   useEffect(() => {
     if (selectedId !== null && selectSource === "map") scrollToCard(selectedId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, selectSource]);
+  }, [selectedId, selectSource, resetTick]);
 
   // When the visitor stops swiping, whichever card sits in the middle becomes the selection.
   function handleScroll() {
