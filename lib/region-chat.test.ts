@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runningToday, formatPrice, validateQuestion, QuestionTooLongError, sortFeaturedFirst } from "./region-chat";
+import { runningToday, formatPrice, validateQuestion, QuestionTooLongError, sortFeaturedFirst, chatDetail } from "./region-chat";
 
 const fresh = new Date();
 
@@ -90,5 +90,24 @@ describe("validateQuestion", () => {
 
   it("accepts a question at exactly 200 characters", () => {
     expect(validateQuestion("a".repeat(200))).toHaveLength(200);
+  });
+});
+
+describe("chatDetail", () => {
+  it("includes a long description so grouped items and prices reach the chat", () => {
+    expect(chatDetail("House wine 5oz/8oz $5/$8, OJ's draught 14oz $5, Red Bull $4")).toBe(
+      " -- House wine 5oz/8oz $5/$8, OJ's draught 14oz $5, Red Bull $4"
+    );
+  });
+
+  it("leaves out null and short title-restating descriptions", () => {
+    expect(chatDetail(null)).toBe("");
+    expect(chatDetail("Happy hour draught")).toBe("");
+  });
+
+  it("truncates a very long description", () => {
+    const out = chatDetail("x".repeat(400));
+    expect(out.length).toBeLessThan(170);
+    expect(out.endsWith("...")).toBe(true);
   });
 });

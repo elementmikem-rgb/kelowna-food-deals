@@ -84,6 +84,18 @@ export function formatPrice(cents: number | null): string {
   return cents === null ? "" : `, $${(cents / 100).toFixed(2)}`;
 }
 
+// A grouped special (e.g. "Happy Hour Drinks, from $5") keeps its individual items and
+// prices only in the description, so the chat needs that text to answer "cheapest beer
+// at X". Short descriptions are usually just a restatement of the title ("Happy hour
+// draught"), so they stay out to keep the context cheap.
+const MIN_DETAIL_CHARS = 40;
+const MAX_DETAIL_CHARS = 160;
+export function chatDetail(description: string | null): string {
+  const text = description?.replace(/\s+/g, " ").trim();
+  if (!text || text.length < MIN_DETAIL_CHARS) return "";
+  return ` -- ${text.length > MAX_DETAIL_CHARS ? `${text.slice(0, MAX_DETAIL_CHARS - 1)}...` : text}`;
+}
+
 // A paid-Promoted item shouldn't be at the mercy of arbitrary DB order the way the
 // specials-per-venue and recurring-vs-one-off-events crowding bugs were -- someone paid
 // for visibility, so it has to actually survive whichever cap applies to its list. Stably
@@ -141,7 +153,7 @@ export async function buildTodayContext(regionId: number, timezone: string): Pro
   const lines: string[] = [];
   for (const s of diverseSpecials.slice(0, MAX_SPECIALS_ITEMS)) {
     const featured = isFeatured(s) ? " (Promoted)" : "";
-    lines.push(`${s.venueName}: ${s.title}${featured}${formatPrice(s.priceCents)} (${s.category})`);
+    lines.push(`${s.venueName}: ${s.title}${featured}${formatPrice(s.priceCents)} (${s.category})${chatDetail(s.description)}`);
   }
   for (const e of recurringEvents.slice(0, MAX_RECURRING_EVENTS_ITEMS)) {
     const time = e.startTime ? ` at ${e.startTime}` : "";
