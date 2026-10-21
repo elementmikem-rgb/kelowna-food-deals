@@ -473,9 +473,10 @@ export async function getVisitorLocationStats(
   );
   const bucket = sql<string>`case
     when ${analyticsEvents.visitorDistanceKm} is null then 'unknown'
-    when ${analyticsEvents.visitorDistanceKm} <= ${HERE_KM} then 'here'
-    when ${analyticsEvents.visitorDistanceKm} <= ${NEARBY_KM} then 'nearby'
+    when ${analyticsEvents.visitorDistanceKm} <= ${sql.raw(String(Math.trunc(HERE_KM)))} then 'here'
+    when ${analyticsEvents.visitorDistanceKm} <= ${sql.raw(String(Math.trunc(NEARBY_KM)))} then 'nearby'
     else 'away' end`;
+  // Constants are inlined (not bound) so Postgres sees the select and group by expressions as identical.
   const counts = await db
     .select({ bucket, n: sql<number>`count(*)::int` })
     .from(analyticsEvents)
