@@ -708,6 +708,12 @@ export const analyticsEvents = specialsSchema.table("analytics_events", {
   visitorId: text("visitor_id").notNull(),
   referrer: text("referrer"),
   country: text("country"), // from Cloudflare's CF-IPCountry header
+  // City-level, IP-based, from Cloudflare's optional visitor location headers (null when that
+  // setting is off). visitorDistanceKm is the distance from the visitor to the center of the
+  // region page they viewed -- how we count travellers (in Penticton, viewing Kelowna).
+  visitorCity: text("visitor_city"),
+  visitorRegion: text("visitor_region"),
+  visitorDistanceKm: integer("visitor_distance_km"),
   // Kept purely for after-the-fact forensics -- e.g. a scattered-geography,
   // no-referrer, one-pageview-per-session burst (a classic domain-scanner
   // signature) previously couldn't be confirmed as bot traffic at all, since

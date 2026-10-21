@@ -526,6 +526,13 @@
       "when": 1792554481742,
       "tag": "0074_venue_photo_source",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792640881742,
+      "tag": "0075_visitor_location",
+      "breakpoints": true
     }
   ]
 }

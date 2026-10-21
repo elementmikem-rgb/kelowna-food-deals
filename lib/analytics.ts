@@ -1,6 +1,7 @@
-import { db, analyticsEvents } from "@/db";
+import { db, analyticsEvents, regions } from "@/db";
 import { and, gte, lt, eq, sql, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
+import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
 
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
 // blog/SEO content gets crawled far more than it gets actually visited, and
@@ -40,6 +41,9 @@ interface TrackEventParams {
   utmMedium?: string | null;
   utmCampaign?: string | null;
   regionId?: number | null;
+  visitorCity?: string | null;
+  visitorRegion?: string | null;
+  visitorDistanceKm?: number | null;
 }
 
 export async function trackEvent(params: TrackEventParams): Promise<void> {
@@ -56,6 +60,9 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
     utmMedium: params.utmMedium ?? null,
     utmCampaign: params.utmCampaign ?? null,
     regionId: params.regionId ?? null,
+    visitorCity: params.visitorCity ?? null,
+    visitorRegion: params.visitorRegion ?? null,
+    visitorDistanceKm: params.visitorDistanceKm ?? null,
   });
 }
 
@@ -441,5 +448,71 @@ export async function getAppInstallStats(
     androidInstalls: pick("pwa_install"),
     appOpens: { android: pick("pwa_app_open", "android"), ios: pick("pwa_app_open", "ios") },
     allTime: allTime ?? { androidInstalls: 0, appOpenVisitors: 0 },
+  };
+}
+
+export interface VisitorLocationStats {
+  // Pageviews by how far the visitor was from the region page they viewed (lib/visitor-location.ts).
+  here: number;
+  nearby: number;
+  away: number;
+  unknown: number;
+  topNearby: { city: string; regionSlug: string; regionName: string; count: number }[];
+  topAway: { city: string; regionSlug: string; regionName: string; count: number }[];
+}
+
+export async function getVisitorLocationStats(
+  window: AnalyticsWindow,
+  regionIds: number[] | "all"
+): Promise<VisitorLocationStats> {
+  const inWindow = and(
+    gte(analyticsEvents.createdAt, window.from),
+    lt(analyticsEvents.createdAt, window.to),
+    regionScopeCondition(analyticsEvents.regionId, regionIds),
+    eq(analyticsEvents.eventType, "pageview")
+  );
+  const bucket = sql<string>`case
+    when ${analyticsEvents.visitorDistanceKm} is null then 'unknown'
+    when ${analyticsEvents.visitorDistanceKm} <= ${HERE_KM} then 'here'
+    when ${analyticsEvents.visitorDistanceKm} <= ${NEARBY_KM} then 'nearby'
+    else 'away' end`;
+  const counts = await db
+    .select({ bucket, n: sql<number>`count(*)::int` })
+    .from(analyticsEvents)
+    .where(inWindow)
+    .groupBy(bucket);
+  const by = (k: string) => counts.find((c) => c.bucket === k)?.n ?? 0;
+
+  const top = async (minKm: number, maxKm: number | null) => {
+    const rows = await db
+      .select({
+        city: analyticsEvents.visitorCity,
+        regionSlug: regions.slug,
+        regionName: regions.brandName,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(analyticsEvents)
+      .innerJoin(regions, eq(analyticsEvents.regionId, regions.id))
+      .where(
+        and(
+          inWindow,
+          sql`${analyticsEvents.visitorCity} is not null`,
+          sql`${analyticsEvents.visitorDistanceKm} > ${minKm}`,
+          maxKm === null ? sql`true` : sql`${analyticsEvents.visitorDistanceKm} <= ${maxKm}`
+        )
+      )
+      .groupBy(analyticsEvents.visitorCity, regions.slug, regions.brandName)
+      .orderBy(sql`count(*) desc`)
+      .limit(8);
+    return rows.map((r) => ({ city: r.city ?? "", regionSlug: r.regionSlug, regionName: r.regionName, count: r.n }));
+  };
+
+  return {
+    here: by("here"),
+    nearby: by("nearby"),
+    away: by("away"),
+    unknown: by("unknown"),
+    topNearby: await top(HERE_KM, NEARBY_KM),
+    topAway: await top(NEARBY_KM, null),
   };
 }

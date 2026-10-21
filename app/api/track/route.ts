@@ -4,6 +4,7 @@ import { trackEvent, isBotUserAgent } from "@/lib/analytics";
 import { checkRateLimit } from "@/lib/request-rate-limit";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { getCurrentRegion, getRegionBySlug } from "@/lib/regions";
+import { readVisitorLocation } from "@/lib/visitor-location";
 
 const trackSchema = z.object({
   eventType: z.string().min(1).max(50),
@@ -57,11 +58,18 @@ export async function POST(req: NextRequest) {
       (await getCurrentRegion().catch(() => null)) ??
       (await getRegionBySlug(parsed.data.page.split("/")[1] ?? "").catch(() => null));
 
+    // City-level location from Cloudflare's optional visitor-location headers; all null when
+    // that setting is off, so this is safe to ship before it is switched on.
+    const visitor = readVisitorLocation(req.headers, region ? { lat: region.lat, lng: region.lng } : null);
+
     await trackEvent({
       ...parsed.data,
       country: country && country !== "XX" ? country : null,
       userAgent,
       regionId: region?.id ?? null,
+      visitorCity: visitor.city,
+      visitorRegion: visitor.region,
+      visitorDistanceKm: visitor.distanceKm,
     });
   } catch (err) {
     console.error("Analytics track failed:", err);

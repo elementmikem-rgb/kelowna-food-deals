@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats } from "@/lib/analytics";
+import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats, getVisitorLocationStats } from "@/lib/analytics";
+import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { AdminShell } from "@/components/AdminShell";
 import { pacificTodayISODate } from "@/lib/time";
@@ -59,6 +60,7 @@ export default async function AdminAnalyticsPage({
   const scope = await getSelectedAdminScope();
   const stats = await getAnalyticsStats(window, scope.regionIds);
   const installs = await getAppInstallStats(window, scope.regionIds);
+  const visitors = await getVisitorLocationStats(window, scope.regionIds);
 
   // Defaults for the custom picker: whatever's already active, so reopening it
   // (or tweaking one side) starts from the range currently on screen.
@@ -174,6 +176,48 @@ export default async function AdminAnalyticsPage({
           </span>
         </div>
         <AnalyticsChart data={stats.dailyTrend} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-lg text-foreground">Where visitors are</h2>
+        {visitors.here + visitors.nearby + visitors.away === 0 ? (
+          <p className="text-xs text-muted-2">
+            No visitor-location data yet. It needs Cloudflare&apos;s &quot;Add visitor location headers&quot;
+            setting switched on; until then only the country is known.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard label={`In the area (within ${HERE_KM} km)`} value={visitors.here} />
+              <StatCard label={`Travelling (${HERE_KM} to ${NEARBY_KM} km)`} value={visitors.nearby} />
+              <StatCard label={`Planning ahead (over ${NEARBY_KM} km)`} value={visitors.away} />
+              <StatCard label="Location unknown" value={visitors.unknown} />
+            </div>
+            {[
+              { title: "Most common routes, travelling", rows: visitors.topNearby },
+              { title: "Most common origins, planning ahead", rows: visitors.topAway },
+            ].map(
+              (group) =>
+                group.rows.length > 0 && (
+                  <div key={group.title} className="rounded-xl border border-border bg-surface divide-y divide-border text-sm">
+                    <div className="px-3 py-2 text-xs text-muted-2">{group.title}</div>
+                    {group.rows.map((r) => (
+                      <div key={`${r.city}-${r.regionSlug}`} className="flex items-center justify-between px-3 py-2">
+                        <span className="text-foreground/90">
+                          {r.city} <span className="text-muted-2">viewing</span> {r.regionName.replace(/ Food Deals$| Bons Plans$/, "")}
+                        </span>
+                        <span className="font-mono-tabular text-muted shrink-0 ml-2">{r.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+            )}
+            <p className="text-xs text-muted-2">
+              Pageviews, by how far the visitor&apos;s IP-based location is from the middle of the region page
+              they viewed. Accurate to about a city and counted in totals only; nothing identifies a person.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
