@@ -1,5 +1,6 @@
 import { areaNameFromBrand } from "@/lib/page-titles";
 import type { Metadata } from "next";
+import { regionOgImages } from "@/lib/seo";
 import { getMonthlySpecials } from "@/lib/data";
 import { getCurrentRegion, getRegionContext } from "@/lib/regions";
 import { MonthlySpecials } from "@/components/MonthlySpecials";
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/${region.slug}/monthly` },
-    openGraph: { title, description, url: `/${region.slug}/monthly` },
+    openGraph: { title, description, url: `/${region.slug}/monthly`, images: regionOgImages(region.slug) },
   };
 }
 

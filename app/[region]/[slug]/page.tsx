@@ -11,7 +11,7 @@ import { FAQSection } from "@/components/FAQSection";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AreaLinks } from "@/components/AreaLinks";
-import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
+import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL, regionOgImages } from "@/lib/seo";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { dayFromSlug, dayLabel } from "@/lib/day-slugs";
 import { categoryFromSlug, categoryPageLabel } from "@/lib/category-slugs";
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
     title,
     description,
     alternates: { canonical: `/${region.slug}/${slug}` },
-    openGraph: { title, description, url: `/${region.slug}/${slug}` },
+    openGraph: { title, description, url: `/${region.slug}/${slug}`, images: regionOgImages(region.slug) },
   };
 }
 

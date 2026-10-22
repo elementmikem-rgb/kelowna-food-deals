@@ -10,7 +10,7 @@ import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 import { FAQSection } from "@/components/FAQSection";
 import { getEffectiveLanguage } from "@/lib/i18n";
-import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
+import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL, regionOgImages } from "@/lib/seo";
 import { eventTypeFromSlug, eventTypePageLabel } from "@/lib/event-type-slugs";
 
 // Same reasoning as app/[region]/[slug]/page.tsx -- per-region correctness
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: EventTypeSlugPageProps): Prom
     title,
     description,
     alternates: { canonical: `/${region.slug}/events/${slug}` },
-    openGraph: { title, description, url: `/${region.slug}/events/${slug}` },
+    openGraph: { title, description, url: `/${region.slug}/events/${slug}`, images: regionOgImages(region.slug) },
   };
 }
 

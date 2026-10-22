@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { regionOgImages } from "@/lib/seo";
 import type { Metadata } from "next";
 import {
   getVenueById,
@@ -100,7 +101,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: ogTitle, description, url },
+    openGraph: { title: ogTitle, description, url, images: regionOgImages(region.slug) },
   };
 }
 

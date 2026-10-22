@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { regionOgImages } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getBlogPost } from "@/lib/blog-data";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -59,6 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url,
       type: "article",
       publishedTime: post.publishedAt,
+      images: regionOgImages(region.slug),
     },
   };
 }

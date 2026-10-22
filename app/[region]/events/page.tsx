@@ -9,7 +9,7 @@ import { TipJar } from "@/components/TipJar";
 import { SubmitEventCTA } from "@/components/SubmitEventCTA";
 import { FAQSection } from "@/components/FAQSection";
 import { getEffectiveLanguage } from "@/lib/i18n";
-import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL } from "@/lib/seo";
+import { buildEventsJsonLd, buildBreadcrumbJsonLd, SITE_URL, regionOgImages } from "@/lib/seo";
 
 // Per-region correctness requires the request's own domain (getCurrentRegion),
 // which forces dynamic rendering -- see app/page.tsx's comment.
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/${region.slug}/events` },
-    openGraph: { title, description, url: `/${region.slug}/events` },
+    openGraph: { title, description, url: `/${region.slug}/events`, images: regionOgImages(region.slug) },
   };
 }
 

@@ -8,6 +8,13 @@ const MAX_JSONLD_ITEMS = 80;
 // since sitemap.ts is a route module, not a lib one.
 export const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 
+// A page that sets its own `openGraph` REPLACES the parent's, which drops the card image
+// Next.js generates from app/[region]/opengraph-image.tsx (found 2026-10-22: every page except
+// the region home had no og:image). Pages with their own openGraph spread this in to keep it.
+export function regionOgImages(regionSlug: string) {
+  return [{ url: `/${regionSlug}/opengraph-image`, width: 1200, height: 630 }];
+}
+
 export function buildSpecialsJsonLd(
   specials: SpecialWithVenue[],
   regionName: string,
