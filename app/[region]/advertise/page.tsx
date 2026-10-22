@@ -146,6 +146,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: c.metaTitle,
     description: c.metaDescription(region.brandName),
     alternates: { canonical: `/${region.slug}/advertise` },
+    // Near-identical across ~98 regions and no search value: kept out of the index and sitemap so
+    // Google spends its crawl on venue and deal pages.
+    robots: { index: false, follow: true },
   };
 }
 

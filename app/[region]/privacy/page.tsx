@@ -154,6 +154,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: c.metaTitle,
     description: c.metaDescription(region.brandName),
     alternates: { canonical: `/${region.slug}/privacy` },
+    // Same legal text in every region: kept out of the index and sitemap (see advertise/page.tsx).
+    robots: { index: false, follow: true },
   };
 }
 

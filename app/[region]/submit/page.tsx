@@ -23,6 +23,8 @@ export async function generateMetadata({
     title: "Submit an Update",
     description: "Spot a special or event we don't have? Let us know.",
     alternates: { canonical: `/${region.slug}/submit` },
+    // A form, identical across ~98 regions: kept out of the index and sitemap (see advertise/page.tsx).
+    robots: { index: false, follow: true },
   };
 }
 

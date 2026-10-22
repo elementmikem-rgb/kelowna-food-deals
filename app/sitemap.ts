@@ -88,12 +88,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })),
       { url: `${BASE_URL}/monthly`, lastModified: new Date(), changeFrequency: "daily", priority: 0.5 },
       { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
-      { url: `${BASE_URL}/submit`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
-      { url: `${BASE_URL}/advertise`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.4 },
-      // Not listed here: /archive sets robots: { index: false } (app/[region]/archive/page.tsx) --
-      // a noindex page has no business in a sitemap, and listing it is exactly what triggered
-      // Google Search Console's "excluded by noindex tag" warning for every region (2026-09-20).
-      { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.2 }
+      // Not listed here: /archive, /submit, /advertise and /privacy all set robots: { index: false }
+      // -- a noindex page has no business in a sitemap, and listing /archive is exactly what
+      // triggered Google Search Console's "excluded by noindex tag" warning for every region
+      // (2026-09-20). The last three are near-identical in all ~98 regions, so they only dilute
+      // the crawl budget Google gives the site.
     );
 
     for (const v of selectSitemapVenues(activeVenues, lastVerifiedByVenue, eventVerifiedByVenue)) {
