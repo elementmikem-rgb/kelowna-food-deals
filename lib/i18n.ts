@@ -85,6 +85,7 @@ export const strings = {
       tipJar: "Tip jar",
       privacy: "Privacy & terms",
       ownerLogin: "Own a venue? Log in",
+      preferredSource: "Add us as a preferred source on Google",
     },
     emptyState: {
       noSpecials: "No specials found for this day/category yet.",
@@ -210,6 +211,7 @@ export const strings = {
       tipJar: "Pourboire",
       privacy: "Confidentialité et conditions",
       ownerLogin: "Propriétaire d'un établissement? Connexion",
+      preferredSource: "Ajoutez-nous comme source préférée sur Google",
     },
     emptyState: {
       noSpecials: "Aucun spécial trouvé pour ce jour/cette catégorie pour l'instant.",

@@ -34,6 +34,14 @@ export async function SiteFooter() {
       <Link href={`${base}/privacy`} className="text-muted-2 underline">
         {footer.privacy}
       </Link>
+      <a
+        href="https://www.google.com/preferences/source?q=todaystab.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-muted-2 underline"
+      >
+        {footer.preferredSource}
+      </a>
       <Link href="/owner/login" className="text-muted-2 underline">
         {footer.ownerLogin}
       </Link>
