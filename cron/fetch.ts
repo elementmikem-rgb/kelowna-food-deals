@@ -49,6 +49,29 @@ function isPrivateOrReservedIp(ip: string): boolean {
   return false;
 }
 
+// Site builders serve every uploaded flyer/menu image from their own CDN hostname, never the
+// venue's domain (Wix -> static.wixstatic.com, Squarespace -> images.squarespace-cdn.com and, after
+// a redirect, static1.squarespace.com ...), so the same-hostname rule below silently skipped
+// exactly the files venues upload. These well-known public hosts are listed explicitly (not "any
+// host") so the SSRF guard keeps its teeth: https only, every URL must still resolve to a public
+// IP, and at most one redirect is followed (see fetchPromoFile) and only to a host that passes
+// this same check. Approved by Mike 2026-10-22.
+const IMAGE_CDN_HOST_RES: RegExp[] = [
+  /(^|\.)wixstatic\.com$/i,
+  /(^|\.)filesusr\.com$/i, // Wix user-uploaded documents (PDFs), where /_files/ links redirect
+  /(^|\.)squarespace-cdn\.com$/i,
+  /^static\d*\.squarespace\.com$/i,
+  /(^|\.)wsimg\.com$/i, // GoDaddy Website Builder
+  /(^|\.)editmysite\.com$/i, // Square Online / Weebly
+  /(^|\.)cdn-website\.com$/i, // Duda
+  /(^|\.)website-files\.com$/i, // Webflow
+  /^cdn\.shopify\.com$/i,
+];
+
+export function isAllowedImageCdnHost(hostname: string): boolean {
+  return IMAGE_CDN_HOST_RES.some((re) => re.test(hostname));
+}
+
 async function isSafeImageUrl(imgUrl: string, pageUrl: string): Promise<boolean> {
   let url: URL;
   let page: URL;
@@ -59,7 +82,8 @@ async function isSafeImageUrl(imgUrl: string, pageUrl: string): Promise<boolean>
     return false;
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-  if (url.hostname !== page.hostname) return false;
+  if (url.hostname !== page.hostname && url.protocol !== "https:") return false;
+  if (url.hostname !== page.hostname && !isAllowedImageCdnHost(url.hostname)) return false;
   try {
     const addresses = await dnsLookup(url.hostname, { all: true });
     if (addresses.some((a) => isPrivateOrReservedIp(a.address))) return false;
@@ -118,54 +142,181 @@ function exceedsMaxImageSize(res: Response): boolean {
   return len !== null && Number(len) > MAX_IMAGE_DOWNLOAD_BYTES;
 }
 
-// A venue's own promo graphic/flyer only ever shows up as an <img> tag --
-// cheerio's .text() pass has nothing to extract from that node, so this
-// content was invisible to the pipeline until image transcription existed
-// (see ./vision.ts). Mirrors discover.ts's KEYWORD_RE but kept as its own
-// copy here rather than imported: discover.ts already imports from this
-// file, and importing back from discover.ts would create a cycle.
-const PROMO_IMAGE_KEYWORD_RE = /special|happy[-\s]?hour|promo|deal|menu/i;
-const MAX_IMAGES_PER_PAGE = 2;
+// A venue's own promo graphic/flyer only ever shows up as an <img> tag or a link to an image/PDF
+// file -- cheerio's .text() pass has nothing to extract from either, so that content was invisible
+// to the pipeline until image transcription existed (see ./vision.ts). Mirrors discover.ts's
+// KEYWORD_RE but kept as its own copy here rather than imported: discover.ts already imports from
+// this file, and importing back from discover.ts would create a cycle.
+const PROMO_FILE_KEYWORD_RE =
+  /special|happy ?hour|promo|deal|menu|drink|dinner|lunch|brunch|brekk|breakfast|cocktail|feature|wing|beer|wine|flyer|talker|daily|food/i;
+const STRONG_PROMO_RE = /special|happy ?hour|hoppy|deal|promo|daily|feature|wing|talker|flyer/i;
+const MAX_IMAGES_PER_PAGE = 4;
+const MAX_PDFS_PER_PAGE = 3;
+const MAX_PDF_TEXT_CHARS = 8000;
+const MIN_PDF_TEXT_CHARS = 40; // an image-only (scanned) PDF has no text layer; nothing to read
+
+// Filenames and alt text use +, _, - and . as word separators ("CT+HAPPY+HOUR+WEB.png"), which
+//  / \s patterns never match, so normalize before testing keywords.
+export function normalizeKeywordText(s: string): string {
+  let d = s;
+  try {
+    d = decodeURIComponent(s);
+  } catch {
+    /* keep raw */
+  }
+  return d.replace(/[+_\-.]+/g, " ");
+}
+
+// Resolves a file URL, drops query/hash, and keys the transcription cache on the file itself.
+export function normalizePromoFileUrl(raw: string, pageUrl: string): string | null {
+  try {
+    const u = new URL(raw, pageUrl);
+    u.hash = "";
+    u.search = "";
+    let out = u.toString();
+    // Wix serves resized renditions ("/media/abc~mv2.jpg/v1/fill/w_191,h_420/x.jpg") that are
+    // thumbnails too small to read; the part before "/v1/" is the original upload.
+    if (/wixstatic\.com$/i.test(u.hostname)) {
+      const i = out.indexOf("/v1/");
+      if (i > 0) out = out.slice(0, i);
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+function fileKind(url: string): "pdf" | "image" | null {
+  let path: string;
+  try {
+    path = new URL(url).pathname;
+  } catch {
+    return null;
+  }
+  if (/\.pdf$/i.test(path)) return "pdf";
+  if (/\.(png|jpe?g|webp|gif)$/i.test(path)) return "image";
+  return null;
+}
+
+// Pure (no network) so it's unit-testable: which image/PDF files on this page look like a
+// menu/specials/happy-hour graphic? Covers <img> tags AND plain <a href="...png|pdf"> links
+// (Squarespace menu buttons, Wix flyers wrapped in a link to a PDF).
+export function collectPromoFiles(
+  $: cheerio.CheerioAPI,
+  pageUrl: string
+): { images: string[]; pdfs: string[] } {
+  const images: string[] = [];
+  const pdfs: string[] = [];
+  const seen = new Set<string>();
+  const add = (raw: string, hint: string) => {
+    const abs = normalizePromoFileUrl(raw, pageUrl);
+    if (!abs || seen.has(abs)) return;
+    const kind = fileKind(abs);
+    if (!kind) return;
+    if (!PROMO_FILE_KEYWORD_RE.test(normalizeKeywordText(`${hint} ${abs.split("/").pop()}`))) return;
+    seen.add(abs);
+    (kind === "pdf" ? pdfs : images).push(abs);
+  };
+
+  // Links first: a flyer image wrapped in a link to its PDF is better read from the PDF text
+  // than from the thumbnail inside it.
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") ?? "";
+    const inner = $(el).find("img").first();
+    add(href, `${$(el).text()} ${inner.attr("alt") ?? ""}`);
+  });
+  $("img[src]").each((_, el) => {
+    const wrapped = $(el).closest("a[href]").attr("href");
+    if (wrapped && fileKind(normalizePromoFileUrl(wrapped, pageUrl) ?? "") === "pdf") return;
+    add($(el).attr("src") ?? "", $(el).attr("alt") ?? "");
+  });
+  // The per-page caps exist to bound cost, so spend them on the files most likely to hold
+  // deals: a venue with a lunch menu, dinner menu, kids menu AND a happy hour PDF must not have
+  // the happy hour one cut off just because it appears last in the page.
+  const rank = (u: string) => (STRONG_PROMO_RE.test(normalizeKeywordText(u.split("/").pop() ?? "")) ? 0 : 1);
+  const byRank = (a: string, b: string) => rank(a) - rank(b); // Array.sort is stable
+  return { images: images.sort(byRank).slice(0, MAX_IMAGES_PER_PAGE), pdfs: pdfs.sort(byRank).slice(0, MAX_PDFS_PER_PAGE) };
+}
+
+// Fetches a promo file without ever following a redirect blindly: a 3xx is followed AT MOST ONCE,
+// and only if the target passes isSafeImageUrl (same host as the page, or a listed site-builder
+// CDN, https, public IP). Squarespace's "/s/menu.png" links, for example, 302 to static1.squarespace.com.
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+async function fetchPromoFile(fileUrl: string, pageUrl: string): Promise<Response | null> {
+  await rateLimit();
+  let res = await fetch(fileUrl, { headers: { "User-Agent": USER_AGENT }, redirect: "manual" });
+  if (REDIRECT_STATUSES.has(res.status)) {
+    const loc = res.headers.get("location");
+    let target: string;
+    try {
+      target = new URL(loc ?? "", fileUrl).toString();
+    } catch {
+      return null;
+    }
+    if (!(await isSafeImageUrl(target, pageUrl))) {
+      console.warn(`[${fileUrl}] redirect target not allowed, skipped`);
+      return null;
+    }
+    await rateLimit();
+    res = await fetch(target, { headers: { "User-Agent": USER_AGENT }, redirect: "manual" });
+  }
+  return res.ok ? res : null;
+}
+
+async function readPromoPdf(pdfUrl: string, pageUrl: string): Promise<string> {
+  if (!(await isSafeImageUrl(pdfUrl, pageUrl))) {
+    console.warn(`[${pdfUrl}] skipped promo PDF: not a same-origin or listed site-builder public URL`);
+    return "";
+  }
+  const res = await fetchPromoFile(pdfUrl, pageUrl);
+  if (!res) return "";
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("pdf") && !/\.pdf$/i.test(new URL(pdfUrl).pathname)) return "";
+  if (exceedsMaxImageSize(res)) {
+    console.warn(`[${pdfUrl}] skipped promo PDF: exceeds ${MAX_IMAGE_DOWNLOAD_BYTES} byte limit`);
+    return "";
+  }
+  const parser = new PDFParse({ data: Buffer.from(await res.arrayBuffer()) });
+  try {
+    const text = (await parser.getText()).text.trim();
+    return text.length >= MIN_PDF_TEXT_CHARS ? text.slice(0, MAX_PDF_TEXT_CHARS) : "";
+  } finally {
+    await parser.destroy();
+  }
+}
 
 async function transcribePromoImages(
   $: cheerio.CheerioAPI,
   pageUrl: string
 ): Promise<{ text: string; tokensUsed: number }> {
-  let origin: string;
-  try {
-    origin = new URL(pageUrl).origin;
-  } catch {
-    return { text: "", tokensUsed: 0 };
-  }
-
-  const candidates: string[] = [];
-  $("img[src]").each((_, el) => {
-    if (candidates.length >= MAX_IMAGES_PER_PAGE) return;
-    const src = $(el).attr("src") ?? "";
-    const alt = $(el).attr("alt") ?? "";
-    if (!PROMO_IMAGE_KEYWORD_RE.test(src) && !PROMO_IMAGE_KEYWORD_RE.test(alt)) return;
-    try {
-      candidates.push(new URL(src, origin).toString());
-    } catch {
-      /* unparseable src -- skip */
-    }
-  });
+  const { images, pdfs } = collectPromoFiles($, pageUrl);
 
   let combinedText = "";
   let tokensUsed = 0;
-  for (const imgUrl of candidates) {
+
+  for (const pdfUrl of pdfs) {
+    try {
+      const text = await readPromoPdf(pdfUrl, pageUrl);
+      if (text) combinedText += `
+=== PDF: ${pdfUrl} ===
+${text}
+`;
+    } catch {
+      // One bad PDF (dead link, corrupt file) shouldn't fail the whole page.
+    }
+  }
+
+  for (const imgUrl of images) {
     if (!(await isSafeImageUrl(imgUrl, pageUrl))) {
-      console.warn(`[${imgUrl}] skipped promo image transcription: not a same-origin public URL`);
+      console.warn(`[${imgUrl}] skipped promo image transcription: not a same-origin or listed site-builder public URL`);
       continue;
     }
     try {
-      await rateLimit();
-      // redirect: "manual" -- a redirect target hasn't been through the
-      // same-origin/private-IP check above, so silently following one would
-      // undo it. Losing an occasional legitimately-redirected image is an
-      // acceptable tradeoff for a minor content-enrichment feature.
-      const res = await fetch(imgUrl, { headers: { "User-Agent": USER_AGENT }, redirect: "manual" });
-      if (!res.ok) continue;
+      // fetchPromoFile never follows a redirect blindly (see its comment): the target must pass
+      // the same host/IP checks as the original URL.
+      const res = await fetchPromoFile(imgUrl, pageUrl);
+      if (!res) continue;
       const contentType = res.headers.get("content-type") ?? "";
       if (!contentType.startsWith("image/")) continue;
       if (exceedsMaxImageSize(res)) {
@@ -177,7 +328,10 @@ async function transcribePromoImages(
       if (!result) continue;
       tokensUsed += result.tokensUsed;
       if (result.text) {
-        combinedText += `\n=== IMAGE: ${imgUrl} ===\n${result.text}\n`;
+        combinedText += `
+=== IMAGE: ${imgUrl} ===
+${result.text}
+`;
       }
     } catch {
       // One bad image (dead link, corrupt file) shouldn't fail the whole page.

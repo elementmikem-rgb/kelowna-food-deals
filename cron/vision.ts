@@ -99,15 +99,12 @@ export async function transcribeImageText(
       // Disabled for the same reason as cron/extract.ts: plain transcription has nothing
       // to reason about, and Haiku 5.5 does adaptive thinking by default otherwise.
       thinking: { type: "disabled" as const },
-      // 0, not the default -- this call's job is transcription of a static
-      // image, not creative generation, so the correct output barely varies
-      // run to run at temperature 0. Left at default, minor wording drift
-      // between nights would change the image's transcribed text even when
-      // the image itself never changed, which feeds into the venue's overall
-      // content hash and would make "unchanged, skipped extraction" never
-      // fire for an image-heavy venue -- paying for a fresh vision call and
-      // a fresh Haiku extraction every single night for no real reason.
-      temperature: 0,
+      // No temperature here: this used to pin temperature 0 so wording wouldn't drift between
+      // nights, but Haiku 5.5 rejects the parameter outright ("`temperature` is deprecated for
+      // this model", HTTP 400), which made EVERY image transcription fail silently -- an image
+      // venue then looked empty and got its specials archived. Drift is contained instead by
+      // the cache above (keyed on URL + a hash of the image bytes): an unchanged image is
+      // never re-transcribed, so its text is stable night to night.
       messages: [
         {
           role: "user",
