@@ -275,7 +275,23 @@ export async function processVenue(
     const { specials, events, menuItems, tokensUsed, cacheCreationTokens, cacheReadTokens, outputTokens } =
       await extractVenueContent(normalized, includeMenuItems);
     tokensSpent += tokensUsed;
-    await replaceVenueSpecials(venue.id, regionId, sourceUrl, specials);
+    const { held } = await replaceVenueSpecials(venue.id, regionId, sourceUrl, specials);
+    if (held) {
+      // Empty extraction against a venue with live specials: nothing was archived, and the
+      // hash is NOT recorded (null) so tomorrow retries instead of "unchanged, skipped".
+      await logScrapeRun({
+        venueId: venue.id,
+        contentHash: null,
+        changed: true,
+        tokensUsed: tokensSpent,
+        cacheCreationTokens,
+        cacheReadTokens,
+        outputTokens,
+        error: "held: empty extraction for a venue with active specials, nothing archived",
+      });
+      console.warn(`[${venue.name}] extraction returned 0 specials but venue has active ones; held, nothing archived`);
+      return { tokensUsed: tokensSpent };
+    }
     await replaceVenueEvents(venue.id, regionId, sourceUrl, events);
     // Only touch menu items when this call actually asked for them -- passing an
     // empty array here when menu items were deliberately skipped would make
@@ -524,7 +540,24 @@ async function applyBatchItemResult(
   // expires on Anthropic's side (~29 days). Caught here, the one bad item is marked
   // failed and every other venue in the batch still applies normally.
   try {
-    await replaceVenueSpecials(item.venueId, item.regionId, item.sourceUrl, specials);
+    const { held } = await replaceVenueSpecials(item.venueId, item.regionId, item.sourceUrl, specials);
+    if (held) {
+      // See the sync path in processVenue: hold, archive nothing, leave the hash null so
+      // the next run re-extracts.
+      await logScrapeRun({
+        venueId: item.venueId,
+        contentHash: null,
+        changed: true,
+        tokensUsed: tokensSpent,
+        cacheCreationTokens: outcome.cacheCreationTokens,
+        cacheReadTokens: outcome.cacheReadTokens,
+        outputTokens: outcome.outputTokens,
+        error: "held: empty extraction for a venue with active specials, nothing archived",
+      });
+      console.warn(`[venue ${item.venueId}] batch returned 0 specials but venue has active ones; held, nothing archived`);
+      await markExtractionBatchItemDone(item.id, "applied");
+      return;
+    }
     await replaceVenueEvents(item.venueId, item.regionId, item.sourceUrl, events);
     // Only touch menu items when this call actually asked for them -- passing an empty
     // array here when menu items were deliberately skipped would make

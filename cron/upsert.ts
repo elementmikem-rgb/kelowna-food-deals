@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm"
 import type { ExtractedSpecial, ExtractedEvent, ExtractedMenuItem } from "./extract";
 import { pacificTodayISODate } from "@/lib/time";
 import { specialIdentityKey, eventIdentityKey } from "@/lib/archived-match";
+import { shouldHoldEmptyExtraction } from "./wipe-guard";
 
 function menuItemIdentityKey(m: {
   name: string;
@@ -65,9 +66,9 @@ export async function replaceVenueSpecials(
   regionId: number,
   sourceUrl: string,
   extracted: ExtractedSpecial[]
-): Promise<void> {
+): Promise<{ held: boolean }> {
   const now = new Date();
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     const existing = await tx
       .select()
       .from(specials)
@@ -78,6 +79,11 @@ export async function replaceVenueSpecials(
           isNotNull(specials.sourceUrl)
         )
       );
+    // Wipe-to-zero guard, see cron/wipe-guard.ts. The caller must not record the content hash
+    // when held is true, or tomorrow's "unchanged" skip would freeze the doubt in place.
+    if (shouldHoldEmptyExtraction(existing.length, extracted.length)) {
+      return { held: true };
+    }
     const suppressed = await tx
       .select()
       .from(specials)
@@ -152,6 +158,7 @@ export async function replaceVenueSpecials(
         }))
       );
     }
+    return { held: false };
   });
 }
 
