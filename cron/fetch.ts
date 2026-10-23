@@ -66,6 +66,11 @@ const IMAGE_CDN_HOST_RES: RegExp[] = [
   /(^|\.)cdn-website\.com$/i, // Duda
   /(^|\.)website-files\.com$/i, // Webflow
   /^cdn\.shopify\.com$/i,
+  // Amazon S3 buckets (virtual-hosted "bucket.s3.region.amazonaws.com" and path-style "s3.region..."):
+  // some venues' sites keep their poster images in their own bucket (found 2026-10-22: Pizzeria
+  // Tratto). Same guard as the rest: https only, public IP, one safe redirect.
+  /^[a-z0-9][a-z0-9.-]*\.s3([.-][a-z0-9-]+)?\.amazonaws\.com$/i,
+  /^s3([.-][a-z0-9-]+)?\.amazonaws\.com$/i,
 ];
 
 export function isAllowedImageCdnHost(hostname: string): boolean {
@@ -201,6 +206,26 @@ function fileKind(url: string): "pdf" | "image" | null {
 // Pure (no network) so it's unit-testable: which image/PDF files on this page look like a
 // menu/specials/happy-hour graphic? Covers <img> tags AND plain <a href="...png|pdf"> links
 // (Squarespace menu buttons, Wix flyers wrapped in a link to a PDF).
+// A page that is itself called "specials" / "happy hour" / "deals" holds its deals as poster images
+// that are often uploaded under random filenames ("ECFA84EA-D000-....png", found live 2026-10-22 at
+// Schooners and Tide & Boar), so the filename keyword test above never matches them.
+const PROMO_PAGE_RE = /special|happy ?hour|\bdeals?\b|promo|offers?|weekly|daily features?/i;
+// Images on such a page that are clearly chrome, not content.
+const NON_CONTENT_IMAGE_RE =
+  /logo|icon|avatar|sprite|badge|favicon|spinner|loading|social|payment|visa|mastercard|doordash|ubereats|skip ?the|gift ?card|facebook|instagram|twitter|header|banner-bg|button|kisspng|order ?online/i;
+const MIN_CONTENT_IMAGE_PX = 200;
+
+export function isPromoPage($: cheerio.CheerioAPI, pageUrl: string): boolean {
+  let path = "";
+  try {
+    path = decodeURIComponent(new URL(pageUrl).pathname);
+  } catch {
+    /* fall through to title only */
+  }
+  const heading = `${$("title").first().text()} ${$("h1").first().text()}`;
+  return PROMO_PAGE_RE.test(normalizeKeywordText(path)) || PROMO_PAGE_RE.test(heading);
+}
+
 export function collectPromoFiles(
   $: cheerio.CheerioAPI,
   pageUrl: string
@@ -208,14 +233,32 @@ export function collectPromoFiles(
   const images: string[] = [];
   const pdfs: string[] = [];
   const seen = new Set<string>();
-  const add = (raw: string, hint: string) => {
+  const contextual = new Set<string>(); // images accepted only because the PAGE is a specials page
+  const promoPage = isPromoPage($, pageUrl);
+  const add = (raw: string, hint: string, ctx = false) => {
     const abs = normalizePromoFileUrl(raw, pageUrl);
     if (!abs || seen.has(abs)) return;
     const kind = fileKind(abs);
     if (!kind) return;
-    if (!PROMO_FILE_KEYWORD_RE.test(normalizeKeywordText(`${hint} ${abs.split("/").pop()}`))) return;
+    const keywordHit = PROMO_FILE_KEYWORD_RE.test(normalizeKeywordText(`${hint} ${abs.split("/").pop()}`));
+    if (!keywordHit && !(ctx && kind === "image")) return;
     seen.add(abs);
+    if (!keywordHit) contextual.add(abs);
     (kind === "pdf" ? pdfs : images).push(abs);
+  };
+  // Real image URL of an <img>, skipping lazy-load placeholders (data: URIs).
+  const imgSrc = (el: Parameters<typeof $>[0]): string => {
+    const src = $(el).attr("src") ?? "";
+    if (src && !src.startsWith("data:")) return src;
+    return $(el).attr("data-src") ?? $(el).attr("data-lazy-src") ?? $(el).attr("data-original") ?? "";
+  };
+  const looksLikeContent = (el: Parameters<typeof $>[0], src: string, alt: string): boolean => {
+    if ($(el).closest("header, nav, footer").length > 0) return false;
+    if (NON_CONTENT_IMAGE_RE.test(normalizeKeywordText(`${alt} ${src.split("/").pop() ?? ""} ${$(el).attr("class") ?? ""}`))) return false;
+    const w = Number($(el).attr("width"));
+    const h = Number($(el).attr("height"));
+    if ((Number.isFinite(w) && w > 0 && w < MIN_CONTENT_IMAGE_PX) || (Number.isFinite(h) && h > 0 && h < MIN_CONTENT_IMAGE_PX)) return false;
+    return true;
   };
 
   // Links first: a flyer image wrapped in a link to its PDF is better read from the PDF text
@@ -225,15 +268,22 @@ export function collectPromoFiles(
     const inner = $(el).find("img").first();
     add(href, `${$(el).text()} ${inner.attr("alt") ?? ""}`);
   });
-  $("img[src]").each((_, el) => {
+  $("img").each((_, el) => {
     const wrapped = $(el).closest("a[href]").attr("href");
     if (wrapped && fileKind(normalizePromoFileUrl(wrapped, pageUrl) ?? "") === "pdf") return;
-    add($(el).attr("src") ?? "", $(el).attr("alt") ?? "");
+    const src = imgSrc(el);
+    if (!src) return;
+    const alt = $(el).attr("alt") ?? "";
+    // Delivery-app buttons and logos carry words like "menu" and "food" in their filenames, so the
+    // chrome-name check applies to keyword matches too, not only to the page-context ones.
+    if (NON_CONTENT_IMAGE_RE.test(normalizeKeywordText(`${alt} ${src.split("/").pop() ?? ""} ${$(el).attr("class") ?? ""}`))) return;
+    add(src, alt, promoPage && looksLikeContent(el, src, alt));
   });
   // The per-page caps exist to bound cost, so spend them on the files most likely to hold
   // deals: a venue with a lunch menu, dinner menu, kids menu AND a happy hour PDF must not have
   // the happy hour one cut off just because it appears last in the page.
-  const rank = (u: string) => (STRONG_PROMO_RE.test(normalizeKeywordText(u.split("/").pop() ?? "")) ? 0 : 1);
+  const rank = (u: string) =>
+    STRONG_PROMO_RE.test(normalizeKeywordText(u.split("/").pop() ?? "")) || contextual.has(u) ? 0 : 1;
   const byRank = (a: string, b: string) => rank(a) - rank(b); // Array.sort is stable
   return { images: images.sort(byRank).slice(0, MAX_IMAGES_PER_PAGE), pdfs: pdfs.sort(byRank).slice(0, MAX_PDFS_PER_PAGE) };
 }
