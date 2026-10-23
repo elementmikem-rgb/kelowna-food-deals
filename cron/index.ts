@@ -1,4 +1,4 @@
-import { fetchAndExtractText, fetchAndExtractTextViaBrowser, type FetchResult } from "./fetch";
+import { fetchAndExtractText, fetchAndExtractTextViaBrowser, type FetchResult, withScheme } from "./fetch";
 import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
@@ -85,7 +85,7 @@ function venueUrls(venue: { website: string | null; menuUrl: string | null; sour
   const all = [venue.menuUrl, venue.website, ...venue.sourceUrls].filter(
     (u): u is string => !!u
   );
-  return Array.from(new Set(all)).filter(isAutomatableUrl);
+  return Array.from(new Set(all.map(withScheme))).filter(isAutomatableUrl);
 }
 
 // Overridable so a one-off manual run (e.g. clearing a backlog) can raise the

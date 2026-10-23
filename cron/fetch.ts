@@ -8,7 +8,13 @@ import { transcribeImageText } from "./vision";
 
 // kelownaspecials.com is NXDOMAIN — a venue operator checking their access
 // logs needs an identifier that actually resolves.
-const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
+// "Mozilla/5.0 (compatible; ...)" is the conventional shape for an identified crawler (Googlebot,
+// Bingbot). Shopify's edge answers a bare "Name/1.0" agent with 429 local_rate_limited while serving
+// the same page to this form (found 2026-10-23: meritbrewing.ca, forkedriverbrewing.com). It still
+// names us and links the operator page; it does not pretend to be a person's browser.
+const USER_AGENT = "Mozilla/5.0 (compatible; KelownaSpecialsBot/1.0; +https://kelownafooddeals.shop)";
+// robots.txt groups are matched on the product token only.
+const ROBOTS_AGENT = "KelownaSpecialsBot";
 
 // SSRF guard for image URLs pulled out of a venue's OWN page content --
 // unlike venue.website/menuUrl (typed in by Mike when seeding a venue),
@@ -126,10 +132,17 @@ export async function isAllowedByRobots(url: string): Promise<boolean> {
     const origin = new URL(url).origin;
     const robots = await getRobots(origin);
     if (!robots) return true; // no robots.txt or unreachable -> treat as allowed
-    return robots.isAllowed(url, USER_AGENT) ?? true;
+    return robots.isAllowed(url, ROBOTS_AGENT) ?? true;
   } catch {
     return true;
   }
+}
+
+// A venue's website is often stored as a bare domain ("leopoldstavern.com"); fetch() throws
+// "Failed to parse URL" on that, so the venue was never scraped at all.
+export function withScheme(url: string): string {
+  const u = url.trim();
+  return /^https?:\/\//i.test(u) ? u : `https://${u}`;
 }
 
 export type FetchResult =

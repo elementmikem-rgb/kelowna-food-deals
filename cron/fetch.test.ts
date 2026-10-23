@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
-import { collectPromoFiles, isAllowedImageCdnHost, isPromoPage, normalizeKeywordText, normalizePromoFileUrl } from "./fetch";
+import { collectPromoFiles, isAllowedImageCdnHost, isPromoPage, normalizeKeywordText, normalizePromoFileUrl, withScheme } from "./fetch";
 
 const PAGE = "https://venue.example.com/menu";
 
@@ -134,5 +134,20 @@ describe("collectPromoFiles on an ordinary page", () => {
   it("still ignores random-filename images", () => {
     const $ = cheerio.load(`<title>Home</title><body><img src="/a/ECFA84EA-D000.png"><img src="/a/team-photo.jpg"></body>`);
     expect(collectPromoFiles($, "https://venue.example.com/").images).toEqual([]);
+  });
+});
+
+describe("withScheme", () => {
+  it("adds https:// to a bare domain so fetch() can parse it", () => {
+    expect(withScheme("leopoldstavern.com")).toBe("https://leopoldstavern.com");
+    expect(withScheme("www.venue.ca/specials")).toBe("https://www.venue.ca/specials");
+  });
+  it("leaves real http(s) URLs alone, any case", () => {
+    expect(withScheme("http://venue.ca/")).toBe("http://venue.ca/");
+    expect(withScheme("https://venue.ca/menu")).toBe("https://venue.ca/menu");
+    expect(withScheme("HTTPS://venue.ca")).toBe("HTTPS://venue.ca");
+  });
+  it("trims surrounding whitespace", () => {
+    expect(withScheme("  venue.ca ")).toBe("https://venue.ca");
   });
 });

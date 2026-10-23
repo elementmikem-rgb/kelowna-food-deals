@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { isAllowedByRobots } from "./fetch";
 import { rateLimit } from "./rateLimit";
 
-const USER_AGENT = "KelownaSpecialsBot/1.0 (+https://kelownafooddeals.shop)";
+const USER_AGENT = "Mozilla/5.0 (compatible; KelownaSpecialsBot/1.0; +https://kelownafooddeals.shop)";
 
 // Matches against both the URL path and the link's own visible text -- a
 // venue's "View Menu" button often points at an opaque share-link slug
