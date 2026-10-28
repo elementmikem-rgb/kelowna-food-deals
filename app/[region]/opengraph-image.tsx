@@ -75,6 +75,7 @@ export default async function Image() {
               color: "#ffffff",
               letterSpacing: -2,
               lineHeight: 0.9,
+              textShadow: "0 2px 16px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.8)",
             }}
           >
             {cityName}
@@ -99,6 +100,7 @@ export default async function Image() {
               color: "rgba(255,255,255,0.82)",
               fontWeight: 400,
               lineHeight: 1.35,
+              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
             }}
           >
             {region.language === "fr"
