@@ -84,37 +84,53 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              width: 48,
+              width: 52,
               height: 3,
               backgroundColor: "#e8946a",
               borderRadius: 2,
               marginTop: 22,
-              marginBottom: 18,
+              marginBottom: 20,
             }}
           />
 
           <div
             style={{
               display: "flex",
-              fontSize: 21,
-              color: "rgba(255,255,255,0.82)",
-              fontWeight: 400,
-              lineHeight: 1.35,
-              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+              fontSize: 26,
+              color: "#ffffff",
+              fontWeight: 600,
+              lineHeight: 1.3,
+              textShadow: "0 1px 8px rgba(0,0,0,0.75)",
             }}
           >
             {region.language === "fr"
-              ? "Happy hours & spéciaux — vérifiés aujourd'hui."
-              : "Happy hours & specials — checked today."}
+              ? "Happy hours & spéciaux alimentaires"
+              : "Happy hours & food specials"}
           </div>
 
           <div
             style={{
               display: "flex",
-              fontSize: 15,
-              color: "rgba(255,255,255,0.38)",
-              marginTop: 16,
-              letterSpacing: "0.06em",
+              fontSize: 20,
+              color: "rgba(255,220,180,0.9)",
+              fontWeight: 400,
+              marginTop: 8,
+              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+            }}
+          >
+            {region.language === "fr"
+              ? "Vérifiés aujourd'hui — aucune application requise"
+              : "Verified today — no app, no account needed"}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              fontSize: 16,
+              color: "rgba(255,255,255,0.5)",
+              marginTop: 18,
+              letterSpacing: "0.08em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
             }}
           >
             todaystab.com
