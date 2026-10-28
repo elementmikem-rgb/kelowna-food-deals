@@ -64,8 +64,10 @@ export default async function AdminAnalyticsPage({
 
   // Defaults for the custom picker: whatever's already active, so reopening it
   // (or tweaking one side) starts from the range currently on screen.
-  const defaultFrom = fromParam ?? window.from.toISOString().slice(0, 10);
-  const defaultTo = toParam ?? new Date(window.to.getTime() - 1).toISOString().slice(0, 10);
+  // Shown as Pacific dates (en-CA formats as YYYY-MM-DD) so the boxes match a Kelowna calendar, not UTC.
+  const pacificDate = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+  const defaultFrom = fromParam ?? pacificDate(window.from);
+  const defaultTo = toParam ?? pacificDate(new Date(window.to.getTime() - 1));
 
   return (
     <AdminShell active="analytics">

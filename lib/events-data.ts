@@ -8,6 +8,7 @@ export interface EventWithVenue {
   id: number;
   venueId: number | null;
   venueName: string;
+  venueCity?: string | null;
   locationAddress: string | null;
   title: string;
   description: string | null;
@@ -67,6 +68,7 @@ export const recurringColumns = {
   id: events.id,
   venueId: events.venueId,
   venueName: venues.name,
+  venueCity: venues.city,
   locationAddress: events.locationAddress,
   title: events.title,
   description: events.description,
@@ -132,6 +134,7 @@ export async function getUpcomingOneOffEvents(
       id: events.id,
       venueId: events.venueId,
       venueName: venues.name,
+      venueCity: venues.city,
       locationName: events.locationName,
       locationAddress: events.locationAddress,
       title: events.title,
@@ -178,6 +181,7 @@ export async function getUpcomingOneOffEvents(
       id: r.id,
       venueId: r.venueId,
       venueName: r.venueName ?? r.locationName ?? "Unknown location",
+      venueCity: r.venueCity,
       locationAddress: r.locationAddress,
       title: r.title,
       description: r.description,

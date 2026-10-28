@@ -14,6 +14,7 @@ import { EventTypeFilter } from "./EventTypeFilter";
 import { EventVenueGroup } from "./EventVenueGroup";
 import { EventsCalendar } from "./EventsCalendar";
 import { groupByVenue, type VenueGroup } from "@/lib/group-by-venue";
+import { ViewToggle } from "./ViewToggle";
 
 // Same reasoning as SpecialsBoard's own dynamic import: Leaflet touches
 // window/document at module load, so it can only ever run client-side.
@@ -98,7 +99,7 @@ export function EventsBoard({
     return recurring
       .filter((e) => activeDays.includes(e.dayOfWeek ?? -1))
       .filter((e) => selectedType === "all" || e.eventType === selectedType)
-      .filter((e) => !normalizedQuery || e.venueName.toLowerCase().includes(normalizedQuery))
+      .filter((e) => !normalizedQuery || (e.venueName.toLowerCase().includes(normalizedQuery) || (e.venueCity ?? "").toLowerCase().includes(normalizedQuery)))
       .sort((a, b) => {
         const dayDiff = activeDays.indexOf(a.dayOfWeek ?? -1) - activeDays.indexOf(b.dayOfWeek ?? -1);
         if (dayDiff !== 0) return dayDiff;
@@ -110,7 +111,7 @@ export function EventsBoard({
   const searchedUpcoming = useMemo(
     () =>
       normalizedQuery
-        ? dateFilteredUpcoming.filter((e) => e.venueName.toLowerCase().includes(normalizedQuery))
+        ? dateFilteredUpcoming.filter((e) => (e.venueName.toLowerCase().includes(normalizedQuery) || (e.venueCity ?? "").toLowerCase().includes(normalizedQuery)))
         : dateFilteredUpcoming,
     [dateFilteredUpcoming, normalizedQuery]
   );
@@ -207,19 +208,7 @@ export function EventsBoard({
 
         {/* List/Map toggle -- defaults to List so nothing changes for existing
             visitors unless they opt in, same as SpecialsBoard's own toggle. */}
-        <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start">
-          {(["list", "map"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`press-pill rounded-full px-3 py-1 capitalize ${
-                view === v ? "bg-accent text-background" : "text-muted"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        <ViewToggle view={view} onChange={setView} />
 
         {view === "map" && (
           <MapView

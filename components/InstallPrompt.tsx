@@ -129,7 +129,7 @@ export function InstallPrompt() {
     // since Chrome's own mini-infobar or address-bar install icon can also
     // trigger a real install without this banner ever being shown.
     function onAppInstalled() {
-      track("pwa_install", "android");
+      trackOncePerSession("pwa_install", "android");
     }
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);

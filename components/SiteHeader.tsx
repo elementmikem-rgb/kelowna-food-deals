@@ -78,6 +78,8 @@ export async function SiteHeader({
         <div className="flex items-center gap-2">
           <SavedVenuesLink regionSlug={region.slug} lang={lang} />
           <SiteNav active={active} />
+          {/* Filled by ViewToggle (List/Map) on pages that have a board. */}
+          <div id="view-toggle-slot" className="empty:hidden" />
           <ShareButton
             title={region.brandName}
             text={`Verified food & drink specials happening today around ${firstWord}:`}

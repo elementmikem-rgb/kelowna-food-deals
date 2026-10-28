@@ -63,3 +63,15 @@ Keep a flag list while working: wrong country, wrong region, non-venue, dead or 
 ## Police yourself
 
 If you catch yourself being careless (skipping a page that clearly had specials, wording a note as unread, entering unverified prices), say so and add 10 venues to the remaining target. Fix the note by opening the page and replacing it with `_tmp-q.ts` (`update ... set checked_no_listings_note = replace(...)`).
+
+## Emails and cron URLs (added 2026-10-23, Mike's instruction)
+
+- Open the venue's Contact page (or footer) on every venue and record any email in the note as "Email: x." (the `email` field on a batch entry appends it before "RE-CHECK by"). Never in `contact_email`. Phone numbers go in the note too.
+- Cron URLs: give a batch entry `urls: [...]` with the text pages that hold specials/events/menus. The script merges them into `venues.source_urls` (deduped, cap 10) ONLY when the venue has no active specials or events (hand rows would be duplicated by the cron, which has no dedupe against null-source rows). Discovery has often saved the page already, so this is mostly a no-op. Do not add image-only, PDF-behind-gate or dead pages. Do not flip hand rows to cron-owned.
+- venueNote must not start with the "2026-10-22 manual check:" prefix (the script adds it).
+- Check why a page the cron already fetches produced nothing: bare-domain website, 429 on the bot user agent, JS-rendered content (set `requires_browser`).
+
+## Social pages when the website has nothing (added 2026-10-23, Mike's instruction)
+
+If the website is dead, empty, a template, or just points to Facebook/Instagram for specials and events, open the venue's public Facebook and Instagram pages (links are in the site's footer, or search the venue name) and read what is posted: pinned posts, event listings, happy hour or weekly special posts, the About/Hours section, and the contact email. View only: never log in with new credentials, create accounts, follow, like, message or accept cookie banners. Enter only what is clearly current and dated; a post about a past event is not a special. Say in the note which social page was read and when its latest post was. If a social page is not viewable without a login, say that plainly in the note.
+Also: open the contact page on every venue and save the email in the note. The 2026-10-23 target was raised by 80 for process slips (doubled note prefix x2, 3 slip phrases, partial Moxies happy hour, no email hunt, no social check).

@@ -15,6 +15,7 @@ import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
 import { sortByDistance, formatDistance, type Point } from "@/lib/nearest";
+import { ViewToggle } from "./ViewToggle";
 
 // Leaflet reads `window`/`document` at module load, so it can never run during
 // Next.js's server render -- ssr:false defers loading the whole map bundle
@@ -229,7 +230,13 @@ export function SpecialsBoard({
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
       .filter((s) => selectedCity === "all" || s.venueCity === selectedCity)
-      .filter((s) => !normalizedQuery || s.venueName.toLowerCase().includes(normalizedQuery))
+      // Name OR town, so typing a sub-region ("West Kelowna", "Lake Country") finds its venues.
+      .filter(
+        (s) =>
+          !normalizedQuery ||
+          s.venueName.toLowerCase().includes(normalizedQuery) ||
+          (s.venueCity ?? "").toLowerCase().includes(normalizedQuery)
+      )
       .sort((a, b) => {
         // A paid seasonal boost outranks everything else while it's active.
         const boostDiff =
@@ -395,19 +402,7 @@ export function SpecialsBoard({
 
       {/* List/Map toggle -- defaults to List (unchanged existing behaviour) so
           nothing about the page visitors already use changes unless they opt in. */}
-      <div className="flex gap-1 rounded-full border border-border p-0.5 text-xs self-start">
-        {(["list", "map"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`press-pill rounded-full px-3 py-1 capitalize ${
-              view === v ? "bg-accent text-background" : "text-muted"
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+      <ViewToggle view={view} onChange={setView} />
 
       {view === "map" && (
         <MapView

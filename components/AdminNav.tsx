@@ -30,7 +30,7 @@ function Badge({ count, tone }: { count: number; tone: "accent" | "evergreen" })
   );
 }
 
-function LogoutButton() {
+function LogoutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +45,7 @@ function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="press-pill rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-muted hover:text-foreground disabled:opacity-50"
+      className={`press-pill rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-muted hover:text-foreground disabled:opacity-50 ${className}`}
     >
       {loading ? "…" : "Log out"}
     </button>
@@ -59,6 +59,7 @@ function ScopeSwitcher({
   selectedCountryId,
   selectedProvinceId,
   selectedRegionId,
+  className = "",
 }: {
   countries: { id: number; name: string }[];
   provinces: { id: number; countryId: number; name: string }[];
@@ -66,6 +67,7 @@ function ScopeSwitcher({
   selectedCountryId: number | "all";
   selectedProvinceId: number | "all";
   selectedRegionId: number | "all";
+  className?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -87,10 +89,10 @@ function ScopeSwitcher({
     selectedProvinceId === "all" ? [] : regions.filter((r) => r.provinceId === selectedProvinceId);
 
   const selectClass =
-    "press-pill rounded-full border border-border bg-transparent px-3 py-1.5 text-xs text-muted disabled:opacity-50";
+    "press-pill min-w-0 max-w-full rounded-full border border-border bg-transparent px-3 py-1.5 text-xs text-muted disabled:opacity-50";
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       <select
         value={String(selectedCountryId)}
         disabled={loading}
@@ -224,7 +226,13 @@ export function AdminNav({
   return (
     <header className="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6 bg-background/95 backdrop-blur border-b border-border">
       <div className="flex items-center justify-between gap-3 flex-wrap max-w-4xl mx-auto">
-        <Link href="/admin/submissions" className="flex items-center gap-2 shrink-0">
+        {/* Mobile is three rows: stamp + Log out, then the section menu, then the scope
+            pickers. The pickers plus Log out used to be one shrink-0 group that was wider
+            than the phone, so the whole header overflowed sideways and clipped the stamp,
+            Log out and the open menu. The wrapper below is display:contents under sm so
+            its children can be ordered into those rows; from sm up it is the original
+            scope + Log out group. */}
+        <Link href="/admin/submissions" className="order-1 sm:order-none flex items-center gap-2 shrink-0">
           <span className="stamp px-2 py-0.5 text-[10px]">Admin</span>
           <span className="font-display text-sm text-foreground hidden sm:inline">
             TodaysTab
@@ -262,8 +270,9 @@ export function AdminNav({
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="contents sm:flex sm:items-center sm:gap-2 sm:shrink-0">
           <ScopeSwitcher
+            className="order-4 basis-full sm:order-none sm:basis-auto"
             countries={countries}
             provinces={provinces}
             regions={regions}
@@ -271,7 +280,7 @@ export function AdminNav({
             selectedProvinceId={selectedProvinceId}
             selectedRegionId={selectedRegionId}
           />
-          <LogoutButton />
+          <LogoutButton className="order-2 sm:order-none" />
         </div>
       </div>
 
@@ -296,7 +305,7 @@ function MobileNavMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative sm:hidden flex-1 min-w-0">
+    <div className="relative sm:hidden order-3 basis-full min-w-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
