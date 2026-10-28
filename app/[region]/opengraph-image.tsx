@@ -16,67 +16,52 @@ export default async function Image() {
     .trim();
 
   const cityFontSize =
-    cityName.length > 22 ? 58 :
-    cityName.length > 16 ? 74 :
-    cityName.length > 10 ? 90 : 108;
+    cityName.length > 22 ? 54 :
+    cityName.length > 16 ? 68 :
+    cityName.length > 10 ? 84 : 100;
 
-  const logoPng = readFileSync(join(process.cwd(), "public/icons/icon-512.png"));
-  const logoSrc = `data:image/png;base64,${logoPng.toString("base64")}`;
-
-  // Logo's own palette — always these regardless of region theme
-  const logoCoral = "#e8946a";
-  const logoGreen = "#3d6b48";
-  const bg = "#f2ece0";
-  const fg = "#12100a";
+  const heroBuf = readFileSync(join(process.cwd(), "public/images/og-hero.jpg"));
+  const heroSrc = `data:image/jpeg;base64,${heroBuf.toString("base64")}`;
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          backgroundColor: bg,
-          fontFamily: "sans-serif",
-        }}
-      >
-        {/* Logo — large, bleeds slightly off the left edge */}
+      <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", fontFamily: "sans-serif" }}>
+        {/* Photo background — already sized 1200×630 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoSrc}
-          width={500}
-          height={500}
-          alt=""
-          style={{ marginLeft: -20, flexShrink: 0 }}
-        />
+        <img src={heroSrc} width={1200} height={630} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
 
-        {/* Thin vertical divider */}
+        {/* Gradient: transparent left → dark right for text readability */}
         <div
           style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to right, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.72) 100%)",
             display: "flex",
-            width: 3,
-            height: 280,
-            backgroundColor: logoGreen,
-            opacity: 0.2,
-            marginLeft: 52,
-            marginRight: 52,
-            borderRadius: 2,
-            flexShrink: 0,
           }}
         />
 
-        {/* Right: city name block */}
-        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+        {/* Text block — right side */}
+        <div
+          style={{
+            position: "absolute",
+            right: 72,
+            top: 0,
+            bottom: 0,
+            width: 520,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
           <div
             style={{
               display: "flex",
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 800,
-              color: logoCoral,
+              color: "rgba(255,220,180,0.85)",
               textTransform: "uppercase",
-              letterSpacing: "0.18em",
-              marginBottom: 12,
+              letterSpacing: "0.22em",
+              marginBottom: 14,
             }}
           >
             {region.language === "fr" ? "Spéciaux aujourd'hui à" : "Deals on now in"}
@@ -87,9 +72,9 @@ export default async function Image() {
               display: "flex",
               fontSize: cityFontSize,
               fontWeight: 900,
-              color: fg,
-              letterSpacing: -3,
-              lineHeight: 0.88,
+              color: "#ffffff",
+              letterSpacing: -2,
+              lineHeight: 0.9,
             }}
           >
             {cityName}
@@ -98,11 +83,22 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              fontSize: 22,
-              color: logoGreen,
-              fontWeight: 600,
-              marginTop: 20,
-              opacity: 0.8,
+              width: 48,
+              height: 3,
+              backgroundColor: "#e8946a",
+              borderRadius: 2,
+              marginTop: 22,
+              marginBottom: 18,
+            }}
+          />
+
+          <div
+            style={{
+              display: "flex",
+              fontSize: 21,
+              color: "rgba(255,255,255,0.82)",
+              fontWeight: 400,
+              lineHeight: 1.35,
             }}
           >
             {region.language === "fr"
@@ -113,11 +109,10 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              fontSize: 16,
-              color: fg,
-              opacity: 0.28,
-              marginTop: 10,
-              letterSpacing: "0.05em",
+              fontSize: 15,
+              color: "rgba(255,255,255,0.38)",
+              marginTop: 16,
+              letterSpacing: "0.06em",
             }}
           >
             todaystab.com
