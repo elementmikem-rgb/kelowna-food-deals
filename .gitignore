@@ -55,3 +55,11 @@ backups/
 
 # throwaway working data (region-launch venue seed dumps, etc.) -- not source
 /scratch/
+
+# one-off venue audit/cleanup exports and send logs (contain real venue emails) -- not source
+/venue-*.csv
+/duplicate-venues-*.csv
+/city-label-*.csv
+/region-fixes-*.csv
+/no-url-venues.csv
+/send-first-contact-*.log

@@ -305,12 +305,6 @@ const SEED_VENUES: SeedVenue[] = [
     menuUrl: "https://boomerskelowna.com/",
   },
   {
-    name: "Mickie's Pub",
-    address: "2170 Harvey Avenue, Kelowna, BC V1Y 6G8",
-    website: "https://mickiespub.com",
-    menuUrl: "https://mickiespub.com",
-  },
-  {
     name: "The Canadian Brewhouse Kelowna",
     address: "3030 Pandosy Street, Kelowna, BC",
     website: "https://thecanadianbrewhouse.com/locations/kelowna/",
@@ -365,16 +359,60 @@ const SEED_VENUES: SeedVenue[] = [
     menuUrl: "https://bin4burgerlounge.com/locations/kelowna/",
   },
   {
-    name: "Social 242 Lounge & Grill",
-    address: "242 Lawrence Ave, Kelowna, BC V1Y 6L3",
-    website: "https://www.social242.com/",
-    menuUrl: "https://www.social242.com/",
-  },
-  {
     name: "The Coop Wicked Chicken & Bar",
     address: "274 Bernard Avenue, Kelowna, BC V1Y 6N4",
     website: "https://thecoopwickedchicken.com/order-now/kelowna/",
     menuUrl: "https://thecoopwickedchicken.com/order-now/kelowna/",
+  },
+
+  // Kelowna - downtown / waterfront (discovered October 2026)
+  {
+    name: "King Taps Lakeside",
+    address: "1352 Water St, Kelowna, BC",
+    website: "https://kingtaps.com/locations/kelowna/",
+    menuUrl: "https://kingtaps.com/locations/kelowna/",
+  },
+  {
+    name: "RauDZ Regional Table",
+    address: "1560 Water St, Kelowna, BC",
+    website: "https://raudz.com/",
+    menuUrl: "https://raudz.com/",
+  },
+  {
+    name: "Friends of Dorothy",
+    address: "315 Lawrence Ave, Kelowna, BC",
+    website: "https://fodlounge.com/",
+    menuUrl: "https://fodlounge.com/",
+  },
+
+  // Kelowna - North End brewery district (discovered October 2026)
+  {
+    name: "Vice & Virtue Brewing Co.",
+    address: "1033 Richter St, Kelowna, BC V1Y 2K4",
+    website: "https://viceandvirtuebrewing.ca/",
+    menuUrl: "https://viceandvirtuebrewing.ca/",
+  },
+  {
+    name: "Copper Brewing Co.",
+    address: "#102-1851 Kirschner Rd, Kelowna, BC",
+    website: "https://copperbrewingco.com/",
+    menuUrl: "https://copperbrewingco.com/",
+  },
+
+  // Kelowna - South Mission / Lakeshore (discovered October 2026)
+  {
+    name: "Barn Owl Brewing",
+    address: "102-4629 Lakeshore Rd, Kelowna, BC",
+    website: "https://barnowlbrewing.ca/",
+    menuUrl: "https://barnowlbrewing.ca/",
+  },
+
+  // West Kelowna - additional brewery (discovered October 2026)
+  {
+    name: "Lakesider Brewing",
+    address: "835 Anders Rd, West Kelowna, BC",
+    website: "https://lakesiderbrewing.com/",
+    menuUrl: "https://lakesiderbrewing.com/",
   },
 
   // Peachland
