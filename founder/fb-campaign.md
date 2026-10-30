@@ -1,7 +1,7 @@
 # Today's Tab — Facebook Group Campaign Tracker
 
-**Total joined:** ~188 groups · **Campaign-relevant:** ~129 · **Community groups posted:** 21 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~83  
-**Last updated:** 2026-10-28 (full Activity Log audit + 5 new posts)
+**Total joined:** ~198 groups · **Campaign-relevant:** ~139 · **Community groups posted:** 27 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~87  
+**Last updated:** 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
 
 Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule risk`
 
@@ -31,7 +31,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Where To Eat in Kamloops | ✔ POSTED | todaystab.com/kamloops — 2026-10-28 |
-| Kamloops Network | ✅ JOINED | |
+| Kamloops Network | ✅ JOINED | 2026-10-29: shows Joined + post box, no pending banner (likely cleared, confirm when posting) |
 
 ### Penticton
 
@@ -51,13 +51,15 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Victoria, BC Community | ✅ JOINED | |
+| Victoria, BC | ✅ JOINED | Joined 2026-10-29 — 48K |
+| Victoria Buzz | ✅ JOINED | Joined 2026-10-29 — 54K — participation review required before first post; 2026-10-29 'now you can post' notification, likely cleared |
 
 ### Nanaimo
 
 | Group | Status | Notes |
 |-------|--------|-------|
 | Nanaimo Rant & Rave | ✅ JOINED | |
-| WHATS HAPPENING? NANAIMO | ✅ JOINED | |
+| WHATS HAPPENING? NANAIMO | ✔ POSTED | todaystab.com/nanaimo — 2026-10-29 |
 | Nanaimo Raves and Recommendations | ✅ JOINED | |
 
 ### Comox Valley
@@ -72,7 +74,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Sunshine Coast Bulletin Board | ✅ JOINED | |
+| Sunshine Coast Bulletin Board | ✅ JOINED | Stale pending post (Sep 12, old template) deleted 2026-10-29 |
 | Everything Sechelt BC | ✅ JOINED | |
 | Everything Sunshine Coast BC Canada 🇨🇦 | ✅ JOINED | |
 
@@ -82,9 +84,9 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 |-------|--------|-------|
 | EVERYTHING Prince George | ✅ JOINED | |
 | CRANBROOK, BC 🇨🇦 | ✅ JOINED | |
-| Nelson, B.C. | ✅ JOINED | |
-| Whistler Events | ✅ JOINED | |
-| Squamish Rant & Rave | ✅ JOINED | |
+| Nelson, B.C. | ✔ POSTED | todaystab.com/nelson — 2026-10-29 |
+| Whistler Events | ✅ JOINED | Stale pending post (Sep 12, old template) deleted 2026-10-29 |
+| Squamish Rant & Rave | ✔ POSTED | todaystab.com/whistler — 2026-10-29 |
 | Golden BC Free/ Local Buy / Sell / Trade | ✅ JOINED | |
 | Revelstoke Community | ✅ JOINED | |
 
@@ -97,7 +99,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Calgary Food - FoodYYC! A Group for foodies | ✅ JOINED | Joined 2026-10-28 — 159K members — pending approval |
-| Calgary Hub | ✅ JOINED | |
+| Calgary Hub | ✔ POSTED | todaystab.com/calgary — 2026-10-29 (admins approved posting later that day, post should be published) |
 | What's happening in Calgary | ✅ JOINED | |
 | Events in Calgary | ✅ JOINED | |
 | Calgary Rant and Rave | ✅ JOINED | |
@@ -120,27 +122,32 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Edmonton, YOU'VE GOT TO EAT HERE!! | ⚠️ JOINED | Joined 2026-10-28 — 134K — rule: no advertising/promos |
+| Edmonton, YOU'VE GOT TO EAT HERE!! | ⚠️ JOINED | Joined 2026-10-28 — 134K — rule: no advertising/promos. Idea parked 2026-10-29: ask admin for one-time permission (Mike said leave for now) |
 | Edmonton Events | ✅ JOINED | |
 | Events In Edmonton | ✅ JOINED | |
 | Edmonton Hub | ✅ JOINED | |
-| EDMONTON RANT AND RAVE | ✅ JOINED | |
+| EDMONTON RANT AND RAVE | ✔ POSTED | todaystab.com/edmonton — 2026-10-29 (pending admin approval) |
 | Edmonton What's Happening | ✅ JOINED | |
 | North Side Hub (Edmonton) | ✅ JOINED | |
 | Edmonton Community | ✅ JOINED | |
 | Edmonton Chat And Community | ✅ JOINED | |
+| Edmonton Exposed | ✅ JOINED | Joined 2026-10-29 — 11K |
+| St. Albert alberta RANT AND RAVE | ✔ POSTED | todaystab.com/st-albert-spruce-grove — 2026-10-29 (live in feed) |
+| St Albert Chat-Rants And Raves | ⚠️ JOINED — rule risk | Joined 2026-10-29 — 9.2K — rule 1: no promotions or spam, do not post. Idea parked 2026-10-29: ask admin for one-time permission (Mike said leave for now) |
 
 ### Red Deer
 
 | Group | Status | Notes |
 |-------|--------|-------|
 | Red Deer community | ✅ JOINED | |
+| Rants and Raves Red Deer | ⚠️ JOINED — rule risk, do not post | Joined 2026-10-29 — 58K. Rules read 2026-10-30: rule 4 bans unapproved business advertisements, rule 5 no using raves to advertise, rule 6 businesses may not post ads (use admin-contact page). Skip |
 
 ### Lethbridge
 
 | Group | Status | Notes |
 |-------|--------|-------|
 | What's Going On In Lethbridge and Area | ✅ JOINED | |
+| What's Going On In Lethbridge | ✅ JOINED | Joined 2026-10-29 — 73K |
 
 ---
 
@@ -151,8 +158,10 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Penny Pinchers Winnipeg | ✅ JOINED | Joined 2026-10-28 — 129K members — pending approval |
-| Support Local Business Winnipeg | ✅ JOINED | |
+| Support Local Business Winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-10-29 (live in feed; group About welcomes promotion) |
 | savemoneyinwinnipeg | ✅ JOINED | |
+| people of winnipeg | ✅ JOINED | Joined 2026-10-29 — 35K |
+| Winnipeg Events - What to do in and around Winnipeg, Manitoba | ✅ JOINED | Joined 2026-10-29 — 3.9K |
 
 ---
 
@@ -165,6 +174,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | REGINA Takeout | ✔ POSTED | todaystab.com/regina — 2026-10-28 |
 | What's happening Regina?!!!! | ✅ JOINED | |
 | Support Local Business Regina | ✅ JOINED | |
+| Rant And Rave Regina | ✅ JOINED — ready to post | Joined 2026-10-29 — 20.8K. Rules read 2026-10-30: no racism, no asking for stuff, no promo ban. Post drafted 2026-10-30 but Facebook rate limit hit before it went out (NOT posted). Retry another day |
 
 ### Saskatoon
 
@@ -261,8 +271,8 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Windsor Food Spotters - UNRESTRICTED | ❌ REMOVED | Posted .ca URL (todaystab.ca/windsor-essex) — removed by group admin — 2026-10-28 |
-| Windsor's Finest Food and Eateries - UNRESTRICTED | ✅ JOINED | |
+| Windsor Food Spotters - UNRESTRICTED | ✔ POSTED (re-post) | 2026-10-28 post with .ca URL was removed by admin; reposted 2026-10-29 with todaystab.com/windsor-essex, live in feed, recheck it is not removed again |
+| Windsor's Finest Food and Eateries - UNRESTRICTED | ✔ POSTED | todaystab.com/windsor-essex — 2026-10-30 (live in feed "Just now", 35.4K members; About: FREE advertising for local businesses) |
 
 ### Sudbury & Northern Ontario
 
@@ -302,7 +312,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Local Moncton Events | ✅ JOINED | |
+| Local Moncton Events | ✔ POSTED | todaystab.com/moncton — 2026-10-29 (live in feed) |
 
 ---
 
