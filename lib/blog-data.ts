@@ -99,17 +99,15 @@ export const BLOG_POSTS: BlogPost[] = [
 <strong>Turtle Jack's</strong> (West Kelowna) -- 1 lb of wings for $13.99, paired with a $6 Molson Canadian or Coors Light.</p>
 <h2>Wednesday -- the busiest wing night in town</h2>
 <p><strong>Baxter's Bar &amp; Grill</strong> (Spall Rd) -- $0.35 per wing, the lowest per-wing price we've confirmed anywhere in Kelowna.<br>
-<strong>Mickie's Pub</strong> (Harvey Ave) -- $0.50 per wing.<br>
 <strong>McCulloch Station Pub</strong> -- $6 per dozen.<br>
 <strong>WINGS Rutland</strong> -- $12 all day (same deal as Sunday).<br>
 <strong>Tonics Pub</strong> (Ellis St) -- $10 per pound.<br>
 <strong>Train Station Pub</strong> (Ellis St) -- half-price wings.<br>
 <strong>Creekside Pub &amp; Grill</strong> -- $5 off a pound of wings.</p>
 <h2>Whenever (no set day confirmed)</h2>
-<p><strong>Boomers Bar &amp; Grill</strong> -- wings by the pound at $5.<br>
-<strong>Mickie's Pub</strong> also runs a standing wing discount outside Wednesdays -- worth calling ahead to confirm which night.</p>
+<p><strong>Boomers Bar &amp; Grill</strong> -- wings by the pound at $5.</p>
 <h2>The pattern worth noticing</h2>
-<p>Wednesday is, by a wide margin, Kelowna's real wing night -- seven of the eleven wing specials we've verified land on a Wednesday. If you're planning around price alone, Baxter's $0.35/wing Wednesday is the cheapest confirmed deal in the city; if you want volume, Tonics' $10/lb or Turtle Jack's $13.99/lb (paired with a cheap beer) go further per dollar for a group.</p>
+<p>Wednesday is, by a wide margin, Kelowna's real wing night -- six of the ten wing specials we've verified land on a Wednesday. If you're planning around price alone, Baxter's $0.35/wing Wednesday is the cheapest confirmed deal in the city; if you want volume, Tonics' $10/lb or Turtle Jack's $13.99/lb (paired with a cheap beer) go further per dollar for a group.</p>
 <p>Prices and days shift without notice -- that's true everywhere, not just here. Check the <a href="/?category=wing_night">live wing night list</a> before you go; it updates as soon as we catch a change.</p>
 `,
   },
@@ -122,12 +120,11 @@ export const BLOG_POSTS: BlogPost[] = [
       "Confirmed Kelowna food and drink specials under $10 -- real prices from real venues, not a generic 'budget dining' listicle.",
     publishedAt: "2026-07-18",
     excerpt:
-      "We filtered every verified special on this site down to $10 or less. Twenty of them held up. Here's what's actually worth the trip.",
+      "We filtered every verified special on this site down to $10 or less. Here's what held up and what's actually worth the trip.",
     contentHtml: `
 <p>"Budget dining guide" posts are usually just restaurant names with no prices attached, because nobody actually checked. We did the opposite: we filtered our full database down to specials confirmed at $10 or under, and kept only the ones we can point to a real source for.</p>
 <h2>Under $5</h2>
 <p><strong>Baxter's Bar &amp; Grill</strong> -- $0.35 wings, Wednesdays.<br>
-<strong>Mickie's Pub</strong> -- $0.50 wings.<br>
 <strong>Baxter's Bar &amp; Grill</strong> -- Friday tacos at $2 each.<br>
 <strong>Erica Jane</strong> -- $2 oysters, Thursdays, alongside sociable plates and rotating live music.<br>
 <strong>Kelly O'Bryan's</strong> -- $3.50 Power Hour drinks.<br>
