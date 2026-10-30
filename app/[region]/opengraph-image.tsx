@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { ImageResponse } from "next/og";
 import { getCurrentRegion } from "@/lib/regions";
+import { cityFromBrand } from "@/lib/venue-card";
 
 export const alt = "Food & drink deals today";
 export const size = { width: 1200, height: 630 };
@@ -10,10 +11,7 @@ export const contentType = "image/png";
 export default async function Image() {
   const region = await getCurrentRegion();
 
-  const cityName = region.brandName
-    .replace(/ Food Deals$/, "")
-    .replace(/ Spéciaux alimentaires$/, "")
-    .trim();
+  const cityName = cityFromBrand(region.brandName);
 
   const cityFontSize =
     cityName.length > 22 ? 54 :

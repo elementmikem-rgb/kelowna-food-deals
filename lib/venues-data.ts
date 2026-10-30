@@ -1,5 +1,5 @@
 import { db, venues, specials, events, venuePhotos, menuItems } from "@/db";
-import { and, desc, eq, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, isNotNull, or, gte, sql } from "drizzle-orm";
 import type { SpecialWithVenue, PreviousSpecial } from "./data";
 import { attachNextGames } from "./game-day";
 import type { EventWithVenue } from "./events-data";
@@ -206,4 +206,19 @@ export async function getVenueEvents(venueId: number, timezone: string): Promise
   // See lib/time.ts's toDateOrNull comment -- lastConfirmedAt is a raw SQL
   // subquery, so the driver hands it back as a plain string, not a real Date.
   return rows.map((r) => ({ ...r, lastConfirmedAt: toDateOrNull(r.lastConfirmedAt) })) as EventWithVenue[];
+}
+
+// Background for a venue's share card (the og:image). Owner and Google photos only: visitor
+// submissions are mostly menus and signage, which make a poor card background.
+export async function getVenueCardPhoto(venueId: number): Promise<{ photoData: string } | null> {
+  const rows = await db
+    .select({ photoData: venuePhotos.photoData })
+    .from(venuePhotos)
+    .where(and(eq(venuePhotos.venueId, venueId), inArray(venuePhotos.source, ["owner", "google"])))
+    .orderBy(
+      sql`case ${venuePhotos.source} when 'owner' then 0 else 1 end`,
+      desc(venuePhotos.createdAt)
+    )
+    .limit(1);
+  return rows[0] ?? null;
 }
