@@ -2,6 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
+
+function MessageBody({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const { main, quoted } = splitQuoted(text);
+  return (
+    <>
+      <p className="text-sm text-muted whitespace-pre-wrap break-words">{main}</p>
+      {quoted && (
+        <div className="mt-1">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs text-muted-2 hover:text-muted"
+          >
+            {expanded ? 'Hide quoted text' : '···'}
+          </button>
+          {expanded && (
+            <div className="mt-2 pl-3 border-l-2 border-border">
+              <p className="text-xs text-muted-2 whitespace-pre-wrap break-words">
+                {stripQuotePrefix(quoted)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
 
 interface Message {
   id: string;
@@ -304,7 +332,7 @@ export function InboxThread({ venueId, displayName, contactEmail, archived, mess
                 dangerouslySetInnerHTML={{ __html: m.bodyHtml }}
               />
             ) : (
-              <p className="text-sm text-muted whitespace-pre-wrap break-words">{m.bodyText}</p>
+              m.bodyText ? <MessageBody text={m.bodyText} /> : null
             )}
             {m.attachments.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-1">
