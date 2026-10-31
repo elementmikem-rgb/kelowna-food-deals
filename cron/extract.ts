@@ -248,6 +248,26 @@ export interface ExtractionOutcome {
 const DISCOUNT_SIGNAL =
   /(\$|%|½|\b1\/2\b|\boff\b|\bfree\b|\bhalf\b|\bbogo\b|\bbuy one\b|\bdiscount(ed)?\b|\bdeal\b|\b2[\s-]?(for|pour)[\s-]?1\b|\bgratuit(e|s|es)?\b|\brabais\b|\br[ée]duit(e|s|es)?\b|\br[ée]duction\b|\bmoiti[ée] prix\b|\baubaine\b|\bsp[ée]cial\b|\bpromo(tion)?\b)/i;
 
+// Seen live on Fox'n Hounds Pub (2026-10-26): the page lists "MONDAY 1/2 PRICE CHICKEN WINGS
+// (3PM-CLOSE)" and, on the next line, "$1 OFF <beer> PINTS". The model quoted
+// "monday 1/2 price chicken wings (3pm-close) $1 off" -- gluing the pint line's "$1 off" onto
+// the wings -- and saved wings as "$1 off". The verbatim-substring check can't catch this,
+// because the glued quote really does appear in the page text. So: when the quote LEADS with a
+// half-price phrase and a "$N off" / "N% off" phrase follows it, the saved title/description
+// must not carry the "$ off" without also saying half price. Narrow on purpose: quotes that
+// legitimately hold two deals but whose saved text still says half price ("1/2 price wings $5
+// off beer buckets"), and half-litre wording ("$7 off 1/2 l"), are kept.
+const HALF_PRICE_PHRASE = /(½\s*price|\b1\/2\s*-?\s*price\b|\bhalf[\s-]*priced?\b|\bmoiti[ée] prix\b)/i;
+const AMOUNT_OFF_PHRASE = /(\$\s?\d+(\.\d+)?\s*off\b|\b\d+\s?%\s*off\b)/i;
+
+export function swapsInTrailingDiscount(quote: string, title: string, description: string | null): boolean {
+  const half = quote.search(HALF_PRICE_PHRASE);
+  const amount = quote.search(AMOUNT_OFF_PHRASE);
+  if (half < 0 || amount < 0 || amount < half) return false;
+  const saved = `${title} ${description ?? ""}`;
+  return AMOUNT_OFF_PHRASE.test(saved) && !HALF_PRICE_PHRASE.test(saved);
+}
+
 function collapseWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -493,6 +513,12 @@ export function verifyExtraction(toolInput: unknown, haystack: string): Verified
     if (!haystack.includes(quote)) {
       console.warn(
         `dropped special "${s.title}": evidence_quote not found verbatim in source text`
+      );
+      continue;
+    }
+    if (swapsInTrailingDiscount(quote, s.title, s.description)) {
+      console.warn(
+        `dropped special "${s.title}": evidence_quote leads with a half-price phrase but the saved text says "$ off" (the next line's discount) ("${s.evidence_quote}")`
       );
       continue;
     }

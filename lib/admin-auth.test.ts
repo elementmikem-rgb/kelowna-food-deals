@@ -26,7 +26,10 @@ describe("verifyAdminCookie", () => {
     const [payload, sig] = [good.slice(0, good.lastIndexOf(".")), good.slice(good.lastIndexOf(".") + 1)];
     const forged = b64url(JSON.stringify({ sid: "x", exp: Date.now() + 1e9 }));
     expect(await verifyAdminCookie(`${forged}.${sig}`)).toBe(false);
-    expect(await verifyAdminCookie(`${payload}.${sig.slice(0, -1)}0`)).toBe(false);
+    // Change the last hex digit to a DIFFERENT one (a fixed "0" would leave the signature
+    // untouched about 1 time in 16 and make this assertion flaky).
+    const flipped = sig.endsWith("0") ? "1" : "0";
+    expect(await verifyAdminCookie(`${payload}.${sig.slice(0, -1)}${flipped}`)).toBe(false);
   });
 
   it("rejects a cookie signed with a different secret", async () => {
