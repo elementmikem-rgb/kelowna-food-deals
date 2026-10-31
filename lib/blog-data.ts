@@ -211,7 +211,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     excerpt:
       "The lowest confirmed Kelowna happy hour drink price on October 31, 2026 is $3.50, and 14 venues run a second window after 8 PM.",
     contentHtml: `
-<p>Quick answer: most Kelowna happy hours run 2 to 5&nbsp;PM or 3 to 6&nbsp;PM, and 14 venues add a second window after 8&nbsp;PM. Confirmed prices start at $3.50 for a highball or a draft beer. The North End brewery district and downtown (Water Street and Bernard Avenue) hold the most spots. This guide covers 22 venues TodaysTab re-checked in the last 45 days.</p>
+<p>Quick answer: most Kelowna happy hours run 2 to 5&nbsp;PM or 3 to 6&nbsp;PM, and 14 venues in our data add a second window after 8&nbsp;PM. Confirmed prices start at $3.50 for a highball or a draft beer. The North End brewery district and downtown (Water Street and Bernard Avenue) hold the most spots. This guide covers 22 venues TodaysTab re-checked in the last 45 days.</p>
 <p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
 
 <table>
@@ -219,25 +219,25 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <tr><th>Venue</th><th>Deal</th><th>Days and times</th><th>Price</th><th>Neighbourhood</th></tr>
 </thead>
 <tbody>
-<tr><td><a href="/kelowna/venues/22">Kelly O'Bryan's &amp; Carlos O'Bryan's</a></td><td>Power Hour single highballs and select shots</td><td>Daily, 8 to 9&nbsp;PM</td><td>$3.50</td><td>Downtown (Bernard Ave)</td></tr>
-<tr><td><a href="/kelowna/venues/280">Packing House Pub</a></td><td>12&nbsp;oz draft beer and shots</td><td>Daily, 9&nbsp;PM to close</td><td>$3.50</td><td>Northeast Kelowna</td></tr>
-<tr><td><a href="/kelowna/venues/132">Original Joe's Kelowna</a></td><td>Blonde lager, house wine, well highballs</td><td>Daily, 4 to 5&nbsp;PM</td><td>From $3.75</td><td>Pandosy</td></tr>
-<tr><td><a href="/kelowna/venues/150">Pretty Not Bad</a></td><td>House wine, house beer, single highball</td><td>Daily, 4 to 5&nbsp;PM</td><td>$3.88</td><td>North End</td></tr>
+<tr><td><a href="/kelowna/venues/22">Kelly O'Bryan's &amp; Carlos O'Bryan's</a></td><td>Power Hour single highballs and select shots</td><td>Tue and Sun, 8 to 9&nbsp;PM</td><td>$3.50</td><td>Downtown (Bernard Ave)</td></tr>
+<tr><td><a href="/kelowna/venues/280">Packing House Pub</a></td><td>12&nbsp;oz draft beer and shots</td><td>Daily, 9&nbsp;PM to close</td><td>$3.50</td><td>Rutland</td></tr>
+<tr><td><a href="/kelowna/venues/132">Original Joe's Kelowna</a></td><td>Blonde lager, house wine, well highballs</td><td>Daily, 4 to 5&nbsp;PM and 8 to 9&nbsp;PM</td><td>From $3.75</td><td>Pandosy</td></tr>
+<tr><td><a href="/kelowna/venues/150">Pretty Not Bad</a></td><td>House wine, house beer, single highball</td><td>Daily, 4 to 5&nbsp;PM</td><td>About $3.88</td><td>North End</td></tr>
 <tr><td><a href="/kelowna/venues/135">The Canadian Brewhouse</a></td><td>315&nbsp;ml Bud Light stein, appetizers</td><td>Mon to Sat, 2 to 6&nbsp;PM and from 9&nbsp;PM</td><td>$3.99</td><td>Pandosy</td></tr>
 <tr><td><a href="/kelowna/venues/31">BNA Brewing Co. &amp; Eatery</a></td><td>BNA Lite and XPA</td><td>Daily, 4 to 6&nbsp;PM</td><td>$5.49</td><td>North End</td></tr>
 <tr><td><a href="/kelowna/venues/155">The Office Brewery</a></td><td>16&nbsp;oz draught beer</td><td>Mon to Fri, 2 to 5&nbsp;PM</td><td>$5.00</td><td>North End</td></tr>
 <tr><td><a href="/kelowna/venues/17">Freddy's Brewpub</a></td><td>14&nbsp;oz No Pants Pilsner</td><td>Sun and Tue to Sat, 3 to 6&nbsp;PM</td><td>$5.00</td><td>Rutland</td></tr>
 <tr><td><a href="/kelowna/venues/158">Rustic Reel Brewing Company</a></td><td>5&nbsp;oz house wine, single highball</td><td>Sun and Wed to Sat, 3 to 5&nbsp;PM</td><td>$5.00</td><td>North End</td></tr>
-<tr><td><a href="/kelowna/venues/3">Earls Kelowna</a></td><td>Oysters on the half shell</td><td>Daily, 3 to 6&nbsp;PM</td><td>$3.50 each</td><td>Downtown (Bernard Ave)</td></tr>
+<tr><td><a href="/kelowna/venues/3">Earls Kelowna</a></td><td>Oysters on the half shell</td><td>Daily, 3 to 6&nbsp;PM</td><td>$3.50</td><td>Downtown (Bernard Ave)</td></tr>
 </tbody>
 </table>
 
-<p>Kelowna became Canada's first UNESCO Creative City of Gastronomy in 2025, according to <a href="https://www.tourismkelowna.com/explore/city-of-gastronomy/">Tourism Kelowna</a> and the <a href="https://www.kelowna.ca/node/571888">City of Kelowna</a>. According to TodaysTab's checks on October 31, 2026, 76 of the 119 active venues in our Kelowna database have at least one special with a stated day or time window, confidence of 0.7 or higher, and a verification date within 45 days. Of those, 59 run a happy hour. Of the 50 with a stated afternoon window, 17 use 2 to 5&nbsp;PM as their main window and 11 use 3 to 6&nbsp;PM. As of October 31, 2026, 14 venues run a happy hour that starts at 8&nbsp;PM or later, and the lowest confirmed drink price is $3.50 at two of them.</p>
+<p>Kelowna became Canada's first UNESCO Creative City of Gastronomy in 2025, according to <a href="https://www.tourismkelowna.com/explore/city-of-gastronomy/">Tourism Kelowna</a> and the <a href="https://www.kelowna.ca/node/571888">City of Kelowna</a>. According to TodaysTab's checks on October 31, 2026, 76 of the 119 active venues in our Kelowna database have at least one special with a stated day or time window, confidence of 0.7 or higher, and a verification date within 45 days. Of those, 59 run a happy hour. Of the 50 with a stated afternoon window, 17 use 2 to 5&nbsp;PM as their main window and 11 use 3 to 6&nbsp;PM. As of October 31, 2026, 14 venues in our data run a happy hour that starts at 8&nbsp;PM or later, and the lowest confirmed drink price is $3.50, at Packing House Pub daily and Kelly O'Bryan's on Tuesdays and Sundays.</p>
 
 <h2>North End brewery district</h2>
 <p>Ellis Street, Clement Avenue and Vaughan Avenue north of downtown form the city's densest cluster of breweries and brewpubs, all within a few blocks of each other.</p>
 <p><strong><a href="/kelowna/venues/31">BNA Brewing Co. &amp; Eatery (1250 Ellis St)</a></strong> runs the longest daily menu on this list. From 4 to 6&nbsp;PM every day: $5.49 BNA Lite and XPA, $5.99 other BNA beer, $6.99 for a 5&nbsp;oz glass of wine, $9.99 for an Old Fashioned, Negroni or Moscow Mule, $13 buffalo wings and $6 bang bang shrimp tacos. A Super Save Hour from 5 to 6&nbsp;PM adds $5 beers and $10 small plates. On Fridays from 9&nbsp;PM, single highballs and rotating shots are $4.99 and double highballs are $8.99.</p>
-<p><strong><a href="/kelowna/venues/150">Pretty Not Bad (740 Clement Ave)</a></strong> keeps a one-hour window, 4 to 5&nbsp;PM daily, with a flat $3.88 on a 5&nbsp;oz house red or white, a 12&nbsp;oz house lager, hazy or sour, and a 1&nbsp;oz single highball. A $12 smash burger is on the same hour.</p>
+<p><strong><a href="/kelowna/venues/150">Pretty Not Bad (740 Clement Ave)</a></strong> keeps a one-hour window, 4 to 5&nbsp;PM daily, with a flat price on a 5&nbsp;oz house red or white, a 12&nbsp;oz house lager, hazy or sour, and a 1&nbsp;oz single highball: about $3.88 as recorded on October 27, 2026, though the restaurant's OpenTable page has listed $3.33, so confirm before you go. A $12 smash burger is on the same hour.</p>
 <p><strong><a href="/kelowna/venues/155">The Office Brewery (890 Clement Ave)</a></strong> runs 2 to 5&nbsp;PM Monday to Friday: $5 for a 16&nbsp;oz draught beer, $7 for a 20&nbsp;oz, $7 for a 6&nbsp;oz glass of rotating VQA wine and $10 for a Spicy Pineapple Margarita. Mondays and Tuesdays also have half-price bottles of wine, with no time window stated.</p>
 <p><strong><a href="/kelowna/venues/158">Rustic Reel Brewing Company (760 Vaughan Ave)</a></strong> is a taproom with a 3 to 5&nbsp;PM happy hour on Sunday and Wednesday to Saturday. A 16&nbsp;oz craft beer is $7, a 5&nbsp;oz house wine and a 1&nbsp;oz single highball are $5 each, a pitcher is $15 and a basket of potatoes, cauliflower or chips is $4.</p>
 
@@ -247,29 +247,29 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p><strong><a href="/kelowna/venues/26">OAK + CRU Social Kitchen &amp; Wine Bar (1310 Water St)</a></strong> runs 3 to 5&nbsp;PM daily: $12 for an Aperol spritz, Old Fashioned, margarita or Negroni, $9 for a 5&nbsp;oz barrel-to-tap wine and $1 off every beer tap.</p>
 <p><strong><a href="/kelowna/venues/139">Match Eatery &amp; Public House (1300 Water St)</a></strong> runs 3 to 5:30&nbsp;PM daily with $2 off a 16&nbsp;oz craft beer, $1 off well highballs and a $6.95 car hop slider. Wednesday is half-price wine in any size, excluding bubbles.</p>
 <p><strong><a href="/kelowna/venues/37">Skinny Duke's Glorious Emporium (1481 Water St)</a></strong> has a 5 to 6&nbsp;PM window daily: $5.99 for Coors Original on tap or a Miller High Life, $9.99 for an Aperol Spritz, Old Fashioned, Negroni or Moscow Mule, and $7.99 for a 5&nbsp;oz Hester Creek Pinot Gris.</p>
-<p><strong><a href="/kelowna/venues/3">Earls Kelowna (211 Bernard Ave)</a></strong> runs 3 to 6&nbsp;PM daily. Oysters on the half shell are $3.50 each, fries are $5, and Rascal wine, sangria and the nitro espresso martini are half price.</p>
-<p><strong><a href="/kelowna/venues/22">Kelly O'Bryan's &amp; Carlos O'Bryan's (262 Bernard Ave)</a></strong> has two daily windows. From 2 to 5&nbsp;PM: $6.25 single highballs and 16&nbsp;oz domestic draft, $7.75 for a 9&nbsp;oz house wine, $8.75 for a 20&nbsp;oz Irish pint and $9.25 for double highballs. From 8 to 9&nbsp;PM the Power Hour drops single highballs and select shots to $3.50 and domestic sleeves to $4.</p>
-<p><strong><a href="/kelowna/venues/35">Leopold's Tavern (279 Bernard Ave)</a></strong> owns the latest window on the list. From 11&nbsp;PM daily, a 20&nbsp;oz pint of Leo's Lager and a Leo's Island Iced Tea are $5 each, and a Smash Burger Jr. is $5.</p>
-<p><strong><a href="/kelowna/venues/433">Room 272 (Bernard Ave)</a></strong> runs happy hour all day on Sundays. On Mondays, 3 to 5&nbsp;PM brings a $10 Aperol Spritz, Old Fashioned or classic margarita, $15 fish and chips and $5 mixed fries, and a second window runs 10 to 11&nbsp;PM.</p>
-<p><strong><a href="/kelowna/venues/33">Erica Jane (1187 Sunset Dr)</a></strong> lists a 2 to 5&nbsp;PM happy hour every day, plus 9 to 11&nbsp;PM Monday to Wednesday and 11&nbsp;AM to 11&nbsp;PM on Mondays. Thursday from 6 to 9&nbsp;PM, oysters are $2. We have no confirmed prices for its regular happy hour.</p>
+<p><strong><a href="/kelowna/venues/3">Earls Kelowna (211 Bernard Ave)</a></strong> runs 3 to 6&nbsp;PM daily. Oysters on the half shell are $3.50 on the happy hour menu according to TodaysTab's October 27 check, so confirm the unit with the restaurant. Fries are $5, and Rascal wine, sangria and the nitro espresso martini are half price.</p>
+<p><strong><a href="/kelowna/venues/22">Kelly O'Bryan's &amp; Carlos O'Bryan's (262 Bernard Ave)</a></strong> has a daily 2 to 5&nbsp;PM window and a Power Hour on Tuesdays and Sundays. From 2 to 5&nbsp;PM: $6.25 single highballs and 16&nbsp;oz domestic draft, $7.75 for a 9&nbsp;oz house wine, $8.75 for a 20&nbsp;oz Irish pint and $9.25 for double highballs. On Tuesdays and Sundays, from 8 to 9&nbsp;PM, the Power Hour drops single highballs and select shots to $3.50 and domestic sleeves to $4 (per our October 27 check; the pub's site also lists a late-night happy hour from 9&nbsp;PM to close daily).</p>
+<p><strong><a href="/kelowna/venues/35">Leopold's Tavern (279 Bernard Ave)</a></strong> owns the latest window on the list. According to TodaysTab's October 27 check, from 11&nbsp;PM daily, a 20&nbsp;oz pint of Leo's Lager and a Leo's Island Iced Tea are $5 each, and a Smash Burger Jr. is $5.</p>
+<p><strong><a href="/kelowna/venues/433">Room 272 (Bernard Ave, no street number listed)</a></strong> runs happy hour all day on Sundays, and its site lists happy hour Thursday to Monday. On Mondays, 3 to 5&nbsp;PM brings a $10 Aperol Spritz, Old Fashioned or classic margarita, $15 fish and chips and $5 mixed fries, and a second window runs 10 to 11&nbsp;PM.</p>
+<p><strong><a href="/kelowna/venues/33">Erica Jane (1187 Sunset Dr)</a></strong> lists a 2 to 5&nbsp;PM happy hour every day, plus 9 to 11&nbsp;PM Monday to Wednesday and 11&nbsp;AM to 11&nbsp;PM on Mondays. Thursday from 6 to 9&nbsp;PM, oysters are $2. These times are from TodaysTab's October check, and we have no confirmed prices for its regular happy hour.</p>
 
-<h2>Pandosy Village and Lakeshore</h2>
+<h2>Pandosy, Lakeshore and the Lower Mission</h2>
 <p>South of downtown, Pandosy Street and Lakeshore Road lead toward the Mission, with a mix of neighbourhood restaurants and lake-side pubs.</p>
 <p><strong><a href="/kelowna/venues/135">The Canadian Brewhouse (3030 Pandosy St)</a></strong> runs Monday to Saturday, 2 to 6&nbsp;PM and again from 9&nbsp;PM. A 315&nbsp;ml Bud Light stein is $3.99, highballs and Fireball are $4.99, a 6&nbsp;oz house wine is $5.99 and an espresso martini is $9.99. Tuesday tacos are $3.99 each.</p>
-<p><strong><a href="/kelowna/venues/132">Original Joe's Kelowna (2728 Pandosy St)</a></strong> runs a Power Hour from 4 to 5&nbsp;PM daily with blonde lager, house wine and well highballs from $3.75. Tuesday adds half-price wings after 2&nbsp;PM.</p>
-<p><strong><a href="/kelowna/venues/19">Hotel Eldorado Kelowna (500 Cook Rd)</a></strong> runs 3 to 5&nbsp;PM daily. A 12&nbsp;oz Miller High Life is $6, White Claw is $5, Heirloom red or white wine is $6, a Le Cinq Sink Rose is $9 and a sangria pitcher is $25.</p>
+<p><strong><a href="/kelowna/venues/132">Original Joe's Kelowna (2728 Pandosy St)</a></strong> runs a Power Hour twice daily, 4 to 5&nbsp;PM and 8 to 9&nbsp;PM, with blonde lager, house wine and well highballs from $3.75. Tuesday adds half-price wings after 2&nbsp;PM.</p>
+<p><strong><a href="/kelowna/venues/19">Hotel Eldorado Kelowna (500 Cook Rd, on the lake south of KLO Rd)</a></strong> lists a 3 to 5&nbsp;PM daily happy hour in TodaysTab's October checks, and the hotel's own site links a happy hour menu, so confirm before you go. In that check, a 12&nbsp;oz Miller High Life is $6, White Claw is $5, Heirloom red or white wine is $6, a Le Cinq Sink Rose is $9 and a sangria pitcher is $25.</p>
 <p><strong><a href="/kelowna/venues/36">Creekside Pub &amp; Grill (3929 Lakeshore Rd)</a></strong> rotates a different deal each day, with no times stated. Sunday has $9.50 double Caesars and $6 house wine. Monday and Tuesday have $5 domestic bottles and $5.50 craft sleeves. Wednesday has $5 bottles and $5 off a pound of wings. Saturday has $5 off bottles of wine and double Long Islands for about $9.</p>
 
-<h2>Rutland and northeast Kelowna</h2>
-<p>Inland and east of Highway 97, these pubs serve neighbourhoods that rarely appear on downtown lists.</p>
-<p><strong><a href="/kelowna/venues/17">Freddy's Brewpub (948 McCurdy Rd)</a></strong> runs 3 to 6&nbsp;PM Sunday and Tuesday to Saturday: $5 for a 14&nbsp;oz No Pants Pilsner, $6 for a 5&nbsp;oz house wine, $5.50 for a 1&nbsp;oz highball, $7.50 for a Caesar and $8 for a single smashburger. Wings are $10 on Sundays and Thursdays after 3&nbsp;PM.</p>
+<h2>Rutland</h2>
+<p>Inland and east of Highway 97, these pubs serve a neighbourhood that rarely appears on downtown lists.</p>
+<p><strong><a href="/kelowna/venues/17">Freddy's Brewpub (948 McCurdy Rd)</a></strong> lists a 3 to 6&nbsp;PM happy hour Sunday and Tuesday to Saturday in TodaysTab's October checks (its own website does not show one, so call ahead): $5 for a 14&nbsp;oz No Pants Pilsner, $6 for a 5&nbsp;oz house wine, $5.50 for a 1&nbsp;oz highball, $7.50 for a Caesar and $8 for a single smashburger. Wings are $10 on Sundays and Thursdays after 3&nbsp;PM.</p>
 <p><strong><a href="/kelowna/venues/280">Packing House Pub (663 Finns Rd)</a></strong> has a late-night happy hour from 9&nbsp;PM to close every day: $3.50 for a 12&nbsp;oz draft beer, $3.50 for lemon drop and Burt Reynolds shots, $1 off house wine and 25% off snacks and shares. Wednesdays bring half-price wings from 4&nbsp;PM.</p>
 
 <h2>West Kelowna</h2>
 <p>Across the William R. Bennett Bridge, the Highway 97 and Main Street corridors hold several pubs with steady afternoon windows.</p>
-<p><strong><a href="/kelowna/venues/82">Whiski-Jack's Pins &amp; Pints (525 BC-97 #620)</a></strong> runs 2 to 5&nbsp;PM daily: $1 off 16&nbsp;oz draft, $2 off double highballs, a $5 flat top beef taco, a $9 hot honey pizza and $7 garlic parm fries.</p>
-<p><strong><a href="/kelowna/venues/40">Sammy J's Grill &amp; Bar (190-525 Hwy 97)</a></strong> runs 3 to 6&nbsp;PM daily with a 14&nbsp;oz Sammy's Lager for $5 and an 18&nbsp;oz pint for $6. Wednesdays take $5 off wings.</p>
-<p><strong><a href="/kelowna/venues/222">WINGS West Kelowna (#1-2484 Main St)</a></strong> runs its Happiest Hours from 2 to 6&nbsp;PM Monday to Saturday: a $9 Mule, $12 wings and fries and $7 country-style perogies. Sundays have a $12 wings special.</p>
+<p><strong><a href="/kelowna/venues/82">Whiski-Jack's Pins &amp; Pints (525 BC-97 #620)</a></strong> lists a 2 to 5&nbsp;PM daily happy hour in TodaysTab's October check (the venue's site says only that drinks are on special every day): $1 off 16&nbsp;oz draft, $2 off double highballs, a $5 flat top beef taco, a $9 hot honey pizza and $7 garlic parm fries.</p>
+<p><strong><a href="/kelowna/venues/40">Sammy J's Grill &amp; Bar (190-525 Hwy 97)</a></strong> lists a 3 to 6&nbsp;PM daily happy hour in TodaysTab's October check, with a 14&nbsp;oz Sammy's Lager for $5 and an 18&nbsp;oz pint for $6. Wednesdays take $5 off wings.</p>
+<p><strong><a href="/kelowna/venues/222">WINGS West Kelowna (#1-2484 Main St)</a></strong> lists Happiest Hours from 2 to 6&nbsp;PM Monday to Saturday in TodaysTab's October 27 check, so call to confirm: a $9 Mule, $12 wings and fries and $7 country-style perogies. Sundays have a $12 wings special.</p>
 
 <h2>What's not on this list</h2>
 <p>Competitor guides name several places we cannot confirm. Table Nineteen and Shore Line Brewing appear on other lists but are not in our database, so we have no verified data on them. Red Bird Brewing is in our database with no confirmed special. Baxter's Bar &amp; Grill, The Landing Kitchen + Bar and Wildling are tracked, but their specials were last verified more than 45 days ago, so we left them out. Social 242 Lounge and Grill and Mickie's Pub have closed permanently, and some older guides still list them.</p>
@@ -278,13 +278,13 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <h3>What time is happy hour in Kelowna?</h3>
 <p>Most Kelowna happy hours run 2 to 5&nbsp;PM or 3 to 6&nbsp;PM. According to TodaysTab's checks on October 31, 2026, 2 to 5&nbsp;PM is the most common main window, used by 17 of the 50 venues with a stated afternoon window. Fourteen venues also run a second window starting at 8&nbsp;PM or later.</p>
 <h3>Where is the cheapest happy hour in Kelowna?</h3>
-<p>The lowest confirmed drink price is $3.50. Kelly O'Bryan's at 262 Bernard Ave charges it for single highballs and select shots from 8 to 9&nbsp;PM, and Packing House Pub at 663 Finns Rd charges it for a 12&nbsp;oz draft beer from 9&nbsp;PM to close. Original Joe's follows at $3.75 from 4 to 5&nbsp;PM.</p>
+<p>The lowest confirmed drink price is $3.50. Kelly O'Bryan's at 262 Bernard Ave charges it for single highballs and select shots from 8 to 9&nbsp;PM on Tuesdays and Sundays, and Packing House Pub at 663 Finns Rd charges it for a 12&nbsp;oz draft beer from 9&nbsp;PM to close. Original Joe's follows at $3.75 from 4 to 5&nbsp;PM.</p>
 <h3>Which Kelowna bars have a late-night happy hour?</h3>
 <p>Fourteen venues start a happy hour at 8&nbsp;PM or later, including BNA Brewing on Fridays from 9&nbsp;PM, The Canadian Brewhouse from 9&nbsp;PM Monday to Saturday, Packing House Pub from 9&nbsp;PM daily and Leopold's Tavern from 11&nbsp;PM daily, where a pint of Leo's Lager is $5.</p>
 <h3>Is there a happy hour in Kelowna on Sundays?</h3>
 <p>Yes. On Sundays, BNA Brewing runs 4 to 6&nbsp;PM, Hotel Eldorado runs 3 to 5&nbsp;PM, Rustic Reel runs 3 to 5&nbsp;PM, Freddy's Brewpub runs 3 to 6&nbsp;PM, Erica Jane runs 2 to 5&nbsp;PM, and Room 272 runs happy hour all day. Creekside Pub has $9.50 double Caesars on Sundays.</p>
 <h3>Which Kelowna happy hour has the best food deals?</h3>
-<p>Earls Kelowna at 211 Bernard Ave sells oysters on the half shell for $3.50 each from 3 to 6&nbsp;PM daily. BNA Brewing has $6 bang bang shrimp tacos and $9 truffle fries from 4 to 6&nbsp;PM daily, and Whiski-Jack's Pins &amp; Pints has a $5 beef taco from 2 to 5&nbsp;PM.</p>
+<p>Earls Kelowna at 211 Bernard Ave lists oysters on the half shell at $3.50 from 3 to 6&nbsp;PM daily in TodaysTab's October 27 check. BNA Brewing has $6 bang bang shrimp tacos and $9 truffle fries from 4 to 6&nbsp;PM daily, and Whiski-Jack's Pins &amp; Pints has a $5 beef taco from 2 to 5&nbsp;PM.</p>
 <h3>How do I know these Kelowna happy hour deals are current?</h3>
 <p>Every special on this list has a confidence score of 0.7 or higher and was re-verified within the 45 days before October 31, 2026. We recheck monthly, drop closed venues, and list only prices we have confirmed. The live Kelowna page always shows today's deals, so use it for same-day plans.</p>
 
@@ -296,16 +296,16 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     slug: "happy-hours-penticton-2026",
     category: "Guide",
     regions: ["penticton"],
-    title: "Penticton Happy Hours 2026: Every Confirmed Spot",
+    title: "Penticton Happy Hours 2026: 21 Spots With Deals",
     metaDescription:
-      "21 confirmed Penticton happy hours for 2026, from $5 beers at Highway 97 Brewery to $2 oysters at Orolo. Last verified October 31 with days, times and prices.",
+      "21 Penticton spots with happy hour deals in our October 2026 checks, from $5 beers at Highway 97 Brewery to $2 oysters at Orolo. Call ahead to confirm.",
     publishedAt: "2026-10-29",
     updatedAt: "2026-10-31",
     excerpt:
-      "Penticton has 21 happy hour spots confirmed as of October 31, 2026, and the most common window is 2 to 5 PM with $5 beer at three of them.",
+      "Penticton has 21 spots with happy hour deals in our October 2026 checks, and the most common window is 2 to 5 PM with $5 beer at three of them.",
     contentHtml: `
-<p>Quick answer: Penticton happy hour most often runs 2 to 5&nbsp;PM, and 21 venues on this list have a confirmed special. Beer starts at $5 (Highway 97 Brewery, Yellow Dog Brewing, Local Public Eatery) and a single highball at The Black Antler is $4. Downtown, around Martin Street, has the most spots.</p>
-<p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
+<p>Quick answer: Penticton happy hour most often runs 2 to 5&nbsp;PM, and this list covers 21 venues with a special in our October checks. Beer starts at $5 (Highway 97 Brewery, Yellow Dog Brewing, Local Public Eatery) and a single highball at The Black Antler is $4. Downtown, around Martin Street, has the most spots.</p>
+<p>Last verified October 31, 2026. Where a venue's own site and our records differ, or a venue publishes no times or prices, we say so, and you should call ahead. We re-check the list monthly.</p>
 
 <h2>Penticton happy hours at a glance</h2>
 <table>
@@ -315,49 +315,49 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <tr><td><a href="/penticton/venues/228">Yellow Dog Brewing</a></td><td>El Perro pints</td><td>Daily, 2 to 5&nbsp;PM</td><td>$5</td><td>Downtown</td></tr>
 <tr><td><a href="/penticton/venues/223">The Black Antler</a></td><td>Single highball</td><td>Mon-Fri, 2 to 5&nbsp;PM</td><td>$4</td><td>Downtown</td></tr>
 <tr><td><a href="/penticton/venues/234">Orolo Restaurant at Time Winery</a></td><td>Oysters</td><td>Daily, 4 to 5&nbsp;PM</td><td>$2 each</td><td>Downtown</td></tr>
-<tr><td><a href="/penticton/venues/227">Local Public Eatery</a></td><td>House lager (0.35&nbsp;L)</td><td>Daily, 2 to 5&nbsp;PM; also from 8 or 9&nbsp;PM</td><td>$5</td><td>Eckhardt Avenue and Uptown</td></tr>
-<tr><td><a href="/penticton/venues/231">Palmer Kitchen + Spirits</a></td><td>Local craft beer, vodka Caesar</td><td>Daily, 4:30 to 7:30&nbsp;PM</td><td>$6.50</td><td>Eckhardt Avenue and Uptown</td></tr>
+<tr><td><a href="/penticton/venues/227">Local Public Eatery</a></td><td>House lager (0.35&nbsp;L)</td><td>Daily, 2 to 5&nbsp;PM; also from 8 or 9&nbsp;PM</td><td>$5</td><td>West of downtown</td></tr>
+<tr><td><a href="/penticton/venues/231">Palmer Kitchen + Spirits</a></td><td>Local craft beer, vodka Caesar</td><td>Daily, 4:30 to 7:30&nbsp;PM (unconfirmed)</td><td>$6.50</td><td>West of downtown</td></tr>
 <tr><td><a href="/penticton/venues/232">BNA Brewing</a></td><td>Super Save Happy Hour beer</td><td>Daily, 4 to 6&nbsp;PM</td><td>$5.49</td><td>Downtown</td></tr>
 <tr><td><a href="/penticton/venues/236">Salty's Beach House</a></td><td>Well highballs</td><td>Daily, 2 to 5&nbsp;PM</td><td>$6</td><td>Lakeshore</td></tr>
 <tr><td><a href="/penticton/venues/314">Barley Mill Brew Pub &amp; Bistro</a></td><td>Double highballs</td><td>Tuesday</td><td>$9</td><td>Skaha Lake</td></tr>
 </tbody>
 </table>
 
-<p>Penticton sits between Okanagan Lake and Skaha Lake, and Statistics Canada's 2021 Census counted <a href="https://www.penticton.ca/node/33998">36,885 residents, up 9.3 per cent in five years</a>, according to the City of Penticton. According to TodaysTab's checks on October 31, 2026, we track 56 active venues in the Penticton region and 30 of them have a current special that meets our rules (confidence of 0.7 or higher, re-checked within 45 days, with a stated day or time). Of the 12 venues in the city with a stated happy hour window, 5 run 2 to 5&nbsp;PM, the most common window (Kin &amp; Folk is left out of that count because its own website and our records disagree). The lowest confirmed drink price is $4, at Local Public Eatery (a cold tea shot) and at The Black Antler (a single highball and a Sunday mimosa or Caesar). Only 1 of those 12, Local Public Eatery, has a confirmed window that starts at 8&nbsp;PM or later.</p>
+<p>Penticton sits between Okanagan Lake and Skaha Lake, and Statistics Canada's 2021 Census counted <a href="https://www.penticton.ca/node/33998">36,885 residents, up 9.3 per cent in five years</a>, according to the City of Penticton. According to TodaysTab's checks on October 31, 2026, we track 56 active venues in the Penticton region and 30 of them have a current special that meets our rules (confidence of 0.7 or higher, re-checked within 45 days, with a stated day or time). Of the 12 venues in the city with a stated happy hour window, 5 run 2 to 5&nbsp;PM, the most common window (Kin &amp; Folk is left out of that count because its own website and our records disagree). The lowest confirmed drink price is $4, at Local Public Eatery (a cold tea shot) and at The Black Antler (a single highball and a Sunday mimosa or Caesar). In our records only Local Public Eatery has a window that starts at 8&nbsp;PM or later; Kin &amp; Folk and Sociale on Lakeshore list late windows on their own websites.</p>
 
 <h2>Downtown: Martin Street, Winnipeg Street and Main Street</h2>
 <p>Downtown is the walkable core, with most bars within a few blocks of Martin Street and Winnipeg Street.</p>
-<p><strong><a href="/penticton/venues/232">BNA Brewing (218 Martin St)</a></strong> runs its Super Save Happy Hour daily from 4 to 6&nbsp;PM: BNA beer at $5.49, other BNA beer at $5.99, white wine at $6.99, and Moscow Mules, Old Fashioneds and Long Island Iced Teas at $9.99. Mocktails start at $4.99. Bowling is 50% off on Mondays and again on Thursdays from 9&nbsp;PM.</p>
-<p><strong><a href="/penticton/venues/234">Orolo Restaurant at Time Winery (361 Martin St)</a></strong> has a one-hour happy hour daily from 4 to 5&nbsp;PM. Oysters are $2 each, local draft is $6, wine is $9 (including the Evolve Chardonnay) and the Chronos Merlot is $13. Food includes tallow fries at $8, a burger at $18 and steak bites at $23. Tuesday is Steak Date Night and Thursday is Bone-in Steak.</p>
-<p><strong><a href="/penticton/venues/233">The Hub on Martin (260 Martin St)</a></strong> rotates deals by day. Sunday: Molson Canadian or Coors Light at $6. Monday: a double Paralyzer at $9. Tuesday: jugs at $18 and sleeves at $6. Wednesday: pilsner jugs at $18, double highballs at $8 and wing night at $6.95. Thursday to Saturday: Long Islands at $9.</p>
-<p><strong><a href="/penticton/venues/238">The Pasta Factory (236 Martin St)</a></strong> runs a daily 3 to 5&nbsp;PM happy hour with draft pints at $7, sangria jugs at $15 and a 6&nbsp;oz NY steak sandwich at $15. Wednesday (4 to 8&nbsp;PM) adds an 8&nbsp;oz flatiron steak dinner at $25.</p>
-<p><strong><a href="/penticton/venues/223">The Black Antler (215 Winnipeg St)</a></strong> has the most unusual offer in town: free wings with any drink purchase, Monday to Friday, 2 to 5&nbsp;PM. The same window has house red or white at $6, a single highball at $4, a martini at $7 and a Buck N' Beer at $16. Tuesday brings a 20&nbsp;oz Antler Lager at $6, Thursday is $2 off cocktails, and Sunday mimosas and Caesars are $4.</p>
-<p><strong><a href="/penticton/venues/354">The Forest (#104-215 Winnipeg St)</a></strong> gives a free Forest Margherita flatbread with a drink purchase on Thursdays and Fridays from 4 to 6&nbsp;PM.</p>
+<p><strong><a href="/penticton/venues/232">BNA Brewing (218 Martin St)</a></strong> runs its Super Save Happy Hour daily from 4 to 6&nbsp;PM, according to BNA's menu as of October 30 (BNA opens at 4&nbsp;PM, so this is its first two hours): BNA beer at $5.49, other BNA beer at $5.99, white wine at $6.99, and Moscow Mules, Old Fashioneds and Long Island Iced Teas at $9.99. Mocktails are $4.99 to $5.99. Bowling lanes reserve from 5&nbsp;PM, and our records list 50% off bowling on Mondays and on Thursdays from 9&nbsp;PM.</p>
+<p><strong><a href="/penticton/venues/234">Orolo Restaurant at Time Winery (361 Martin St)</a></strong> has a one-hour happy hour daily from 4 to 5&nbsp;PM, according to its happy hour menu as of October 30. Oysters are $2 each, local draft is $6, wine is $9 (including the Evolve Chardonnay) and the Chronos Merlot is $13. Food includes tallow fries at $8, a burger at $18 and steak bites at $23. Tuesday is Steak Date Night and Thursday is Bone-in Steak, both wine-with-dinner deals rather than part of the happy hour. Orolo is closed Thursday, November 26 for a private event.</p>
+<p><strong><a href="/penticton/venues/233">The Hub on Martin (260 Martin St)</a></strong> rotates deals by day, according to TodaysTab's October 28 check (its website does not list them, so call 250-490-0304 to confirm). Sunday: Molson Canadian or Coors Light at $6. Monday: a double Paralyzer at $9. Tuesday: jugs at $18 and sleeves at $6. Wednesday: pilsner jugs at $18, double highballs at $8 and wing night at $6.95. Thursday to Saturday: Long Islands at $9.</p>
+<p><strong><a href="/penticton/venues/238">The Pasta Factory (236 Martin St)</a></strong> is open Tuesday to Saturday, 3 to 9&nbsp;PM, and closed Sunday and Monday. Our records show a 3 to 5&nbsp;PM happy hour with draft pints at $7, sangria jugs at $15 and a 6&nbsp;oz NY steak sandwich at $15, so call 250-492-6088 to confirm. Wednesday (4 to 8&nbsp;PM) adds an 8&nbsp;oz flatiron steak dinner at $25.</p>
+<p><strong><a href="/penticton/venues/223">The Black Antler (215 Winnipeg St)</a></strong> has the most unusual offer in town: free wings (one pound per person, while supplies last) with any regular-priced drink over $9, Monday to Friday, 2 to 5&nbsp;PM, dine in only. In our records the same window has house red or white at $6, a single highball at $4, a martini at $7, a Buck N' Beer at $16 and a 20&nbsp;oz Antler Lager, amber or sour at $6. Thursday is $2 off cocktails, and Sunday mimosas and Caesars are $4.</p>
+<p><strong><a href="/penticton/venues/354">The Forest (#104-215 Winnipeg St)</a></strong> calls its happy hour Enchanted Hour: Thursdays and Fridays, 4 to 6&nbsp;PM, a free Forest Margherita flatbread with any drink purchase of $9 or more. Hours vary by day, so call ahead to confirm.</p>
 <p><strong><a href="/penticton/venues/320">Pizzeria Tratto (256 Westminster Ave)</a></strong> opens for dinner at 5&nbsp;PM. On Mondays and Tuesdays, Bottleshock gives you a free pizza when you buy a bottle of wine. On Wednesdays, Full Sleeve Wednesday is a 2-for-1 on beers with any pizza.</p>
-<p><strong><a href="/penticton/venues/224">Kin &amp; Folk (557 Main St)</a></strong> lists a daily happy hour in our records from 2 to 5&nbsp;PM. Its own website lists 3 to 5&nbsp;PM and again from 9&nbsp;PM to close, so call (778-531-6170) before you go. Prices in our records: Low Life at $5, Folk Lager at $6, Dan Dan fries at $12 and beef potstickers at $16. Wednesdays are half-price wine bottles.</p>
-<p><strong><a href="/penticton/venues/235">Highway 97 Brewery (200 Ellis St)</a></strong> pours $5 sleeves Monday to Friday from 2 to 5&nbsp;PM. Thirsty Thursday has $6 pints from 5&nbsp;PM. Wing Wednesday is wings at $9.97 and pitchers at $19.97, and Friday is a beef dip at $19.97.</p>
-<p><strong><a href="/penticton/venues/228">Yellow Dog Brewing (169 Estabrook Ave)</a></strong> sits at the corner of Winnipeg Street and Estabrook Avenue. From 2 to 5&nbsp;PM daily: El Perro pints at $5, general pints at $6, cocktails at $7, a pound of wings at $10, hot dogs and fries at $5 each, and a small pizza or the Chase burger and beer at $15.</p>
+<p><strong><a href="/penticton/venues/224">Kin &amp; Folk (557 Main St)</a></strong> runs happy hour daily from 3 to 5&nbsp;PM and again from 9&nbsp;PM to close, according to its website; call 778-531-6170 to confirm. Prices in our records: Low Life at $5, Folk Lager at $6, Dan Dan fries at $12 and beef potstickers at $16. Wednesdays are half-price wine bottles.</p>
+<p><strong><a href="/penticton/venues/235">Highway 97 Brewery (200 Ellis St)</a></strong> pours $5 sleeves Monday to Friday from 2 to 5&nbsp;PM, according to our October 23 check. Thirsty Thursday has $6 pints from 5&nbsp;PM. Wing Wednesday is wings at $9.97 and pitchers at $19.97, and Friday is a beef dip at $19.97.</p>
+<p><strong><a href="/penticton/venues/228">Yellow Dog Brewing (169 Estabrook Ave)</a></strong> is in the heart of downtown. Its website was offline when we checked, so call before you go. In our records, from 2 to 5&nbsp;PM daily: El Perro pints at $5, general pints at $6, cocktails at $7, a pound of wings at $10, hot dogs and fries at $5 each, and a small pizza or the Chase burger and beer at $15.</p>
 
 <h2>Lakeshore: the Okanagan Lake beachfront</h2>
 <p>Lakeshore Drive West runs along the north beach, with patios facing the water.</p>
-<p><strong><a href="/penticton/venues/236">Salty's Beach House (1000 Lakeshore Dr W)</a></strong> has a daily 2 to 5&nbsp;PM happy hour with Parallel 49 beer at $8, Neighbourhood Passion Fruit Wheat Ale at $8.50, well highballs at $6 and The Captain's Wife at $12.</p>
-<p><strong><a href="/penticton/venues/230">Sociale on Lakeshore (950 Lakeshore Dr W)</a></strong> calls its offer Tappy Hour: tapas and drinks daily from 3 to 5&nbsp;PM. Its website also lists 9&nbsp;PM to close, and it is closed Mondays. We have no confirmed prices.</p>
-<p><strong><a href="/penticton/venues/312">The Barking Parrot (21 Lakeshore Dr W)</a></strong> sells $2 burgers with the purchase of any drink of $5 or more on Fridays from 4:30 to 6:30&nbsp;PM. Confirm hours before a winter visit.</p>
+<p><strong><a href="/penticton/venues/236">Salty's Beach House (1000 Lakeshore Dr W)</a></strong> has a 2 to 5&nbsp;PM happy hour, according to our October 30 check (it may be limited to inside seating), with Parallel 49 beer at $8, Neighbourhood Passion Fruit Wheat Ale at $8.50, well highballs at $6 and The Captain's Wife at $12.</p>
+<p><strong><a href="/penticton/venues/230">Sociale on Lakeshore (950 Lakeshore Dr W)</a></strong> calls its offer Tappy Hour: tapas and beer-on-tap specials from 3 to 5&nbsp;PM and from 9&nbsp;PM to close, according to its website. The restaurant is closed Mondays, so expect Tappy Hour Tuesday to Sunday. We have no confirmed prices.</p>
+<p><strong><a href="/penticton/venues/312">The Barking Parrot (21 Lakeshore Dr W)</a></strong> announced Burger Fridays starting October 23: $2 burgers with any drink of $5 or more, 4:30 to 6:30&nbsp;PM (per the venue's announcement; not shown on its website). It is at the Penticton Lakeside Resort on the downtown waterfront and is open daily from noon to 2&nbsp;AM. Call 250-493-9753 to confirm.</p>
 
-<h2>Eckhardt Avenue and Uptown</h2>
-<p>South of downtown, the bars along Eckhardt Avenue, Burnaby Avenue and Vernon Avenue sit between the city centre and the Uptown retail strip near Cherry Lane at 2111 Main Street.</p>
-<p><strong><a href="/penticton/venues/227">Local Public Eatery (1070 Eckhardt Ave W)</a></strong> has the biggest food menu of any happy hour here. From 2 to 5&nbsp;PM daily: house lager (0.35&nbsp;L) at $5, draft at $6, wine $2 off, a cold tea shot at $4, rail highballs at $5.25 and an Old Fashioned at $10. Food: a fish taco at $5, hot wings at $12 and the LOCAL burger with fries at $14. A second window starts at 8&nbsp;PM Sunday to Thursday and 9&nbsp;PM Friday and Saturday, with the same prices.</p>
-<p><strong><a href="/penticton/venues/315">Bar One (939 Burnaby Ave W)</a></strong> has a deal every day. Sunday Caesars are $5, Tuesday tacos and cervezas are $4 from 4&nbsp;PM, and Wednesday is wine by the glass or bottle. Thursday, Friday and Saturday house draft is $6, with wings on Thursday and Saturday from 4&nbsp;PM.</p>
-<p><strong><a href="/penticton/venues/231">Palmer Kitchen + Spirits (903 Vernon Ave)</a></strong> in the Four Points by Sheraton lists a daily 4:30 to 7:30&nbsp;PM window: local craft beer and vodka Caesars at $6.50, house red or white at $9.50, crispy calamari at $12.80, fried chicken wings at $14 and truffle parmesan fries at $10.40. The restaurant's website shows a happy hour menu without times, so call 778-476-9202 to confirm.</p>
-<p><strong><a href="/penticton/venues/225">Match Eatery &amp; Public House (553 Vees Dr #201)</a></strong> at Cascades Casino runs the longest daily window on this list: 3 to 9&nbsp;PM daily on craft beer, wine, highballs and Free Spirited cocktails, plus a Car Hop slider at $6.95. Monday is fish and chips at $15, and Friday is chicken parmigiana at $19.99. We do not have confirmed drink prices.</p>
+<h2>West of downtown: Eckhardt, Burnaby and Vernon Avenues and Vees Drive</h2>
+<p>These bars sit along Eckhardt Avenue West, Burnaby Avenue West, Vernon Avenue and Vees Drive, roughly 1 to 1.5&nbsp;km west and southwest of Martin Street. The Cherry Lane shopping centre at 2111 Main Street is about 3&nbsp;km south.</p>
+<p><strong><a href="/penticton/venues/227">Local Public Eatery (1070 Eckhardt Ave W)</a></strong> has the biggest food menu of any happy hour here. From 2 to 5&nbsp;PM daily: house lager (0.35&nbsp;L) at $5, draft at $6, wine $2 off, a cold tea shot at $4, rail highballs at $5.25 and an Old Fashioned at $10. Food: a fish taco at $5, hot wings at $12 and the LOCAL burger with fries at $14. A second window starts at 8&nbsp;PM Sunday to Thursday and 9&nbsp;PM Friday and Saturday (the restaurant's page also shows 10&nbsp;PM for weekends, so call 250-493-3388 to confirm).</p>
+<p><strong><a href="/penticton/venues/315">Bar One (939 Burnaby Ave W)</a></strong> has a deal every day, dine in only. Sunday Caesars are $5 all day, Tuesday tacos are $4 each and Coronas are $5.25 from 4&nbsp;PM, and Wednesday takes $1 off 8&nbsp;oz glasses of wine and $5 off bottles. Thursday, Friday and Saturday house draft is $6, with wings on Thursday and Saturday from 4&nbsp;PM and $7.50 double highballs on Friday.</p>
+<p><strong><a href="/penticton/venues/231">Palmer Kitchen + Spirits (903 Vernon Ave)</a></strong> in the Four Points by Sheraton lists a happy hour menu on its website; our records show a daily 4:30 to 7:30&nbsp;PM window, which the restaurant has not confirmed: local craft beer and vodka Caesars at $6.50, house red or white at $9.50, crispy calamari at $12.80, fried chicken wings at $14 and truffle parmesan fries at $10.40. The restaurant's website shows a happy hour menu without times, so call 778-476-9202 to confirm.</p>
+<p><strong><a href="/penticton/venues/225">Match Eatery &amp; Public House (553 Vees Dr #201)</a></strong> at Cascades Casino lists a 3 to 9&nbsp;PM daily window in our October 15 check, on craft beer, wine, highballs and Free Spirited cocktails (call (778) 476-8555 to confirm), plus a Car Hop slider at $6.95. Monday is fish and chips at $15, and Friday is chicken parmigiana at $19.99. We do not have confirmed drink prices.</p>
 
 <h2>Skaha Lake and South Penticton</h2>
 <p><strong><a href="/penticton/venues/314">Barley Mill Brew Pub &amp; Bistro (2460 Skaha Lake Rd)</a></strong> has a different deal almost every day. Monday: a buck off 9&nbsp;oz wine. Tuesday: double highballs at $9. Wednesday: tequila shooters at $5.50 and half-price wings from 3&nbsp;PM. Thursday: $5 off bottles and jugs of Barley Brew beer and $12.99 flatbreads. Friday: $5 off bottles and jugs plus $5.50 shooters. Sunday: $5 off jugs and a buck off Caesars.</p>
 
 <h2>Just outside Penticton</h2>
-<p><strong><a href="/penticton/venues/246">Naramata Pub &amp; Grill (985 Robinson Avenue, Naramata)</a></strong> serves a salmon burger special on Mondays at $25, a family-style pasta night on Thursdays at $18, and 2 Can Dine with a bottle of wine on Fridays and Saturdays at $85.99.</p>
-<p><strong><a href="/penticton/venues/316">Giant's Head Brewing (13224 Victoria Rd N, Summerland)</a></strong> has Wing Wednesday at $8.99 from 4&nbsp;PM, a Thursday burger and beer at $25, and Senior Sunday with a 12&nbsp;oz beer at $6.</p>
-<p><strong><a href="/penticton/venues/339">Okanagan Falls Hotel Bar &amp; Grill (1045 Main St, Okanagan Falls)</a></strong> runs burger and beer at $24 on Sundays and Thursdays, fish and chips at $13 on Mondays, wing night at $12 from 5&nbsp;PM on Wednesdays.</p>
+<p><strong><a href="/penticton/venues/246">Naramata Pub &amp; Grill (985 Robinson Avenue, Naramata)</a></strong> posts its weekly specials on Facebook; our October 29 check found a Thursday family-style pasta night at $18 and a Friday and Saturday 2 Can Dine with a bottle of wine at $85.99. Summer hours were closed Monday and Tuesday, so check before you go.</p>
+<p><strong><a href="/penticton/venues/316">Giant's Head Brewing (13224 Victoria Rd N, Summerland)</a></strong> has Wing Wednesday at $8.99 from 4&nbsp;PM, a Thursday burger and beer at $25, and a Senior Sunday menu for guests 55 and older (our records show a 12&nbsp;oz beer at $6).</p>
+<p><strong><a href="/penticton/venues/339">Okanagan Falls Hotel Bar &amp; Grill (1045 Main St, Okanagan Falls)</a></strong> has, according to our October 26 check, burger and beer at $24 on Sundays and Thursdays, fish and chips at $13 on Mondays, wing night at $12 from 5&nbsp;PM on Wednesdays.</p>
 
 <h2>What's not on this list</h2>
 <p>These venues are in our database or on competitor lists, but we cannot confirm a current happy hour to our standard.</p>
@@ -373,9 +373,9 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <h3>Is there a Penticton happy hour on Sundays?</h3>
 <p>Yes. Local Public Eatery runs its 2 to 5&nbsp;PM happy hour daily, so Sunday is covered. The Black Antler has $4 mimosas and Caesars, Bar One has $5 Caesars, The Hub on Martin sells Molson Canadian or Coors Light at $6, and Barley Mill takes $5 off jugs of its own beer.</p>
 <h3>Where can I get free food with a drink in Penticton?</h3>
-<p>The Black Antler gives free wings with any drink purchase, Monday to Friday, 2 to 5&nbsp;PM. The Forest gives a free Margherita flatbread with a drink on Thursdays and Fridays, 4 to 6&nbsp;PM. Pizzeria Tratto gives a free pizza with a bottle of wine on Mondays and Tuesdays.</p>
+<p>The Black Antler gives free wings with any regular-priced drink over $9, Monday to Friday, 2 to 5&nbsp;PM, dine in only. The Forest gives a free Margherita flatbread with a drink of $9 or more on Thursdays and Fridays, 4 to 6&nbsp;PM. Pizzeria Tratto gives a free pizza with a bottle of wine on Mondays and Tuesdays.</p>
 <h3>How do I know these Penticton happy hour deals are current?</h3>
-<p>Every special on this list has a confidence score of 0.7 or higher and was re-checked within 45 days of October 31, 2026. We re-check the list monthly, and every venue page shows a last-verified date. Our method is written up in <a href="/penticton/blog/how-we-verify-every-special">how we verify every special</a>.</p>
+<p>Every special on this list has a confidence score of 0.7 or higher and was re-checked within 45 days of October 31, 2026. We re-check the list monthly, and every venue page shows a last-verified date. Where a venue's own website does not show a deal, this guide says so. Our method is written up in <a href="/penticton/blog/how-we-verify-every-special">how we verify every special</a>.</p>
 
 <h2>Check tonight's specials and see the sibling guides</h2>
 <p>This post is a snapshot from October 31, 2026. The live <a href="/penticton">Penticton specials page</a> is always current, and you can browse by day: <a href="/penticton/wednesday">Wednesday</a>, <a href="/penticton/friday">Friday</a> and <a href="/penticton/sunday">Sunday</a>. If a deal has changed, tell us on the <a href="/penticton/submit">submit page</a>. More reading is in the <a href="/penticton/blog">Penticton blog</a>, and the same method is used in our guides for <a href="/kelowna/blog/happy-hours-kelowna-2026">Kelowna</a> and <a href="/edmonton/blog/happy-hours-edmonton-2026">Edmonton</a>.</p>
@@ -387,13 +387,13 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     regions: ["revelstoke-golden"],
     title: "Revelstoke & Golden Happy Hours 2026: Confirmed Spots",
     metaDescription:
-      "Happy hours in Revelstoke and Golden BC: 4 confirmed venues, drinks from $6, daily 2-6 PM windows plus a 9-11 PM round in Golden. Verified Oct 31, 2026.",
+      "Happy hours in Revelstoke and Golden BC: 3 confirmed venues, drinks from $6, daily 2-6 PM windows plus a 9 PM to close round in Golden. Verified Oct 31, 2026.",
     publishedAt: "2026-10-29",
     updatedAt: "2026-10-31",
     excerpt:
-      "TodaysTab confirmed current happy hour specials at 4 of 14 tracked venues in Revelstoke and Golden, with drinks from $6 at Rockford Bar | Grill.",
+      "TodaysTab confirmed current happy hour specials at 3 of 14 tracked venues in Revelstoke and Golden, with drinks from $6 at Rockford Bar | Grill.",
     contentHtml: `
-<p>Quick answer: Happy hour in Revelstoke and Golden runs between 2 and 6&nbsp;PM daily at the three spots TodaysTab has confirmed, with drinks from $6, and one Golden restaurant adds a second round from 9 to 11&nbsp;PM. Revelstoke Mountain Resort has the most deals. Only 4 of the 14 venues we track have a current confirmed special.</p>
+<p>Quick answer: Happy hour in Revelstoke and Golden runs between 2 and 6&nbsp;PM daily at the three spots TodaysTab has confirmed, with drinks from $6, and one Golden restaurant adds a second round from 9&nbsp;PM to close. Revelstoke Mountain Resort has the most deals. Only 3 of the 14 venues we track have a current confirmed special.</p>
 
 <p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
 
@@ -404,18 +404,17 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <tbody>
 <tr><td><a href="/revelstoke-golden/venues/3158">Rockford Bar | Grill</a></td><td>Craft pints, vodka soda (1&nbsp;oz), feature cocktails (1&nbsp;oz); dine in only</td><td>Daily, 3-6&nbsp;PM</td><td>$6 each</td><td>Revelstoke Mountain Resort</td></tr>
 <tr><td><a href="/revelstoke-golden/venues/3158">Rockford Bar | Grill</a></td><td>Vegetable dumplings, Governor Tso's chicken; dine in only</td><td>Daily, 3-6&nbsp;PM</td><td>$7 each</td><td>Revelstoke Mountain Resort</td></tr>
-<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>Draft beer (16&nbsp;oz) and house wine (6&nbsp;oz)</td><td>Daily, 2-5&nbsp;PM and 9-11&nbsp;PM</td><td>$7 each</td><td>Golden, Trans-Canada Highway</td></tr>
-<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>Wagyu beef gyoza, tempura prawn roll, Southern Heat chicken bites</td><td>Daily, 2-5&nbsp;PM and 9-11&nbsp;PM</td><td>$12 each</td><td>Golden, Trans-Canada Highway</td></tr>
-<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>The Raven Burger</td><td>Daily, 2-5&nbsp;PM and 9-11&nbsp;PM</td><td>$19</td><td>Golden, Trans-Canada Highway</td></tr>
+<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>Draft beer (16&nbsp;oz) and house wine (6&nbsp;oz)</td><td>Daily, 2-5&nbsp;PM and 9&nbsp;PM to close</td><td>$7 each</td><td>Golden, Trans-Canada Highway</td></tr>
+<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>Wagyu beef gyoza, tempura prawn roll, Southern Heat chicken bites</td><td>Daily, 2-5&nbsp;PM and 9&nbsp;PM to close</td><td>$12 each</td><td>Golden, Trans-Canada Highway</td></tr>
+<tr><td><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery</a></td><td>The Raven Burger</td><td>Daily, 2-5&nbsp;PM and 9&nbsp;PM to close</td><td>$19</td><td>Golden, Trans-Canada Highway</td></tr>
 <tr><td><a href="/revelstoke-golden/venues/3151">SEOUL STREET</a></td><td>Original edamame</td><td>Daily, 4-6&nbsp;PM</td><td>$5</td><td>Downtown Revelstoke</td></tr>
 <tr><td><a href="/revelstoke-golden/venues/3151">SEOUL STREET</a></td><td>Original fries</td><td>Daily, 4-6&nbsp;PM</td><td>$6</td><td>Downtown Revelstoke</td></tr>
-<tr><td><a href="/revelstoke-golden/venues/3156">The Den (Revelstoke)</a></td><td>50% off burgers, October promotion</td><td>October 2026 only</td><td>Half price</td><td>Revelstoke Mountain Resort</td></tr>
 </tbody>
 </table>
 
-<p>Revelstoke and Golden are about 150&nbsp;km apart on Highway 1, and they have very different drinking scenes. Statistics Canada's <a href="https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm?Lang=E">2021 Census</a> counted 8,275 people in Revelstoke and 3,986 in Golden, so both are small towns where a bar's specials often live on a chalkboard or an Instagram story rather than a website. That is why this guide is short. According to TodaysTab's checks on October 31, 2026, we track 14 venues across the two towns and 4 of them have a current, confirmed special with a stated day or time window.</p>
+<p>Revelstoke and Golden are about 150&nbsp;km apart on Highway 1, and they have very different drinking scenes. Statistics Canada's <a href="https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm?Lang=E">2021 Census</a> counted 8,275 people in Revelstoke and about 4,000 in Golden, so both are small towns where a bar's specials often live on a chalkboard or an Instagram story rather than a website. That is why this guide is short. According to TodaysTab's checks on October 31, 2026, we track 14 venues across the two towns and 3 of them have a current, confirmed special with a stated day or time window.</p>
 
-<p>The numbers behind that, as of October 31, 2026: the lowest confirmed price on a drink is $6, at Rockford Bar | Grill (craft pints, vodka soda and feature cocktails). The lowest confirmed price on any item is $5, for original edamame at SEOUL STREET. One venue of the 4, Raven + Pine Mountain Eatery, runs a late-night window (9 to 11&nbsp;PM). All 3 venues with a daily happy hour start between 2 and 4&nbsp;PM and finish by 6&nbsp;PM.</p>
+<p>The numbers behind that, as of October 31, 2026: the lowest confirmed price on a drink is $6, at Rockford Bar | Grill (craft pints, vodka soda and feature cocktails). The lowest confirmed price on any item is $5, for original edamame at SEOUL STREET. One venue of the 3, Raven + Pine Mountain Eatery, runs a late-night window (9&nbsp;PM to close). The three afternoon happy hours start between 2 and 4&nbsp;PM and finish by 6&nbsp;PM; Raven + Pine adds its late round from 9&nbsp;PM to close.</p>
 
 <h2>Revelstoke Mountain Resort</h2>
 
@@ -425,29 +424,27 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p>Rockford also runs a different drink feature each day, confirmed on October 29, 2026. Sunday is Caesars and mimosas (1&nbsp;oz) at $6. Monday is Double Happiness (16&nbsp;oz) at $6, house wine at $6 for 6&nbsp;oz or $9 for 9&nbsp;oz. Tuesday takes $2 off all local draft. Wednesday is half-price bottles of wine. Thursday is a Peach Mango Bellini (1&nbsp;oz) at $7. Friday takes $2 off a 2&nbsp;oz Moscow Mule. Saturday has white sangria (1&nbsp;oz) at $7.50 and a 40&nbsp;cl Stella at $8. Our data does not state a time window for the daily features, so ask your server whether they overlap with the 3-6&nbsp;PM happy hour.</p>
 
-<p><strong><a href="/revelstoke-golden/venues/3156">The Den (Revelstoke) (1701 Coursier Ave #4104)</a></strong> ran 50% off burgers for the month of October. That promotion ends today, October 31, so check thedenrevelstoke.ca or ask at the counter for November. We have no confirmed daily happy hour for The Den, and no price for the burger discount beyond the half-price rate.</p>
-
 <h2>Downtown Revelstoke</h2>
 
 <p>Downtown Revelstoke is a walkable grid around First Street and MacKenzie Avenue, with the old-town pubs and most of the independent restaurants. Distances between venues are a few minutes on foot.</p>
 
-<p><strong><a href="/revelstoke-golden/venues/3151">SEOUL STREET (314 1 St W)</a></strong> is a Korean street food bar. Happy hour runs 4-6&nbsp;PM daily, and every confirmed item is food: original edamame $5, street edamame $7, original fries $6, street fries $10 and crispy chicken wontons $10. We have not confirmed any drink prices. Menu and hours are at <a href="https://seoul-street.ca">seoul-street.ca</a>. This is the cheapest confirmed snack in the region.</p>
+<p><strong><a href="/revelstoke-golden/venues/3151">SEOUL STREET (314 1 St W)</a></strong> is a Korean-themed pub and restaurant. According to the venue's menu as of October 28, 2026, happy hour runs 4-6&nbsp;PM daily, and every confirmed item is food: original edamame $5, street edamame $7, original fries $6, street fries $10 and crispy chicken wontons $10. We have not confirmed any drink prices. Check <a href="https://seoul-street.ca">seoul-street.ca</a> or their Instagram for the current menu. This is the cheapest snack we have confirmed in the region.</p>
 
 <h2>Golden: Trans-Canada Highway</h2>
 
 <p>Golden's bars cluster downtown along 8th and 9th Avenue North, but the one venue with confirmed, priced specials sits on the highway. According to <a href="https://www.tourismgolden.com/dining/pubs-bars">Tourism Golden</a>, daily specials and happy hours are common at local pubs, though most do not publish times.</p>
 
-<p><strong><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery (1049 Trans-Canada Hwy)</a></strong> is inside the Prestige Golden Hotel and runs two windows every day, 2-5&nbsp;PM and 9-11&nbsp;PM, with the same menu in both. The hotel's own <a href="https://www.prestigehotelsandresorts.com/locations/golden/dining">dining page</a> lists the same afternoon window. Drinks: draft beer (16&nbsp;oz, Steamworks and Whitetooth Brewing) $7, house Stone Road wine (6&nbsp;oz) $7, a 2&nbsp;oz cocktail (Canadian Caesar, mojito or mule) $10, and a 1.5&nbsp;oz warmer (B52, Monte Cristo or blueberry tea) $9.</p>
+<p><strong><a href="/revelstoke-golden/venues/3164">Raven + Pine Mountain Eatery (1049 Trans-Canada Hwy)</a></strong> is inside the Prestige Golden Hotel and runs two windows every day, 2-5&nbsp;PM and 9&nbsp;PM to close, with the same menu in both. Prices below are from the venue's menu as recorded on October 23, 2026, so check before you go. The hotel's own <a href="https://www.prestigehotelsandresorts.com/locations/golden/dining">dining page</a> lists the same two windows. Drinks: draft beer (16&nbsp;oz, Steamworks and Whitetooth Brewing) $7, house Stone Road wine (6&nbsp;oz) $7, a 2&nbsp;oz cocktail (Canadian Caesar, mojito or mule) $10, and a 1.5&nbsp;oz warmer (B52, Monte Cristo or blueberry tea) $9.</p>
 
 <p>Food in both windows: wagyu beef gyoza $12, tempura prawn roll $12, Southern Heat chicken bites $12, The Raven Burger $19, rigatoni bolognese $20, teriyaki ember bowl $20 and Fireside Frites (6&nbsp;oz sirloin with fries) $29. It is the only place in either town where we have confirmed a late-night happy hour.</p>
 
 <h2>What's not on this list</h2>
 
-<p>These venues are in our database, but we do not have a current confirmed special with a day or time window, so we do not list a deal for them. <a href="/revelstoke-golden/venues/3160">Riverhouse Tavern (506 8 Ave N)</a> in Golden is the closest call: reviews mention Taco Tuesday and wood-fired pizza on Sundays and Mondays, but we hold that at low confidence with no times or prices, so we have left it out of the deals above.</p>
+<p>These venues are in our database, but we do not have a current confirmed special with a day or time window, so we do not list a deal for them. <a href="/revelstoke-golden/venues/3160">Riverhouse Tavern (506 8 Ave N)</a> in Golden is the closest call: the Golden chamber of commerce lists it and reviews mention Taco Tuesday, but we could not confirm current hours, times or prices, so call ahead. We have left it out of the deals above. <a href="/revelstoke-golden/venues/3156">The Den (1701 Coursier Ave #4104)</a>, on Coursier Avenue near Revelstoke Mountain Resort, ran a burger promotion in October that has ended, and we have no current confirmed special for it.</p>
 
-<p>Also tracked without a confirmed special: <a href="/revelstoke-golden/venues/3153">Craft Bierhaus (107 2 St E)</a>, <a href="/revelstoke-golden/venues/3154">River City Pub &amp; Patio (112 1 St E)</a>, <a href="/revelstoke-golden/venues/3157">The Last Drop Pub (200 3 St W)</a> and <a href="/revelstoke-golden/venues/3152">The Village Idiot Bar and Grill (306 MacKenzie Ave)</a> in Revelstoke, plus <a href="/revelstoke-golden/venues/3159">Rockwater Grill and Bar (429 9 Ave N)</a>, <a href="/revelstoke-golden/venues/3163">Stolen Bell Distillery (616 8 Ave N)</a>, <a href="/revelstoke-golden/venues/3161">The Bar &amp; Grill (505 9 Ave N)</a>, <a href="/revelstoke-golden/venues/3162">The Wolf's Den (1105 9 St S)</a> and <a href="/revelstoke-golden/venues/3165">Whitetooth Brewing Company (623 8 Ave N)</a> in Golden.</p>
+<p>Also tracked without a confirmed special: <a href="/revelstoke-golden/venues/3153">Craft Bierhaus (107 2 St E)</a>, <a href="/revelstoke-golden/venues/3154">River City Pub &amp; Patio (112 1 St E)</a>, <a href="/revelstoke-golden/venues/3157">The Last Drop Pub (200 3 St W)</a> and <a href="/revelstoke-golden/venues/3152">The Village Idiot Bar and Grill (306 MacKenzie Ave)</a> in Revelstoke, plus <a href="/revelstoke-golden/venues/3159">Rockwater Grill and Bar (429 9 Ave N)</a>, <a href="/revelstoke-golden/venues/3163">Stolen Bell Distillery (616 8 Ave N)</a>, <a href="/revelstoke-golden/venues/3161">The Golden Taps (505 9 Ave N)</a>, <a href="/revelstoke-golden/venues/3162">The Wolf's Den (1105 9 St S)</a> and <a href="/revelstoke-golden/venues/3165">Whitetooth Brewing Company (623 8 Ave N)</a> in Golden.</p>
 
-<p>Other guides name Big Eddy Pub, Bar One, Mackenzie Common Tavern and the Island Restaurant in Golden. None of those are in our database, so we cannot vouch for their specials and we leave them off. If you know a current deal at any of these, the submit link below takes a minute.</p>
+<p>Some other lists name additional pubs in both towns that we could not confirm as current, so we leave them off rather than guess. If you know a current deal at any pub in either town, the submit link below takes a minute.</p>
 
 <h2>Frequently asked questions</h2>
 
@@ -458,7 +455,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p>The lowest confirmed drink price in either town is $6, at Rockford Bar | Grill (2950 Camozzi Rd): craft pints, a 1&nbsp;oz vodka soda and 1&nbsp;oz feature cocktails, 3 to 6&nbsp;PM daily, dine in only. In Golden, Raven + Pine Mountain Eatery charges $7 for a 16&nbsp;oz draft beer or a 6&nbsp;oz glass of house wine during happy hour.</p>
 
 <h3>Is there a late-night happy hour in Golden?</h3>
-<p>Yes, at one place we have confirmed. Raven + Pine Mountain Eatery (1049 Trans-Canada Hwy) repeats its happy hour from 9 to 11&nbsp;PM daily, with $7 draft beer, $7 house wine, a $10 cocktail and the same food specials as the afternoon window. No other venue in either town has a confirmed late window.</p>
+<p>Yes, at one place we have confirmed. Raven + Pine Mountain Eatery (1049 Trans-Canada Hwy) repeats its happy hour from 9&nbsp;PM to close daily, according to its own website, with $7 draft beer, $7 house wine, a $10 cocktail and the same food specials as the afternoon window, as of October 23, 2026. No other venue in either town has a confirmed late window.</p>
 
 <h3>Does Rockford have a happy hour on weekends?</h3>
 <p>Yes. Rockford Bar | Grill's 3 to 6&nbsp;PM happy hour runs every day, dine in only, so it includes Saturday and Sunday. It also lists a daily feature: Caesars and mimosas (1&nbsp;oz) for $6 on Sunday, and white sangria (1&nbsp;oz) at $7.50 or a 40&nbsp;cl Stella at $8 on Saturday.</p>
@@ -467,7 +464,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p>SEOUL STREET (314 1 St W) has the lowest confirmed food prices we track in the region: original edamame is $5 and original fries are $6, both during its 4 to 6&nbsp;PM daily happy hour. At Rockford, vegetable dumplings and Governor Tso's chicken are $7 each from 3 to 6&nbsp;PM.</p>
 
 <h3>How do I know these deals are current?</h3>
-<p>Each special on this page was checked against a venue source, and the newest check was October 29, 2026, and the oldest was October 6, 2026 for The Den's October promotion. We only list specials with a stated day or time window and high confidence, and we re-check monthly. Prices change, so the live page for the region is always the current version.</p>
+<p>Each special on this page was checked against a venue source, and the newest check was October 29, 2026, and the oldest was October 23, 2026 for Raven + Pine Mountain Eatery. We only list specials with a stated day or time window and high confidence, and we re-check monthly. Prices change, so the live page for the region is always the current version.</p>
 
 <h2>Check what is on today</h2>
 
@@ -478,15 +475,15 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     slug: "happy-hours-kitchener-waterloo-cambridge-2026",
     category: "Guide",
     regions: ["kitchener-waterloo-cambridge"],
-    title: "Kitchener-Waterloo Happy Hours 2026: 30 Confirmed Spots",
+    title: "Kitchener-Waterloo Happy Hours 2026: 26 Confirmed Spots",
     metaDescription:
-      "Every confirmed happy hour in Kitchener, Waterloo and Cambridge: 30 venues, beers from $1.25, cocktails at $12, and 2-5 PM windows. Checked October 31, 2026.",
+      "Every confirmed happy hour in Kitchener, Waterloo and Cambridge: 26 venues, beers from $1.25, cocktails at $12, and 2-5 PM windows. Checked October 31, 2026.",
     publishedAt: "2026-10-29",
     updatedAt: "2026-10-31",
     excerpt:
-      "Of 132 venues TodaysTab tracks in Kitchener-Waterloo-Cambridge, 30 have a confirmed special, and the lowest confirmed beer price is $1.25.",
+      "Of 132 venues TodaysTab tracks in Kitchener-Waterloo-Cambridge, 26 are listed here with a confirmed special, and the lowest confirmed beer price is $1.25.",
     contentHtml: `
-<p>Quick answer: Kitchener-Waterloo-Cambridge happy hours mostly run 2 to 5&nbsp;PM or 4 to 6&nbsp;PM, with many pubs adding a second window from 9&nbsp;PM. Confirmed prices run from $1.25 beers to $12 cocktails. Uptown Waterloo's King Street is the densest strip. TodaysTab has 30 venues with a confirmed special.</p>
+<p>Quick answer: Kitchener-Waterloo-Cambridge happy hours mostly run 2 to 5&nbsp;PM or 4 to 6&nbsp;PM, with many pubs adding a second window from 9&nbsp;PM. Confirmed prices run from $1.25 beers to $12 cocktails. Uptown Waterloo's King Street is the densest strip. This guide lists 26 venues with a special TodaysTab has confirmed.</p>
 
 <p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
 
@@ -494,52 +491,52 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <thead><tr><th>Venue</th><th>Deal</th><th>Days and times</th><th>Price</th><th>Neighbourhood</th></tr></thead>
 <tbody>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/6589">Dallas Night Club</a></td><td>Dollar Beer Fridays</td><td>Fridays, all night</td><td>$1.25</td><td>Downtown Kitchener</td></tr>
-<tr><td><a href="/kitchener-waterloo-cambridge/venues/6571">The Pub On King</a></td><td>6&nbsp;oz beers</td><td>Tuesdays</td><td>$1.25</td><td>Uptown Waterloo</td></tr>
+<tr><td><a href="/kitchener-waterloo-cambridge/venues/6571">The Pub On King</a></td><td>6&nbsp;oz beers</td><td>Tuesdays after 8&nbsp;PM</td><td>$1.25</td><td>Uptown Waterloo</td></tr>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/6605">The Canadian Brewhouse</a></td><td>Stein of Bud Light</td><td>Mon-Sat 2-6&nbsp;PM and from 9&nbsp;PM</td><td>$3.99</td><td>Kingsway Drive, Kitchener</td></tr>
-<tr><td><a href="/kitchener-waterloo-cambridge/venues/6542">The Three Idiots</a></td><td>341&nbsp;ml domestic bottle</td><td>Daily after 9&nbsp;PM</td><td>$4.49</td><td>King Street East, Kitchener</td></tr>
+<tr><td><a href="/kitchener-waterloo-cambridge/venues/6542">The Three Idiots</a></td><td>341&nbsp;ml domestic bottle</td><td>After 9&nbsp;PM, closed Tuesdays</td><td>$4.49</td><td>King Street East, Kitchener</td></tr>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/6552">The Duke of Wellington</a></td><td>Duke's Lager pints</td><td>Sunday to Thursday</td><td>$5</td><td>Uptown Waterloo</td></tr>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/6558">Piper Arms</a></td><td>20&nbsp;oz domestic pint</td><td>Daily 11&nbsp;AM-4&nbsp;PM and after 9&nbsp;PM</td><td>$5</td><td>King Street East, Kitchener</td></tr>
-<tr><td><a href="/kitchener-waterloo-cambridge/venues/6569">Bobby O'Brien's</a></td><td>Canadian, Coors Light and Coors Original pints</td><td>Daily 2-5&nbsp;PM</td><td>$5.25</td><td>Downtown Kitchener</td></tr>
+<tr><td><a href="/kitchener-waterloo-cambridge/venues/6569">Bobby O'Brien's</a></td><td>16&nbsp;oz Canadian and Coors Light draught</td><td>Daily 2-5&nbsp;PM</td><td>$5.50</td><td>Downtown Kitchener</td></tr>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/6561">Browns Socialhouse Cambridge</a></td><td>Social Lager, 385&nbsp;ml</td><td>Daily 2-5&nbsp;PM and from 9&nbsp;PM</td><td>$5.75</td><td>Hespeler Road, Cambridge</td></tr>
 <tr><td><a href="/kitchener-waterloo-cambridge/venues/2353">Malt &amp; Barley Public House</a></td><td>All pints and glasses of wine</td><td>Daily 2-5&nbsp;PM and 9-10&nbsp;PM</td><td>$6</td><td>Fischer-Hallman Road, Kitchener</td></tr>
 </tbody>
 </table>
 
-<p>Statistics Canada counted <a href="https://www12.statcan.gc.ca/census-recensement/2021/as-sa/fogs-spg/page.cfm?lang=E&amp;topic=1&amp;dguid=2021S0503541">575,847 people in the Kitchener-Cambridge-Waterloo census metropolitan area</a> in the 2021 Census, spread across three cities with three different bar scenes. According to TodaysTab's checks on October 31, 2026, we track 132 active venues and 30 of them have a confirmed special with a stated day or time window. The most common window is 2 to 5&nbsp;PM, at 8 venues, followed by 4 to 6&nbsp;PM at 6. Ten venues run a deal that starts at 8&nbsp;PM or later. The lowest confirmed beer price is $1.25, shared by Dallas Night Club on Fridays and The Pub On King on Tuesdays.</p>
+<p>Statistics Canada counted <a href="https://www12.statcan.gc.ca/census-recensement/2021/as-sa/fogs-spg/page.cfm?lang=E&amp;topic=1&amp;dguid=2021S0503541">575,847 people in the Kitchener-Cambridge-Waterloo census metropolitan area</a> in the 2021 Census, spread across three cities with three different bar scenes. According to TodaysTab's checks on October 31, 2026, we track 132 active venues, and 26 of them are listed here with a confirmed special and a stated day or time window. Among the venues listed, the most common window is 2 to 5&nbsp;PM, at 8 venues, followed by 4 to 6&nbsp;PM at 4. Eleven of them run a deal that starts at 8&nbsp;PM or later. The lowest confirmed beer price is $1.25, shared by Dallas Night Club on Fridays and The Pub On King on Tuesdays after 8&nbsp;PM.</p>
 
 <h2>Uptown Waterloo</h2>
 
 <p>Uptown is the King Street core of Waterloo, where pubs and cocktail rooms sit within a few blocks of each other. Most weekday deals here are daily rotations, so check the day before you go.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6571">The Pub On King (77 King St N)</a></strong> rotates a deal each night. Mondays have $5 domestic pints and $15.50 pitchers. Tuesdays have $15.50 domestic pitchers, 6&nbsp;oz beers at $1.25 and 6&nbsp;oz Cottage Springs at $2.25, plus $9 Don Julio and Hennessy shots after 8&nbsp;PM. Wednesdays have $8.50 schooners and half-price wine bottles. Thursdays after 8&nbsp;PM have 12&nbsp;oz beers at $2.25 and Cottage Springs at $4.50. Saturdays before 11&nbsp;PM have sangria mini pitchers at $9.50.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6571">The Pub On King (77 King St N)</a></strong> rotates a deal each night. Mondays have $5 domestic pints and $15.50 pitchers. Tuesdays have $15.50 domestic pitchers and $9 Don Julio and Hennessy shots, and after 8&nbsp;PM, 6&nbsp;oz beers at $1.25 and 6&nbsp;oz Cottage Springs at $2.25. Wednesdays have $8.50 schooners and half-price wine bottles. Thursdays after 8&nbsp;PM have 12&nbsp;oz beers at $2.25 and Cottage Springs at $4.50. Saturdays before 11&nbsp;PM have sangria mini pitchers at $9.50.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6552">The Duke of Wellington (100 King St S)</a></strong> pours Duke's Lager pints at $5 from Sunday to Thursday. Sunday adds a $10 Caesar, Monday has $5 Moosehead pints, Tuesday has $6.50 Irish pints, Wednesday has $10 wings and $5 6&nbsp;oz Two Oceans wine, and Thursday has $5.50 Cowbell pints.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6552">The Duke of Wellington (100 King St S)</a></strong> posts rotating daily drink specials, so call ahead for current prices. In TodaysTab's data, Duke's Lager pints are $5 from Sunday to Thursday. Sunday adds a $10 Caesar, Monday has $5 Moosehead pints, Tuesday has $6.50 Irish pints, Wednesday has $10 wings and $5 6&nbsp;oz Two Oceans wine, and Thursday has $5.50 Cowbell pints.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/1048">LaLa Social House (181 King St S)</a></strong> runs a social hour Tuesday to Saturday, 4 to 6&nbsp;PM: Peroni draft at $9 and Peroni 0.0% at $7. <strong><a href="/kitchener-waterloo-cambridge/venues/6618">Lower Lounge at Lala (181 King St S Lower Level)</a></strong> has the same hours with draft Peroni at $9, Peroni 0.0% at $7 and Collective Arts Ransack the Universe at $9.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/1048">LaLa Social House (181 King St S)</a></strong> runs a social hour Tuesday to Saturday, 4 to 6&nbsp;PM; according to the venue's social hour menu, Peroni draft is $9 and Peroni 0.0% is $7. <strong><a href="/kitchener-waterloo-cambridge/venues/6618">Lower Lounge at Lala (181 King St S Lower Level)</a></strong> has the same hours, and the same menu lists draft Peroni at $9, Peroni 0.0% at $7 and Collective Arts Ransack the Universe at $9.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/2358">Proof Kitchen + Lounge (110 Erb St W)</a></strong> prices all signature cocktails at $12 from Monday to Friday, 4 to 6&nbsp;PM. Tuesday margaritas are $12, and Wednesday has half-price bottles of select wines.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/2362">Ethel's Lounge (114 King St N)</a></strong> serves Wing Ding Wednesday: BBQ wings in your choice of sauce for $11 after 4&nbsp;PM with a drink.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/2362">Ethel's Lounge (114 King St N)</a></strong> has run a Wing Ding Wednesday wings deal (BBQ wings in your choice of sauce for $11 after 4&nbsp;PM with a drink, in TodaysTab's data), so call ahead to confirm the price.</p>
 
 <h2>Northfield Drive, Waterloo</h2>
 
-<p>Northfield Drive East is the chain-restaurant stretch in north Waterloo, with two venues that keep the same hours daily.</p>
+<p>Northfield Drive East is the chain-restaurant stretch in north Waterloo, with two chain venues that run daily happy hours.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/6646">The Keg Steakhouse + Bar (42 Northfield Dr E)</a></strong> runs happy hour in the bar and lounge, dine-in only: Monday to Friday 4 to 6&nbsp;PM, Saturday and Sunday 3 to 5&nbsp;PM, and nightly from 9&nbsp;PM. We have no confirmed prices for it.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6556">Browns Socialhouse Waterloo (255 Northfield Dr E)</a></strong> offers Social Lager (385&nbsp;ml) at $5.75, Social Ale at $6.25, 1&nbsp;oz social cocktails at $6, 6&nbsp;oz wine at $7.50 and half-price wine bottles, daily 2 to 5&nbsp;PM and from 9&nbsp;PM.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6556">Browns Socialhouse Waterloo (255 Northfield Dr E)</a></strong> runs social hour daily 2 to 5&nbsp;PM and from 9&nbsp;PM. Prices in TodaysTab's data: Social Lager (385&nbsp;ml) at $5.75, Social Ale at $6.25, 1&nbsp;oz social cocktails at $6, 6&nbsp;oz wine at $7.50 and half-price wine bottles.</p>
 
 <h2>Downtown Kitchener</h2>
 
-<p>Downtown Kitchener centres on King Street West and the streets around Victoria Street North. Deals here lean toward day-specific pub specials and a few late-night options.</p>
+<p>Downtown Kitchener centres on King Street West, with one stop just north on Victoria Street North. Deals here lean toward day-specific pub specials and a few late-night options.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6569">Bobby O'Brien's (125 King St W)</a></strong> pours Canadian, Coors Light and Coors Original pints at $5.25 daily from 2 to 5&nbsp;PM. Mondays add $5.25 Molson pints, Wednesdays have $9.29 Molson schooners, Thursdays have $5 off bottles of wine and 10 wings for $10 after 5&nbsp;PM, and Sundays have $2 off domestic pitchers.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6569">Bobby O'Brien's (125 King St W)</a></strong> pours 16&nbsp;oz Canadian or Coors Light draught at $5.50 daily from 2 to 5&nbsp;PM, with wings at $1 each, according to its own site. TodaysTab's data also lists $5.25 Molson pints on Mondays, $9.29 Molson schooners on Wednesdays, $5 off bottles of wine and 10 wings for $10 after 5&nbsp;PM on Thursdays, and $2 off domestic pitchers on Sundays, which the venue's page does not show, so call ahead.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/2352">Don Julio Tacos &amp; Tequila Bar (147A King St W)</a></strong> starts its deals at 4:30&nbsp;PM: $2 off Dos Equis and Madri on tap on Sundays, $10.25 margaritas on Wednesdays, and $2 off tequila and mezcal shots on Thursdays.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/2352">Don Julio Tacos &amp; Tequila Bar (147A King St W)</a></strong> starts its deals at 4:30&nbsp;PM, according to its drink menu as recorded by TodaysTab: $2 off Dos Equis and Madri on tap on Sundays, $10.25 margaritas on Wednesdays, and $2 off tequila and mezcal shots on Thursdays.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/2351">TWH Social Bar &amp; Bistro (1 King St W)</a></strong> runs Wine Wednesday: 50% off selected bottles and half-price 9&nbsp;oz glasses.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/1045">PUBLIC Kitchen &amp; Bar (300 Victoria St N)</a></strong> serves a tapas and beverage happy hour Tuesday to Saturday, 4 to 6&nbsp;PM, with selections from $8, dine-in only.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/1045">PUBLIC Kitchen &amp; Bar (300 Victoria St N, just north of downtown)</a></strong> serves a tapas and beverage happy hour Tuesday to Saturday, 4 to 6&nbsp;PM, with selections from $8, dine-in only.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/6589">Dallas Night Club (312 King St W)</a></strong> sells beers for $1.25 all night on Fridays, the lowest confirmed beer price on this list.</p>
 
@@ -547,58 +544,58 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p>These venues sit along King Street East, Victoria Street North, Fairway Road and Kingsway Drive, and most are easier to reach by car.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/2353">Malt &amp; Barley Public House (1187 Fischer-Hallman Rd)</a></strong> prices all pints and glasses of wine at $6, daily from 2 to 5&nbsp;PM and again 9 to 10&nbsp;PM. Wednesday is half-price wings, dine-in only.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/2353">Malt &amp; Barley Public House (1187 Fischer-Hallman Rd)</a></strong> lists a daily 2 to 5&nbsp;PM and 9 to 10&nbsp;PM happy hour, with all pints and glasses of wine at $6 in TodaysTab's data, so confirm prices with the pub. Wednesday is half-price wings, dine-in only.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6562">Borealis Grille &amp; Bar (4336 King St E)</a></strong> pours $6 taps, covering cocktails, draft beer, wine and kombucha, Monday to Friday 2 to 5&nbsp;PM.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6562">Borealis Grille &amp; Bar (4336 King St E)</a></strong> advertises a weekday 2 to 5&nbsp;PM happy hour with $6 drinks on its company site (cocktails, draft beer, wine and kombucha); confirm it applies to the Kitchener location at 519-219-9007.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6558">Piper Arms (4391 King St E)</a></strong> sells a 20&nbsp;oz domestic pint for $5 daily from 11&nbsp;AM to 4&nbsp;PM. After 9&nbsp;PM it offers $5 domestic pints, $5 bar rails, 99-cent wings, half-price appetizers and $6 house wine.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6558">Piper Arms (4391 King St E)</a></strong> lists daily pint and late-night specials, so call ahead to confirm. In TodaysTab's data, a 20&nbsp;oz domestic pint is $5 daily from 11&nbsp;AM to 4&nbsp;PM, and after 9&nbsp;PM it offers $5 domestic pints, $5 bar rails, 99-cent wings, half-price appetizers and $6 house wine.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6542">The Three Idiots (2979 King St E)</a></strong> has $5.99 happy hour drinks from 1 to 5&nbsp;PM and, after 9&nbsp;PM, 341&nbsp;ml domestic bottles at $4.49 and imported or premium bottles at $6.49. Daily rotations: $14.99 domestic pitchers on Sunday, $9.99 growlers on Monday, $5.99 tall cans on Wednesday, half-price wine bottles on Thursday and $3.99 tequila shots on Friday.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6542">The Three Idiots (2979 King St E)</a></strong> has a 1 to 5&nbsp;PM happy hour (call for prices) and, after 9&nbsp;PM, 341&nbsp;ml domestic bottles at $4.49 and imported or premium bottles at $6.49 in TodaysTab's data. Sunday to Friday have rotating drink deals; call (226) 647-0638 for current prices. The pub is closed on Tuesdays.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/6605">The Canadian Brewhouse (2960 Kingsway Dr, Unit P004)</a></strong> runs Monday to Saturday 2 to 6&nbsp;PM and again from 9&nbsp;PM: Bud Light steins at $3.99, Stella Artois steins at $5.49, 6&nbsp;oz house wine at $5.99, highballs and Fireball shots at $4.99, and tacos at $3.99.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6559">Moxies Kitchener (385 Fairway Rd S)</a></strong> runs dine-in happy hour daily 2 to 5&nbsp;PM and 9&nbsp;PM to close: 6&nbsp;oz wine from $5, 16&nbsp;oz Big Life beer at $5, house highballs at $5 and half-price wine bottles.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6559">Moxies Kitchener (385 Fairway Rd S)</a></strong> runs dine-in happy hour daily 2 to 5&nbsp;PM and again from 9 to 11&nbsp;PM on Sunday and Monday or 9&nbsp;PM to midnight Tuesday to Saturday. In TodaysTab's data, 6&nbsp;oz wine is from $5, 16&nbsp;oz Big Life beer at $5, house highballs at $5 and half-price wine bottles.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/6549">Jack Astor's Bar &amp; Grill (2960 Kingsway Dr, Unit 15A)</a></strong> starts select beers, wines and cocktails at $6 daily from 2 to 5&nbsp;PM, with half-price 750&nbsp;ml wine bottles all day Monday and Tuesday.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/2355">Chicago Pub &amp; Billiards (725 Ottawa St S)</a></strong> posts a drink for every day: $5 Caesars and $6 20&nbsp;oz Kronenbourg on Sunday, $6 Heineken pints Monday, $4.50 tequila shots Tuesday, $5 Corona Wednesday, $6 Guinness Thursday, $9.99 espresso martinis Friday and $6 20&nbsp;oz Hazy Days Saturday.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/2355">Chicago Pub &amp; Billiards (725 Ottawa St S)</a></strong> posts a drink for every day: $5 Caesars and $6 Kronenbourg on Sunday, $6 Heineken pints Monday, $4.50 tequila shots Tuesday, $5 Corona Wednesday, $6 Guinness Thursday, $9.99 espresso martinis Friday and $6 Hazy Days Saturday.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/6567">Whale &amp; Ale British Pub (1120 Victoria St N, Unit 2)</a></strong> has $6 Caesars on Sundays and half-price wings with a beverage on Tuesdays.</p>
 
 <h2>Cambridge</h2>
 
-<p>Our confirmed Cambridge deals cluster along Hespeler Road, the main commercial strip, so a stop at one is a short drive from the next.</p>
+<p>These Cambridge spots sit on or just off Hespeler Road, with the Keg on Pinebush Road a few minutes north.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6561">Browns Socialhouse Cambridge (355 Hespeler Rd)</a></strong> offers Social Lager (385&nbsp;ml) at $5.75, Social Ale at $6.25, 6&nbsp;oz wine at $7.50, 1&nbsp;oz social cocktails at $6 and half-price wine bottles, daily 2 to 5&nbsp;PM and from 9&nbsp;PM.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6561">Browns Socialhouse Cambridge (355 Hespeler Rd)</a></strong> runs social hour daily 2 to 5&nbsp;PM and from 9&nbsp;PM. Prices in TodaysTab's data: Social Lager (385&nbsp;ml) at $5.75, Social Ale at $6.25, 6&nbsp;oz wine at $7.50, 1&nbsp;oz social cocktails at $6 and half-price wine bottles.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/871">State &amp; Main Kitchen and Bar (375 Hespeler Rd, Unit 2)</a></strong> runs dine-in happy hour daily 2 to 5&nbsp;PM and 9&nbsp;PM to close, with snacks and drinks from $5. Mondays take $2 off margaritas, Wednesdays have half-price wings after 2&nbsp;PM, Thursdays have half-price wine bottles, and Saturdays take $2 off sangria.</p>
 
-<p><strong><a href="/kitchener-waterloo-cambridge/venues/6645">The Keg Steakhouse + Bar (44 Pinebush Rd)</a></strong> uses the same schedule as its Waterloo location: weekdays 4 to 6&nbsp;PM, weekends 3 to 5&nbsp;PM and nightly from 9&nbsp;PM, in the bar and lounge, dine-in only. We have no confirmed prices.</p>
+<p><strong><a href="/kitchener-waterloo-cambridge/venues/6645">The Keg Steakhouse + Bar (44 Pinebush Rd)</a></strong> runs happy hour in the bar and lounge from opening until 6&nbsp;PM on weekdays, from opening until 5&nbsp;PM on weekends, and nightly from 9&nbsp;PM, dine-in only. We have no confirmed prices.</p>
 
 <p><strong><a href="/kitchener-waterloo-cambridge/venues/2369">Blackshop Restaurant &amp; Wine Bar (595 Hespeler Rd)</a></strong> serves Sunday endless brunch from 10&nbsp;AM to 3&nbsp;PM at $48 per adult and $27 under 10, with one mimosa or Caesar included per adult.</p>
 
 <h2>What's not on this list</h2>
 
-<p>The Hop House and White Rabbit entries at 47 and 49 King St N in Uptown Waterloo disagree across listings, including whether they open on Mondays and Tuesdays, so we left them out until we can re-confirm. Our records for The Black Badger (55 Water St N, Cambridge), The Aging Oak (3 Queen St E, Cambridge), Gator's Tail (970 Franklin Blvd, Cambridge), The Rabbid Fox (123 Pioneer Dr, Kitchener), Graffiti Market (137 Glasgow St, Kitchener) and Howl At The Moon (1271 Victoria St N, Kitchener) hold deals, but we could not confirm independently that each is currently operating, so they are held back.</p>
+<p>The Hop House and White Rabbit entries at 47 King St N in Uptown Waterloo disagree across listings, including whether they open on Mondays and Tuesdays, so we left them out until we can re-confirm. Our records for The Black Badger (55 Water St N, Cambridge), The Aging Oak (3 Queen St E, Cambridge), Gator's Tail (970 Franklin Blvd, Cambridge), The Rabbid Fox (123 Pioneer Dr, Kitchener), Graffiti Market (137 Glasgow St, Kitchener) and Howl At The Moon (1271 Victoria St N, Kitchener) hold deals, but we could not confirm independently that each is currently operating, so they are held back.</p>
 
 <p>The Fiddle and Firkin (707 King St E, Cambridge) is also out: its listed specials name the Swan, the Frog and Firkin on Yonge, which are other pubs, so we do not treat them as Cambridge deals. Competitor lists also name Abe Erb, Morty's Pub, Grand Trunk Saloon and Loloan Lobby Bar. We have no current confirmed schedule for any of them, and Beertown in Waterloo and Cambridge has no confirmed special either.</p>
 
 <h2>Frequently asked questions</h2>
 
 <h3>What time is happy hour in Kitchener-Waterloo?</h3>
-<p>The most common window in TodaysTab's October 31, 2026 data is 2 to 5&nbsp;PM, used by 8 venues including Bobby O'Brien's and Malt &amp; Barley. Six more run 4 to 6&nbsp;PM, such as Proof Kitchen + Lounge and LaLa Social House. Several chains add a second window from 9&nbsp;PM.</p>
+<p>The most common window in TodaysTab's October 31, 2026 data is 2 to 5&nbsp;PM, used by 8 of the venues listed here, including Bobby O'Brien's and Malt &amp; Barley. Four more run 4 to 6&nbsp;PM, such as Proof Kitchen + Lounge and LaLa Social House. Several chains add a second window from 9&nbsp;PM.</p>
 
 <h3>Where is the cheapest beer in Kitchener-Waterloo?</h3>
-<p>The lowest confirmed beer price is $1.25. Dallas Night Club (312 King St W, Kitchener) sells $1.25 beers all night on Fridays, and The Pub On King (77 King St N, Waterloo) sells 6&nbsp;oz beers at $1.25 on Tuesdays. For a larger pour, The Canadian Brewhouse has Bud Light steins at $3.99.</p>
+<p>The lowest confirmed beer price is $1.25. Dallas Night Club (312 King St W, Kitchener) sells $1.25 beers all night on Fridays, and The Pub On King (77 King St N, Waterloo) sells 6&nbsp;oz beers at $1.25 on Tuesdays after 8&nbsp;PM. For a larger pour, The Canadian Brewhouse has Bud Light steins at $3.99.</p>
 
 <h3>Which bars have late-night happy hour in Waterloo Region?</h3>
-<p>Ten venues have a deal starting at 8&nbsp;PM or later. Piper Arms (4391 King St E) offers $5 domestic pints and 99-cent wings after 9&nbsp;PM, Browns Socialhouse runs its menu from 9&nbsp;PM, and The Pub On King starts Tuesday and Thursday deals after 8&nbsp;PM.</p>
+<p>Eleven of the venues listed here have a deal starting at 8&nbsp;PM or later. Piper Arms (4391 King St E) offers $5 domestic pints and 99-cent wings after 9&nbsp;PM, Browns Socialhouse runs its menu from 9&nbsp;PM, and The Pub On King starts Tuesday and Thursday deals after 8&nbsp;PM.</p>
 
 <h3>Is there a happy hour in Uptown Waterloo?</h3>
 <p>Yes. Proof Kitchen + Lounge (110 Erb St W) prices signature cocktails at $12 from 4 to 6&nbsp;PM on weekdays, LaLa Social House (181 King St S) pours Peroni at $9 from 4 to 6&nbsp;PM Tuesday to Saturday, and The Duke of Wellington (100 King St S) has $5 Duke's Lager from Sunday to Thursday.</p>
 
 <h3>Which Kitchener-Waterloo happy hours are on Sundays?</h3>
-<p>Sunday deals include $5 Duke's Lager and a $10 Caesar at The Duke of Wellington, $2 off domestic pitchers at Bobby O'Brien's, $2 off Dos Equis and Madri on tap at Don Julio from 4:30&nbsp;PM, $6 Caesars at Whale &amp; Ale, and the Keg's 3 to 5&nbsp;PM weekend happy hour.</p>
+<p>According to TodaysTab's data, Sunday deals include $5 Duke's Lager and a $10 Caesar at The Duke of Wellington, $2 off domestic pitchers at Bobby O'Brien's, $2 off Dos Equis and Madri on tap at Don Julio from 4:30&nbsp;PM, $6 Caesars at Whale &amp; Ale, and the Keg Waterloo's 3 to 5&nbsp;PM weekend happy hour.</p>
 
 <h3>Is there a happy hour in Cambridge, Ontario?</h3>
 <p>Yes. Browns Socialhouse (355 Hespeler Rd) and State &amp; Main (375 Hespeler Rd, Unit 2) both run daily happy hours from 2 to 5&nbsp;PM and again from 9&nbsp;PM. Browns sells Social Lager at $5.75, and State &amp; Main lists snacks and drinks from $5.</p>
@@ -615,15 +612,15 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     slug: "happy-hours-edmonton-2026",
     category: "Guide",
     regions: ["edmonton"],
-    title: "Edmonton Happy Hours 2026: Every Confirmed Spot",
+    title: "Edmonton Happy Hours 2026: 27 Spots With Deals",
     metaDescription:
-      "28 confirmed Edmonton happy hours for 2026, from $3.99 draught at 1st RND to Whyte Avenue and ICE District deals, with days and times. Checked Oct 31, 2026.",
+      "27 Edmonton happy hour spots from our October 2026 checks, from $3.99 sleeves at 1st RND to Whyte Avenue and ICE District deals, with days and times.",
     publishedAt: "2026-10-29",
     updatedAt: "2026-10-31",
     excerpt:
-      "The most common Edmonton happy hour window is 2-5 PM (12 venues), and the lowest confirmed draught is $3.99 at 1st RND, per TodaysTab's October 31, 2026 checks.",
+      "The most common Edmonton happy hour window is 2-5 PM (about a dozen venues), and a 12 oz sleeve of draught is $3.99 at 1st RND, per TodaysTab's October 31, 2026 checks.",
     contentHtml: `
-<p>Quick answer: Edmonton happy hours most often run 2-5&nbsp;PM or 2-6&nbsp;PM, and confirmed prices start at $3.99 for a 12&nbsp;oz draught at 1st RND and $4.75 for a 20&nbsp;oz pint at The Black Dog Freehouse. Old Strathcona (Whyte Avenue) has the most spots. TodaysTab tracks 95 Edmonton venues with current, dated deals.</p>
+<p>Quick answer: Edmonton happy hours most often run 2-5&nbsp;PM or 2-6&nbsp;PM. A 12&nbsp;oz sleeve of draught is $3.99 at 1st RND and a 20&nbsp;oz pint is $4.75 at The Black Dog Freehouse, with shorter power hours as low as $2.99 at The Pint Whyte. Old Strathcona (Whyte Avenue) has the most spots. TodaysTab tracks about 95 Edmonton venues with current, dated deals.</p>
 
 <p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
 
@@ -633,17 +630,17 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 </thead>
 <tbody>
 <tr><td><a href="/edmonton/venues/742">The Black Dog Freehouse</a></td><td>20&nbsp;oz draught pints, well highballs, shots</td><td>Mon-Sat 2-7&nbsp;PM; Sunday specials</td><td>$4.75 pints, $4 highballs</td><td>Old Strathcona</td></tr>
-<tr><td><a href="/edmonton/venues/7268">1st RND</a></td><td>Sliders, fish tacos, 12&nbsp;oz house draught</td><td>Mon-Sat 2-6&nbsp;PM and 9&nbsp;PM-close</td><td>$3.99 each</td><td>Downtown West</td></tr>
-<tr><td><a href="/edmonton/venues/7344">The Pint Whyte</a></td><td>Highballs, wine, domestic taps</td><td>Mon-Sat 3-7&nbsp;PM; all day Sunday</td><td>$5</td><td>Old Strathcona</td></tr>
+<tr><td><a href="/edmonton/venues/7268">1st RND</a></td><td>Sliders, fish tacos, 12&nbsp;oz house draught</td><td>Mon-Sat 2-6&nbsp;PM and 9&nbsp;PM-close</td><td>$3.99 each</td><td>Oliver (Wihkwentowin)</td></tr>
+<tr><td><a href="/edmonton/venues/7344">The Pint Whyte</a></td><td>Highballs, wine, domestic taps</td><td>Tue-Sat 3-7&nbsp;PM; all day Sunday</td><td>$5</td><td>Old Strathcona</td></tr>
 <tr><td><a href="/edmonton/venues/7198">The Bell in Scona Brewery</a></td><td>14&nbsp;oz draft, house wine, food from $5.45</td><td>Daily 2-5&nbsp;PM; all day Sunday</td><td>$5 draft</td><td>Old Strathcona</td></tr>
 <tr><td><a href="/edmonton/venues/7341">Sugarbowl</a></td><td>Select house and rotating taps</td><td>Daily 3-6&nbsp;PM</td><td>$8</td><td>Garneau</td></tr>
-<tr><td><a href="/edmonton/venues/740">O'Byrne's Irish Pub (ICE District)</a></td><td>Hi-balls, house pints, Jameson</td><td>Daily 2-7&nbsp;PM</td><td>$5</td><td>ICE District</td></tr>
+<tr><td><a href="/edmonton/venues/740">O'Byrne's Irish Pub (ICE District)</a></td><td>Hi-balls, house pints, Jameson</td><td>2-7&nbsp;PM (call to confirm)</td><td>$5</td><td>ICE District</td></tr>
 <tr><td><a href="/edmonton/venues/3023">Woodwork</a></td><td>Draft beer, feature wine, classic cocktails</td><td>Mon-Fri 2-5&nbsp;PM</td><td>$8 draft, $14 cocktails</td><td>Downtown</td></tr>
-<tr><td><a href="/edmonton/venues/7366">Bodega Whyte Avenue</a></td><td>Half-price feature wine, beer, cocktails</td><td>Daily 2-5&nbsp;PM</td><td>Half price</td><td>Old Strathcona</td></tr>
+<tr><td><a href="/edmonton/venues/7366">Bodega Whyte Avenue</a></td><td>Half-price feature wine, beer, cocktails</td><td>Tue-Sun 2-5&nbsp;PM</td><td>Half price</td><td>Old Strathcona</td></tr>
 </tbody>
 </table>
 
-<p>In June 2016 Alberta changed the rules that shape these deals: the Alberta Gaming, Liquor and Cannabis commission <a href="https://www.aglc.ca/news/responsible-liquor-service-focus-happy-hours-policy-change">removed the 8&nbsp;PM limit on happy hours</a>, so a bar can discount at any time it is open, as long as prices stay above the provincial minimum. According to TodaysTab's checks on October 31, 2026, we track 228 active Edmonton venues, 110 have live specials, and 95 of those pass our test (confidence of 0.7 or higher, re-checked within 45 days, with a stated day or time). The most common happy hour window is 2-5&nbsp;PM (12 venues), then 2-6&nbsp;PM (8 venues). 23 venues run a happy hour that starts at 9&nbsp;PM or later, and 39 have a Sunday happy hour or Sunday drink special.</p>
+<p>In June 2016 Alberta changed the rules that shape these deals: the Alberta Gaming, Liquor and Cannabis commission <a href="https://www.aglc.ca/news/responsible-liquor-service-focus-happy-hours-policy-change">removed the 8&nbsp;PM limit on happy hours</a>, so a bar can discount at any time it is open, as long as prices stay above the provincial minimum. According to TodaysTab's checks on October 31, 2026, we track 228 active Edmonton venues, 110 have live specials, and about 95 of those pass our test (confidence of 0.7 or higher, re-checked within 45 days, with a stated day or time). The most common happy hour window is 2-5&nbsp;PM (about a dozen venues), then 2-6&nbsp;PM (about eight). About 23 venues run a happy hour that starts at 9&nbsp;PM or later, and about 39 have a Sunday happy hour or Sunday drink special.</p>
 
 <h2>Old Strathcona (Whyte Avenue)</h2>
 
@@ -653,23 +650,21 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p><strong><a href="/edmonton/venues/7346">The Buckingham (10439 Whyte Avenue)</a></strong> has a different special each day from 3&nbsp;PM to 2&nbsp;AM: $4.50 well highballs Monday and Wednesday, $5.25 tequila and margaritas Tuesday, 50% off burgers Thursday, $10 all-you-can-eat corn dogs Monday.</p>
 
-<p><strong><a href="/edmonton/venues/7219">O'Byrne's Irish Pub (10616 Whyte Ave NW)</a></strong> runs 2-7&nbsp;PM with a rotating weekday theme: $8 Guinness family pints Tuesday, $4.25 house pints and half-price wine bottles Thursday, $5 flavoured whiskey shots Friday.</p>
+<p><strong><a href="/edmonton/venues/7219">O'Byrne's Irish Pub (10616 Whyte Ave NW)</a></strong> runs a Tuesday happy hour from 2 to 7&nbsp;PM with $8 Guinness family pints. It posts other weekday features, including house pints and half-price wine bottles on Thursday and shots on Friday, so check its page. Closed Mondays.</p>
 
 <p><strong><a href="/edmonton/venues/739">Hudsons Canada's Pub (10307 82 Ave NW)</a></strong> starts its Monday and Tuesday deals at 6&nbsp;PM: $6.75 Alexander Keith's on Monday, $6 rotating taps on Tuesday. Wednesday is 50% off wings with a drink purchase.</p>
 
 <p><strong><a href="/edmonton/venues/2183">Blowers &amp; Grafton (10550 82 Ave NW)</a></strong> posts a daily feature instead of a window: $1 off 20&nbsp;oz house lager Monday, $5 off any pizza Monday, $15 for half a dozen oysters Thursday, half-price wine bottles Thursday.</p>
 
-<p><strong><a href="/edmonton/venues/7371">The Mash (10402 Whyte Ave NW)</a></strong> serves craft pints at $6 (core taps) and $6.50 (rotating taps) daily from 3 to 6&nbsp;PM, with a feature 10-inch pizza at $14 to $16 Sunday to Friday.</p>
-
-<p><strong><a href="/edmonton/venues/7366">Bodega Whyte Avenue (10314 82 Ave NW)</a></strong> takes half off feature wine, beer and cocktails from 2 to 5&nbsp;PM daily. Wednesday adds half-price wine from 5 to 9&nbsp;PM.</p>
+<p><strong><a href="/edmonton/venues/7366">Bodega Whyte Avenue (10314 82 Ave NW)</a></strong> takes half off feature wine, beer and cocktails from 2 to 5&nbsp;PM Tuesday to Sunday, according to TodaysTab's data; call ahead, because the venue's hours header says it opens at 4&nbsp;PM. Wednesday adds half-price wine from 5 to 9&nbsp;PM.</p>
 
 <p><strong><a href="/edmonton/venues/7198">The Bell in Scona Brewery (10416 80 Ave NW)</a></strong> charges $5 for 14&nbsp;oz drafts and 5&nbsp;oz house wine from 2 to 5&nbsp;PM daily, with beer towers at $37. Sunday is all-day happy hour, and Monday rotating taps are $5.</p>
 
-<p><strong><a href="/edmonton/venues/7344">The Pint Whyte (8032 104 Street NW)</a></strong> charges $5 for highballs, wine and domestic taps from 3 to 7&nbsp;PM and all day Sunday. Tuesday has $2.25 8&nbsp;oz mini beers, and Friday and Saturday have a $2.99 power hour from 9 to 10&nbsp;PM.</p>
+<p><strong><a href="/edmonton/venues/7344">The Pint Whyte (8032 104 Street NW, at 80 Avenue just south of Whyte Avenue)</a></strong> charges $5 for highballs, wine and domestic taps Tuesday to Saturday from 3 to 7&nbsp;PM and all day Sunday. Tuesday has $2.25 8&nbsp;oz mini beers, and Friday and Saturday have a $2.99 power hour from 9 to 10&nbsp;PM.</p>
 
 <p><strong><a href="/edmonton/venues/741">The Next Act Pub (8224 104 Street NW)</a></strong> starts a "Curtain Call" window at 9&nbsp;PM Sunday to Thursday: $1 off all draft, $3 off fail pails, and six late-night snacks for $8.</p>
 
-<p><strong><a href="/edmonton/venues/7345">Boxer Albertan Kitchen &amp; Bar (10315 83 Ave NW)</a></strong> runs happy hour from opening until 5:30&nbsp;PM Sunday to Wednesday and until 5&nbsp;PM Friday and Saturday: $11 classic cocktails, 20% off pizza, 20% off draft beer and wine, $6 bread and butter.</p>
+<p><strong><a href="/edmonton/venues/7345">Boxer Albertan Kitchen &amp; Bar (10315 83 Ave NW)</a></strong> runs happy hour in the afternoon until 5:30&nbsp;PM Sunday to Thursday and until 5&nbsp;PM Friday and Saturday (opening times vary, so call ahead). According to the venue's happy hour menu, items include $11 classic cocktails, 20% off pizza, 20% off draft beer and wine and $6 bread and butter, so check the menu for the exact list.</p>
 
 <h2>Garneau and Ritchie</h2>
 
@@ -683,17 +678,17 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p>Rogers Place anchors the north end. Bars here lean on afternoon windows and late-night menus.</p>
 
-<p><strong><a href="/edmonton/venues/7268">1st RND (11248 104 Ave NW)</a></strong> runs its "3 Star Happy Hour" Monday to Saturday 2-6&nbsp;PM and again from 9&nbsp;PM to close: $3.99 sliders, fish tacos and 12&nbsp;oz sleeves of house draught. Wednesday wings are half price after 6&nbsp;PM.</p>
+<p><strong><a href="/edmonton/venues/7268">1st RND (104 Avenue at 112 Street, on the Oliver side of downtown)</a></strong> runs its "3 Star Happy Hour" Monday to Saturday 2-6&nbsp;PM and again from 9&nbsp;PM to close: $3.99 sliders, fish tacos and 12&nbsp;oz sleeves of house draught. Wednesday wings are half price after 6&nbsp;PM.</p>
 
 <p><strong><a href="/edmonton/venues/3023">Woodwork (10132 100 Street NW)</a></strong> serves Monday to Friday 2-5&nbsp;PM: $8 draft, $12 feature wine, $14 shaken or stirred classic cocktails, and $8 hickory frites.</p>
 
-<p><strong><a href="/edmonton/venues/7200">Bar Henry (10220 103 Ave NW)</a></strong> holds an aperitivo hour from 3 to 5&nbsp;PM, with $13 wine by the glass and snacks from $7.</p>
+<p><strong><a href="/edmonton/venues/7200">Bar Henry (10220 103 Ave NW)</a></strong> holds an aperitivo hour from 3 to 5&nbsp;PM Wednesday to Saturday, with $13 cocktails and wine by the glass and snacks from $7.</p>
 
 <p><strong><a href="/edmonton/venues/3027">Black Pearl Seafood Bar (10132 104 Street NW)</a></strong> starts a late-night happy hour at 8&nbsp;PM daily: $6 prosecco, $12 king crab mushroom caps. Tuesday adds a $99 cold seafood tower, and Wednesday wine bottles are half price.</p>
 
-<p><strong><a href="/edmonton/venues/740">O'Byrne's Irish Pub, ICE District (10235 101 Street NW)</a></strong> runs 2-7&nbsp;PM daily with $5 hi-balls, house pints and Jameson, and $8 Guinness family pints on Tuesday.</p>
+<p><strong><a href="/edmonton/venues/740">O'Byrne's Irish Pub, ICE District (10235 101 Street NW)</a></strong> lists $5 hi-balls, house pints and Jameson from 2 to 7&nbsp;PM, with $8 Guinness family pints on Tuesday; call ahead to confirm.</p>
 
-<p><strong><a href="/edmonton/venues/747">The Canadian Icehouse (10332 103 Street NW)</a></strong> posts a different special each day: $4.99 Jameson shots Sunday, $6.99 margaritas Tuesday, $10.99 tankards of any draught Thursday.</p>
+<p><strong><a href="/edmonton/venues/747">The Canadian Icehouse (10332 103 Street NW)</a></strong> posts a different special each day (check its daily specials page for the current list): $4.99 Jameson shots Sunday, $6.99 margaritas Tuesday, $10.99 tankards of any draught Thursday.</p>
 
 <p><strong><a href="/edmonton/venues/7201">The Sherlock Holmes Pub Downtown (10012 101A Ave)</a></strong> says happy hour "starts at just $3" Monday to Saturday 2-6&nbsp;PM and from 11&nbsp;AM on Sunday. Tuesday is half-price dry ribs or wings.</p>
 
@@ -705,11 +700,11 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p><strong><a href="/edmonton/venues/751">Bodega 124 Street (12417 Stony Plain Rd)</a></strong> runs half-price feature wine, beer and cocktails Tuesday to Saturday 4-5&nbsp;PM, and half-price wine by the bottle and glass on Wednesday from 4 to 9&nbsp;PM.</p>
 
-<p><strong><a href="/edmonton/venues/7218">Three Vikings (10713 124 Street)</a></strong> takes 25% off all wine Tuesday to Friday 2-5&nbsp;PM, with a $5 cheese and olive plate. Daily pint features run $7.75 to $8.75.</p>
+<p><strong><a href="/edmonton/venues/7218">Three Vikings (10713 124 Street)</a></strong> takes 25% off all wine on Tuesdays 2-5&nbsp;PM in our confirmed data (check for other days), with a $5 cheese and olive plate. Daily pint features run $6.75 to $8.75.</p>
 
-<p><strong><a href="/edmonton/venues/7267">Clementine (11957 Jasper Avenue NW)</a></strong> holds a daily 5-6&nbsp;PM window: $8 pilsner (16&nbsp;oz), $14 shaken or stirred cocktails, and $2 off feature wine pours.</p>
+<p><strong><a href="/edmonton/venues/7267">Clementine (11957 Jasper Avenue NW)</a></strong> holds a 5-6&nbsp;PM window Tuesday to Saturday: $8 pilsner (16&nbsp;oz), $14 shaken or stirred cocktails, and $2 off feature wine pours.</p>
 
-<p><strong><a href="/edmonton/venues/7354">Slow Pour Beer Bar (10416 122 St NW)</a></strong> has Sunday $7 Pilsner Urquell and $10 negronis, Tuesday 20% off draft, and Friday 4-6&nbsp;PM $6 cask ale pints.</p>
+<p><strong><a href="/edmonton/venues/7354">Slow Pour Beer Bar (10416 122 St NW)</a></strong> has Sunday $7 Pilsner Urquell and $10 negronis, Friday 4-6&nbsp;PM pints of rotating cask ale (the venue's page lists $6 and $7, so check on arrival) and Wednesday $20 off bottles of wine. It opens at 5&nbsp;PM on Sunday, Wednesday and Thursday and is closed Monday and Tuesday.</p>
 
 <h2>West and south Edmonton</h2>
 
@@ -719,28 +714,28 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p><strong><a href="/edmonton/venues/7277">The Canadian Brewhouse, Lewis Estates (1320 Webber Greens Dr NW)</a></strong> runs Monday to Saturday 2-6&nbsp;PM: $3.99 Bud Light steins, $4.99 highballs and Fireball, $5.99 house wine.</p>
 
-<p><strong><a href="/edmonton/venues/7199">Flame &amp; Barrel (1237 Windermere Way SW)</a></strong> runs 3-5&nbsp;PM daily: $5.50 domestic draft, $6 house wine, $5 highballs, a $9 small cheese pizza. A second window opens at 8:30&nbsp;PM.</p>
+<p><strong><a href="/edmonton/venues/7199">Flame &amp; Barrel (1237 Windermere Way SW)</a></strong> runs a midweek happy hour, 3-5&nbsp;PM according to our data, with $5.50 domestic draft, $6 house wine, $5 highballs and a $9 small cheese pizza; check the venue's happy hour menu for days and any evening window.</p>
 
 <h2>What's not on this list</h2>
 
-<p>Of the 110 Edmonton venues with live specials, 82 are not described above. We kept this list to the 28 spots with the clearest prices and windows. Others, such as <a href="/edmonton/venues/7348">The Public Exchange (10909 Jasper Ave)</a>, <a href="/edmonton/venues/2187">The Common</a> and the other Canadian Brewhouse locations, are confirmed but only partly covered here. The Common's data shows weekly features such as $5.50 Tuesday margaritas, with no 3-6&nbsp;PM window like the one competitor lists give. Tavern on Whyte, Beer Revolution and El Cortez appear on older roundups, and we hold no confirmed specials for them. Malt &amp; Mortar (10416 82 Avenue), which older lists still recommend, is shown as closed on listings and in 2024 news.</p>
+<p>Of the 110 Edmonton venues with live specials, 83 are not described above. We kept this list to the 27 spots with the clearest prices and windows. Others, such as <a href="/edmonton/venues/7348">The Public Exchange (10909 Jasper Ave)</a>, <a href="/edmonton/venues/2187">The Common</a> and the other Canadian Brewhouse locations, are confirmed but only partly covered here. The Common's data shows weekly features such as $5.50 Tuesday margaritas, with no 3-6&nbsp;PM window like the one competitor lists give. Beer Revolution closed in September 2025. Tavern on Whyte and El Cortez appear on older roundups, and we hold no confirmed specials for them. Malt &amp; Mortar (10416 82 Avenue), which older lists still recommend, is shown as closed on listings and in 2024 news. The Mash (10402 Whyte Ave NW) appears in our data, but it is not on the chain's own current location list, so we left it out.</p>
 
 <h2>Frequently asked questions</h2>
 
 <h3>What time is happy hour in Edmonton?</h3>
-<p>The most common window in TodaysTab's October 31, 2026 data is 2-5&nbsp;PM, shared by 12 venues, followed by 2-6&nbsp;PM at 8 venues. The Black Dog Freehouse and O'Byrne's run 2-7&nbsp;PM, the longest windows on our list. Many Edmonton venues also run a second window from 9&nbsp;PM to close.</p>
+<p>The most common window in TodaysTab's October 31, 2026 data is 2-5&nbsp;PM, shared by about a dozen venues, followed by 2-6&nbsp;PM at about eight. The Black Dog Freehouse and O'Byrne's run 2-7&nbsp;PM, the longest windows on our list. Many Edmonton venues also run a second window from 9&nbsp;PM to close.</p>
 
 <h3>Where is the cheapest happy hour in Edmonton?</h3>
-<p>1st RND (11248 104 Ave NW) charges $3.99 for a 12&nbsp;oz sleeve of house draught, sliders and fish tacos Monday to Saturday 2-6&nbsp;PM. For a 20&nbsp;oz pint, The Black Dog Freehouse is lowest at $4.75 from 2 to 7&nbsp;PM. The Pint Whyte sells 8&nbsp;oz mini beers for $2.25 on Tuesdays.</p>
+<p>1st RND (104 Avenue at 112 Street) charges $3.99 for a 12&nbsp;oz sleeve of house draught, sliders and fish tacos, Monday to Saturday 2-6&nbsp;PM. For a 20&nbsp;oz pint, The Black Dog Freehouse is lowest at $4.75 from 2 to 7&nbsp;PM. Shorter windows go lower: The Pint Whyte has $2.25 mini beers on Tuesdays and a $2.99 power hour on Friday and Saturday from 9 to 10&nbsp;PM.</p>
 
 <h3>Which Edmonton bars have a late-night happy hour?</h3>
-<p>23 venues in our data start a happy hour at 9&nbsp;PM or later. Examples are 1st RND (9&nbsp;PM to close, Monday to Saturday), <a href="/edmonton/venues/741">The Next Act Pub (8224 104 Street NW)</a> (Sunday to Thursday), <a href="/edmonton/venues/7349">The Banquet (10332 103 Street NW, Unit 210)</a>, and <a href="/edmonton/venues/7211">JOEY Bell Tower (10310 101 Street NW)</a>. <a href="/edmonton/venues/3027">Black Pearl Seafood Bar</a> starts at 8&nbsp;PM daily.</p>
+<p>About 23 venues in our data start a happy hour at 9&nbsp;PM or later. Examples are 1st RND (9&nbsp;PM to close, Monday to Saturday), <a href="/edmonton/venues/741">The Next Act Pub (8224 104 Street NW)</a> (Sunday to Thursday), <a href="/edmonton/venues/7349">The Banquet (10332 103 Street NW, Unit 210)</a>, and <a href="/edmonton/venues/7211">JOEY Bell Tower (10310 101 Street NW)</a> (per JOEY's happy hour menu). <a href="/edmonton/venues/3027">Black Pearl Seafood Bar</a> starts at 8&nbsp;PM daily.</p>
 
 <h3>Is there a happy hour on Sunday in Edmonton?</h3>
-<p>Yes. 39 venues in our data have a Sunday happy hour or drink special. The Pint Whyte (all day, $5 highballs, wine and domestic taps), The Bell in Scona Brewery (all day, $5 drafts), The Buckingham (3&nbsp;PM to 2&nbsp;AM) and The Sherlock Holmes Pub Downtown (from 11&nbsp;AM) all run one.</p>
+<p>Yes. About 39 venues in our data have a Sunday happy hour or drink special. The Pint Whyte (all day, $5 highballs, wine and domestic taps), The Bell in Scona Brewery (all day, $5 drafts), The Buckingham (3&nbsp;PM to 2&nbsp;AM) and The Sherlock Holmes Pub Downtown (from 11&nbsp;AM) all run one.</p>
 
 <h3>Which Edmonton neighbourhood has the most happy hours?</h3>
-<p>Old Strathcona, around Whyte Avenue (82 Avenue). Eleven of the 28 venues on this list sit within a few blocks of it, from The Black Dog at 10425 Whyte Ave to The Pint Whyte on 104 Street. Downtown and the ICE District follow, with eight.</p>
+<p>Old Strathcona, around Whyte Avenue (82 Avenue). Ten of the 27 venues on this list sit within a few blocks of it, from The Black Dog at 10425 Whyte Ave to The Pint Whyte on 104 Street. Downtown and the ICE District follow, with eight venues in that section of this guide.</p>
 
 <h3>Can bars discount drinks after 8 PM in Alberta?</h3>
 <p>Yes. The Alberta Gaming, Liquor and Cannabis commission removed the 8&nbsp;PM limit on happy hours, so bars can discount at any time they are open if prices meet the minimum drink price. Edmonton bars such as <a href="/edmonton/venues/7268">1st RND</a>, <a href="/edmonton/venues/7223">Brewco</a> and <a href="/edmonton/venues/3027">Black Pearl</a> now advertise late-night windows.</p>
