@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, venueOwners, venueOwnerVenues, venues } from "@/db";
 import { eq, sql } from "drizzle-orm";
+import { checkRateLimit } from "@/lib/request-rate-limit";
 import { createOwnerSession } from "@/lib/venue-owner-auth";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { wrapOutreachHtml } from "@/lib/outreach-send";
@@ -17,6 +18,15 @@ const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
 // hand. Always responds the same way regardless of whether the email matched an owner,
 // so this can't be used to enumerate which addresses have an account.
 export async function POST(req: NextRequest) {
+  // Each call that matches an owner creates a session row and sends an email, so an
+  // unthrottled caller could flood an owner's inbox and burn sender reputation. Same
+  // ceiling as /api/venue-claim. The 429 does not depend on whether the email matched
+  // an owner, so it leaks nothing about which addresses have an account.
+  const { ok: withinLimit } = await checkRateLimit(req, "owner-request-login", 5, 60);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "too many requests, try again later" }, { status: 429 });
+  }
+
   const parsed = requestSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid email" }, { status: 400 });
