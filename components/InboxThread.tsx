@@ -6,7 +6,7 @@ import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
 
 function MessageBody({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
-  const { main, quoted } = splitQuoted(text);
+  const { main, quoted, after } = splitQuoted(text);
   return (
     <>
       <p className="text-sm text-muted whitespace-pre-wrap break-words">{main}</p>
@@ -27,6 +27,7 @@ function MessageBody({ text }: { text: string }) {
           )}
         </div>
       )}
+      {after && <p className="mt-2 text-sm text-muted whitespace-pre-wrap break-words">{after}</p>}
     </>
   );
 }

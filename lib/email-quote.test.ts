@@ -3,7 +3,7 @@ import { splitQuoted, stripQuotePrefix } from "./email-quote";
 
 describe("splitQuoted", () => {
   it("returns the whole body when there is no quoted text", () => {
-    expect(splitQuoted("Hi there\nThanks")).toEqual({ main: "Hi there\nThanks", quoted: null });
+    expect(splitQuoted("Hi there\nThanks")).toEqual({ main: "Hi there\nThanks", quoted: null, after: "" });
   });
 
   it("splits a reply from the quoted thread beneath it", () => {
@@ -11,6 +11,7 @@ describe("splitQuoted", () => {
     const out = splitQuoted(body);
     expect(out.main).toBe("Sounds good.\n\nOn Tue, Mike wrote:");
     expect(out.quoted).toBe("> original line 1\n> original line 2");
+    expect(out.after).toBe("");
   });
 
   it("drops blank lines between the reply and the quote", () => {
@@ -18,7 +19,15 @@ describe("splitQuoted", () => {
   });
 
   it("does not collapse anything when the very first line is quoted", () => {
-    expect(splitQuoted("> only quoted\n> more")).toEqual({ main: "> only quoted\n> more", quoted: null });
+    expect(splitQuoted("> only quoted\n> more")).toEqual({ main: "> only quoted\n> more", quoted: null, after: "" });
+  });
+
+  it("keeps a reply written BELOW the quote visible (bottom-posting)", () => {
+    const body = "On Tue, Mike wrote:\n> Is that still accurate?\n> Thanks\nsome changes,\n\ni can send them sunday";
+    const out = splitQuoted(body);
+    expect(out.main).toBe("On Tue, Mike wrote:");
+    expect(out.quoted).toBe("> Is that still accurate?\n> Thanks");
+    expect(out.after).toBe("some changes,\n\ni can send them sunday");
   });
 
   it("keeps text written between quoted lines inside the collapsed block, not lost", () => {
