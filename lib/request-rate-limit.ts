@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { db, rateLimits } from "@/db";
 import { and, eq, sql } from "drizzle-orm";
+import { clientIpFromHeaders } from "@/lib/client-ip";
 
+// See client-ip.ts: behind Cloudflare the visitor is in CF-Connecting-IP, not X-Forwarded-For.
 export function clientIp(req: NextRequest): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  return clientIpFromHeaders(req.headers);
 }
 
 /**
