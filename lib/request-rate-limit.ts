@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { db, rateLimits } from "@/db";
 import { and, eq, sql } from "drizzle-orm";
-import { clientIpFromHeaders } from "@/lib/client-ip";
+import { clientIpFromHeaders, rateLimitBucket } from "@/lib/client-ip";
 
 // See client-ip.ts: behind Cloudflare the visitor is in CF-Connecting-IP, not X-Forwarded-For.
 export function clientIp(req: NextRequest): string {
@@ -20,7 +20,7 @@ export async function checkRateLimit(
   windowMinutes: number
 ): Promise<{ ok: boolean; remaining: number }> {
   const ip = clientIp(req);
-  const key = `${route}:${ip}`;
+  const key = `${route}:${rateLimitBucket(ip)}`;
   const windowMs = windowMinutes * 60 * 1000;
   const windowStart = new Date(Math.floor(Date.now() / windowMs) * windowMs);
 

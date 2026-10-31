@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { clientIpFromHeaders, isCloudflareIp } from "./client-ip";
+import { clientIpFromHeaders, isCloudflareIp, rateLimitBucket } from "./client-ip";
 
 function h(init: Record<string, string>): Headers {
   return new Headers(init);
@@ -81,5 +81,33 @@ describe("clientIpFromHeaders", () => {
     expect(
       clientIpFromHeaders(h({ "x-forwarded-for": "198.51.100.9, 104.18.40.90", "cf-connecting-ip": "203.0.113.7" }))
     ).toBe("198.51.100.9");
+  });
+});
+
+describe("rateLimitBucket", () => {
+  it("leaves IPv4 addresses and the unknown placeholder alone", () => {
+    expect(rateLimitBucket("203.0.113.7")).toBe("203.0.113.7");
+    expect(rateLimitBucket("unknown")).toBe("unknown");
+  });
+
+  it("puts every address in the same IPv6 /64 in one bucket, so rotating addresses does not dodge a limit", () => {
+    const a = rateLimitBucket("2001:db8:1:2:aaaa:bbbb:cccc:dddd");
+    const b = rateLimitBucket("2001:db8:1:2::1");
+    const c = rateLimitBucket("2001:0DB8:0001:0002:0:0:0:ffff");
+    expect(a).toBe("2001:db8:1:2::/64");
+    expect(b).toBe(a);
+    expect(c).toBe(a);
+  });
+
+  it("keeps different /64 networks apart", () => {
+    expect(rateLimitBucket("2001:db8:1:3::1")).not.toBe(rateLimitBucket("2001:db8:1:2::1"));
+  });
+
+  it("normalises compressed and upper-case forms", () => {
+    expect(rateLimitBucket("2001:DB8::1")).toBe("2001:db8:0:0::/64");
+  });
+
+  it("treats an IPv4-mapped IPv6 address as the IPv4 address", () => {
+    expect(rateLimitBucket("::ffff:203.0.113.7")).toBe("203.0.113.7");
   });
 });

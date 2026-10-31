@@ -31,6 +31,7 @@ const ZERO = BigInt(0);
 const EIGHT = BigInt(8);
 const SIXTEEN = BigInt(16);
 const MASK16 = BigInt(0xffff);
+const MAPPED_PREFIX = BigInt(0xffff); // ::ffff:0:0/96, the high 96 bits of an IPv4-mapped address are zero then ffff
 
 function parseV4(ip: string): bigint | null {
   const parts = ip.split(".");
@@ -119,4 +120,24 @@ export function clientIpFromHeaders(headers: Headers): string {
     if (visitor && (isIPv4(visitor) || isIPv6(visitor))) return visitor;
   }
   return peer || "unknown";
+}
+
+// The key a rate limiter should count a visitor under. IPv4 is used as is. An IPv6 visitor normally
+// controls a whole /64 network (billions of addresses), so keying on the full address would let one
+// person rotate addresses to dodge any cap; those are counted per /64 instead. IPv4-mapped IPv6
+// addresses (::ffff:1.2.3.4) count as the IPv4 address. Used for rate-limit keys only: clientIp()
+// still returns the exact address (the chat route stores it).
+export function rateLimitBucket(ip: string): string {
+  if (!isIPv6(ip)) return ip;
+  const value = parseV6(ip);
+  if (value === null) return ip;
+  const THIRTY_TWO = BigInt(32);
+  if (value >> THIRTY_TWO === MAPPED_PREFIX) {
+    const v4 = value & BigInt(0xffffffff);
+    const octet = (shift: number) => Number((v4 >> BigInt(shift)) & BigInt(255));
+    return `${octet(24)}.${octet(16)}.${octet(8)}.${octet(0)}`;
+  }
+  const top = value >> BigInt(64);
+  const hextet = (shift: number) => Number((top >> BigInt(shift)) & MASK16).toString(16);
+  return `${hextet(48)}:${hextet(32)}:${hextet(16)}:${hextet(0)}::/64`;
 }
