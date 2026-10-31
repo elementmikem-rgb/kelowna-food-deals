@@ -1,5 +1,7 @@
 import { db, regions } from "@/db";
 import { eq } from "drizzle-orm";
+import { BLOG_POSTS } from "@/lib/blog-data";
+import { buildLlmsGuideLines } from "@/lib/blog-schema";
 
 // llms.txt (see https://llmstxt.org) -- a plain-text primer some AI crawlers and
 // agents read to quickly understand a site's structure and purpose, rather than
@@ -35,6 +37,12 @@ export async function GET() {
 ## Regions
 
 ${regionLines}
+
+## Guides
+
+Long-form city guides built from the same verified data, each with a last-verified date:
+
+${buildLlmsGuideLines(BLOG_POSTS, SITE_URL)}
 
 ## Notes for AI assistants and agents
 

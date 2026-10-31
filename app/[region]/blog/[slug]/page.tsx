@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { regionOgImages } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getBlogPost } from "@/lib/blog-data";
+import { buildBlogJsonLd } from "@/lib/blog-schema";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getCurrentRegion } from "@/lib/regions";
@@ -13,6 +14,7 @@ const content = {
   en: {
     subtitle: "Guides to what's actually going on around town.",
     backLink: "← All posts",
+    updated: "Updated",
     sponsored: "Sponsored",
     sponsoredPre: "This post is a paid feature. See our",
     sponsoredLinkText: "privacy & terms",
@@ -21,6 +23,7 @@ const content = {
   fr: {
     subtitle: "Guides sur ce qui se passe vraiment en ville.",
     backLink: "← Tous les articles",
+    updated: "Mis à jour le",
     sponsored: "Commandité",
     sponsoredPre: "Cet article est un contenu commandité. Consultez notre page",
     sponsoredLinkText: "confidentialité et conditions",
@@ -60,6 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url,
       type: "article",
       publishedTime: post.publishedAt,
+      modifiedTime: post.updatedAt ?? post.publishedAt,
       images: regionOgImages(region.slug),
     },
   };
@@ -81,17 +85,11 @@ export default async function BlogPostPage({ params }: PageProps) {
   if (!post) notFound();
   const lang = await getEffectiveLanguage(region);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.metaDescription,
-    datePublished: post.publishedAt,
-    image: `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/icons/icon-512.png`,
-    author: { "@type": "Organization", name: region.brandName },
-    publisher: { "@type": "Organization", name: region.brandName },
-    mainEntityOfPage: `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/blog/${post.slug}`,
-  };
+  const jsonLd = buildBlogJsonLd(
+    post,
+    region,
+    `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`
+  );
 
   return (
     <div className="flex flex-col flex-1 max-w-2xl mx-auto w-full px-4 py-6 gap-6">
@@ -118,6 +116,11 @@ export default async function BlogPostPage({ params }: PageProps) {
             <span className="text-xs text-muted-2 font-mono-tabular">
               {formatDate(post.publishedAt)}
             </span>
+            {post.updatedAt && post.updatedAt !== post.publishedAt && (
+              <span className="text-xs text-muted-2 font-mono-tabular">
+                {content[lang].updated} {formatDate(post.updatedAt)}
+              </span>
+            )}
             {post.sponsored && (
               <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gold">
                 {content[lang].sponsored}
@@ -136,7 +139,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           )}
         </header>
         <div
-          className="prose-blog flex flex-col gap-4 text-sm text-foreground/90 [&_h2]:font-display [&_h2]:text-xl [&_h2]:text-foreground [&_h2]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1 [&_a]:text-accent-dim [&_a]:underline [&_strong]:text-foreground"
+          className="prose-blog flex flex-col gap-4 text-sm text-foreground/90 [&_h2]:font-display [&_h2]:text-xl [&_h2]:text-foreground [&_h2]:mt-2 [&_h3]:font-display [&_h3]:text-base [&_h3]:text-foreground [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full [&_table]:text-left [&_table]:text-xs [&_th]:border-b [&_th]:border-border [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:text-foreground [&_td]:border-b [&_td]:border-border/60 [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1 [&_a]:text-accent-dim [&_a]:underline [&_strong]:text-foreground"
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: post.contentHtml }}
         />

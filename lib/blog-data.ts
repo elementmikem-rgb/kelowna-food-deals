@@ -5,6 +5,9 @@ export interface BlogPost {
   title: string;
   metaDescription: string;
   publishedAt: string; // YYYY-MM-DD
+  // Set when a post is refreshed (new data, new prices). Feeds dateModified in the post's JSON-LD and
+  // the sitemap's lastModified, so search and AI crawlers see the post as current. Omit on a new post.
+  updatedAt?: string; // YYYY-MM-DD
   excerpt: string;
   contentHtml: string;
   category: BlogCategory;
@@ -631,6 +634,11 @@ export function getBlogPost(slug: string, regionSlug: string): BlogPost | undefi
   const post = BLOG_POSTS.find((p) => p.slug === slug);
   if (!post || !isVisibleInRegion(post, regionSlug)) return undefined;
   return post;
+}
+
+// The date search engines should treat this post as last changed on.
+export function blogLastModified(post: BlogPost): Date {
+  return new Date(post.updatedAt ?? post.publishedAt);
 }
 
 export function getBlogPostsForRegion(regionSlug: string): BlogPost[] {
