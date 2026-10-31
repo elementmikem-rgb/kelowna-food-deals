@@ -62,8 +62,15 @@ export const ADMIN_COOKIE_MAX_AGE = SESSION_MAX_AGE_SECONDS;
 // which doesn't match /api/admin/*), so route handlers that send email or
 // mutate data must check the session cookie themselves.
 export async function isAdminAuthed(req: NextRequest): Promise<boolean> {
+  return verifyAdminCookie(req.cookies.get(ADMIN_COOKIE)?.value);
+}
+
+// Same check on a bare cookie value, so server components (which read cookies()
+// instead of a request) can enforce it too. The proxy gate on /admin is the first
+// line; AdminShell calls this as a second line so the pages stay protected even if a
+// request ever reaches them without passing through that prefix check.
+export async function verifyAdminCookie(cookie: string | undefined): Promise<boolean> {
   const secret = process.env.ADMIN_SESSION_SECRET;
-  const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
   if (!secret || !cookie) return false;
 
   const dot = cookie.lastIndexOf(".");

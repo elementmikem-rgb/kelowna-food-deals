@@ -9,6 +9,8 @@ import {
 import { getPrimaryRegion } from "@/lib/regions";
 import { db, regions, provinces, countries } from "@/db";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { ADMIN_COOKIE, verifyAdminCookie } from "@/lib/admin-auth";
 import { AdminNav } from "./AdminNav";
 
 export async function AdminShell({
@@ -39,6 +41,14 @@ export async function AdminShell({
   children: React.ReactNode;
 }) {
   const jar = await cookies();
+  // Second line of defence behind the proxy.ts /admin gate: every admin page except
+  // the login page renders inside this shell, so checking the session here means
+  // the pages still refuse an unauthenticated request even if it ever reaches them
+  // without passing the proxy's pathname prefix test. redirect() throws, so no admin
+  // markup is sent. (The login page does not use AdminShell, so there is no loop.)
+  if (!(await verifyAdminCookie(jar.get(ADMIN_COOKIE)?.value))) {
+    redirect("/admin/login");
+  }
   const rawCountryId = jar.get(ADMIN_COUNTRY_COOKIE)?.value;
   const rawProvinceId = jar.get(ADMIN_PROVINCE_COOKIE)?.value;
   const rawRegionId = jar.get(ADMIN_REGION_COOKIE)?.value;

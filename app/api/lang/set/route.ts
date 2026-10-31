@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
@@ -24,8 +25,9 @@ export async function GET(req: Request) {
   }
   // Same-origin only -- `to` comes from a link we render ourselves, but a
   // request could still hand-craft an off-site redirect target, so this
-  // never redirects anywhere but a path on this same site.
-  const redirectTo = to.startsWith("/") && !to.startsWith("//") ? to : "/";
+  // never redirects anywhere but a path on this same site (see safe-redirect.ts
+  // for why a plain startsWith check is not enough).
+  const redirectTo = safeRedirectPath(to, SITE_URL);
 
   const res = NextResponse.redirect(new URL(redirectTo, SITE_URL));
   res.cookies.set("lang-pref", lang, {
