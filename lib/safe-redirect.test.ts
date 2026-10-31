@@ -30,9 +30,24 @@ describe("safeRedirectPath", () => {
     expect(safeRedirectPath("/ok\u0000", SITE)).toBe("/");
   });
 
+  it("rejects dot-segment forms that normalize to a leading // (re-resolved as another host)", () => {
+    expect(safeRedirectPath("/.//evil.example", SITE)).toBe("/");
+    expect(safeRedirectPath("/a/..//evil.example", SITE)).toBe("/");
+    expect(safeRedirectPath("/./%2e//evil.example", SITE)).toBe("/");
+  });
+
   it("never returns a path that resolves to a different origin", () => {
-    for (const to of ["/\\evil.example", "/\t/evil.example", "//evil.example", "/%2f%2fevil.example"]) {
+    for (const to of [
+      "/\\evil.example",
+      "/\t/evil.example",
+      "//evil.example",
+      "/%2f%2fevil.example",
+      "/.//evil.example",
+      "/a/..//evil.example",
+      "/./%2e//evil.example",
+    ]) {
       const out = safeRedirectPath(to, SITE);
+      expect(out.startsWith("//")).toBe(false);
       expect(new URL(out, SITE).origin).toBe(SITE);
     }
   });
