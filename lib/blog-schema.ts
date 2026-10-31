@@ -5,21 +5,29 @@ import type { BlogPost } from "./blog-data";
 // reader can click (links to /<region>/venues/<id>) are exactly the ItemList. Nothing is
 // maintained twice, so the markup can never drift from the visible text.
 
-const ENTITIES: Record<string, string> = {
-  "&nbsp;": " ",
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&#x27;": "'",
-  "&apos;": "'",
+// Named entities seen in blog copy. Numeric entities (&#333; and &#xE9;) are decoded generically below.
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: " ", amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'",
+  eacute: "é", Eacute: "É", egrave: "è", Egrave: "È", ecirc: "ê", euml: "ë",
+  agrave: "à", Agrave: "À", acirc: "â", auml: "ä", aacute: "á", aring: "å",
+  ccedil: "ç", Ccedil: "Ç", ocirc: "ô", ouml: "ö", oacute: "ó",
+  ugrave: "ù", ucirc: "û", uuml: "ü", uacute: "ú", icirc: "î", iuml: "ï", iacute: "í",
+  ntilde: "ñ", ndash: "-", mdash: "-", rsquo: "'", lsquo: "'", rdquo: "\"", ldquo: "\"",
 };
+
+function decodeEntity(match: string, body: string): string {
+  if (body[0] === "#") {
+    const hex = body[1] === "x" || body[1] === "X";
+    const code = parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
+    return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+  }
+  return NAMED_ENTITIES[body] ?? match;
+}
 
 function plainText(html: string): string {
   return html
     .replace(/<[^>]+>/g, "")
-    .replace(/&(nbsp|amp|lt|gt|quot|apos|#39|#x27);/g, (m) => ENTITIES[m] ?? m)
+    .replace(/&(#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, decodeEntity)
     .replace(/\s+/g, " ")
     .trim();
 }

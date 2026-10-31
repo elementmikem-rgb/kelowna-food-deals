@@ -45,6 +45,11 @@ describe("extractVenueItems", () => {
     ]);
   });
 
+  it("decodes accented-letter entities in venue names (named and numeric), not just &amp; and &nbsp;", () => {
+    const html = `<p><a href="/hamilton/venues/7">D&eacute;j&agrave; Vu Bar (1 Main St)</a></p><p><a href="/hamilton/venues/8">Bard&#333; Locke St (333 Locke St S)</a></p><p><a href="/hamilton/venues/9">Caf&#xE9; Oz (2 King St)</a></p>`;
+    expect(extractVenueItems(html, SITE).map((v) => v.name)).toEqual(["Déjà Vu Bar", "Bardō Locke St", "Café Oz"]);
+  });
+
   it("ignores non-venue links", () => {
     expect(extractVenueItems(`<a href="/penticton">x</a>`, SITE)).toEqual([]);
   });
