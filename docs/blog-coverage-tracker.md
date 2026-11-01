@@ -128,6 +128,6 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 - Done 2026-10-31: deactivated 1024 (Clocktower Glebe, closed), 2247 (Bardo dup), 2262 (Collective Arts dup).
 
 ## Search Console indexing log
-- 2026-11-01: Wave 4 written, verified and corrected: Niagara, Halton, Surrey, Durham, Regina. Request indexing after deploy.
+- 2026-11-01: Wave 4 (Niagara, Halton, Surrey, Durham, Regina) deployed (deployment 7713dedb, commit 34cb583), live 200 with FAQ and ItemList, in sitemap and llms.txt. Search Console still "Quota Exceeded" at 07:55 PST on 2026-11-01 (quota looks like a rolling 24 hours). TODO: request indexing for the 5 wave 3 URLs listed below, then the 5 wave 4 URLs: /niagara-region/blog/happy-hours-niagara, /halton-region/blog/happy-hours-halton, /surrey/blog/happy-hours-surrey, /durham-region/blog/happy-hours-durham, /regina/blog/happy-hours-regina. Try again after about 9 PM PST 2026-11-01 or tomorrow.
 - 2026-10-31: indexing requested for Calgary, Ottawa, Halifax, Hamilton, Barrie. Ottawa inspected later the same day: "Crawled - currently not indexed" (normal for a brand-new page; recheck in a week).
 - 2026-10-31: Vancouver, Toronto, Winnipeg, Saskatoon, London (ON) deployed (deployment a84df486). Request Indexing hit "Quota Exceeded" (daily limit). TODO 2026-11-01: request indexing for /vancouver/blog/happy-hours-vancouver, /toronto-core/blog/happy-hours-toronto, /winnipeg/blog/happy-hours-winnipeg, /saskatoon/blog/happy-hours-saskatoon, /london/blog/happy-hours-london-ontario. The sitemap already lists all five.
