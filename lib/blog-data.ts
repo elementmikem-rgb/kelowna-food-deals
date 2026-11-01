@@ -34,10 +34,11 @@ export const BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Most Kelowna deals sites are copy-pasted lists nobody's checked in years. Here's exactly how we confirm a special is real before it goes live.",
     publishedAt: "2026-06-12",
+    updatedAt: "2026-10-31",
     excerpt:
       "Every special on this site has to survive one rule: if we can't point to where it came from, it doesn't get published. Here's how that actually works.",
     contentHtml: `
-<p>There are a handful of Kelowna food-deals sites out there, and most of them share the same problem: someone built a list once, maybe two years ago, and nobody's touched it since. Restaurants close, happy hours get cancelled, prices go up -- the list doesn't know. You show up for $5 wings and pay $9.</p>
+<p>There are a handful of local food-deals sites out there, and most of them share the same problem: someone built a list once, maybe two years ago, and nobody's touched it since. Restaurants close, happy hours get cancelled, prices go up -- the list doesn't know. You show up for $5 wings and pay $9.</p>
 <p>We built this site around one non-negotiable rule: <strong>a special only gets published if we can point to the exact place it came from.</strong> Not "we're pretty sure," not "it was probably still running." An actual source.</p>
 <h2>Where the data comes from</h2>
 <p>Every listing on this site traces back to one of three sources:</p>
@@ -64,20 +65,21 @@ export const BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "A happy hour guide for Kelowna built from specials we've actually confirmed are still running -- not a list from 2022.",
     publishedAt: "2026-06-20",
+    updatedAt: "2026-10-31",
     excerpt:
       "Forget the lists that haven't been updated since before the pandemic. Here's what's actually on right now, verified against each venue directly.",
     contentHtml: `
 <p>Search "Kelowna happy hour" and you'll find the same three articles everyone else finds -- dated, vague, and missing half the venues that actually run one. Here's what we've confirmed is real, verified against each venue's own current pricing.</p>
 <h2>Creekside Pub &amp; Grill (Lakeshore Road)</h2>
-<p>Creekside runs the most consistent happy hour rotation we've tracked in Kelowna -- a different drink special most days of the week, starting around $4.75-$5.00. If you only bookmark one happy hour page this year, make it theirs; it changes often enough that checking day-of actually matters.</p>
+<p>Creekside runs the most consistent happy hour rotation we've tracked in Kelowna -- a different special most days of the week, from $5 domestic bottles and $5.50 craft sleeves to discounted wings, fish and chips and burgers, plus a Sunday appy menu. If you only bookmark one happy hour page this year, make it theirs; it changes often enough that checking day-of actually matters.</p>
 <h2>BNA Brewing Co. &amp; Eatery (Ellis St)</h2>
-<p>BNA's "Super Save Hour" runs $5 beers, $9 cocktails, $10 small plates, and $2 off wine -- a genuinely full happy hour menu, not just a beer discount. They also run a Friday "Late Nite Power Hour" from 9pm with $4.99 highballs.</p>
+<p>BNA's "Super Save Hour" runs $5 beers and $10 small plates, and the daily happy hour menu adds $9.99 cocktails and $6.99 wine -- a genuinely full happy hour menu, not just a beer discount. They also run a Friday "Late Nite Power Hour" with $4.99 highballs.</p>
 <h2>Kelly O'Bryan's &amp; Carlos O'Bryan's (Bernard Ave)</h2>
-<p>Their "Power Hour" gets you drinks for $3.50 -- one of the lowest confirmed prices on this list -- on top of a rotating weekly food-and-drink lineup that runs 20+ different specials across the week.</p>
+<p>Their "Power Hour" gets you single highballs and shots for $3.50 and domestic draft sleeves for $4 -- among the lowest confirmed prices on this list -- on top of a rotating weekly food-and-drink lineup. Check their venue page for the day and time.</p>
 <h2>Gulfstream (Airport Way)</h2>
-<p>Run by the Four Points by Sheraton, Gulfstream's happy hour includes $5 house-liquor highballs, $11 dry ribs, and $15 margherita pizza -- solid food options if you actually want to eat, not just drink.</p>
+<p>Run by the Four Points by Sheraton, Gulfstream's happy hour includes $5 house-liquor highballs, $13 chili chicken, and $15 margherita pizza -- solid food options if you actually want to eat, not just drink.</p>
 <h2>Earls, Moxies, JOEY, Cactus Club</h2>
-<p>Yes, the chains run happy hour too -- most confirmed at the familiar $5-drinks, $5-$13-apps formula, typically 2-5pm and again after 9pm. We've verified current pricing for each; check the individual venue pages for exact items, since chain menus rotate seasonally.</p>
+<p>Yes, the chains run happy hour too -- most following the familiar cheap-drinks, discounted-apps formula in the mid-afternoon or early evening, and often again late at night. Hours differ by chain and location (Earls, for example, runs 3-6pm), so check the individual venue pages for exact times and items, since chain menus rotate seasonally.</p>
 <h2>The honest caveat</h2>
 <p>Happy hour timing is the single most common thing venues change without warning. Every card on this site shows when it was last verified -- if a listing says "checked today," trust it; if it's been a couple weeks, it's still probably right, but we'd rather you know than assume.</p>
 <p>See the <a href="/">full, current list</a> filtered by day and category -- this post is a snapshot, the site itself is always current.</p>
@@ -89,28 +91,29 @@ export const BLOG_POSTS: BlogPost[] = [
     regions: ["kelowna"],
     title: "Best Wing Nights in Kelowna Right Now",
     metaDescription:
-      "Every confirmed wing night special in Kelowna, with actual prices -- from $0.35 wings to $12 all-you-can-handle deals.",
+      "Every confirmed wing night special in Kelowna, with actual prices -- from 75 cent wings to $12 wing-and-fries deals.",
     publishedAt: "2026-07-03",
+    updatedAt: "2026-10-31",
     excerpt:
       "We pulled every wing special we've verified across Kelowna and sorted them by day. Some of these prices are genuinely surprising.",
     contentHtml: `
 <p>Wing night is the one special almost every pub in Kelowna runs -- and the one where prices vary the most wildly. We've confirmed the following directly against each venue. Sorted by day.</p>
 <h2>Sunday</h2>
-<p><strong>WINGS Rutland</strong> -- $12 wings all day, one flavour per order, dine-in only, beverage purchase required.</p>
+<p><strong>Tonics Pub</strong> (Sutherland Ave) -- $10 per pound of wings, Sundays and Wednesdays.</p>
+<p><strong>WINGS Rutland</strong> -- $12 wings and fries, Monday through Saturday. One flavour per order, dine-in only, beverage purchase required.</p>
 <h2>Monday</h2>
 <p><strong>Montana's BBQ &amp; Bar</strong> (Banks Rd) -- half-price wings with a beverage purchase.<br>
-<strong>Turtle Jack's</strong> (West Kelowna) -- 1 lb of wings for $13.99, paired with a $6 Molson Canadian or Coors Light.</p>
+<strong>Turtle Jack's</strong> (West Kelowna) -- Monday wings and beer for $13.99.</p>
 <h2>Wednesday -- the busiest wing night in town</h2>
-<p><strong>Baxter's Bar &amp; Grill</strong> (Spall Rd) -- $0.35 per wing, the lowest per-wing price we've confirmed anywhere in Kelowna.<br>
-<strong>McCulloch Station Pub</strong> -- $6 per dozen.<br>
-<strong>WINGS Rutland</strong> -- $12 all day (same deal as Sunday).<br>
-<strong>Tonics Pub</strong> (Ellis St) -- $10 per pound.<br>
-<strong>Train Station Pub</strong> (Ellis St) -- half-price wings.<br>
+<p><strong>Whiski-Jack's Pub</strong> (Drought Rd, West Kelowna) -- 75 cent wings, the lowest per-wing price we've confirmed in the Central Okanagan.<br>
+<strong>McCulloch Station Pub</strong> (KLO Rd) -- Super Wing Wednesday, $15.<br>
+<strong>WINGS Rutland</strong> -- $12 wings special.<br>
+<strong>Tonics Pub</strong> (Sutherland Ave) -- $10 per pound (same deal as Sunday).<br>
 <strong>Creekside Pub &amp; Grill</strong> -- $5 off a pound of wings.</p>
-<h2>Whenever (no set day confirmed)</h2>
-<p><strong>Boomers Bar &amp; Grill</strong> -- wings by the pound at $5.</p>
+<h2>Tuesday</h2>
+<p><strong>Boomers Bar &amp; Grill</strong> (Gordon Dr) -- wings by the pound at $5.</p>
 <h2>The pattern worth noticing</h2>
-<p>Wednesday is, by a wide margin, Kelowna's real wing night -- six of the ten wing specials we've verified land on a Wednesday. If you're planning around price alone, Baxter's $0.35/wing Wednesday is the cheapest confirmed deal in the city; if you want volume, Tonics' $10/lb or Turtle Jack's $13.99/lb (paired with a cheap beer) go further per dollar for a group.</p>
+<p>Wednesday is, by a wide margin, Kelowna's real wing night -- five of the ten wing specials we've verified land on a Wednesday. If you're planning around price alone, Whiski-Jack's 75 cent wings on Wednesday is the cheapest confirmed per-wing deal; if you want volume, Tonics' $10/lb or Turtle Jack's $13.99 wings and beer go further per dollar for a group.</p>
 <p>Prices and days shift without notice -- that's true everywhere, not just here. Check the <a href="/?category=wing_night">live wing night list</a> before you go; it updates as soon as we catch a change.</p>
 `,
   },
@@ -122,22 +125,22 @@ export const BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Confirmed Kelowna food and drink specials under $10 -- real prices from real venues, not a generic 'budget dining' listicle.",
     publishedAt: "2026-07-18",
+    updatedAt: "2026-10-31",
     excerpt:
       "We filtered every verified special on this site down to $10 or less. Here's what held up and what's actually worth the trip.",
     contentHtml: `
 <p>"Budget dining guide" posts are usually just restaurant names with no prices attached, because nobody actually checked. We did the opposite: we filtered our full database down to specials confirmed at $10 or under, and kept only the ones we can point to a real source for.</p>
 <h2>Under $5</h2>
-<p><strong>Baxter's Bar &amp; Grill</strong> -- $0.35 wings, Wednesdays.<br>
-<strong>Baxter's Bar &amp; Grill</strong> -- Friday tacos at $2 each.<br>
+<p><strong>Whiski-Jack's Pub</strong> (West Kelowna) -- 75 cent wings, Wednesdays.<br>
 <strong>Erica Jane</strong> -- $2 oysters, Thursdays, alongside sociable plates and rotating live music.<br>
-<strong>Kelly O'Bryan's</strong> -- $3.50 Power Hour drinks.<br>
-<strong>Craft Beer Market</strong> -- $4 happy hour sliders or spicy ahi tacos.<br>
-<strong>Jac's On The Beach</strong> (Peachland) -- happy hour starting at $4, running all day, every day.</p>
+<strong>Kelly O'Bryan's</strong> -- $3.50 Power Hour singles and shots.<br>
+<strong>The Canadian Brewhouse</strong> (Pandosy St) -- $3.99 birria, beef or chicken tacos.<br>
+<strong>Friends Pub</strong> (West Kelowna) -- $4.25 pilsner.</p>
 <h2>$5-$10</h2>
-<p>This is where most of Kelowna's happy hour drink specials cluster: $5 highballs at Gulfstream, Cactus Club (both locations), and BNA Brewing; $4.75-$5 domestic beer at Creekside across multiple weekday specials; $4.99 happy hour drinks at BNA's Friday late-night hour and Montana's Monday happy hour.</p>
+<p>This is where most of Kelowna's happy hour drink specials cluster: $5 house highballs at Gulfstream; $5 Longboard lager or Sunset Soda at Cactus Club (both locations); $5 beers during BNA Brewing's Super Save Hour; $5 domestic bottles at Creekside across multiple weekday specials; $4.99 highballs at BNA's Friday late-night hour; and $4.99 bar drinks at Montana's on Monday.</p>
 <p>On the food side: Boomers' $5/lb wings, Leopold's Tavern's $5 late-night menu, and Montana's Tuesday $5 tacos (with a beverage purchase) all confirmed under the $10 line.</p>
 <h2>What this list doesn't include</h2>
-<p>Notably absent: anything we found mentioned online but couldn't confirm against a real source. Several venues -- Friends Pub, The Canadian Brewhouse, Whiski-Jack's -- are reported by patrons to run wing or drink specials in this price range, but we couldn't verify the exact number, so they're not on this list. If you've got a photo of one of those boards, <a href="/submit">send it our way</a> and we'll add it properly.</p>
+<p>Notably absent: anything we found mentioned online but couldn't confirm against a real source. Several venues are reported by patrons to run drink or food specials in this price range, but we couldn't verify the exact number, so they're not on this list. Whiski-Jack's also runs $5 drink specials and Friends Pub has $10 wings, if you'd like to look beyond the under-$5 list. If you've got a photo of a board we're missing, <a href="/submit">send it our way</a> and we'll add it properly.</p>
 <p>This snapshot will age -- that's the nature of a list like this. The <a href="/">live site</a> re-checks these daily.</p>
 `,
   },
@@ -149,6 +152,7 @@ export const BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "An honest look at food and drink special coverage across Kelowna, West Kelowna, Peachland, and Lake Country -- including where the gaps still are.",
     publishedAt: "2026-08-02",
+    updatedAt: "2026-10-31",
     excerpt:
       "We track specials across four Okanagan communities, but the coverage isn't even yet -- and pretending otherwise would go against the whole point of this site.",
     contentHtml: `
@@ -158,9 +162,9 @@ export const BLOG_POSTS: BlogPost[] = [
 <h2>West Kelowna: thinner, but real</h2>
 <p>We track venues like Turtle Jack's, Sammy J's, Friends Pub, and 19 Okanagan Grill + Bar out here, but confirmed specials are sparser than across the bridge -- partly because fewer of these venues publish specials on their own websites in a way we can verify, and partly because we simply haven't gotten as many visitor submissions from this side yet.</p>
 <h2>Peachland: mostly untapped</h2>
-<p>Peachland has real venues on our books -- Jac's On The Beach, Edgewater Inn, Gasthaus on the Lake -- but verified special data here is thin. Jac's confirmed all-day happy hour (starting at $4) is one of the few things we can point to with real confidence right now.</p>
+<p>Peachland has real venues on our books -- Jac's On The Beach, Edgewater Inn, Gasthaus on the Lake -- but verified special data here is thin. Gasthaus on the Lake is the one place here where we can point to a solid set of confirmed specials right now.</p>
 <h2>Lake Country / Winfield: the frontier</h2>
-<p>The smallest slice of what we track. Turtle Bay Pub and Woody's Pub are on the list, but we've only confirmed a couple of specials between them so far.</p>
+<p>The smallest slice of what we track. Turtle Bay Pub and Woody's Pub are on the list, but we don't have confirmed specials for either one yet.</p>
 <h2>Why the gap exists, and how it closes</h2>
 <p>It's not that West Kelowna, Peachland, and Lake Country run fewer deals -- it's that we haven't verified as many yet. Independent venues outside Kelowna's downtown core are less likely to list specials on a website we can scrape automatically, which means the fastest way to close this gap is exactly the kind of thing this site was built for: someone who's actually there sending in a photo of the board.</p>
 <p>If you're in West Kelowna, Peachland, or Lake Country and you know a spot with a standing deal that isn't on here yet, <a href="/submit">tell us</a> -- that's genuinely the fastest way this list gets more even.</p>
@@ -174,8 +178,9 @@ export const BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Every trivia and karaoke night we've confirmed in Kelowna, sorted by day of the week -- pulled straight from our verified events database.",
     publishedAt: "2026-10-01",
+    updatedAt: "2026-10-31",
     excerpt:
-      "Wednesday is stacked for both. Here's every trivia and karaoke night we've confirmed in Kelowna, sorted by day.",
+      "Wednesday is the trivia night, Tuesday the karaoke night. Here's every trivia and karaoke night we've confirmed in Kelowna, sorted by day.",
     contentHtml: `
 <p>Searching "trivia night Kelowna" or "karaoke Kelowna" mostly turns up venue-discovery pages that don't tell you which night anything actually runs. We pulled every trivia and karaoke night we've verified against each venue directly, sorted by day of the week.</p>
 <h2>Trivia nights</h2>
@@ -184,6 +189,7 @@ export const BLOG_POSTS: BlogPost[] = [
 97 Street Pub, 7pm.<br>
 Cutwater Brewing's "Epic Trivia Night," 7pm.<br>
 Original Joe's Kelowna, 7pm.</p>
+<p><strong>Thursday</strong> -- The Canadian Brewhouse Kelowna, 9pm.</p>
 <p><strong>Friday</strong> -- Creekside Pub &amp; Grill's "Friday Night Trivia," 8pm.</p>
 <h2>Karaoke nights</h2>
 <p><strong>Monday</strong> -- O'Flannigan's "Karaoke Madness," 8:30pm.</p>
@@ -191,11 +197,11 @@ Original Joe's Kelowna, 7pm.</p>
 Kelly O'Bryan's &amp; Carlos O'Bryan's, 8pm.<br>
 Edgewater Inn Bar &amp; Grill, 7pm.</p>
 <p><strong>Wednesday</strong><br>
-O'Flannigan's runs karaoke again midweek, 8:30pm.<br>
 Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal running 11am to 11pm, not a set evening start time; Dakoda's own site frames it as wings-and-karaoke for the whole Wednesday, 18 flavors included.</p>
+<p><strong>Thursday</strong> -- King Taps Kelowna Lakeside, "Thursday Karaoke with Walter Wilcox," 8pm.</p>
 <p><strong>Saturday</strong> -- Creekside Pub &amp; Grill, 8:30pm.</p>
 <h2>The pattern worth noticing</h2>
-<p>Wednesday is stacked for both -- three confirmed trivia nights and two karaoke nights, all in the same city, the same evening. If you want options without a long drive, that's the night to build around. O'Flannigan's is the only venue running karaoke twice a week (Monday and Wednesday).</p>
+<p>Wednesday is the night for trivia -- three confirmed trivia nights in the same city, the same evening, so if you want options without a long drive, that's the night to build around. Tuesday is the karaoke night with the most choice, with Kelly O'Bryan's &amp; Carlos O'Bryan's and Edgewater Inn both running one.</p>
 <p>This is a snapshot of a database that changes as venues update their own listings. See the live, always-current <a href="/kelowna/events/trivia">trivia night page</a> and <a href="/kelowna/events/karaoke">karaoke page</a> -- both filterable by day, both re-checked against each venue's own source.</p>
 `,
   },
@@ -327,7 +333,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <h2>Downtown: Martin Street, Winnipeg Street and Main Street</h2>
 <p>Downtown is the walkable core, with most bars within a few blocks of Martin Street and Winnipeg Street.</p>
-<p><strong><a href="/penticton/venues/232">BNA Brewing (218 Martin St)</a></strong> runs its Super Save Happy Hour daily from 4 to 6&nbsp;PM, according to BNA's menu as of October 30 (BNA opens at 4&nbsp;PM, so this is its first two hours): BNA beer at $5.49, other BNA beer at $5.99, white wine at $6.99, and Moscow Mules, Old Fashioneds and Long Island Iced Teas at $9.99. Mocktails are $4.99 to $5.99. Bowling lanes reserve from 5&nbsp;PM, and our records list 50% off bowling on Mondays and on Thursdays from 9&nbsp;PM.</p>
+<p><strong><a href="/penticton/venues/232">BNA Brewing (218 Martin St)</a></strong> runs its Super Save Happy Hour daily from 4 to 6&nbsp;PM, according to BNA's menu as of October 30 (BNA opens at 4&nbsp;PM, so this is its first two hours): BNA beer at $5.49, other BNA beer at $5.99, white wine at $6.99, and Moscow Mules and Silly Sodas at $9.99. Mocktails are $5.99. Bowling lanes reserve from 5&nbsp;PM; call ahead to ask about bowling deals.</p>
 <p><strong><a href="/penticton/venues/234">Orolo Restaurant at Time Winery (361 Martin St)</a></strong> has a one-hour happy hour daily from 4 to 5&nbsp;PM, according to its happy hour menu as of October 30. Oysters are $2 each, local draft is $6, wine is $9 (including the Evolve Chardonnay) and the Chronos Merlot is $13. Food includes tallow fries at $8, a burger at $18 and steak bites at $23. Tuesday is Steak Date Night and Thursday is Bone-in Steak, both wine-with-dinner deals rather than part of the happy hour. Orolo is closed Thursday, November 26 for a private event.</p>
 <p><strong><a href="/penticton/venues/233">The Hub on Martin (260 Martin St)</a></strong> rotates deals by day, according to TodaysTab's October 28 check (its website does not list them, so call 250-490-0304 to confirm). Sunday: Molson Canadian or Coors Light at $6. Monday: a double Paralyzer at $9. Tuesday: jugs at $18 and sleeves at $6. Wednesday: pilsner jugs at $18, double highballs at $8 and wing night at $6.95. Thursday to Saturday: Long Islands at $9.</p>
 <p><strong><a href="/penticton/venues/238">The Pasta Factory (236 Martin St)</a></strong> is open Tuesday to Saturday, 3 to 9&nbsp;PM, and closed Sunday and Monday. Our records show a 3 to 5&nbsp;PM happy hour with draft pints at $7, sangria jugs at $15 and a 6&nbsp;oz NY steak sandwich at $15, so call 250-492-6088 to confirm. Wednesday (4 to 8&nbsp;PM) adds an 8&nbsp;oz flatiron steak dinner at $25.</p>
@@ -347,7 +353,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <h2>West of downtown: Eckhardt, Burnaby and Vernon Avenues and Vees Drive</h2>
 <p>These bars sit along Eckhardt Avenue West, Burnaby Avenue West, Vernon Avenue and Vees Drive, roughly 1 to 1.5&nbsp;km west and southwest of Martin Street. The Cherry Lane shopping centre at 2111 Main Street is about 3&nbsp;km south.</p>
 <p><strong><a href="/penticton/venues/227">Local Public Eatery (1070 Eckhardt Ave W)</a></strong> has the biggest food menu of any happy hour here. From 2 to 5&nbsp;PM daily: house lager (0.35&nbsp;L) at $5, draft at $6, wine $2 off, a cold tea shot at $4, rail highballs at $5.25 and an Old Fashioned at $10. Food: a fish taco at $5, hot wings at $12 and the LOCAL burger with fries at $14. A second window starts at 8&nbsp;PM Sunday to Thursday and 9&nbsp;PM Friday and Saturday (the restaurant's page also shows 10&nbsp;PM for weekends, so call 250-493-3388 to confirm).</p>
-<p><strong><a href="/penticton/venues/315">Bar One (939 Burnaby Ave W)</a></strong> has a deal every day, dine in only. Sunday Caesars are $5 all day, Tuesday tacos are $4 each and Coronas are $5.25 from 4&nbsp;PM, and Wednesday takes $1 off 8&nbsp;oz glasses of wine and $5 off bottles. Thursday, Friday and Saturday house draft is $6, with wings on Thursday and Saturday from 4&nbsp;PM and $7.50 double highballs on Friday.</p>
+<p><strong><a href="/penticton/venues/315">Bar One (939 Burnaby Ave W)</a></strong> has a deal every day, dine in only. Sunday Caesars are $5 all day, Tuesday tacos are $4 each and Coronas are $5.25 from 4&nbsp;PM, and Wednesday takes $1 off 8&nbsp;oz glasses of wine and $5 off bottles. Thursday is 50% off wings with a $6 house draft, according to Bar One's Penticton page. Our records also list $6 house draft on Friday and Saturday, half-price wings on Saturday from 4&nbsp;PM and $7.50 double highballs on Friday, so call to confirm those.</p>
 <p><strong><a href="/penticton/venues/231">Palmer Kitchen + Spirits (903 Vernon Ave)</a></strong> in the Four Points by Sheraton lists a happy hour menu on its website; our records show a daily 4:30 to 7:30&nbsp;PM window, which the restaurant has not confirmed: local craft beer and vodka Caesars at $6.50, house red or white at $9.50, crispy calamari at $12.80, fried chicken wings at $14 and truffle parmesan fries at $10.40. The restaurant's website shows a happy hour menu without times, so call 778-476-9202 to confirm.</p>
 <p><strong><a href="/penticton/venues/225">Match Eatery &amp; Public House (553 Vees Dr #201)</a></strong> at Cascades Casino lists a 3 to 9&nbsp;PM daily window in our October 15 check, on craft beer, wine, highballs and Free Spirited cocktails (call (778) 476-8555 to confirm), plus a Car Hop slider at $6.95. Monday is fish and chips at $15, and Friday is chicken parmigiana at $19.99. We do not have confirmed drink prices.</p>
 
@@ -414,7 +420,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p>Revelstoke and Golden are about 150&nbsp;km apart on Highway 1, and they have very different drinking scenes. Statistics Canada's <a href="https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm?Lang=E">2021 Census</a> counted 8,275 people in Revelstoke and about 4,000 in Golden, so both are small towns where a bar's specials often live on a chalkboard or an Instagram story rather than a website. That is why this guide is short. According to TodaysTab's checks on October 31, 2026, we track 14 venues across the two towns and 3 of them have a current, confirmed special with a stated day or time window.</p>
 
-<p>The numbers behind that, as of October 31, 2026: the lowest confirmed price on a drink is $6, at Rockford Bar | Grill (craft pints, vodka soda and feature cocktails). The lowest confirmed price on any item is $5, for original edamame at SEOUL STREET. One venue of the 3, Raven + Pine Mountain Eatery, runs a late-night window (9&nbsp;PM to close). The three afternoon happy hours start between 2 and 4&nbsp;PM and finish by 6&nbsp;PM; Raven + Pine adds its late round from 9&nbsp;PM to close.</p>
+<p>The numbers behind that, as of October 31, 2026: the lowest confirmed price on a drink is $6, at Rockford Bar | Grill (craft pints, vodka soda and feature cocktails). The lowest price on any item in our records is $5, for original edamame at SEOUL STREET. One venue of the 3, Raven + Pine Mountain Eatery, runs a late-night window (9&nbsp;PM to close). The three afternoon happy hours start between 2 and 4&nbsp;PM and finish by 6&nbsp;PM; Raven + Pine adds its late round from 9&nbsp;PM to close.</p>
 
 <h2>Revelstoke Mountain Resort</h2>
 
@@ -428,7 +434,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p>Downtown Revelstoke is a walkable grid around First Street and MacKenzie Avenue, with the old-town pubs and most of the independent restaurants. Distances between venues are a few minutes on foot.</p>
 
-<p><strong><a href="/revelstoke-golden/venues/3151">SEOUL STREET (314 1 St W)</a></strong> is a Korean-themed pub and restaurant. According to the venue's menu as of October 28, 2026, happy hour runs 4-6&nbsp;PM daily, and every confirmed item is food: original edamame $5, street edamame $7, original fries $6, street fries $10 and crispy chicken wontons $10. We have not confirmed any drink prices. Check <a href="https://seoul-street.ca">seoul-street.ca</a> or their Instagram for the current menu. This is the cheapest snack we have confirmed in the region.</p>
+<p><strong><a href="/revelstoke-golden/venues/3151">SEOUL STREET (314 1 St W)</a></strong> is a Korean-themed pub and restaurant. According to our records as of October 28, 2026, happy hour runs 4-6&nbsp;PM daily, and every item we have is food: original edamame $5, street edamame $7, original fries $6, street fries $10 and crispy chicken wontons $10. We could not find a happy hour posted on the venue's website, so call to confirm, and we have no drink prices. Check <a href="https://seoul-street.ca">seoul-street.ca</a> or their Instagram for the current menu. This is the cheapest snack in our records for the region.</p>
 
 <h2>Golden: Trans-Canada Highway</h2>
 
@@ -461,7 +467,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p>Yes. Rockford Bar | Grill's 3 to 6&nbsp;PM happy hour runs every day, dine in only, so it includes Saturday and Sunday. It also lists a daily feature: Caesars and mimosas (1&nbsp;oz) for $6 on Sunday, and white sangria (1&nbsp;oz) at $7.50 or a 40&nbsp;cl Stella at $8 on Saturday.</p>
 
 <h3>What is the cheapest food special in Revelstoke?</h3>
-<p>SEOUL STREET (314 1 St W) has the lowest confirmed food prices we track in the region: original edamame is $5 and original fries are $6, both during its 4 to 6&nbsp;PM daily happy hour. At Rockford, vegetable dumplings and Governor Tso's chicken are $7 each from 3 to 6&nbsp;PM.</p>
+<p>SEOUL STREET (314 1 St W) has the lowest food prices in our records for the region: original edamame is $5 and original fries are $6, both during its 4 to 6&nbsp;PM daily happy hour. At Rockford, vegetable dumplings and Governor Tso's chicken are $7 each from 3 to 6&nbsp;PM.</p>
 
 <h3>How do I know these deals are current?</h3>
 <p>Each special on this page was checked against a venue source, and the newest check was October 29, 2026, and the oldest was October 23, 2026 for Raven + Pine Mountain Eatery. We only list specials with a stated day or time window and high confidence, and we re-check monthly. Prices change, so the live page for the region is always the current version.</p>
@@ -714,7 +720,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 
 <p><strong><a href="/edmonton/venues/7277">The Canadian Brewhouse, Lewis Estates (1320 Webber Greens Dr NW)</a></strong> runs Monday to Saturday 2-6&nbsp;PM: $3.99 Bud Light steins, $4.99 highballs and Fireball, $5.99 house wine.</p>
 
-<p><strong><a href="/edmonton/venues/7199">Flame &amp; Barrel (1237 Windermere Way SW)</a></strong> runs a midweek happy hour, 3-5&nbsp;PM according to our data, with $5.50 domestic draft, $6 house wine, $5 highballs and a $9 small cheese pizza; check the venue's happy hour menu for days and any evening window.</p>
+<p><strong><a href="/edmonton/venues/7199">Flame &amp; Barrel (1237 Windermere Way SW)</a></strong> lists a happy hour, 3-5&nbsp;PM according to our data, plus a late happy hour from 8:30&nbsp;PM to close, with $5.50 domestic draft, $6 house wine, $5 highballs and a $9 small cheese pizza; check the venue's happy hour menu for days and any evening window.</p>
 
 <h2>What's not on this list</h2>
 
