@@ -31,11 +31,11 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 | 8 | Barrie & Simcoe County (barrie-simcoe-county) | Ontario | 116 | 42 | Done | happy-hours-barrie | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 2. ATLAS bites/oysters prices unconfirmed (hedged in post). Donaleigh's spelling is right in the post (DB says Donaleighs). Tipsy Goose (4519) not listed; add at refresh. |
 | 9 | Penticton (penticton) | British Columbia | 56 | 36 | Done | happy-hours-penticton-2026 | 2026-10-29 | 2026-10-31 (text re-checked) | 2026-11-30 | Original wave. BNA DB rows mix Kelowna/Vernon/Penticton (post fixed). Yellow Dog site offline, call-ahead wording. |
 | 10 | Revelstoke & Golden (revelstoke-golden) | British Columbia | 15 | 5 | Done | happy-hours-revelstoke-golden-2026 | 2026-10-29 | 2026-10-31 (text re-checked) | 2026-11-30 | Original wave. DB venue 3161 (BC liquor records confirm The Golden Taps Pub at 505 9 Ave N) is named 'The Bar & Grill (Golden)' but is The Golden Taps (rename pending approval). SEOUL STREET happy hour not on its site. |
-| 11 | Vancouver (vancouver) | British Columbia | 338 | 190 | WIP (wave 3) | happy-hours-vancouver |  |  |  | Wave 3, in progress. |
-| 12 | Winnipeg (winnipeg) | Manitoba | 193 | 59 | WIP (wave 3) | happy-hours-winnipeg |  |  |  | Wave 3, in progress. |
-| 13 | Toronto Core (toronto-core) | Ontario | 116 | 54 | WIP (wave 3) | happy-hours-toronto |  |  |  | Wave 3 guide spans toronto-core, -north, -east, -west. |
-| 14 | London (london) | Ontario | 140 | 50 | WIP (wave 3) | happy-hours-london-ontario |  |  |  | Wave 3, in progress. |
-| 15 | Saskatoon (saskatoon) | Saskatchewan | 131 | 46 | WIP (wave 3) | happy-hours-saskatoon |  |  |  | Wave 3, in progress. |
+| 11 | Vancouver (vancouver) | British Columbia | 338 | 190 | Done | happy-hours-vancouver | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 3. Verified by separate agent; Park Pub wings softened, Amber Gastown days unconfirmed, Steamworks discount amounts not in data (worded generically). |
+| 12 | Winnipeg (winnipeg) | Manitoba | 193 | 59 | Done | happy-hours-winnipeg | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 3. La Roca removed (fire Nov 2025). Hy's, Peasant Cookery, 1928 Eatery corrected. 2-5 PM at 11 venues. |
+| 13 | Toronto Core (toronto-core) | Ontario | 116 | 54 | Done | happy-hours-toronto | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 3, spans toronto-core/-north/-east/-west. Late-window count corrected to 4. Boutique Bar $3 rests on our record only. |
+| 14 | London (london) | Ontario | 140 | 50 | Done | happy-hours-london-ontario | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 3 (London, Ontario). Craft Farmacy and Turtle Jack's moved to correct areas. Tue/Wed 30 of 35 counts daily specials. |
+| 15 | Saskatoon (saskatoon) | Saskatchewan | 131 | 46 | Done | happy-hours-saskatoon | 2026-10-31 | 2026-10-31 | 2026-11-30 | Wave 3. Better Brother is City Park. Leopold's Kensington record looks copied from Broadway (call-to-confirm). Wendel Clark's 0.6-confidence rows excluded. |
 | 16 | Calgary SW (calgary-sw) | Alberta | 156 | 82 | Covered |  |  |  |  | In the Calgary guide. |
 | 17 | Toronto North (toronto-north) | Ontario | 146 | 63 | Covered |  |  |  |  | In the Toronto guide (wave 3). |
 | 18 | Calgary NW (calgary-nw) | Alberta | 83 | 52 | Covered |  |  |  |  | In the Calgary guide. |
