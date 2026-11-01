@@ -1038,6 +1038,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     metaDescription:
       "Barrie happy hours 2026: 21 Barrie and Simcoe County spots with deals by area, from a $3.50 beer to 70 cent wings, with days, times and prices.",
     publishedAt: "2026-10-31",
+    updatedAt: "2026-10-31",
     excerpt:
       "TodaysTab checked 21 Barrie and Simcoe County venues on October 31, 2026, and the lowest confirmed drink is a $3.50 Pabst Blue Ribbon on Saturdays at Lockeroom.",
     contentHtml: `
@@ -1091,7 +1092,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <h2>Beyond Barrie: Orillia, Rama and Alliston</h2>
 <p>Our data covers three spots outside Barrie.</p>
 <p><strong><a href="/barrie-simcoe-county/venues/1086">The Social Bar &amp; Lounge (2 Front St N, Orillia)</a></strong> took over the former Fionn MacCool's waterfront space. Its menu lists happy hour Monday to Friday 2 to 5&nbsp;PM and daily from 9:30&nbsp;PM, dine-in only: Coors Light 20&nbsp;oz $6.50, Heineken $9, house drink 16&nbsp;oz $5, house wine $7 and a four-bottle bucket $24. The menu is company-wide and does not name Orillia, so confirm.</p>
-<p><strong><a href="/barrie-simcoe-county/venues/4608">ATLAS Steak + Fish (5899 Rama Rd, Casino Rama)</a></strong> runs happy hour Wednesday to Sunday, 4 to 5&nbsp;PM and 9 to 10&nbsp;PM: $9.50 cocktails and house wine, $2 off draft, $8 to $12 bites and half-price oysters. Casino Rama's pages list the 4 to 5&nbsp;PM window, and an older OpenTable listing shows other times.</p>
+<p><strong><a href="/barrie-simcoe-county/venues/4608">ATLAS Steak + Fish (5899 Rama Rd, Casino Rama)</a></strong> runs happy hour Wednesday to Sunday, 4 to 5&nbsp;PM and 9 to 10&nbsp;PM: $9.50 cocktails according to TodaysTab's October check. Older listings also mention discounted draft, bites and half-price oysters, which we could not confirm, so call ahead. Casino Rama's pages list the 4 to 5&nbsp;PM window, and an older OpenTable listing shows other times.</p>
 <p><strong><a href="/barrie-simcoe-county/venues/4549">Barnstormer Brew Pub &amp; Bottle Shop (265 King St N, Alliston)</a></strong> runs Hoppy Hour Wednesday to Saturday, 3 to 5&nbsp;PM, dine-in only, with no prices in our record. Wednesday adds buck-a-shuck oysters and half-price wings.</p>
 
 <h2>What's not on this list</h2>
