@@ -126,3 +126,7 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 - Done 2026-10-31: cleared the $2 mis-extracted price on Comery Block 'South Block Draught' rows (venue 3387).
 - Venue 1570: stored as Donaleighs; the venue writes Donaleigh's. Rename needs OK.
 - Done 2026-10-31: deactivated 1024 (Clocktower Glebe, closed), 2247 (Bardo dup), 2262 (Collective Arts dup).
+
+## Search Console indexing log
+- 2026-10-31: indexing requested for Calgary, Ottawa, Halifax, Hamilton, Barrie. Ottawa inspected later the same day: "Crawled - currently not indexed" (normal for a brand-new page; recheck in a week).
+- 2026-10-31: Vancouver, Toronto, Winnipeg, Saskatoon, London (ON) deployed (deployment a84df486). Request Indexing hit "Quota Exceeded" (daily limit). TODO 2026-11-01: request indexing for /vancouver/blog/happy-hours-vancouver, /toronto-core/blog/happy-hours-toronto, /winnipeg/blog/happy-hours-winnipeg, /saskatoon/blog/happy-hours-saskatoon, /london/blog/happy-hours-london-ontario. The sitemap already lists all five.
