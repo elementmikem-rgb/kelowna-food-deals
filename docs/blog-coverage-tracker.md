@@ -128,7 +128,7 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 - Done 2026-10-31: deactivated 1024 (Clocktower Glebe, closed), 2247 (Bardo dup), 2262 (Collective Arts dup).
 
 - Done 2026-11-02: deactivated duplicate rows 1747 (Castle John's, kept 7689), 2817 and 7678 (Publican House, kept 7671), 6212 (Sechelt Lighthouse Pub, kept 589), 6528 (Snug Harbour, kept 2264). Buccaneers 6215 is a separate restaurant, left active.
-- Done 2026-11-02: moved the three misfiled Sunshine Coast venues (city, region, specials and events): 6294 Pepe's Chophouse to whistler (Squamish), 6284 Stillhead Distillery to victoria (Duncan, next to Cobble Hill), 6240 Game On to kamloops (Merritt, nearest region, about 85 km). Coordinates still the old region centre, need geocoding.
+- Done 2026-11-02: moved the three misfiled Sunshine Coast venues (city, region, specials and events): 6294 Pepe's Chophouse to whistler (Squamish), 6284 Stillhead Distillery to victoria (Duncan, next to Cobble Hill), 6240 Game On to kamloops (Merritt, nearest region, about 85 km). Coordinates set 2026-11-02 and approx_coords cleared: 6294 from OpenStreetMap (49.73992, -123.13238), 6284 from the Google place pin on stillhead.ca (48.76416, -123.69305), 6240 from OpenStreetMap node 4499487291 and a Trip.com listing agreeing within 1 m (50.12430, -120.75837). Game On and Stillhead open status not confirmed as currently trading.
 - Open: Mississauga Gabby's rows carry other locations' menu prices; Bristol Bar & Grill site is stale (2021).
 
 ## Search Console indexing log
