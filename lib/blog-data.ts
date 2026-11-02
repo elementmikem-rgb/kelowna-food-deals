@@ -211,13 +211,13 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     regions: ["kelowna"],
     title: "Kelowna Happy Hours 2026: Every Confirmed Spot",
     metaDescription:
-      "Kelowna happy hours 2026: 22 confirmed spots with real prices, from $3.50 highballs and draft beer. Checked October 31, 2026, by neighbourhood.",
+      "Kelowna happy hours 2026: 21 confirmed spots with real prices, from $3.50 highballs and draft beer. Checked October 31, 2026, by neighbourhood.",
     publishedAt: "2026-10-29",
     updatedAt: "2026-10-31",
     excerpt:
       "The lowest confirmed Kelowna happy hour drink price on October 31, 2026 is $3.50, and 14 venues run a second window after 8 PM.",
     contentHtml: `
-<p>Quick answer: most Kelowna happy hours run 2 to 5&nbsp;PM or 3 to 6&nbsp;PM, and 14 venues in our data add a second window after 8&nbsp;PM. Confirmed prices start at $3.50 for a highball or a draft beer. The North End brewery district and downtown (Water Street and Bernard Avenue) hold the most spots. This guide covers 22 venues TodaysTab re-checked in the last 45 days.</p>
+<p>Quick answer: most Kelowna happy hours run 2 to 5&nbsp;PM or 3 to 6&nbsp;PM, and 14 venues in our data add a second window after 8&nbsp;PM. Confirmed prices start at $3.50 for a highball or a draft beer. The North End brewery district and downtown (Water Street and Bernard Avenue) hold the most spots. This guide covers 21 venues TodaysTab re-checked in the last 45 days.</p>
 <p>Last verified October 31, 2026. We re-check every special on this list monthly.</p>
 
 <table>
@@ -275,7 +275,6 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p>Across the William R. Bennett Bridge, the Highway 97 and Main Street corridors hold several pubs with steady afternoon windows.</p>
 <p><strong><a href="/kelowna/venues/82">Whiski-Jack's Pins &amp; Pints (525 BC-97 #620)</a></strong> lists a 2 to 5&nbsp;PM daily happy hour in TodaysTab's October check (the venue's site says only that drinks are on special every day): $1 off 16&nbsp;oz draft, $2 off double highballs, a $5 flat top beef taco, a $9 hot honey pizza and $7 garlic parm fries.</p>
 <p><strong><a href="/kelowna/venues/40">Sammy J's Grill &amp; Bar (190-525 Hwy 97)</a></strong> lists a 3 to 6&nbsp;PM daily happy hour in TodaysTab's October check, with a 14&nbsp;oz Sammy's Lager for $5 and an 18&nbsp;oz pint for $6. Wednesdays take $5 off wings.</p>
-<p><strong><a href="/kelowna/venues/222">WINGS West Kelowna (#1-2484 Main St)</a></strong> lists Happiest Hours from 2 to 6&nbsp;PM Monday to Saturday in TodaysTab's October 27 check, so call to confirm: a $9 Mule, $12 wings and fries and $7 country-style perogies. Sundays have a $12 wings special.</p>
 
 <h2>What's not on this list</h2>
 <p>Competitor guides name several places we cannot confirm. Table Nineteen and Shore Line Brewing appear on other lists but are not in our database, so we have no verified data on them. Red Bird Brewing is in our database with no confirmed special. Baxter's Bar &amp; Grill, The Landing Kitchen + Bar and Wildling are tracked, but their specials were last verified more than 45 days ago, so we left them out. Social 242 Lounge and Grill and Mickie's Pub have closed permanently, and some older guides still list them.</p>
@@ -851,14 +850,14 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
     slug: "happy-hours-calgary",
     category: "Guide",
     regions: ["calgary"],
-    title: "Calgary Happy Hours 2026: 25 Spots With Deals",
+    title: "Calgary Happy Hours 2026: 24 Spots With Deals",
     metaDescription:
-      "25 Calgary happy hour spots in our October 2026 checks, from a $3 craft beer at Tool Shed to a $4.50 lager at Bank and Baron. Call ahead to confirm.",
+      "24 Calgary happy hour spots in our October 2026 checks, from a $3 craft beer at Tool Shed to a $4.50 lager at Bank and Baron. Call ahead to confirm.",
     publishedAt: "2026-10-31",
     excerpt:
       "Calgary happy hour most often runs 2 to 5 PM, used by 47 venues in TodaysTab's October 31, 2026 data, with a 5 oz beer from $3.",
     contentHtml: `
-<p>Quick answer: Calgary happy hour most often runs 2 to 5&nbsp;PM, and 47 venues in our October 31, 2026 data use that window. The cheapest pour with a stated window is a 5&nbsp;oz beer at $3 at Tool Shed Beer &amp; BBQ, and The Bank and Baron lists a $4.50 lager. Start with Downtown and the Beltline, where this guide lists the most of its 25 spots.</p>
+<p>Quick answer: Calgary happy hour most often runs 2 to 5&nbsp;PM, and 47 venues in our October 31, 2026 data use that window. The cheapest pour with a stated window is a 5&nbsp;oz beer at $3 at Tool Shed Beer &amp; BBQ, and The Bank and Baron lists a $4.50 lager. Start with Downtown and the Beltline, where this guide lists the most of its 24 spots.</p>
 <p>Last verified October 31, 2026. Where a venue's own site and our records differ, or a venue publishes no times or prices, we say so, and you should call ahead. We re-check the list monthly.</p>
 
 <h2>Calgary happy hours at a glance</h2>
@@ -906,7 +905,6 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <p>Kensington is the business district inside Hillhurst and Sunnyside, and it holds a few of the better whisky and taco deals.</p>
 <p><strong><a href="/calgary/venues/2047">Hayden Block Smoke &amp; Whiskey (1136 Kensington Rd NW)</a></strong> has all whiskey at half price, whiskey cocktails $4 off and South Block draught $2 off, Monday to Friday, 3 to 6&nbsp;PM. Meats are half off after 10&nbsp;PM, Monday to Friday.</p>
 <p><strong><a href="/calgary/venues/646">Blanco Cantina (Kensington) (1140 Kensington Rd NW)</a></strong> runs 2 to 5&nbsp;PM daily: margaritas at $7.50, all tequila half price including top shelf, and classic tacos at $4.</p>
-<p><strong><a href="/calgary-nw/venues/2894">Ikemen Ramen Bar (217 10 St NW)</a></strong> is in Hillhurst, a short walk from Kensington. Our records list a Friday and Saturday 3 to 6&nbsp;PM happy hour: 16&nbsp;oz Sapporo at $5, 16&nbsp;oz Two Pillars Saison at $6, gyoza at $6 and fries at $5. Call ahead.</p>
 
 <h2>East Village and Inglewood: 9 Avenue SE</h2>
 <p>East Village sits just east of downtown on the Bow River, and Inglewood runs along 9 Avenue SE past the Elbow River.</p>
@@ -936,7 +934,7 @@ Dakoda's Sports Bar &amp; Grill's "Wings and Karaoke Night" -- an all-day deal r
 <h3>Are there minimum prices for drinks in Alberta?</h3>
 <p>Yes. Alberta sets minimum drink prices, so specials are discounts rather than free drinks. Global News reported in 2016 that the 8&nbsp;PM cutoff was removed. The AGLC raised the minimums in June 2026 and the province ordered that reversed within two weeks, so check aglc.ca for current figures.</p>
 <h3>Which Calgary bars have happy hour on weekends?</h3>
-<p>King Eddy lists happy hour specials from 2 to 6&nbsp;PM, though hours change on event days. Lonely Mouth Bar, Porch, Blanco Cantina, Tool Shed Beer &amp; BBQ and Vegan Street list daily windows, and Ikemen Ramen Bar lists Friday and Saturday, 3 to 6&nbsp;PM, in our records.</p>
+<p>King Eddy lists happy hour specials from 2 to 6&nbsp;PM, though hours change on event days. Lonely Mouth Bar, Porch, Blanco Cantina, Tool Shed Beer &amp; BBQ and Vegan Street list daily windows.</p>
 <h3>Where can I find happy hour on 17 Avenue SW?</h3>
 <p>Lonely Mouth Bar (528 17 Ave SW) takes 50% off cocktails, beer and wine from 2 to 5&nbsp;PM daily. Porch (730 17 Ave SW) has a daily 2 to 5&nbsp;PM window, and Comery Block Barbecue (638 17 Ave SW) takes $2 off South Block draught on weekdays from 3 to 6&nbsp;PM.</p>
 <h3>How do I know these Calgary deals are current?</h3>
