@@ -32,6 +32,7 @@ import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { venueTitle, areaNameFromBrand } from "@/lib/page-titles";
+import { isThinVenuePage } from "@/lib/venue-indexability";
 
 const content = {
   en: {
@@ -96,7 +97,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const region = await getCurrentRegion();
   if (!venue || venue.regionId !== region.id) return { title: "Venue not found" };
   const lang = region.language as Language;
-  const [specialsOnFile, menuOnFile] = await Promise.all([getVenueSpecials(venue.id), getVenueMenuItems(venue.id)]);
+  const { timezone } = await getRegionContext(region);
+  const [specialsOnFile, menuOnFile, eventsOnFile] = await Promise.all([
+    getVenueSpecials(venue.id),
+    getVenueMenuItems(venue.id),
+    getVenueEvents(venue.id, timezone),
+  ]);
   const title = venueTitle({
     name: venue.name,
     brandName: region.brandName,
@@ -110,6 +116,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: { canonical: url },
+    // A page with nothing on it is kept out of the index until the venue has content.
+    ...(isThinVenuePage({ specials: specialsOnFile.length, events: eventsOnFile.length, menuItems: menuOnFile.length })
+      ? { robots: { index: false, follow: true } }
+      : {}),
     // No explicit `images`: the colocated opengraph-image.tsx (this venue's own card) is attached
     // automatically. Setting images here would override it with the region-wide card.
     openGraph: { title: ogTitle, description, url },
