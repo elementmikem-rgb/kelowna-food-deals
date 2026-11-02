@@ -91,6 +91,17 @@ describe("buildBlogJsonLd", () => {
     expect(posting.mainEntityOfPage).toBe(`${SITE}/penticton/blog/happy-hours-penticton-2026`);
   });
 
+  it("marks a French guide as fr-CA and leaves English posts unmarked", () => {
+    const fr = buildBlogJsonLd({ ...POST, lang: "fr" }, { slug: "quebec-city", brandName: "Québec Bons Plans" }, SITE)["@graph"] as Array<Record<string, unknown>>;
+    expect(fr.find((n) => n["@type"] === "BlogPosting")!.inLanguage).toBe("fr-CA");
+    expect(posting.inLanguage).toBeUndefined();
+  });
+
+  it("reads French FAQ questions, which end with a no-break space before the question mark", () => {
+    const html = "<h3>Quelle heure est le happy hour à Québec&nbsp;?</h3><p>Souvent de 15&nbsp;h à 17&nbsp;h.</p>";
+    expect(extractFaq(html)).toEqual([{ q: "Quelle heure est le happy hour à Québec ?", a: "Souvent de 15 h à 17 h." }]);
+  });
+
   it("omits FAQPage and ItemList when the post has none", () => {
     const g = buildBlogJsonLd({ ...POST, contentHtml: "<p>plain</p>" }, { slug: "penticton", brandName: "B" }, SITE)["@graph"] as Array<Record<string, unknown>>;
     expect(g.map((n) => n["@type"])).toEqual(["BlogPosting"]);

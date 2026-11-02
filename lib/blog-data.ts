@@ -2,6 +2,9 @@ export type BlogCategory = "Guide" | "Explainer" | "Data";
 
 export interface BlogPost {
   slug: string;
+  // "fr" for a guide written natively in Québec French; it marks the post's structured data inLanguage
+  // fr-CA. Omit for English posts.
+  lang?: "en" | "fr";
   title: string;
   metaDescription: string;
   publishedAt: string; // YYYY-MM-DD

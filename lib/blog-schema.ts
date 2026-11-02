@@ -80,6 +80,7 @@ export function buildBlogJsonLd(
       description: post.metaDescription,
       datePublished: post.publishedAt,
       dateModified: post.updatedAt ?? post.publishedAt,
+      inLanguage: post.lang === "fr" ? "fr-CA" : undefined,
       image: `${siteUrl}/icons/icon-512.png`,
       author: org,
       publisher: org,
