@@ -36,9 +36,18 @@ async function main() {
   // Default: every venue linked from a blog guide. Or pass --ids 12,34,56 for a specific list.
   const idsArg = process.argv.indexOf("--ids");
   const blog = readFileSync("lib/blog-data.ts", "utf8");
-  const ids = idsArg > 0
-    ? process.argv[idsArg + 1].split(",").map(Number)
-    : [...new Set([...blog.matchAll(/\/venues\/(\d+)"/g)].map((m) => Number(m[1])))];
+  let ids: number[];
+  if (process.argv.includes("--specials")) {
+    // Every active venue with a live special, minus ids already in the --exclude report files (comma list).
+    const exI = process.argv.indexOf("--exclude");
+    const done = new Set<number>(exI > 0 ? process.argv[exI + 1].split(",").flatMap((p) => JSON.parse(readFileSync(p, "utf8")).map((r: any) => r.id)) : []);
+    const rows = (await db.execute(sql`SELECT v.id FROM specials.venues v WHERE v.active AND v.address IS NOT NULL AND EXISTS (SELECT 1 FROM specials.specials s WHERE s.venue_id = v.id AND s.archived_at IS NULL) ORDER BY v.id`)) as unknown as Array<{ id: number }>;
+    ids = rows.map((r) => r.id).filter((i) => !done.has(i));
+  } else {
+    ids = idsArg > 0
+      ? process.argv[idsArg + 1].split(",").map(Number)
+      : [...new Set([...blog.matchAll(/\/venues\/(\d+)"/g)].map((m) => Number(m[1])))];
+  }
   const venues = (await db.execute(sql`
     SELECT v.id, v.name, v.address, v.city, v.lat, v.lng, v.approx_coords, v.active, g.slug AS region
     FROM specials.venues v JOIN specials.regions g ON g.id = v.region_id
@@ -68,7 +77,7 @@ async function main() {
     const nameOk = nameAgrees(v.name, p.displayName?.text ?? "");
     const distKm = v.lat != null && v.lng != null && p.location ? km(v.lat, v.lng, p.location.latitude, p.location.longitude) : null;
     report.push({
-      id: v.id, name: v.name, region: v.region, address: v.address, active: v.active,
+      id: v.id, name: v.name, region: v.region, address: v.address, active: v.active, placeId: p.id,
       googleName: p.displayName?.text, googleAddress: p.formattedAddress, businessStatus: p.businessStatus ?? null,
       matched: streetOk && nameOk, streetOk, nameOk, approxCoords: v.approx_coords,
       distanceKm: distKm == null ? null : Math.round(distKm * 1000) / 1000,

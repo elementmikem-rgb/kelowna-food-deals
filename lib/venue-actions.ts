@@ -7,6 +7,7 @@ export const VENUE_ACTION_EVENTS = {
   menu: "venue_menu_click",
   phone: "venue_phone_click",
   reviews: "venue_reviews_click",
+  "write-review": "venue_write_review_click",
   claim: "venue_claim_click",
   // Taps on the cards in the specials / events lists.
   card_special: "venue_special_card_click",

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { parse as exifrParse } from "exifr";
 import { fileToBase64 } from "@/lib/client-image";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -198,13 +199,12 @@ export function SubmitForm({
             <label className="text-sm text-muted" htmlFor="newVenueAddress">
               Address
             </label>
-            <input
+            <AddressAutocomplete
               id="newVenueAddress"
-              type="text"
               value={newVenueAddress}
-              onChange={(e) => setNewVenueAddress(e.target.value)}
+              onChange={setNewVenueAddress}
               placeholder="Street address, city"
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
             />
           </div>
           <p className="text-xs text-muted-2">

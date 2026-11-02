@@ -133,6 +133,10 @@ export const venues = specialsSchema.table(
     // `where approxCoords = true` to find them, don't assume every venue's
     // coordinates are precise.
     approxCoords: boolean("approx_coords").notNull().default(false),
+    // Google Places ID, only stored when a Places search matched this venue's street number AND name
+    // (2026-11 checks). Place IDs are free to store and reuse. Drives exact Maps/Directions/Reviews
+    // links; null means we fall back to a text search link.
+    googlePlaceId: text("google_place_id"),
     phone: text("phone"),
     website: text("website"),
     menuUrl: text("menu_url"),

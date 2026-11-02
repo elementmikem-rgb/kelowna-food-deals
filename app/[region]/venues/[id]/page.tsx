@@ -16,6 +16,14 @@ import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
+import {
+  mapsDirectionsUrl,
+  mapsReviewsUrl,
+  mapsWriteReviewUrl,
+  mapsEmbedUrl,
+  mapsPlaceUrl,
+  provinceFromAddress,
+} from "@/lib/google-maps-links";
 import { ShareButton } from "@/components/ShareButton";
 import { SaveVenueButton } from "@/components/SaveVenueButton";
 import { MembersOnlyBadge } from "@/components/MembersOnlyBadge";
@@ -35,6 +43,7 @@ const content = {
     menuLabel: "Menu",
     mapsLabel: "Open in Google Maps",
     reviewsLabel: "Search reviews",
+    writeReviewLabel: "Write a Google review",
     currentSpecialsHeading: "Current Specials",
     noSpecials: "No current specials on file for this venue.",
     eventsHeading: "Events",
@@ -57,6 +66,7 @@ const content = {
     menuLabel: "Menu",
     mapsLabel: "Ouvrir dans Google Maps",
     reviewsLabel: "Rechercher des avis",
+    writeReviewLabel: "Laisser un avis Google",
     currentSpecialsHeading: "Spéciaux en cours",
     noSpecials: "Aucun spécial en cours pour cet établissement.",
     eventsHeading: "Événements",
@@ -144,8 +154,15 @@ export default async function VenuePage({ params }: PageProps) {
     ]);
 
   const areaName = areaNameFromBrand(region.brandName);
-  const mapQuery = encodeURIComponent(venue.address);
-  const reviewsQuery = encodeURIComponent(`${venue.name} ${areaName} reviews`);
+  // With a Google place ID these open the exact place; without one they fall back to a text search.
+  const directionsUrl = mapsDirectionsUrl(venue);
+  const reviewsUrl = mapsReviewsUrl(venue, areaName);
+  const writeReviewUrl = mapsWriteReviewUrl(venue.googlePlaceId);
+  const embedUrl = mapsEmbedUrl({
+    address: venue.address,
+    googlePlaceId: venue.googlePlaceId,
+    embedKey: process.env.NEXT_PUBLIC_GOOGLE_EMBED_KEY,
+  });
 
   const locality = venue.city ?? areaName;
   // venue.address is the full "123 Main St, Peachland, BC V0H 1X7" string, so the
@@ -161,9 +178,11 @@ export default async function VenuePage({ params }: PageProps) {
       "@type": "PostalAddress",
       streetAddress,
       addressLocality: locality,
-      addressRegion: "BC",
+      // Was hardcoded "BC" for every venue, which mislabelled every Ontario, Alberta and Quebec page.
+      addressRegion: provinceFromAddress(venue.address),
       addressCountry: "CA",
     },
+    hasMap: mapsPlaceUrl(venue.googlePlaceId) ?? undefined,
     url: venue.website ?? undefined,
     telephone: venue.phone ?? undefined,
     menu: venue.menuUrl ?? undefined,
@@ -328,7 +347,7 @@ export default async function VenuePage({ params }: PageProps) {
             list (the actual reason someone opened this page) scrolls past it. */}
         <aside className="lg:sticky lg:top-6 flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+            href={directionsUrl}
             data-venue-action="directions"
             data-venue-id={venue.id}
             target="_blank"
@@ -388,7 +407,7 @@ export default async function VenuePage({ params }: PageProps) {
             </a>
           )}
           <a
-            href={`https://www.google.com/search?q=${reviewsQuery}`}
+            href={reviewsUrl}
             data-venue-action="reviews"
             data-venue-id={venue.id}
             target="_blank"
@@ -397,6 +416,18 @@ export default async function VenuePage({ params }: PageProps) {
           >
             {content[lang].reviewsLabel}
           </a>
+          {writeReviewUrl && (
+            <a
+              href={writeReviewUrl}
+              data-venue-action="write-review"
+              data-venue-id={venue.id}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="press-pill rounded-full border border-border px-4 py-2.5 text-sm text-foreground text-center hover:border-muted"
+            >
+              {content[lang].writeReviewLabel}
+            </a>
+          )}
 
           <div className="rounded-xl overflow-hidden border border-border h-48 mt-2">
             <iframe
@@ -404,7 +435,7 @@ export default async function VenuePage({ params }: PageProps) {
               className="w-full h-full"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+              src={embedUrl}
             />
           </div>
         </aside>

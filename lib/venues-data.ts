@@ -20,6 +20,7 @@ export interface VenueDetail {
   instagramHandle: string | null;
   claimedAt: Date | null;
   membersOnly: boolean;
+  googlePlaceId: string | null;
 }
 
 export async function getVenueById(id: number): Promise<VenueDetail | null> {
@@ -38,6 +39,7 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
       instagramHandle: venues.instagramHandle,
       claimedAt: venues.claimedAt,
       membersOnly: venues.membersOnly,
+      googlePlaceId: venues.googlePlaceId,
     })
     .from(venues)
     .where(and(eq(venues.id, id), eq(venues.active, true)))

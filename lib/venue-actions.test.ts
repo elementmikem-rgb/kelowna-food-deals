@@ -8,6 +8,7 @@ describe("venueActionEvent", () => {
     expect(venueActionEvent("menu")).toBe("venue_menu_click");
     expect(venueActionEvent("phone")).toBe("venue_phone_click");
     expect(venueActionEvent("reviews")).toBe("venue_reviews_click");
+    expect(venueActionEvent("write-review")).toBe("venue_write_review_click");
     expect(venueActionEvent("claim")).toBe("venue_claim_click");
   });
 
