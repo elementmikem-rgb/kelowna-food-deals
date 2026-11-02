@@ -1,4 +1,4 @@
-Done | happy-hours-regina | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Moxies is East Regina. Roots weekday deals removed (expired promos). 4529 Gordon Rd (Lancaster Taphouse, closed per OpenTable) left out; DB duplicate Leopold's 7877 not linked. Centre Square and Cathedral labels unverified against the City. |Done | happy-hours-durham | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Lowest price is $3.99 stein at Canadian Brewhouse. Whitby split by area. Whisky John's is west Oshawa. Fox Goes Free prices removed. Brooklin Pub and Cloud Nine rest on undated listings. |Done | happy-hours-surrey | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Boathouse White Rock closed Sept 2025 (removed). Lowest price stated as "lowest confirmed". Par4 is Sullivan Station side of Newton. DB dup ids 405/408 for one venue. |Done | happy-hours-halton | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Chuck's $4 beer was an expired June promo (removed). Keenan's Milton specials page shows the Brampton site (softened). Tipsy Fox Burlington unconfirmed. Street names used instead of unverified neighbourhoods. |Done | happy-hours-niagara | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. La Favella days fixed, Newark Stein Club price removed, Cold Break Monday removed, Sala 61 is west St. Catharines. $5 lowest price is a tie. |# TodaysTab blog coverage tracker
+# TodaysTab blog coverage tracker
 
 One row per region. Update this file every time a guide is written, verified, refreshed or deployed. Data numbers are active venues and live (non-archived) specials as of 2026-10-31; re-pull them with `scripts/_tmp-snap.ts` and the region query in this file's history before choosing the next wave.
 
@@ -43,20 +43,20 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 | 20 | Toronto West (toronto-west) | Ontario | 92 | 30 | Covered |  |  |  |  | In the Toronto guide (wave 3). |
 | 21 | Toronto East (toronto-east) | Ontario | 78 | 26 | Covered |  |  |  |  | In the Toronto guide (wave 3). |
 | 22 | Calgary NE (calgary-ne) | Alberta | 66 | 25 | Covered |  |  |  |  | In the Calgary guide. |
-| 23 | Niagara Region (niagara-region) | Ontario | 179 | 58 | Queued |  |  |  |  |  |
-| 24 | Halton Region (halton-region) | Ontario | 174 | 58 | Queued |  |  |  |  |  |
-| 25 | Surrey & White Rock (surrey) | British Columbia | 112 | 55 | Queued |  |  |  |  |  |
-| 26 | Durham Region (durham-region) | Ontario | 139 | 53 | Queued |  |  |  |  |  |
-| 27 | York Region (york-region) | Ontario | 161 | 51 | Queued |  |  |  |  |  |
-| 28 | Mississauga (mississauga) | Ontario | 123 | 48 | Queued |  |  |  |  |  |
-| 29 | Regina (regina) | Saskatchewan | 118 | 48 | Queued |  |  |  |  |  |
+| 23 | Niagara Region (niagara-region) | Ontario | 179 | 58 | Done | happy-hours-niagara | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. La Favella days fixed, Newark Stein Club price removed, Cold Break Monday removed, Sala 61 is west St. Catharines. $5 lowest price is a tie. |
+| 24 | Halton Region (halton-region) | Ontario | 174 | 58 | Done | happy-hours-halton | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Chuck's $4 beer was an expired June promo (removed). Keenan's Milton specials page shows the Brampton site (softened). Tipsy Fox Burlington unconfirmed. Street names used instead of unverified neighbourhoods. |
+| 25 | Surrey & White Rock (surrey) | British Columbia | 112 | 55 | Done | happy-hours-surrey | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Boathouse White Rock closed Sept 2025 (removed). Lowest price stated as "lowest confirmed". Par4 is Sullivan Station side of Newton. DB dup ids 405/408 for one venue. |
+| 26 | Durham Region (durham-region) | Ontario | 139 | 53 | Done | happy-hours-durham | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Lowest price is $3.99 stein at Canadian Brewhouse. Whitby split by area. Whisky John's is west Oshawa. Fox Goes Free prices removed. Brooklin Pub and Cloud Nine rest on undated listings. |
+| 27 | York Region (york-region) | Ontario | 161 | 51 | Done | happy-hours-york-region | 2026-11-02 | 2026-11-02 | 2026-12-02 | Wave 5. 26 venues across 6 districts. Filly & Co Monday prices fixed, Scaddabush is $2 off, Smash/CLASSIC/Symposium times added. 9 PM window stat: 11 venues publish one. Bar6ix (5811) trades as Bar6ix Sports & Wings, open status unconfirmed. StatCan page 403, figures from search extract. |
+| 28 | Mississauga (mississauga) | Ontario | 123 | 48 | Done | happy-hours-mississauga | 2026-11-02 | 2026-11-02 | 2026-12-02 | Wave 5. Gabby's prices softened (rows carried other locations' menus). Lionheart $4 ties Social Eatery, uncorroborated. Bristol Bar & Grill moved to not-on-list (stale site). Official Plan link is the 2024 PDF, not re-read. Pump House open status rests on a May 2025 post. |
+| 29 | Regina (regina) | Saskatchewan | 118 | 48 | Done | happy-hours-regina | 2026-11-01 | 2026-11-01 | 2026-12-01 | Wave 4. Moxies is East Regina. Roots weekday deals removed (expired promos). 4529 Gordon Rd (Lancaster Taphouse, closed per OpenTable) left out; DB duplicate Leopold's 7877 not linked. Centre Square and Cathedral labels unverified against the City. |
 | 30 | Québec (quebec-city) | Quebec | 184 | 47 | Queued |  |  |  |  |  |
 | 31 | Montréal Centre (montreal-core) | Quebec | 151 | 47 | Queued |  |  |  |  |  |
 | 32 | Laval (laval) | Quebec | 133 | 38 | Queued |  |  |  |  |  |
-| 33 | Peterborough & the Kawarthas (peterborough-kawarthas) | Ontario | 94 | 37 | Queued |  |  |  |  |  |
-| 34 | Guelph (guelph) | Ontario | 91 | 37 | Queued |  |  |  |  |  |
+| 33 | Peterborough & the Kawarthas (peterborough-kawarthas) | Ontario | 94 | 37 | Done | happy-hours-peterborough | 2026-11-02 | 2026-11-02 | 2026-12-02 | Wave 5. 17 venues. Berc's is Tuesday 5-9. Maple Moose follows its own specials page. Canoe & Paddle unconfirmed (out of quick answer). Population figure dropped (StatCan 403). Neighbourhoods use street names. |
+| 34 | Guelph (guelph) | Ontario | 91 | 37 | Done | happy-hours-guelph | 2026-11-02 | 2026-11-02 | 2026-12-02 | Wave 5. 20 venues. Lead price is $1 beers at Trappers Alley (Mon/Thu); Partytown $1 wings softened. Cowboys is Exhibition Park. Shoeless Joe's OpenTable window (2-5, 9-close) conflicts with our 3-6. Royal City, State & Main, Shoeless Joe's, Kelsey's open status from listings only. |
 | 35 | Montréal Nord (montreal-north) | Quebec | 208 | 36 | Queued |  |  |  |  |  |
-| 36 | Sunshine Coast (sunshine-coast) | British Columbia | 89 | 35 | Queued |  |  |  |  |  |
+| 36 | Sunshine Coast (sunshine-coast) | British Columbia | 89 | 35 | Done | happy-hours-sunshine-coast | 2026-11-02 | 2026-11-02 | 2026-12-02 | Wave 5. 10 venues. Shift Kitchen & Bar (588) unconfirmed, left out. Backeddy Pub closed Dec 21 to Feb 4. Ferry times and population from secondary sources. Region has 3 misfiled rows (6294 Pepe's Squamish, 6240 Game On Merritt, 6284 Stillhead Duncan). |
 | 37 | Sherbrooke (sherbrooke) | Quebec | 101 | 32 | Queued |  |  |  |  |  |
 | 38 | Montréal Est (montreal-east) | Quebec | 117 | 30 | Queued |  |  |  |  |  |
 | 39 | Red Deer (red-deer) | Alberta | 89 | 30 | Queued |  |  |  |  |  |
@@ -127,7 +127,12 @@ how-we-verify-every-special (site-wide), real-kelowna-happy-hour-guide, best-win
 - Venue 1570: stored as Donaleighs; the venue writes Donaleigh's. Rename needs OK.
 - Done 2026-10-31: deactivated 1024 (Clocktower Glebe, closed), 2247 (Bardo dup), 2262 (Collective Arts dup).
 
+- Done 2026-11-02: deactivated duplicate rows 1747 (Castle John's, kept 7689), 2817 and 7678 (Publican House, kept 7671), 6212 (Sechelt Lighthouse Pub, kept 589), 6528 (Snug Harbour, kept 2264). Buccaneers 6215 is a separate restaurant, left active.
+- Open: Sunshine Coast region holds three venues that are not on the coast: 6294 Pepe's Chophouse (Squamish area), 6240 Game On (Merritt), 6284 Stillhead (Duncan). They need a region decision, not deactivation.
+- Open: Mississauga Gabby's rows carry other locations' menu prices; Bristol Bar & Grill site is stale (2021).
+
 ## Search Console indexing log
+- 2026-11-02: Wave 5 (York Region, Mississauga, Guelph, Peterborough, Sunshine Coast) deployed (deployment 69a38aab, commit ded64c0), all five live 200 with FAQ and ItemList, in sitemap and llms.txt. IndexNow ping sent (128 URLs, status 200). Google Request Indexing NOT attempted (quota blocked 2026-11-01). TODO: request indexing for the 5 wave 3, 5 wave 4 and 5 wave 5 URLs: /york-region/blog/happy-hours-york-region, /mississauga/blog/happy-hours-mississauga, /peterborough-kawarthas/blog/happy-hours-peterborough, /guelph/blog/happy-hours-guelph, /sunshine-coast/blog/happy-hours-sunshine-coast.
 - 2026-11-01: Bing set up. IndexNow key file live at /0a6488b8bbeff4d4fa9bc33c3b8dc9d7.txt (deployment 58fdec70). Ran `npx tsx scripts/indexnow-ping.ts` (123 blog URLs, status 202). todaystab.com imported into Bing Webmaster Tools from Google Search Console (account also holds photaro.live); sitemap.xml "Processing". After each wave: run the ping script. Check Bing Webmaster (Sitemaps, IndexNow, AI Performance) in about a week.
 - 2026-11-01: Wave 4 (Niagara, Halton, Surrey, Durham, Regina) deployed (deployment 7713dedb, commit 34cb583), live 200 with FAQ and ItemList, in sitemap and llms.txt. Search Console still "Quota Exceeded" at 07:55 PST on 2026-11-01 (quota looks like a rolling 24 hours). TODO: request indexing for the 5 wave 3 URLs listed below, then the 5 wave 4 URLs: /niagara-region/blog/happy-hours-niagara, /halton-region/blog/happy-hours-halton, /surrey/blog/happy-hours-surrey, /durham-region/blog/happy-hours-durham, /regina/blog/happy-hours-regina. Try again after about 9 PM PST 2026-11-01 or tomorrow.
 - 2026-10-31: indexing requested for Calgary, Ottawa, Halifax, Hamilton, Barrie. Ottawa inspected later the same day: "Crawled - currently not indexed" (normal for a brand-new page; recheck in a week).
