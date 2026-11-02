@@ -114,6 +114,10 @@ export function AddressAutocomplete({
               {s.secondary && <span className="text-muted-2"> {s.secondary}</span>}
             </li>
           ))}
+          {/* Google requires its attribution next to Autocomplete suggestions shown outside a Google map. */}
+          <li role="presentation" className="px-3 py-1 text-right text-[10px] text-muted-2">
+            Google Maps
+          </li>
         </ul>
       )}
     </div>
