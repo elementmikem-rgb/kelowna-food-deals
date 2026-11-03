@@ -5,6 +5,7 @@ import { attachNextGames } from "./game-day";
 import type { EventWithVenue } from "./events-data";
 import { recurringColumns } from "./events-data";
 import { regionTodayISODate, toDateOrNull } from "./time";
+import { previousSpecialsCutoff } from "./previous-specials-window";
 
 export interface VenueDetail {
   id: number;
@@ -136,7 +137,13 @@ export async function getVenuePreviousSpecials(venueId: number): Promise<Previou
     })
     .from(specials)
     .innerJoin(venues, eq(specials.venueId, venues.id))
-    .where(and(eq(specials.venueId, venueId), isNotNull(specials.archivedAt)))
+    .where(
+      and(
+        eq(specials.venueId, venueId),
+        isNotNull(specials.archivedAt),
+        gte(specials.archivedAt, previousSpecialsCutoff(new Date()))
+      )
+    )
     .orderBy(desc(specials.archivedAt))
     .limit(15);
 
