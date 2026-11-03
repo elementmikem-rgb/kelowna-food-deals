@@ -65,7 +65,18 @@ export default async function Home() {
         regionLng={region.lng}
       />
 
-      <TipJar regionSlug={region.slug} lang={lang} />
+      <TipJar
+        regionSlug={region.slug}
+        lang={lang}
+        stats={{
+          specials: specials.length,
+          places: new Set(specials.map((s) => s.venueId)).size,
+          cheapestCents: specials.reduce<number | null>(
+            (min, s) => (s.priceCents != null && (min == null || s.priceCents < min) ? s.priceCents : min),
+            null,
+          ),
+        }}
+      />
       <AreaLinks regionSlug={region.slug} regionBrand={region.brandName} towns={towns} nearby={nearby} lang={lang} />
       <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
       <FAQSection lang={lang} />
