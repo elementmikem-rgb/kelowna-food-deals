@@ -21,6 +21,7 @@ export const strings = {
     nav: {
       specials: "Specials",
       events: "Events",
+      nightlife: "Nightlife",
       monthly: "Monthly",
       mySpots: (count: number) => `★ My Spots (${count})`,
     },
@@ -147,6 +148,7 @@ export const strings = {
     nav: {
       specials: "Spéciaux",
       events: "Événements",
+      nightlife: "Vie nocturne",
       monthly: "Mensuel",
       mySpots: (count: number) => `★ Mes favoris (${count})`,
     },

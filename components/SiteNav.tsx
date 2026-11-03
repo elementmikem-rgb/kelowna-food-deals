@@ -9,7 +9,7 @@ import { t, getEffectiveLanguage } from "@/lib/i18n";
 // "saved" (the My Spots page) is the same story -- reached via SavedVenuesLink in
 // the header, not a permanent third tab (see the feature's UI-audit-driven
 // decision not to add another always-visible nav pill on mobile).
-export async function SiteNav({ active }: { active: "specials" | "events" | "monthly" | "blog" | "saved" }) {
+export async function SiteNav({ active }: { active: "specials" | "events" | "nightlife" | "monthly" | "blog" | "saved" }) {
   const region = await getCurrentRegion();
   const nav = t(await getEffectiveLanguage(region)).nav;
   const base = `/${region.slug}`;
@@ -36,6 +36,17 @@ export async function SiteNav({ active }: { active: "specials" | "events" | "mon
         }`}
       >
         {nav.events}
+      </Link>
+      <Link
+        href={`${base}/nightlife`}
+        data-selected={active === "nightlife"}
+        className={`press-pill rounded-full px-4 py-1.5 text-sm border ${
+          active === "nightlife"
+            ? "bg-accent text-background border-accent"
+            : "bg-transparent text-muted border-border hover:border-muted"
+        }`}
+      >
+        {nav.nightlife}
       </Link>
     </nav>
   );

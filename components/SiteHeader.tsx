@@ -13,7 +13,7 @@ export async function SiteHeader({
   brandIsHeading = true,
   heading,
 }: {
-  active: "specials" | "events" | "monthly" | "blog" | "saved";
+  active: "specials" | "events" | "nightlife" | "monthly" | "blog" | "saved";
   subtitle: string;
   // Pages that carry their own <h1> (e.g. a blog post title) pass false so the
   // brand renders as plain text and the page keeps exactly one real heading.
@@ -26,7 +26,13 @@ export async function SiteHeader({
   const lang = await getEffectiveLanguage(region);
   const tr = t(lang);
   const returnPath =
-    active === "events" ? `/${region.slug}/events` : active === "monthly" ? `/${region.slug}/monthly` : `/${region.slug}`;
+    active === "events"
+      ? `/${region.slug}/events`
+      : active === "nightlife"
+        ? `/${region.slug}/nightlife`
+        : active === "monthly"
+          ? `/${region.slug}/monthly`
+          : `/${region.slug}`;
   const BrandTag = brandIsHeading ? "h1" : "span";
   const [firstWord, ...rest] = region.brandName.split(" ");
   return (
