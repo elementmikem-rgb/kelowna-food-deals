@@ -87,7 +87,7 @@ export function SaveVenueButton({
           : "border-border text-muted hover:border-muted hover:text-foreground"
       } ${className}`}
     >
-      {saved ? `â˜… ${tr.card.saved}` : `â˜† ${tr.card.save}`}
+      {saved ? `★ ${tr.card.saved}` : `☆ ${tr.card.save}`}
     </button>
     {toast &&
       createPortal(
