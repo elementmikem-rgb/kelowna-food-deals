@@ -66,7 +66,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Ask what's on tonight"
-        className="press-pill fixed bottom-5 right-5 z-50 flex items-center justify-center gap-2 rounded-full bg-accent text-background shadow-lg h-12 w-12 sm:h-auto sm:w-auto sm:px-5 sm:py-3"
+        className="press-pill fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-[calc(1.25rem+env(safe-area-inset-right))] z-50 flex items-center justify-center gap-2 rounded-full bg-accent text-background shadow-lg h-12 w-12 sm:h-auto sm:w-auto sm:px-5 sm:py-3"
       >
         <svg
           viewBox="0 0 24 24"
@@ -85,7 +85,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-surface shadow-xl flex flex-col overflow-hidden">
+    <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-[calc(1.25rem+env(safe-area-inset-right))] z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-surface shadow-xl flex flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <span className="text-sm font-medium">Ask about today</span>
         <button

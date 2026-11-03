@@ -168,7 +168,7 @@ export function InstallPrompt() {
     // right-5 h-12 chat bubble -- both are bottom-fixed and full-width-ish on
     // mobile, so without the extra offset the chat bubble sits on top of this
     // banner's corner instead of floating cleanly above it.
-    <div className="sm:hidden fixed inset-x-3 bottom-20 z-40 rounded-2xl border border-border bg-surface shadow-[0_4px_20px_rgba(42,40,24,0.18)] p-3 flex items-center gap-3">
+    <div className="sm:hidden fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-border bg-surface shadow-[0_4px_20px_rgba(42,40,24,0.18)] p-3 flex items-center gap-3">
       <img src="/icons/icon-192.png" alt="" width={40} height={40} className="rounded-lg shrink-0" />
       <div className="flex-1 min-w-0">
         {eligible.kind === "ios" ? (

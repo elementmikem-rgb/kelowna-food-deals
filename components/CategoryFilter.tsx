@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CATEGORY_LABELS, t, type Language } from "@/lib/i18n";
 import type { SpecialCategory } from "@/db/schema";
+import { withViewTransition } from "@/lib/view-transition";
 
 const CATEGORIES: SpecialCategory[] = [
   "happy_hour",
@@ -27,17 +28,17 @@ export function CategoryFilter({
 }) {
   const options: (SpecialCategory | "all")[] = ["all", ...CATEGORIES];
   const chipClass =
-    "press-pill shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide border";
+    "press-pill hit-44 shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide border";
   return (
     <div className="relative -mx-4">
-      <div className="flex gap-2 overflow-x-auto pb-1 px-4 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pt-2 pb-3 -mt-2 -mb-2 px-4 no-scrollbar">
         {options.map((opt) => {
           const isSelected = opt === selected;
           const label = opt === "all" ? t(lang).filters.allCategories : CATEGORY_LABELS[lang][opt];
           return (
             <button
               key={opt}
-              onClick={() => onSelect(opt)}
+              onClick={() => withViewTransition(() => onSelect(opt))}
               data-selected={isSelected}
               className={`${chipClass} ${
                 isSelected

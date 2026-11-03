@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { type Language, dowShortNameLocalized } from "@/lib/i18n";
+import { withViewTransition } from "@/lib/view-transition";
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6];
 
@@ -40,7 +41,7 @@ export function DayTabs({
 
   return (
     <div className="relative -mx-4">
-      <div ref={scrollerRef} className="flex gap-2 overflow-x-auto pb-1 px-4 no-scrollbar">
+      <div ref={scrollerRef} className="flex gap-2 overflow-x-auto pt-2 pb-3 -mt-2 -mb-2 px-4 no-scrollbar">
         {DAYS.map((dow) => {
           const isSelected = dow === selected;
           const isToday = dow === today;
@@ -48,9 +49,9 @@ export function DayTabs({
             <button
               key={dow}
               ref={isSelected ? selectedRef : undefined}
-              onClick={() => onSelect(dow)}
+              onClick={() => withViewTransition(() => onSelect(dow))}
               data-selected={isSelected}
-              className={`press-pill shrink-0 rounded-full px-4 py-1.5 text-sm font-mono-tabular border ${
+              className={`press-pill hit-44 shrink-0 rounded-full px-4 py-1.5 text-sm font-mono-tabular border ${
                 isSelected
                   ? "bg-accent text-background border-accent"
                   : "bg-transparent text-muted border-border hover:border-muted"
