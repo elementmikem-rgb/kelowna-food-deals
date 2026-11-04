@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { areaNameFromBrand, regionHomeTitle, venueTitle } from "./page-titles";
+import { areaNameFromBrand, dayPageTitle, regionHomeTitle, venueTitle } from "./page-titles";
 
 describe("areaNameFromBrand", () => {
   it("strips the English and French brand suffixes", () => {
@@ -50,5 +50,16 @@ describe("venueTitle", () => {
 
   it("leaves French venues on the existing region template", () => {
     expect(venueTitle({ name: "Chez Paul", brandName: "Laval Bons Plans", language: "fr", hasSpecialsOrMenu: true })).toBe("Chez Paul");
+  });
+});
+
+describe("dayPageTitle", () => {
+  it("leads with the words people search: area, food deals, the weekday", () => {
+    expect(dayPageTitle("Regina", "Friday")).toBe("Regina Food Deals on Friday: Happy Hour & Specials");
+    expect(dayPageTitle("Sherwood Park", "Wednesday")).toBe("Sherwood Park Food Deals on Wednesday: Happy Hour & Specials");
+  });
+
+  it("does not repeat the brand, since the page title bypasses the site template", () => {
+    expect(dayPageTitle("Kelowna", "Monday").match(/Food Deals/g)).toHaveLength(1);
   });
 });

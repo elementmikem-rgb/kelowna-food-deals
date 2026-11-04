@@ -1,4 +1,4 @@
-import { areaNameFromBrand } from "@/lib/page-titles";
+import { areaNameFromBrand, dayPageTitle } from "@/lib/page-titles";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSpecialsWithVenueForDay } from "@/lib/data";
@@ -65,8 +65,11 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 
   let title: string;
   let description: string;
+  // Day pages skip the "-- Brand" template: their title already says "Food Deals".
+  let absoluteTitle = false;
   if (resolved.kind === "day") {
-    title = `${areaName} Happy Hour & Food Specials on ${dayLabel(resolved.dow)}`;
+    title = dayPageTitle(areaName, dayLabel(resolved.dow));
+    absoluteTitle = true;
     description = `What's actually running on ${dayLabel(resolved.dow)} in ${areaName} -- happy hours and food/drink specials, checked regularly, not a stale list from last year.`;
   } else if (resolved.kind === "category") {
     title = `${areaName} ${categoryPageLabel(resolved.category)} Deals`;
@@ -77,7 +80,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   return {
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     alternates: { canonical: `/${region.slug}/${slug}` },
     openGraph: { title, description, url: `/${region.slug}/${slug}`, images: regionOgImages(region.slug) },

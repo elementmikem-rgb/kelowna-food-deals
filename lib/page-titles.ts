@@ -25,3 +25,11 @@ export function venueTitle(opts: {
   const area = areaNameFromBrand(opts.brandName);
   return { absolute: `${opts.name}${opts.hasSpecialsOrMenu ? " Happy Hour & Menu" : ""} -- ${area}` };
 }
+
+// Weekday pages (/kelowna/friday). Searches here read "friday food deals" and "wednesday food
+// specials" (Search Console, Nov 2026), so the title leads with the area, "Food Deals" and the
+// weekday. The page passes it as an absolute title so the "-- Brand" template (which already says
+// "Food Deals") is not stacked on top of it.
+export function dayPageTitle(areaName: string, dayLabel: string): string {
+  return `${areaName} Food Deals on ${dayLabel}: Happy Hour & Specials`;
+}
