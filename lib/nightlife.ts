@@ -32,6 +32,14 @@ export type NightEventKind = "music" | "karaoke" | "other";
 // when the title or description reads like a night out.
 const NIGHT_WORDS = /\b(dj|dance|party|night ?club|club night|drag|burlesque|ladies night|late ?night|comedy|open mic)\b/i;
 
+// Every event at a venue flagged nightlife counts, whatever its time or title.
+export function nightVenueEventKind(eventType: EventType | string, teamCode: string | null): NightEventKind | null {
+  if (teamCode) return null;
+  if (eventType === "live_music") return "music";
+  if (eventType === "karaoke") return "karaoke";
+  return "other";
+}
+
 export function nightEventKind(e: {
   eventType: EventType | string;
   startTime: string | null;

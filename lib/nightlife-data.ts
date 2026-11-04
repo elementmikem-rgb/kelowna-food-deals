@@ -1,7 +1,9 @@
 import { cache } from "react";
+import { and, eq } from "drizzle-orm";
+import { db, venues } from "@/db";
 import { getAllSpecialsWithVenue } from "@/lib/data";
 import { getRecurringEvents, getUpcomingOneOffEvents } from "@/lib/events-data";
-import { isLateSpecial, nightEventKind, type NightEventKind } from "@/lib/nightlife";
+import { isLateSpecial, nightEventKind, nightVenueEventKind, type NightEventKind } from "@/lib/nightlife";
 
 // One row on the nightlife page, whether it came from a special or an event. Only plain
 // fields the page renders, so the client payload stays small.
@@ -31,6 +33,15 @@ export const getNightlife = cache(async (regionId: number, timezone: string): Pr
     getRecurringEvents(regionId),
     getUpcomingOneOffEvents(regionId, timezone, 14),
   ]);
+
+  // Venues hand-flagged as nightclubs, strip clubs or concert halls: all their events show.
+  const flaggedRows = await db
+    .select({ id: venues.id })
+    .from(venues)
+    .where(and(eq(venues.regionId, regionId), eq(venues.active, true), eq(venues.nightlife, true)));
+  const flagged = new Set(flaggedRows.map((v) => v.id));
+  const kindFor = (e: (typeof recurring)[number]) =>
+    nightEventKind(e) ?? (e.venueId !== null && flagged.has(e.venueId) ? nightVenueEventKind(e.eventType, e.teamCode) : null);
 
   const weekly: NightItem[] = [];
 
@@ -73,13 +84,13 @@ export const getNightlife = cache(async (regionId: number, timezone: string): Pr
   });
 
   for (const e of recurring) {
-    const kind = nightEventKind(e);
+    const kind = kindFor(e);
     if (kind) weekly.push(toItem(e, kind));
   }
 
   const upcoming: NightItem[] = [];
   for (const e of oneOffs) {
-    const kind = nightEventKind(e);
+    const kind = kindFor(e);
     if (kind) upcoming.push(toItem(e, kind));
   }
   upcoming.sort((a, b) => (a.specificDate ?? "").localeCompare(b.specificDate ?? "") || (a.startTime ?? "").localeCompare(b.startTime ?? ""));

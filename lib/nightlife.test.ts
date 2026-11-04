@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isLateSpecial, nightEventKind } from "./nightlife";
+import { isLateSpecial, nightEventKind, nightVenueEventKind } from "./nightlife";
 
 describe("isLateSpecial", () => {
   it("counts a special that starts at 8pm or later", () => {
@@ -48,5 +48,16 @@ describe("nightEventKind", () => {
     expect(nightEventKind({ eventType: "trivia", startTime: "20:00:00", title: "Trivia", description: null, teamCode: null })).toBeNull();
     expect(nightEventKind({ eventType: "sports_night", startTime: "20:00:00", title: "Game", description: null, teamCode: null })).toBeNull();
     expect(nightEventKind({ eventType: "other", startTime: "19:00:00", title: "DJ party", description: null, teamCode: "VAN" })).toBeNull();
+  });
+});
+
+describe("nightVenueEventKind", () => {
+  it("counts every event at a flagged venue, by type", () => {
+    expect(nightVenueEventKind("live_music", null)).toBe("music");
+    expect(nightVenueEventKind("karaoke", null)).toBe("karaoke");
+    expect(nightVenueEventKind("other", null)).toBe("other");
+  });
+  it("still skips NHL rows", () => {
+    expect(nightVenueEventKind("other", "VAN")).toBeNull();
   });
 });

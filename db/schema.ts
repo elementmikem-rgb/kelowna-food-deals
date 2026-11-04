@@ -188,6 +188,9 @@ export const venues = specialsSchema.table(
     // later grows a specials page still gets rechecked eventually.
     checkedNoListingsAt: timestamp("checked_no_listings_at", { withTimezone: true }),
     checkedNoListingsNote: text("checked_no_listings_note"),
+    // Hand-set for nightclubs, strip clubs and concert venues. Their events always show on the
+    // /[region]/nightlife page, whatever the event type or title (see lib/nightlife-data.ts).
+    nightlife: boolean("nightlife").notNull().default(false),
     // Set the moment an admin approves a claim request (app/api/admin/claims/[id]/route.ts).
     // Drives two things: the nightly cron skips this venue entirely (cron/index.ts) since the
     // owner is now the source of truth, and the "Owner verified" badge on its cards.

@@ -540,6 +540,13 @@
       "when": 1792727281742,
       "tag": "0076_venue_google_place_id",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1793767017498,
+      "tag": "0077_nightlife_flag",
+      "breakpoints": true
     }
   ]
 }
