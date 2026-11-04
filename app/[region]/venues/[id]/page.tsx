@@ -15,6 +15,8 @@ import { SpecialCard } from "@/components/SpecialCard";
 import { EventCard } from "@/components/EventCard";
 import { PreviousSpecials } from "@/components/PreviousSpecials";
 import { SiteFooter } from "@/components/SiteFooter";
+import { GuideLinks } from "@/components/GuideLinks";
+import { getGuideLinks } from "@/lib/guide-links";
 import { VenuePhotoGallery } from "@/components/VenuePhotoGallery";
 import {
   mapsDirectionsUrl,
@@ -451,6 +453,7 @@ export default async function VenuePage({ params }: PageProps) {
         </aside>
       </div>
 
+      <GuideLinks links={getGuideLinks(region.slug, { kind: "venue" })} lang={lang} />
       <SiteFooter />
     </div>
   );

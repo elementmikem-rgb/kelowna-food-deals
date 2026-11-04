@@ -11,6 +11,8 @@ import { FAQSection } from "@/components/FAQSection";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AreaLinks } from "@/components/AreaLinks";
+import { GuideLinks } from "@/components/GuideLinks";
+import { getGuideLinks } from "@/lib/guide-links";
 import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL, regionOgImages } from "@/lib/seo";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { dayFromSlug, dayLabel } from "@/lib/day-slugs";
@@ -191,6 +193,17 @@ export default async function SlugPage({ params }: SlugPageProps) {
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />
+      <GuideLinks
+        links={getGuideLinks(
+          region.slug,
+          resolved.kind === "category"
+            ? { kind: "category", slug }
+            : resolved.kind === "town"
+              ? { kind: "town", slug: resolved.town.slug }
+              : { kind: "day" },
+        )}
+        lang={lang}
+      />
       <AreaLinks
         regionSlug={region.slug}
         regionBrand={region.brandName}

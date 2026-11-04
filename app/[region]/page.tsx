@@ -7,6 +7,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AboutSection } from "@/components/AboutSection";
 import { AreaLinks } from "@/components/AreaLinks";
+import { GuideLinks } from "@/components/GuideLinks";
+import { getGuideLinks } from "@/lib/guide-links";
 import { getTownsForRegion } from "@/lib/towns";
 import { getNearbyRegions } from "@/lib/nearby-regions";
 import { areaNameFromBrand } from "@/lib/page-titles";
@@ -77,6 +79,7 @@ export default async function Home() {
           ),
         }}
       />
+      <GuideLinks links={getGuideLinks(region.slug, { kind: "home" })} lang={lang} />
       <AreaLinks regionSlug={region.slug} regionBrand={region.brandName} towns={towns} nearby={nearby} lang={lang} />
       <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
       <FAQSection lang={lang} />
