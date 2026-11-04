@@ -300,4 +300,22 @@ describe("buildWebsiteJsonLd", () => {
       logo: "https://todaystab.com/icons/icon-192.png",
     });
   });
+
+  it("adds sameAs and a contact point only when the profile has them", () => {
+    const [, org] = buildWebsiteJsonLd("https://todaystab.com/kelowna", "Kelowna Food Deals", "https://todaystab.com/icons/icon-192.png", {
+      sameAs: ["https://www.facebook.com/example"],
+      contactEmail: "hello@example.com",
+    })["@graph"];
+    expect(org.sameAs).toEqual(["https://www.facebook.com/example"]);
+    expect(org.contactPoint).toEqual({ "@type": "ContactPoint", contactType: "customer support", email: "hello@example.com" });
+  });
+
+  it("leaves both out for an empty profile", () => {
+    const [, org] = buildWebsiteJsonLd("https://todaystab.com/kelowna", "Kelowna Food Deals", "https://todaystab.com/icons/icon-192.png", {
+      sameAs: [],
+      contactEmail: null,
+    })["@graph"];
+    expect(org).not.toHaveProperty("sameAs");
+    expect(org).not.toHaveProperty("contactPoint");
+  });
 });

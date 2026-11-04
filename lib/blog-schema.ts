@@ -72,7 +72,14 @@ export function buildBlogJsonLd(
   region: { slug: string; brandName: string },
   siteUrl: string
 ): Record<string, unknown> {
-  const org = { "@type": "Organization", name: region.brandName, url: `${siteUrl}/${region.slug}` };
+  // The same Organization the region layout publishes (same @id), so author, publisher and the page's
+  // WebSite markup all name one entity.
+  const org = {
+    "@type": "Organization",
+    "@id": `${siteUrl}/${region.slug}/#organization`,
+    name: region.brandName,
+    url: `${siteUrl}/${region.slug}`,
+  };
   const graph: Array<Record<string, unknown>> = [
     {
       "@type": "BlogPosting",

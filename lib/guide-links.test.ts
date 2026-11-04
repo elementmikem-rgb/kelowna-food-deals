@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getGuideLinks } from "./guide-links";
+import { getGuideLinks, getVerifyLink } from "./guide-links";
 
 describe("getGuideLinks", () => {
   it("links a region's happy hour guide from a day page and a venue page", () => {
@@ -44,5 +44,18 @@ describe("getGuideLinks", () => {
     const [link] = getGuideLinks("quebec-city", { kind: "day" });
     expect(link.href).toBe("/quebec-city/blog/happy-hours-quebec");
     expect(link.title.length).toBeGreaterThan(10);
+  });
+});
+
+describe("getVerifyLink", () => {
+  it("links the how-we-verify post for an English region", () => {
+    expect(getVerifyLink("kelowna", "en")).toEqual({
+      href: "/kelowna/blog/how-we-verify-every-special",
+      title: "How we verify every special",
+    });
+  });
+
+  it("returns nothing for a French region, since the post is English only", () => {
+    expect(getVerifyLink("quebec-city", "fr")).toBeNull();
   });
 });

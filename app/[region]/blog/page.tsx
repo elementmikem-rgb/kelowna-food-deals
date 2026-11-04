@@ -36,7 +36,13 @@ export async function generateMetadata({
   return {
     title: "Blog",
     description: content[lang].metaDesc,
-    alternates: { canonical: `/${region.slug}/blog` },
+    alternates: {
+      canonical: `/${region.slug}/blog`,
+      // Only regions with their own guides have a feed.
+      types: getBlogPostsForRegion(region.slug).some((p) => p.regions?.includes(region.slug))
+        ? { "application/rss+xml": `/${region.slug}/blog/feed.xml` }
+        : undefined,
+    },
   };
 }
 

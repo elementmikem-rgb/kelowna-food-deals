@@ -87,7 +87,13 @@ describe("buildBlogJsonLd", () => {
   });
 
   it("names the organisation author with a url and links the canonical page", () => {
-    expect(posting.author).toEqual({ "@type": "Organization", name: "Penticton Food Deals", url: `${SITE}/penticton` });
+    expect(posting.author).toEqual({
+      "@type": "Organization",
+      "@id": `${SITE}/penticton/#organization`,
+      name: "Penticton Food Deals",
+      url: `${SITE}/penticton`,
+    });
+    expect(posting.publisher).toEqual(posting.author);
     expect(posting.mainEntityOfPage).toBe(`${SITE}/penticton/blog/happy-hours-penticton-2026`);
   });
 

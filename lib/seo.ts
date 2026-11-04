@@ -1,5 +1,6 @@
 import type { SpecialWithVenue } from "./data";
 import type { EventWithVenue } from "./events-data";
+import { ORG_PROFILE, type OrgProfile } from "./org-profile";
 import { todayDowInRegion, regionTodayISODate, addDaysISO, isStale, resolveMonthlyOccurrenceISODate } from "./time";
 
 const MAX_JSONLD_ITEMS = 80;
@@ -228,24 +229,28 @@ export function buildFaqJsonLd(items: readonly { q: string; a: string }[]) {
 // schema above. One region's brand per URL prefix, same as every other per-region
 // page -- not a single sitewide identity, since each region brand is its own
 // name/logo/social presence (see db/schema.ts's regions table).
-export function buildWebsiteJsonLd(siteUrl: string, brandName: string, logoUrl: string) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "@id": `${siteUrl}/#website`,
-        url: siteUrl,
-        name: brandName,
-        publisher: { "@id": `${siteUrl}/#organization` },
-      },
-      {
-        "@type": "Organization",
-        "@id": `${siteUrl}/#organization`,
-        name: brandName,
-        url: siteUrl,
-        logo: logoUrl,
-      },
-    ],
+export function buildWebsiteJsonLd(siteUrl: string, brandName: string, logoUrl: string, profile: OrgProfile = ORG_PROFILE) {
+  const org: Record<string, unknown> = {
+    "@type": "Organization",
+    "@id": `${siteUrl}/#organization`,
+    name: brandName,
+    url: siteUrl,
+    logo: logoUrl,
   };
+  // Only real, owner-confirmed values are published (see lib/org-profile.ts).
+  if (profile.sameAs.length > 0) org.sameAs = profile.sameAs;
+  if (profile.contactEmail) {
+    org.contactPoint = { "@type": "ContactPoint", contactType: "customer support", email: profile.contactEmail };
+  }
+  const graph: Array<Record<string, unknown>> = [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: siteUrl,
+      name: brandName,
+      publisher: { "@id": `${siteUrl}/#organization` },
+    },
+    org,
+  ];
+  return { "@context": "https://schema.org", "@graph": graph };
 }

@@ -46,3 +46,10 @@ export function getGuideLinks(regionSlug: string, ctx: GuideContext): GuideLink[
   if (link) links.push(link);
   return links;
 }
+
+// The "how we verify" explainer is the closest thing the site has to an About page. It is English
+// only, so French regions get no link rather than a jump into another language.
+export function getVerifyLink(regionSlug: string, lang: string): GuideLink | null {
+  if (lang === "fr") return null;
+  return { href: `/${regionSlug}/blog/how-we-verify-every-special`, title: "How we verify every special" };
+}

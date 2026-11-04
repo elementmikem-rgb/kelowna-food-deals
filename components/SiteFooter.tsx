@@ -3,10 +3,13 @@ import { getLastScrapeTime } from "@/lib/status";
 import { formatCheckedAt } from "@/lib/time";
 import { getCurrentRegion } from "@/lib/regions";
 import { t, getEffectiveLanguage } from "@/lib/i18n";
+import { getVerifyLink } from "@/lib/guide-links";
 
 export async function SiteFooter() {
   const [lastScrape, region] = await Promise.all([getLastScrapeTime(), getCurrentRegion()]);
-  const footer = t(await getEffectiveLanguage(region)).footer;
+  const lang = await getEffectiveLanguage(region);
+  const footer = t(lang).footer;
+  const verify = getVerifyLink(region.slug, lang);
   const base = `/${region.slug}`;
 
   return (
@@ -22,6 +25,11 @@ export async function SiteFooter() {
       <Link href={`${base}/blog`} className="text-muted-2 underline">
         {footer.blog}
       </Link>
+      {verify && (
+        <Link href={verify.href} className="text-muted-2 underline">
+          {verify.title}
+        </Link>
+      )}
       <Link href={`${base}/archive`} className="text-muted-2 underline">
         {footer.archive}
       </Link>
