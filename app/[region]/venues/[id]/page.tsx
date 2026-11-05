@@ -290,7 +290,7 @@ export default async function VenuePage({ params }: PageProps) {
               <TagFilteredGrid
                 lang={lang}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                tagsByKey={Object.fromEntries(groupByDayRange(venueSpecials).map((s) => [String(s.id), tagSpecial(s)]))}
+                tagLists={groupByDayRange(venueSpecials).map((s) => tagSpecial(s))}
               >
                 {groupByDayRange(venueSpecials).map((s) => (
                   <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} regionSlug={region.slug} lang={lang} />
