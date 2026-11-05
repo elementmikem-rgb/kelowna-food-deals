@@ -33,13 +33,11 @@ import { formatPrice } from "@/lib/format";
 import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
-import { venueTitle, areaNameFromBrand } from "@/lib/page-titles";
+import { venueTitle, venueDescription, areaNameFromBrand } from "@/lib/page-titles";
 import { isThinVenuePage } from "@/lib/venue-indexability";
 
 const content = {
   en: {
-    metaDesc: (name: string, addr: string) =>
-      `Current food/drink specials, events, and info for ${name} -- ${addr}. Verified, not guessed.`,
     backLink: "← All specials",
     shareText: (name: string, brandName: string) => `Specials & events at ${name} -- ${brandName}:`,
     websiteLabel: "Website",
@@ -61,8 +59,6 @@ const content = {
     claimVenue: "Own this venue? Claim your free listing",
   },
   fr: {
-    metaDesc: (name: string, addr: string) =>
-      `Spéciaux repas et boissons, événements et informations pour ${name} -- ${addr}. Vérifiés, pas devinés.`,
     backLink: "← Tous les spéciaux",
     shareText: (name: string, brandName: string) => `Spéciaux et événements à ${name} -- ${brandName} :`,
     websiteLabel: "Site web",
@@ -112,7 +108,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     hasSpecialsOrMenu: specialsOnFile.length > 0 || menuOnFile.length > 0,
   });
   const ogTitle = typeof title === "string" ? venue.name : title.absolute;
-  const description = content[lang].metaDesc(venue.name, venue.address);
+  const description = venueDescription({
+    name: venue.name,
+    address: venue.address,
+    language: region.language,
+    deals: groupByDayRange(specialsOnFile).map((g) => ({ title: g.title, priceCents: g.priceCents, dayLabel: g.dayLabel })),
+  });
   const url = `/${region.slug}/venues/${venue.id}`;
   return {
     title,

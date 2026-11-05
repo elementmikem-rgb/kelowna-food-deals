@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { areaNameFromBrand, dayPageTitle, regionHomeTitle, venueTitle } from "./page-titles";
+import { areaNameFromBrand, dayPageTitle, regionHomeTitle, venueDescription, venueTitle } from "./page-titles";
 
 describe("areaNameFromBrand", () => {
   it("strips the English and French brand suffixes", () => {
@@ -61,5 +61,39 @@ describe("dayPageTitle", () => {
 
   it("does not repeat the brand, since the page title bypasses the site template", () => {
     expect(dayPageTitle("Kelowna", "Monday").match(/Food Deals/g)).toHaveLength(1);
+  });
+});
+
+describe("venueDescription", () => {
+  const base = { name: "Ask Pablo", address: "269 Lawrence Ave, Kelowna, BC", language: "en" };
+
+  it("leads with the real deals, with price and days", () => {
+    const d = venueDescription({
+      ...base,
+      deals: [
+        { title: "Power Taps", priceCents: 800, dayLabel: "Fri-Sat" },
+        { title: "Double Margs", priceCents: 1000, dayLabel: "Wed" },
+      ],
+    });
+    expect(d).toBe("Ask Pablo, 269 Lawrence Ave, Kelowna, BC: Power Taps $8 (Fri-Sat), Double Margs $10 (Wed). Checked by TodaysTab.");
+  });
+
+  it("keeps a deal with no price or day short", () => {
+    const d = venueDescription({ ...base, deals: [{ title: "Mariscos Seafood Platter", priceCents: null, dayLabel: null }] });
+    expect(d).toContain("Mariscos Seafood Platter.");
+  });
+
+  it("lists at most three deals and stays under 160 characters", () => {
+    const deals = Array.from({ length: 6 }, (_, i) => ({ title: `Special number ${i + 1} with a long name`, priceCents: 999, dayLabel: "Mon-Fri" }));
+    const d = venueDescription({ ...base, deals });
+    expect(d.length).toBeLessThanOrEqual(160);
+    expect(d).not.toContain("Special number 4");
+  });
+
+  it("falls back to the generic line with no deals, and for French regions", () => {
+    expect(venueDescription({ ...base, deals: [] })).toBe("Current food/drink specials, events, and info for Ask Pablo -- 269 Lawrence Ave, Kelowna, BC. Verified, not guessed.");
+    expect(venueDescription({ ...base, language: "fr", deals: [{ title: "X", priceCents: 500, dayLabel: "Lun" }] })).toBe(
+      "Spéciaux repas et boissons, événements et informations pour Ask Pablo -- 269 Lawrence Ave, Kelowna, BC. Vérifiés, pas devinés."
+    );
   });
 });

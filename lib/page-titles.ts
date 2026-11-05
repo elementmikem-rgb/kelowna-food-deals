@@ -1,3 +1,5 @@
+import { formatPrice } from "./format";
+
 // Search-result titles for the region home page and venue pages. Pure so the wording is
 // unit-tested; the pages only supply the data.
 
@@ -32,4 +34,41 @@ export function venueTitle(opts: {
 // "Food Deals") is not stacked on top of it.
 export function dayPageTitle(areaName: string, dayLabel: string): string {
   return `${areaName} Food Deals on ${dayLabel}: Happy Hour & Specials`;
+}
+
+// Venue-page snippet. Searches here are mostly the venue's own name ("ask pablo menu"), so the
+// description leads with what the venue really has on, in its own words, instead of a generic line.
+// Deals are already collapsed to a day range (lib/group-days.ts); French regions and venues with no
+// deals keep the existing wording.
+export interface DescriptionDeal {
+  title: string;
+  priceCents: number | null;
+  dayLabel: string | null;
+}
+
+const MAX_DESCRIPTION = 160;
+
+export function venueDescription(opts: {
+  name: string;
+  address: string;
+  language: string;
+  deals: DescriptionDeal[];
+}): string {
+  const { name, address } = opts;
+  if (opts.language === "fr") {
+    return `Spéciaux repas et boissons, événements et informations pour ${name} -- ${address}. Vérifiés, pas devinés.`;
+  }
+  const generic = `Current food/drink specials, events, and info for ${name} -- ${address}. Verified, not guessed.`;
+  const parts = opts.deals.slice(0, 3).map((d) => {
+    const price = d.priceCents === null ? "" : ` ${formatPrice(d.priceCents)}`;
+    const days = d.dayLabel ? ` (${d.dayLabel})` : "";
+    return `${d.title}${price}${days}`;
+  });
+  // Drop the last deal until the whole line fits what Google shows.
+  while (parts.length > 0) {
+    const line = `${name}, ${address}: ${parts.join(", ")}. Checked by TodaysTab.`;
+    if (line.length <= MAX_DESCRIPTION) return line;
+    parts.pop();
+  }
+  return generic;
 }
