@@ -9,15 +9,15 @@ import type { CategorySponsor } from "@/lib/sponsored-data";
 import { todayDowInRegion, dowFullName, regionTodayISODate } from "@/lib/time";
 import { CATEGORY_LABELS, t, type Language } from "@/lib/i18n";
 import { DayTabs } from "./DayTabs";
-import { CategoryFilter } from "./CategoryFilter";
-import { CityFilter } from "./CityFilter";
 import { SpecialVenueGroup } from "./SpecialVenueGroup";
 import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
 import { sortByDistance, formatDistance, type Point } from "@/lib/nearest";
 import { ViewToggle } from "./ViewToggle";
-import { WhatFilter, type WhenMode } from "./WhatFilter";
-import { tagSpecial, isLateNight, UNDER_10_CENTS, SPECIAL_TAGS, type SpecialTag } from "@/lib/special-tags";
+import { QuickFilters, type ActiveFilter } from "./QuickFilters";
+import { FilterSheet } from "./FilterSheet";
+import { filterText, type WhenMode } from "@/lib/board-filters";
+import { tagSpecial, isLateNight, UNDER_10_CENTS, SPECIAL_TAGS, TAG_LABELS, type SpecialTag } from "@/lib/special-tags";
 import { liveStatus, nowMinutesInRegion, statusRank } from "@/lib/live-status";
 
 // Leaflet reads `window`/`document` at module load, so it can never run during
@@ -113,6 +113,7 @@ export function SpecialsBoard({
   const [when, setWhen] = useState<WhenMode>("any");
   const [under10, setUnder10] = useState(false);
   const [late, setLate] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   // The browser's reading of the region's clock, in minutes. Null on the server and on first paint so the
   // cached HTML never claims something is on now; it is filled in on mount and kept fresh every minute.
   const [nowMin, setNowMin] = useState<number | null>(null);
@@ -386,6 +387,27 @@ export function SpecialsBoard({
     return { flash, featured, boosted, plain: plainOrdered, distances, all, onNowPlaces };
   }, [filtered, userPos, sortNearest, clock]);
 
+  // Filters that are on but have no chip of their own in the quick row appear as removable tags.
+  const FT = filterText(lang);
+  const TL = TAG_LABELS[lang === "fr" ? "fr" : "en"];
+  const extras: ActiveFilter[] = [];
+  if (selectedTag !== "all" && selectedTag !== "food" && selectedTag !== "drink")
+    extras.push({ key: "tag", label: TL[selectedTag], onClear: () => setSelectedTag("all") });
+  if (late) extras.push({ key: "late", label: FT.late, onClear: () => setLate(false) });
+  if (selectedCategory !== "all")
+    extras.push({ key: "cat", label: CATEGORY_LABELS[lang][selectedCategory], onClear: () => setSelectedCategory("all") });
+  if (selectedCity !== "all") extras.push({ key: "city", label: selectedCity, onClear: () => setSelectedCity("all") });
+  const activeCount =
+    extras.length + (when !== "any" ? 1 : 0) + (under10 ? 1 : 0) + (selectedTag === "food" || selectedTag === "drink" ? 1 : 0);
+  function clearAll() {
+    setSelectedTag("all");
+    setWhen("any");
+    setUnder10(false);
+    setLate(false);
+    setSelectedCategory("all");
+    setSelectedCity("all");
+  }
+
   const activeSponsor =
     selectedCategory !== "all" ? categorySponsors.find((s) => s.category === selectedCategory) : undefined;
 
@@ -431,29 +453,46 @@ export function SpecialsBoard({
       </div>
 
       <div className="flex flex-col gap-3">
-        <WhatFilter
+        <QuickFilters
           lang={lang}
           timed={timed}
+          counts={chipCounts}
           when={when}
           onWhen={setWhen}
-          under10={under10}
-          onUnder10={setUnder10}
-          late={late}
-          onLate={setLate}
           tag={selectedTag}
           onTag={setSelectedTag}
-          counts={chipCounts}
+          under10={under10}
+          onUnder10={setUnder10}
+          activeCount={activeCount}
+          extras={extras}
+          onOpenSheet={() => setSheetOpen(true)}
+          onClearAll={clearAll}
         />
-        <CategoryFilter
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
-          lang={lang}
-          regionSlug={regionSlug}
-        />
-        {cities.length > 0 && (
-          <CityFilter cities={cities} selected={selectedCity} onSelect={setSelectedCity} lang={lang} />
-        )}
       </div>
+
+      <FilterSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        lang={lang}
+        regionSlug={regionSlug}
+        timed={timed}
+        counts={chipCounts}
+        when={when}
+        onWhen={setWhen}
+        under10={under10}
+        onUnder10={setUnder10}
+        late={late}
+        onLate={setLate}
+        tag={selectedTag}
+        onTag={setSelectedTag}
+        category={selectedCategory}
+        onCategory={setSelectedCategory}
+        cities={cities}
+        city={selectedCity}
+        onCity={setSelectedCity}
+        placeCount={grouped.all.length}
+        onClearAll={clearAll}
+      />
 
       {activeSponsor && (
         <div className="-mt-1 flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/15 px-4 py-2.5">

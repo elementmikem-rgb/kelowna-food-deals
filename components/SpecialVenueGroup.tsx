@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
-import { SpecialRow } from "./SpecialRow";
-import { liveStatus } from "@/lib/live-status";
+import { VenueCardSpecials } from "./VenueCardSpecials";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { OwnerVerifiedBadge } from "./OwnerVerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
@@ -9,13 +8,6 @@ import { VenueGroupActions } from "./VenueGroupActions";
 import { SaveVenueButton } from "./SaveVenueButton";
 import { isPromotionActive } from "@/lib/promotion";
 import { t, type Language } from "@/lib/i18n";
-
-// Above this many, a venue's card starts crowding out everyone else's on the
-// board (BNA Brewing and Cutwater Brewing both run past 10) -- the rest are
-// one click away on the venue's own page, which lists all of them anyway.
-const MAX_VISIBLE = 5;
-// On now first, then coming up, then untimed, then finished (a stable sort keeps the board's own order inside each band).
-const STATUS_ORDER = { live: 0, soon: 1, allday: 2, ended: 3 } as const;
 
 export function SpecialVenueGroup({
   venueId,
@@ -43,16 +35,6 @@ export function SpecialVenueGroup({
   const featured = isPromotionActive(specials[0]?.venueFeaturedUntil ?? null);
   const isPartner = specials[0]?.venuePartnerSince != null;
   const photoId = specials[0]?.venuePhotoId ?? null;
-  const ordered =
-    nowMin === null
-      ? specials
-      : specials
-          .map((s) => ({ s, k: STATUS_ORDER[liveStatus(s.startTime, s.endTime, nowMin).kind] }))
-          .sort((a, b) => a.k - b.k)
-          .map((x) => x.s);
-  const visible = ordered.slice(0, MAX_VISIBLE);
-  const hiddenCount = specials.length - visible.length;
-
   return (
     <article
       data-venue-impression={venueId}
@@ -170,17 +152,7 @@ export function SpecialVenueGroup({
         </div>
       )}
 
-      <ul className="flex flex-col divide-y divide-border">
-        {visible.map((s) => (
-          <SpecialRow key={s.id} special={s} lang={lang} nowMin={nowMin} />
-        ))}
-      </ul>
-
-      {hiddenCount > 0 && (
-        <p className="relative z-10 pointer-events-none mt-1 pt-2 border-t border-dashed border-border text-xs font-medium text-accent-dim">
-          + {hiddenCount} more -- view all {specials.length} specials →
-        </p>
-      )}
+      <VenueCardSpecials specials={specials} lang={lang} nowMin={nowMin} />
 
       <div className="relative z-10 flex items-center justify-between gap-3 mt-1 pt-2 border-t border-border">
         <ConfirmedBadges

@@ -35,6 +35,8 @@ import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { venueTitle, venueDescription, areaNameFromBrand } from "@/lib/page-titles";
 import { isThinVenuePage } from "@/lib/venue-indexability";
+import { TagFilteredGrid } from "@/components/TagFilteredGrid";
+import { tagSpecial } from "@/lib/special-tags";
 
 const content = {
   en: {
@@ -285,11 +287,15 @@ export default async function VenuePage({ params }: PageProps) {
             {venueSpecials.length === 0 ? (
               <p className="text-muted-2 text-sm">{content[lang].noSpecials}</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TagFilteredGrid
+                lang={lang}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                tagsByKey={Object.fromEntries(groupByDayRange(venueSpecials).map((s) => [String(s.id), tagSpecial(s)]))}
+              >
                 {groupByDayRange(venueSpecials).map((s) => (
                   <SpecialCard key={s.id} special={s} dayLabel={s.dayLabel} regionSlug={region.slug} lang={lang} />
                 ))}
-              </div>
+              </TagFilteredGrid>
             )}
           </section>
 
