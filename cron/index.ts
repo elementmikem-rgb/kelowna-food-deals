@@ -4,6 +4,7 @@ import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
+import { pruneChatQueries } from "@/lib/chat-retention";
 import { sendWeeklyDigests } from "@/lib/weekly-digest";
 import { normalizeText, hashText } from "./hash";
 import { syncBookings } from "./booking-sync";
@@ -946,6 +947,13 @@ async function runScrapeCycle() {
     console.log(`Analytics: pruned ${deleted} event(s) older than the retention window`);
   } catch (err) {
     console.error("Analytics pruning failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    const { deleted } = await pruneChatQueries();
+    console.log(`Chat: pruned ${deleted} question(s) older than the retention window`);
+  } catch (err) {
+    console.error("Chat pruning failed:", err instanceof Error ? err.message : err);
   }
 
   try {

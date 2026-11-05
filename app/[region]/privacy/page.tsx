@@ -21,6 +21,10 @@ interface PrivacyCopy {
   analyticsBody: string;
   submissionsHeading: string;
   submissionsBody: string;
+  chatHeading: string;
+  chatBody: string;
+  thirdPartiesHeading: string;
+  thirdPartiesBody: string;
   tipsHeading: string;
   tipsBody: string;
   cookiesHeading: string;
@@ -61,6 +65,12 @@ const copy: Record<Language, PrivacyCopy> = {
     submissionsHeading: "If you submit a special, event, or sponsorship inquiry",
     submissionsBody:
       "A submitted photo or description is stored so it can be reviewed and published. A sponsorship inquiry's name, business, and email are stored so we can follow up, and trigger one automatic confirmation email back to you. None of this is sold or shared beyond what's needed to respond to you.",
+    chatHeading: "The chat box (AI)",
+    chatBody:
+      "Answers in the chat box are written by an AI model (Claude, from Anthropic). When you ask a question, the question and your last few messages are sent to Anthropic to produce the answer. We store each question, its answer and your IP address so we can see what people ask and limit abuse. We delete these after 90 days. Please don't type personal details into the chat box. The AI can be wrong, so check anything important with the venue. If you are thinking about harming yourself, call or text 988 in Canada at any time, or call 911 in an emergency.",
+    thirdPartiesHeading: "Services that handle data for us",
+    thirdPartiesBody:
+      "Cloudflare (network and security, and the country code above), Railway (hosting and our database), Stripe (tips and paid placements), Anthropic (the chat box, and reading venue menus and submissions), Brevo (emails we send, such as sponsorship confirmations and messages to venue owners) and OpenStreetMap (the map tiles your browser loads when you open the map, which means OpenStreetMap sees your IP address). We don't sell your data.",
     tipsHeading: "Tips",
     tipsBody:
       "The tip jar redirects to Stripe's own checkout page -- this site never sees or stores your card details.",
@@ -110,6 +120,12 @@ const copy: Record<Language, PrivacyCopy> = {
       "Si vous soumettez un spécial, un événement ou une demande de commandite",
     submissionsBody:
       "Une photo ou description soumise est conservée pour être examinée et publiée. Le nom, le nom de l'entreprise et l'adresse courriel d'une demande de commandite sont conservés afin que nous puissions assurer un suivi et envoyer un courriel de confirmation automatique. Ces informations ne sont ni vendues ni partagées au-delà de ce qui est nécessaire pour vous répondre.",
+    chatHeading: "La boîte de clavardage (IA)",
+    chatBody:
+      "Les réponses de la boîte de clavardage sont rédigées par un modèle d'IA (Claude, d'Anthropic). Lorsque vous posez une question, celle-ci et vos derniers messages sont envoyés à Anthropic pour produire la réponse. Nous conservons chaque question, sa réponse et votre adresse IP afin de voir ce que les gens demandent et de limiter les abus. Ces données sont supprimées après 90 jours. Évitez d'écrire des renseignements personnels dans la boîte de clavardage. L'IA peut se tromper : vérifiez tout détail important auprès de l'établissement. Si vous pensez à vous faire du mal, appelez ou textez le 988, en tout temps, ou composez le 911 en cas d'urgence.",
+    thirdPartiesHeading: "Services qui traitent des données pour nous",
+    thirdPartiesBody:
+      "Cloudflare (réseau et sécurité, ainsi que le code de pays mentionné plus haut), Railway (hébergement et base de données), Stripe (pourboires et placements payants), Anthropic (la boîte de clavardage, ainsi que la lecture des menus et des soumissions), Brevo (courriels que nous envoyons, comme les confirmations de commandite et les messages aux propriétaires d'établissements) et OpenStreetMap (les tuiles de carte que votre navigateur charge lorsque vous ouvrez la carte, ce qui signifie qu'OpenStreetMap voit votre adresse IP). Nous ne vendons pas vos données.",
     tipsHeading: "Pourboires",
     tipsBody:
       "Le pot à pourboires redirige vers la page de paiement de Stripe -- ce site ne voit ni ne stocke jamais vos coordonnées bancaires.",
@@ -189,6 +205,16 @@ export default async function PrivacyPage() {
             {c.submissionsHeading}
           </h2>
           <p>{c.submissionsBody}</p>
+        </div>
+
+        <div>
+          <h2 className="font-display text-xl text-foreground mb-2">{c.chatHeading}</h2>
+          <p>{c.chatBody}</p>
+        </div>
+
+        <div>
+          <h2 className="font-display text-xl text-foreground mb-2">{c.thirdPartiesHeading}</h2>
+          <p>{c.thirdPartiesBody}</p>
         </div>
 
         <div>

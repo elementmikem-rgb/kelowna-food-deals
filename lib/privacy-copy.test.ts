@@ -37,6 +37,40 @@ describe("English privacy copy: analytics", () => {
   });
 });
 
+describe("privacy copy: chat box and third parties", () => {
+  const fr = source.slice(source.indexOf("  fr: {"));
+  const section = (text: string, from: string, to: string) => text.slice(text.indexOf(from), text.indexOf(to));
+  const enChat = section(en, "chatBody:", "tipsHeading:");
+  const frChat = section(fr, "chatBody:", "tipsHeading:");
+  const days = readFileSync(join(__dirname, "chat-retention.ts"), "utf8").match(/CHAT_RETENTION_DAYS = (\d+)/)![1];
+
+  it("discloses AI, stored questions and IP, and the retention period matching the code", () => {
+    expect(enChat).toMatch(/Anthropic/);
+    expect(enChat).toMatch(/IP address/);
+    expect(enChat).toContain(`${days} days`);
+    expect(frChat).toMatch(/Anthropic/);
+    expect(frChat).toContain(`${days} jours`);
+  });
+
+  it("points to 988 in both languages", () => {
+    expect(enChat).toContain("988");
+    expect(frChat).toContain("988");
+  });
+
+  it("names every service that receives visitor data", () => {
+    const third = section(en, "thirdPartiesBody:", "tipsHeading:");
+    for (const name of ["Cloudflare", "Railway", "Stripe", "Anthropic", "Brevo", "OpenStreetMap"]) {
+      expect(third).toContain(name);
+    }
+  });
+
+  it("the chat system prompt has a crisis rule that points to 988", () => {
+    const chat = readFileSync(join(__dirname, "region-chat.ts"), "utf8");
+    expect(chat).toMatch(/SAFETY OVERRIDE/);
+    expect(chat).toContain("988");
+  });
+});
+
 describe("English privacy copy: storage", () => {
   const cookies = en.slice(en.indexOf("cookiesBody:"), en.indexOf("sponsoredHeading:"));
 
