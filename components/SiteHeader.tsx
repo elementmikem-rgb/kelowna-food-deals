@@ -81,7 +81,9 @@ export async function SiteHeader({
             <p className="text-muted text-xs sm:text-sm">{subtitle}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Wraps onto a second line on a narrow phone: the saved link, three nav pills, List/Map and Share
+            add up to more than 390px, which made the whole page scroll sideways. */}
+        <div className="flex flex-wrap items-center gap-2">
           <SavedVenuesLink regionSlug={region.slug} lang={lang} />
           <SiteNav active={active} />
           {/* Filled by ViewToggle (List/Map) on pages that have a board. */}

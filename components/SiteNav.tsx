@@ -14,7 +14,7 @@ export async function SiteNav({ active }: { active: "specials" | "events" | "nig
   const nav = t(await getEffectiveLanguage(region)).nav;
   const base = `/${region.slug}`;
   return (
-    <nav className="flex gap-2">
+    <nav className="flex flex-wrap gap-2">
       <Link
         href={base}
         data-selected={active === "specials"}
