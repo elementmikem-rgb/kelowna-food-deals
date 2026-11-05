@@ -101,8 +101,9 @@ export function FilterSheet({
   }, [open, onClose]);
 
   if (!open) return null;
+  // z-[70]: above the floating chat button (z-50), which otherwise sits on top of the Show button.
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
@@ -182,7 +183,7 @@ export function FilterSheet({
           )}
         </div>
 
-        <div className="flex items-center gap-3 border-t border-border px-4 py-3">
+        <div className="flex items-center gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <button type="button" onClick={onClearAll} className="text-sm text-muted-2 underline hover:text-foreground">
             {L.clearAll}
           </button>
