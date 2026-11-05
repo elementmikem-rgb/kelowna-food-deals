@@ -88,3 +88,43 @@ export function tagSpecial(s: TaggableSpecial): SpecialTag[] {
   }
   return SPECIAL_TAGS.filter((t) => tags.has(t));
 }
+
+// Chip and page wording. Order here is the order the chips appear on the board.
+export const TAG_LABELS: Record<"en" | "fr", Record<SpecialTag, string>> = {
+  en: { food: "Food", drink: "Drinks", wings: "Wings", beer: "Beer", wine: "Wine", cocktails: "Cocktails", activity: "Things to do", kids: "Kids eat free", brunch: "Brunch" },
+  fr: { food: "Manger", drink: "Boissons", wings: "Ailes", beer: "Bière", wine: "Vin", cocktails: "Cocktails", activity: "Activités", kids: "Enfants", brunch: "Brunch" },
+};
+
+export const CHIP_TAGS: SpecialTag[] = ["food", "drink", "wings", "beer", "wine", "cocktails", "brunch", "kids", "activity"];
+
+// Landing pages for the searches people actually type ("beer specials kelowna"). Food and wings already
+// have pages under their category slugs (/food-specials, /wing-night), so only the drink tags are new.
+export const TAG_SLUGS: Record<string, SpecialTag> = {
+  "beer-specials": "beer",
+  "wine-specials": "wine",
+  "cocktail-specials": "cocktails",
+  "drink-specials": "drink",
+};
+
+export function tagFromSlug(slug: string): SpecialTag | null {
+  return TAG_SLUGS[slug] ?? null;
+}
+
+export const TAG_PAGE_LABELS: Record<string, string> = {
+  beer: "Beer Specials",
+  wine: "Wine Specials",
+  cocktails: "Cocktail & Shot Specials",
+  drink: "Drink Specials",
+};
+
+// "Late night": starts at 9 PM or later, ends at 10 PM or later, or runs past midnight.
+export function isLateNight(startTime: string | null, endTime: string | null): boolean {
+  const mins = (t: string | null) => (t ? Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]) : null);
+  const s = mins(startTime);
+  const e = mins(endTime);
+  if (s !== null && s >= 21 * 60) return true;
+  if (e === null) return false;
+  return e >= 22 * 60 || (s !== null && e <= s);
+}
+
+export const UNDER_10_CENTS = 1000;

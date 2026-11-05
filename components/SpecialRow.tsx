@@ -2,6 +2,7 @@ import type { SpecialWithVenue } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { formatTimeWindow, formatVerifiedRelative, isStale } from "@/lib/time";
 import { isPromotionActive } from "@/lib/promotion";
+import { liveStatus, statusLabel } from "@/lib/live-status";
 import { FlashSpecialPanel } from "./FlashSpecialPanel";
 import { t, CATEGORY_LABELS, type Language } from "@/lib/i18n";
 
@@ -12,7 +13,16 @@ import { t, CATEGORY_LABELS, type Language } from "@/lib/i18n";
 // component is a pure display row again, matching the shape SpecialCard.tsx
 // still needs (SpecialCard renders one venue's specials on its own dedicated
 // page, where per-special actions still make sense -- no crowding there).
-export function SpecialRow({ special, lang = "en" }: { special: SpecialWithVenue; lang?: Language }) {
+export function SpecialRow({
+  special,
+  lang = "en",
+  nowMin = null,
+}: {
+  special: SpecialWithVenue;
+  lang?: Language;
+  // The region's clock in minutes, only when the board is on today in the browser; null = no time label.
+  nowMin?: number | null;
+}) {
   const stale = isStale(special.lastVerifiedAt);
   const price = formatPrice(special.priceCents);
   const timeWindow = formatTimeWindow(special.startTime, special.endTime);
@@ -21,6 +31,8 @@ export function SpecialRow({ special, lang = "en" }: { special: SpecialWithVenue
   // specials.photoData's schema comment) -- boosted is implied, but check both anyway
   // rather than relying on that invariant holding across every future code path.
   const showPhoto = boosted && special.hasPhoto;
+  const status = nowMin === null ? null : liveStatus(special.startTime, special.endTime, nowMin);
+  const statusText = status ? statusLabel(status, special.startTime, lang) : null;
 
   return (
     <li className={`relative z-10 py-2.5 first:pt-0 last:pb-0 ${stale ? "opacity-50" : ""}`}>
@@ -45,6 +57,15 @@ export function SpecialRow({ special, lang = "en" }: { special: SpecialWithVenue
           {price && <span className="font-mono-tabular text-sm text-accent">{price}</span>}
           {timeWindow && (
             <span className="font-mono-tabular text-[11px] text-muted">{timeWindow}</span>
+          )}
+          {statusText && status && (
+            <span
+              className={`text-[11px] font-medium ${
+                status.kind === "live" ? "text-evergreen" : status.kind === "soon" ? "text-accent-dim" : "text-muted-2"
+              }`}
+            >
+              {statusText}
+            </span>
           )}
         </div>
       </div>

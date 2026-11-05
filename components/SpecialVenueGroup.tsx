@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { SpecialWithVenue } from "@/lib/data";
 import { SpecialRow } from "./SpecialRow";
+import { liveStatus } from "@/lib/live-status";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { OwnerVerifiedBadge } from "./OwnerVerifiedBadge";
 import { ConfirmedBadges } from "./ConfirmedBadges";
@@ -13,6 +14,8 @@ import { t, type Language } from "@/lib/i18n";
 // board (BNA Brewing and Cutwater Brewing both run past 10) -- the rest are
 // one click away on the venue's own page, which lists all of them anyway.
 const MAX_VISIBLE = 5;
+// On now first, then coming up, then untimed, then finished (a stable sort keeps the board's own order inside each band).
+const STATUS_ORDER = { live: 0, soon: 1, allday: 2, ended: 3 } as const;
 
 export function SpecialVenueGroup({
   venueId,
@@ -20,6 +23,7 @@ export function SpecialVenueGroup({
   specials,
   regionSlug,
   lang = "en",
+  nowMin = null,
   distanceLabel,
 }: {
   venueId: number;
@@ -27,6 +31,9 @@ export function SpecialVenueGroup({
   specials: SpecialWithVenue[];
   regionSlug: string;
   lang?: Language;
+  // The region's clock in minutes, passed only when the board is showing today in the browser. It drives
+  // each row's "On now / Starts in ..." label and puts what is running first. Null = make no time claims.
+  nowMin?: number | null;
   // e.g. "1.2 km" -- only passed when the visitor chose "Sort by nearest" and we know this venue's real location.
   distanceLabel?: string;
 }) {
@@ -36,7 +43,14 @@ export function SpecialVenueGroup({
   const featured = isPromotionActive(specials[0]?.venueFeaturedUntil ?? null);
   const isPartner = specials[0]?.venuePartnerSince != null;
   const photoId = specials[0]?.venuePhotoId ?? null;
-  const visible = specials.slice(0, MAX_VISIBLE);
+  const ordered =
+    nowMin === null
+      ? specials
+      : specials
+          .map((s) => ({ s, k: STATUS_ORDER[liveStatus(s.startTime, s.endTime, nowMin).kind] }))
+          .sort((a, b) => a.k - b.k)
+          .map((x) => x.s);
+  const visible = ordered.slice(0, MAX_VISIBLE);
   const hiddenCount = specials.length - visible.length;
 
   return (
@@ -158,7 +172,7 @@ export function SpecialVenueGroup({
 
       <ul className="flex flex-col divide-y divide-border">
         {visible.map((s) => (
-          <SpecialRow key={s.id} special={s} lang={lang} />
+          <SpecialRow key={s.id} special={s} lang={lang} nowMin={nowMin} />
         ))}
       </ul>
 

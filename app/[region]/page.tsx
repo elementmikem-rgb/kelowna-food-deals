@@ -11,6 +11,7 @@ import { GuideLinks } from "@/components/GuideLinks";
 import { getGuideLinks } from "@/lib/guide-links";
 import { getTownsForRegion } from "@/lib/towns";
 import { getNearbyRegions } from "@/lib/nearby-regions";
+import { getTagPageSlugsForRegion } from "@/lib/tag-pages-data";
 import { areaNameFromBrand } from "@/lib/page-titles";
 import { FAQSection } from "@/components/FAQSection";
 import { HomeIntroCallout } from "@/components/HomeIntroCallout";
@@ -31,12 +32,13 @@ export default async function Home() {
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
   const today = todayDowInRegion(timezone);
-  const [specials, categorySponsors, areas, towns, nearby] = await Promise.all([
+  const [specials, categorySponsors, areas, towns, nearby, tagPages] = await Promise.all([
     getSpecialsWithVenueForDay(region.id, today),
     getActiveCategorySponsors([region.id]),
     getActiveVenueCities(region.id),
     getTownsForRegion(region.id, region.slug, areaNameFromBrand(region.brandName)),
     getNearbyRegions(region),
+    region.language === "fr" ? Promise.resolve([]) : getTagPageSlugsForRegion(region.id),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code);
@@ -81,7 +83,7 @@ export default async function Home() {
       />
       <GuideLinks links={getGuideLinks(region.slug, { kind: "home" })} lang={lang} />
       <AreaLinks regionSlug={region.slug} regionBrand={region.brandName} towns={towns} nearby={nearby} lang={lang} />
-      <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} />
+      <AboutSection brandName={region.brandName} areas={areas} regionSlug={region.slug} lang={lang} tagPages={tagPages} />
       <FAQSection lang={lang} />
       <SiteFooter />
 

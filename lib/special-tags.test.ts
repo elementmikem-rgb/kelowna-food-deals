@@ -73,3 +73,21 @@ describe("tagSpecial", () => {
     expect(tags("Spécial shooters", "other")).toEqual(["drink", "cocktails"]);
   });
 });
+
+import { isLateNight, tagFromSlug } from "./special-tags";
+
+describe("late night and landing slugs", () => {
+  it("counts 9 PM starts, 10 PM finishes and past-midnight windows as late night", () => {
+    expect(isLateNight("21:00:00", null)).toBe(true);
+    expect(isLateNight("17:00:00", "22:00:00")).toBe(true);
+    expect(isLateNight("22:00:00", "02:00:00")).toBe(true);
+    expect(isLateNight("15:00:00", "18:00:00")).toBe(false);
+    expect(isLateNight(null, null)).toBe(false);
+  });
+
+  it("maps the new landing slugs and leaves the old ones alone", () => {
+    expect(tagFromSlug("beer-specials")).toBe("beer");
+    expect(tagFromSlug("cocktail-specials")).toBe("cocktails");
+    expect(tagFromSlug("wing-night")).toBeNull();
+  });
+});

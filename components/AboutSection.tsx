@@ -1,6 +1,7 @@
 import { t, type Language } from "@/lib/i18n";
 import { DAY_SLUGS, dayLabel } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS, categoryPageLabel } from "@/lib/category-slugs";
+import { TAG_SLUGS, TAG_PAGE_LABELS } from "@/lib/special-tags";
 import { EVENT_TYPE_SLUGS, eventTypePageLabel } from "@/lib/event-type-slugs";
 
 export function AboutSection({
@@ -8,11 +9,14 @@ export function AboutSection({
   areas,
   regionSlug,
   lang = "en",
+  tagPages = [],
 }: {
   brandName: string;
   areas: string[];
   regionSlug: string;
   lang?: Language;
+  // Beer / wine / cocktail landing pages this region qualifies for (lib/tag-pages.ts).
+  tagPages?: string[];
 }) {
   const about = t(lang).about;
   const areaList =
@@ -55,6 +59,11 @@ export function AboutSection({
         {Object.entries(CATEGORY_SLUGS).map(([slug, category]) => (
           <a key={slug} href={`/${regionSlug}/${slug}`} className="text-accent-dim underline">
             {categoryPageLabel(category)}
+          </a>
+        ))}
+        {tagPages.map((slug) => (
+          <a key={slug} href={`/${regionSlug}/${slug}`} className="text-accent-dim underline">
+            {TAG_PAGE_LABELS[TAG_SLUGS[slug]]}
           </a>
         ))}
       </p>

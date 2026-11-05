@@ -5,6 +5,7 @@ import { getBlogPostsForRegion, blogLastModified } from "@/lib/blog-data";
 import { selectSitemapVenues } from "@/lib/sitemap-venues";
 import { DAY_SLUGS } from "@/lib/day-slugs";
 import { CATEGORY_SLUGS } from "@/lib/category-slugs";
+import { getTagPageSlugsByRegion } from "@/lib/tag-pages-data";
 import { EVENT_TYPE_SLUGS } from "@/lib/event-type-slugs";
 import { getTownsByRegion } from "@/lib/towns";
 import { areaNameFromBrand } from "@/lib/page-titles";
@@ -26,6 +27,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const townsByRegion = await getTownsByRegion(
     activeRegions.map((r) => ({ id: r.id, slug: r.slug, areaName: areaNameFromBrand(r.brandName) }))
   );
+
+  // Beer / wine / cocktail landing pages, only for regions that have enough such specials.
+  const tagPagesByRegion = await getTagPageSlugsByRegion(activeRegions.filter((r) => r.language !== "fr").map((r) => r.id));
 
   const lastVerifiedRows = await db
     .select({ venueId: specials.venueId, lastVerifiedAt: max(specials.lastVerifiedAt) })
@@ -72,6 +76,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       })),
       ...Object.keys(CATEGORY_SLUGS).map((slug) => ({
+        url: `${BASE_URL}/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      })),
+      ...(tagPagesByRegion.get(region.id) ?? []).map((slug) => ({
         url: `${BASE_URL}/${slug}`,
         lastModified: new Date(),
         changeFrequency: "daily" as const,

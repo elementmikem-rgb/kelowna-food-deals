@@ -16,6 +16,9 @@ import { groupByVenue } from "@/lib/group-by-venue";
 import { isPromotionActive } from "@/lib/promotion";
 import { sortByDistance, formatDistance, type Point } from "@/lib/nearest";
 import { ViewToggle } from "./ViewToggle";
+import { WhatFilter, type WhenMode } from "./WhatFilter";
+import { tagSpecial, isLateNight, UNDER_10_CENTS, SPECIAL_TAGS, type SpecialTag } from "@/lib/special-tags";
+import { liveStatus, nowMinutesInRegion, statusRank } from "@/lib/live-status";
 
 // Leaflet reads `window`/`document` at module load, so it can never run during
 // Next.js's server render -- ssr:false defers loading the whole map bundle
@@ -26,6 +29,9 @@ const MapView = dynamic(() => import("./MapView").then((m) => m.MapView), {
   ssr: false,
   loading: () => <p className="text-muted-2 text-sm py-8 text-center">Loading map…</p>,
 });
+
+// "Starting soon" means within the next two hours.
+const SOON_WITHIN_MIN = 120;
 
 function timeToMinutes(time: string | null): number {
   if (!time) return Number.MAX_SAFE_INTEGER; // no start time sorts last within its day
@@ -58,6 +64,7 @@ export function SpecialsBoard({
   initialDay,
   initialCategory,
   initialCity,
+  initialTag,
   regionLat = null,
   regionLng = null,
 }: {
@@ -80,6 +87,8 @@ export function SpecialsBoard({
   // Seeds the "area" chip for a town landing page (/kelowna/west-kelowna) so the town's own
   // specials are what's server-rendered; the visitor can still widen it to all areas.
   initialCity?: string;
+  // Seeds the "what" chip for the beer / wine / cocktail landing pages (/kelowna/beer-specials).
+  initialTag?: SpecialTag;
   // Map view's initial center -- the region's own lat/lng, not derived from
   // venue pins, so the map is centered sensibly even before/without any pins
   // in view (e.g. a filter that matches zero venues in one corner of town).
@@ -100,6 +109,13 @@ export function SpecialsBoard({
   );
   const [selectedCity, setSelectedCity] = useState<string | "all">(initialCity ?? "all");
   const [venueQuery, setVenueQuery] = useState("");
+  const [selectedTag, setSelectedTag] = useState<SpecialTag | "all">(initialTag ?? "all");
+  const [when, setWhen] = useState<WhenMode>("any");
+  const [under10, setUnder10] = useState(false);
+  const [late, setLate] = useState(false);
+  // The browser's reading of the region's clock, in minutes. Null on the server and on first paint so the
+  // cached HTML never claims something is on now; it is filled in on mount and kept fresh every minute.
+  const [nowMin, setNowMin] = useState<number | null>(null);
   const [view, setView] = useState<"list" | "map">("list");
   // "Sort by nearest": the visitor's position lives only in this component's memory -- it is never
   // sent to the server or stored. Closest-first is requested on load; if location is unavailable the daily-rotation order is used.
@@ -201,6 +217,17 @@ export function SpecialsBoard({
     return () => document.removeEventListener("visibilitychange", syncToday);
   }, [timezone]);
 
+  useEffect(() => {
+    const tick = () => setNowMin(nowMinutesInRegion(timezone));
+    tick();
+    const id = setInterval(tick, 60_000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [timezone]);
+
   function handleSelectDay(day: number) {
     dayPickedByUser.current = true;
     setSelectedDay(day);
@@ -224,11 +251,58 @@ export function SpecialsBoard({
 
   const normalizedQuery = venueQuery.trim().toLowerCase();
 
+  // Time claims only make sense for today, and only once the browser has read the clock.
+  const timed = nowMin !== null && selectedDay === today;
+  const clock = timed ? nowMin : null;
+
+  // Tags are derived here from each special's own words (lib/special-tags.ts), so nothing is stored and
+  // every row, old or new, is covered the same way.
+  const tagsById = useMemo(() => {
+    const m = new Map<number, SpecialTag[]>();
+    for (const sp of allSpecials) m.set(sp.id, tagSpecial(sp));
+    return m;
+  }, [allSpecials]);
+
+  // What is on the chosen day, before the what/when chips narrow it: drives which chips are worth showing.
+  const dayPool = useMemo(
+    () =>
+      allSpecials.filter(
+        (sp) => !sp.isMonthly && (sp.dayOfWeek === null || sp.dayOfWeek === selectedDay) && (selectedCity === "all" || sp.venueCity === selectedCity)
+      ),
+    [allSpecials, selectedDay, selectedCity]
+  );
+  const chipCounts = useMemo(() => {
+    const tags = Object.fromEntries(SPECIAL_TAGS.map((t) => [t, 0])) as Record<SpecialTag, number>;
+    let now = 0;
+    let soon = 0;
+    let cheap = 0;
+    let lateCount = 0;
+    for (const sp of dayPool) {
+      for (const t of tagsById.get(sp.id) ?? []) tags[t]++;
+      if (clock !== null) {
+        const st = liveStatus(sp.startTime, sp.endTime, clock);
+        if (st.kind === "live") now++;
+        else if (st.kind === "soon" && st.inMin <= SOON_WITHIN_MIN) soon++;
+      }
+      if (sp.priceCents !== null && sp.priceCents <= UNDER_10_CENTS) cheap++;
+      if (isLateNight(sp.startTime, sp.endTime)) lateCount++;
+    }
+    return { tags, now, soon, under10: cheap, late: lateCount };
+  }, [dayPool, tagsById, clock]);
+
   const filtered = useMemo(() => {
     return allSpecials
       .filter((s) => !s.isMonthly)
       .filter((s) => s.dayOfWeek === null || s.dayOfWeek === selectedDay)
       .filter((s) => selectedCategory === "all" || s.category === selectedCategory)
+      .filter((s) => selectedTag === "all" || (tagsById.get(s.id) ?? []).includes(selectedTag))
+      .filter((s) => !under10 || (s.priceCents !== null && s.priceCents <= UNDER_10_CENTS))
+      .filter((s) => !late || isLateNight(s.startTime, s.endTime))
+      .filter((s) => {
+        if (when === "any" || clock === null) return true;
+        const st = liveStatus(s.startTime, s.endTime, clock);
+        return when === "now" ? st.kind === "live" : st.kind === "soon" && st.inMin <= SOON_WITHIN_MIN;
+      })
       .filter((s) => selectedCity === "all" || s.venueCity === selectedCity)
       // Name OR town, so typing a sub-region ("West Kelowna", "Lake Country") finds its venues.
       .filter(
@@ -259,7 +333,7 @@ export function SpecialsBoard({
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [allSpecials, selectedDay, selectedCategory, selectedCity, normalizedQuery]);
+  }, [allSpecials, selectedDay, selectedCategory, selectedTag, under10, late, when, clock, tagsById, selectedCity, normalizedQuery]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -301,8 +375,15 @@ export function SpecialsBoard({
         if (p) distances.set(g.key, sortByDistance([g], () => p, userPos)[0].distanceKm ?? 0);
       }
     }
-    return { flash, featured, boosted, plain: plainOrdered, distances, all: [...flash, ...featured, ...boosted, ...plainOrdered] };
-  }, [filtered, userPos, sortNearest]);
+    // With the clock known, places with something on now come first, then ones coming up or untimed, then
+    // ones that have finished. The sort is stable, so the nearest / daily-mix order holds inside each band.
+    const rankOf = (g: (typeof groups)[number]) =>
+      clock === null ? 1 : statusRank(g.items.map((sp) => liveStatus(sp.startTime, sp.endTime, clock)));
+    if (clock !== null) plainOrdered = plainOrdered.slice().sort((a, b) => rankOf(a) - rankOf(b));
+    const all = [...flash, ...featured, ...boosted, ...plainOrdered];
+    const onNowPlaces = clock === null ? 0 : all.filter((g) => rankOf(g) === 0).length;
+    return { flash, featured, boosted, plain: plainOrdered, distances, all, onNowPlaces };
+  }, [filtered, userPos, sortNearest, clock]);
 
   const activeSponsor =
     selectedCategory !== "all" ? categorySponsors.find((s) => s.category === selectedCategory) : undefined;
@@ -349,6 +430,19 @@ export function SpecialsBoard({
       </div>
 
       <div className="flex flex-col gap-3">
+        <WhatFilter
+          lang={lang}
+          timed={timed}
+          when={when}
+          onWhen={setWhen}
+          under10={under10}
+          onUnder10={setUnder10}
+          late={late}
+          onLate={setLate}
+          tag={selectedTag}
+          onTag={setSelectedTag}
+          counts={chipCounts}
+        />
         <CategoryFilter
           selected={selectedCategory}
           onSelect={setSelectedCategory}
@@ -391,6 +485,7 @@ export function SpecialsBoard({
             ? " · loading…"
             : ` · ${filtered.length} special${filtered.length === 1 ? "" : "s"} at ${grouped.all.length} place${grouped.all.length === 1 ? "" : "s"}`}
           {selectedCity !== "all" ? ` in ${selectedCity}` : ""}
+          {timed && grouped.onNowPlaces > 0 ? ` · ${grouped.onNowPlaces} on now` : ""}
         </span>
         {/* A condensed nudge here so the tip jar isn't only reachable by
             scrolling past the entire feed -- the full ask still lives at
@@ -446,6 +541,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    nowMin={clock}
                     distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
@@ -467,6 +563,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    nowMin={clock}
                     distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
@@ -488,6 +585,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    nowMin={clock}
                     distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}
@@ -511,6 +609,7 @@ export function SpecialsBoard({
                     specials={g.items}
                     regionSlug={regionSlug}
                     lang={lang}
+                    nowMin={clock}
                     distanceLabel={grouped.distances.has(g.key) ? formatDistance(grouped.distances.get(g.key)!, lang) : undefined}
                   />
                 ))}

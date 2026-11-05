@@ -17,6 +17,8 @@ import { buildSpecialsJsonLd, buildBreadcrumbJsonLd, SITE_URL, regionOgImages } 
 import { getEffectiveLanguage } from "@/lib/i18n";
 import { dayFromSlug, dayLabel } from "@/lib/day-slugs";
 import { categoryFromSlug, categoryPageLabel } from "@/lib/category-slugs";
+import { tagFromSlug, TAG_PAGE_LABELS, type SpecialTag } from "@/lib/special-tags";
+import { getTagPageSlugsForRegion } from "@/lib/tag-pages-data";
 import { getTownsForRegion, townSlug, type Town } from "@/lib/towns";
 import { getNearbyRegions } from "@/lib/nearby-regions";
 import type { SpecialCategory } from "@/db/schema";
@@ -41,6 +43,7 @@ interface SlugPageProps {
 type SlugKind =
   | { kind: "day"; dow: number }
   | { kind: "category"; category: SpecialCategory }
+  | { kind: "tag"; tag: SpecialTag }
   | { kind: "town"; town: Town };
 
 type PageRegion = Awaited<ReturnType<typeof getCurrentRegion>>;
@@ -50,6 +53,12 @@ async function resolveSlug(slug: string, region: PageRegion): Promise<SlugKind |
   if (dow !== null) return { kind: "day", dow };
   const category = categoryFromSlug(slug);
   if (category !== null) return { kind: "category", category };
+  // Beer / wine / cocktail / drink pages exist only for English regions that really have such specials.
+  const tag = tagFromSlug(slug);
+  if (tag !== null) {
+    if (region.language === "fr") return null;
+    return (await getTagPageSlugsForRegion(region.id)).includes(slug) ? { kind: "tag", tag } : null;
+  }
   const towns = await getTownsForRegion(region.id, region.slug, areaNameFromBrand(region.brandName));
   const town = towns.find((t) => t.slug === slug);
   return town ? { kind: "town", town } : null;
@@ -74,6 +83,9 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   } else if (resolved.kind === "category") {
     title = `${areaName} ${categoryPageLabel(resolved.category)} Deals`;
     description = `${categoryPageLabel(resolved.category)} deals actually running in ${areaName} -- checked regularly, pulled from each venue's own menu, not guessed.`;
+  } else if (resolved.kind === "tag") {
+    title = `${areaName} ${TAG_PAGE_LABELS[resolved.tag]} Today`;
+    description = `${TAG_PAGE_LABELS[resolved.tag]} actually running in ${areaName} -- checked regularly, pulled from each venue's own menu, not guessed.`;
   } else {
     title = `${resolved.town.city} Happy Hour & Food Specials Today`;
     description = `Happy hours and food/drink specials running today in ${resolved.town.city}: ${resolved.town.venueCount} places, checked regularly and pulled from each venue's own menu, not guessed.`;
@@ -146,7 +158,9 @@ export default async function SlugPage({ params }: SlugPageProps) {
       ? `${areaName} Happy Hour & Food Specials on ${dayLabel(resolved.dow)}`
       : resolved.kind === "category"
         ? `${areaName} ${categoryPageLabel(resolved.category)} Deals`
-        : `${resolved.town.city} Happy Hour & Food Specials`;
+        : resolved.kind === "tag"
+          ? `${areaName} ${TAG_PAGE_LABELS[resolved.tag]}`
+          : `${resolved.town.city} Happy Hour & Food Specials`;
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(SITE_URL, [
     { name: "Home", path: "/" },
     { name: region.brandName, path: `/${region.slug}` },
@@ -155,7 +169,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
   const subtitle =
     resolved.kind === "day"
       ? "What's actually running today, verified regularly -- not a stale list."
-      : resolved.kind === "category"
+      : resolved.kind === "category" || resolved.kind === "tag"
         ? "Checked regularly, pulled from each venue's own menu -- not guessed."
         : `What's actually running today in ${resolved.town.city}, verified regularly -- not a stale list.`;
 
@@ -190,6 +204,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
         lang={lang}
         initialDay={dow}
         initialCategory={resolved.kind === "category" ? resolved.category : undefined}
+        initialTag={resolved.kind === "tag" ? resolved.tag : undefined}
         initialCity={resolved.kind === "town" ? resolved.town.city : undefined}
         regionLat={region.lat}
         regionLng={region.lng}
