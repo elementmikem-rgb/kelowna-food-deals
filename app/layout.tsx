@@ -1,26 +1,34 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Fraunces, Karla, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { getPrimaryRegion, getCurrentOrPrimaryRegion } from "@/lib/regions";
 import "./globals.css";
 
-const fraunces = Fraunces({
+// Fonts are served from app/fonts (latin subset, variable, SIL Open Font License) rather than fetched
+// from Google at build time: a Railway build that could not reach Google Fonts failed with no error.
+const fraunces = localFont({
   variable: "--font-fraunces",
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
+  src: [
+    { path: "./fonts/Fraunces-normal.woff2", weight: "100 900", style: "normal" },
+    { path: "./fonts/Fraunces-italic.woff2", weight: "100 900", style: "italic" },
+  ],
+  display: "swap",
 });
 
-const karla = Karla({
+const karla = localFont({
   variable: "--font-karla",
-  subsets: ["latin"],
+  src: "./fonts/Karla.woff2",
+  weight: "200 800",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  src: "./fonts/GeistMono.woff2",
+  weight: "100 900",
+  display: "swap",
 });
 
 const SITE_URL = `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`;
