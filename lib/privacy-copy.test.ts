@@ -59,7 +59,7 @@ describe("privacy copy: chat box and third parties", () => {
 
   it("names every service that receives visitor data", () => {
     const third = section(en, "thirdPartiesBody:", "tipsHeading:");
-    for (const name of ["Cloudflare", "Railway", "Stripe", "Anthropic", "Brevo", "OpenStreetMap"]) {
+    for (const name of ["Cloudflare", "Railway", "Stripe", "Anthropic", "Brevo", "OpenStreetMap", "Google"]) {
       expect(third).toContain(name);
     }
   });
