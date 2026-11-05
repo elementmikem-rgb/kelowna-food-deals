@@ -273,21 +273,22 @@ export function SpecialsBoard({
   );
   const chipCounts = useMemo(() => {
     const tags = Object.fromEntries(SPECIAL_TAGS.map((t) => [t, 0])) as Record<SpecialTag, number>;
-    let now = 0;
-    let soon = 0;
+    // On now / Starting soon count places, not specials: "12 places on now" is what a visitor can act on.
+    const nowVenues = new Set<number>();
+    const soonVenues = new Set<number>();
     let cheap = 0;
     let lateCount = 0;
     for (const sp of dayPool) {
       for (const t of tagsById.get(sp.id) ?? []) tags[t]++;
       if (clock !== null) {
         const st = liveStatus(sp.startTime, sp.endTime, clock);
-        if (st.kind === "live") now++;
-        else if (st.kind === "soon" && st.inMin <= SOON_WITHIN_MIN) soon++;
+        if (st.kind === "live") nowVenues.add(sp.venueId);
+        else if (st.kind === "soon" && st.inMin <= SOON_WITHIN_MIN) soonVenues.add(sp.venueId);
       }
       if (sp.priceCents !== null && sp.priceCents <= UNDER_10_CENTS) cheap++;
       if (isLateNight(sp.startTime, sp.endTime)) lateCount++;
     }
-    return { tags, now, soon, under10: cheap, late: lateCount };
+    return { tags, now: nowVenues.size, soon: soonVenues.size, under10: cheap, late: lateCount };
   }, [dayPool, tagsById, clock]);
 
   const filtered = useMemo(() => {
