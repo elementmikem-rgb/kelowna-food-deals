@@ -263,7 +263,7 @@ export default async function VenuePage({ params }: PageProps) {
         <div className="lg:col-span-2 flex flex-col gap-8 min-w-0">
           <header className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
-              <h1 className="font-display text-3xl sm:text-4xl text-foreground">{venue.name}</h1>
+              <h1 className="font-display text-3xl sm:text-4xl text-foreground min-w-0 [overflow-wrap:anywhere]">{venue.name}</h1>
               <div className="flex items-center gap-2 shrink-0 mt-1">
                 <SaveVenueButton venueId={venue.id} venueName={venue.name} regionSlug={region.slug} lang={lang} />
                 <ShareButton
