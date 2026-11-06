@@ -98,3 +98,16 @@ Quebec platforms worth one scraper each: Ovation (Drummondville, Gatineau, Granb
 - Ticketmaster: Brossard, Quebec Capitole, Banff Centre links (no public listing; not a source to read).
 
 Not covered here: regions that already have some theatre events from Showpass but thin coverage (for example Toronto, Montreal core, Halifax, Winnipeg, Edmonton, Calgary). The big halls there (Roy Thomson, Place des Arts, Winspear, Arts Commons) mostly use their own systems or Ticketmaster.
+
+## What the cron reads and what it cannot (checked 2026-11-05)
+
+Read now: The Box Office (browser), Showpass (public API), Ticket Seller (plain HTML), Ovation (plain HTML, 5 Quebec halls), eVenue (browser; Centre In The Square, Yates Memorial Centre; the "Upcoming Events" panel shows only the next ten shows, so these two halls carry a rolling window of about two weeks).
+
+Not read, and why:
+- TixHub (Collingwood, Gravenhurst): its robots.txt disallows automated reading. Not touched.
+- Brampton's Rose (tickets.brampton.ca): answers with a Cloudflare challenge ("Enable JavaScript and cookies"). Not worked around.
+- Oshawa's Regent Theatre: the page lists events with the dates only inside free-text descriptions; real showtimes are on one page per event (eventperformances.asp?evt=N). Possible, about 20 pages a night.
+- FirstOntario PAC and Richmond Hill Centre: Tessitura pages that build themselves; dates did not show in the rendered text for FirstOntario. Needs a closer look.
+- TicketAcces (Val-d'Or, Rouyn-Noranda, Lévis): one 1.3 MB ColdFusion page per hall; events are inside product pages. Needs a closer look.
+- Tixx (Medicine Hat) and Ticketpro (Barrie, Spruce Grove): lists that show titles but not dates on the first page.
+- Ottawa Meridian Theatres is on eVenue like the two above; its list code was not found yet (meridianshenkman.evenue.net).
