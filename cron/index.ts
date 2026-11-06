@@ -7,6 +7,7 @@ import { scrapeShowpassEvents } from "./scrapeShowpass";
 import { scrapeTicketsellerEvents } from "./scrapeTicketseller";
 import { scrapeOvationEvents } from "./scrapeOvation";
 import { scrapeEvenueEvents } from "./scrapeEvenue";
+import { scrapeShowareEvents } from "./scrapeShoware";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -972,6 +973,14 @@ async function runScrapeCycle() {
     console.log(`eVenue events: refreshed ${inserted} hall event(s)`);
   } catch (err) {
     console.error("eVenue scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // ShoWare ticket sites (Regent Theatre, Oshawa): a JSON list of every upcoming performance.
+    const { inserted } = await withTimeout(scrapeShowareEvents(), 2 * 60_000, "ShoWare scrape");
+    console.log(`ShoWare events: refreshed ${inserted} hall event(s)`);
+  } catch (err) {
+    console.error("ShoWare scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {

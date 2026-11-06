@@ -106,7 +106,7 @@ Read now: The Box Office (browser), Showpass (public API), Ticket Seller (plain 
 Not read, and why:
 - TixHub (Collingwood, Gravenhurst): its robots.txt disallows automated reading. Not touched.
 - Brampton's Rose (tickets.brampton.ca): answers with a Cloudflare challenge ("Enable JavaScript and cookies"). Not worked around.
-- Oshawa's Regent Theatre: the page lists events with the dates only inside free-text descriptions; real showtimes are on one page per event (eventperformances.asp?evt=N). Possible, about 20 pages a night.
+- Oshawa's Regent Theatre (ShoWare ticketing): now read by cron/scrapeShoware.ts. The event pages load their showtimes from a JSON list (tickets.regenttheatre.ca/include/widgets/events/performancelist.asp), one request returns all upcoming performances (61 on 2026-11-05) and robots.txt allows it. Other ShoWare sites can be added to SHOWARE_HALLS.
 - FirstOntario PAC and Richmond Hill Centre: Tessitura pages that build themselves; dates did not show in the rendered text for FirstOntario. Needs a closer look.
 - TicketAcces (Val-d'Or, Rouyn-Noranda, Lévis): one 1.3 MB ColdFusion page per hall; events are inside product pages. Needs a closer look.
 - Tixx (Medicine Hat) and Ticketpro (Barrie, Spruce Grove): lists that show titles but not dates on the first page.
