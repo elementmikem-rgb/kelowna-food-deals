@@ -3,6 +3,7 @@ import { eq, like, sql } from "drizzle-orm";
 import { isAllowedByRobots } from "./fetch";
 import { rateLimit } from "./rateLimit";
 import { classifyEventType } from "./eventClassify";
+import { safeUrlOnHost } from "@/lib/safe-url";
 import { buildRegionCityIndex, matchRegionByCity, parsePosition } from "./regionMatch";
 import type { EventType } from "../db/schema";
 
@@ -141,6 +142,8 @@ export async function storeShowpassEvents(found: ShowpassEvent[]): Promise<{ ins
       continue;
     }
     const title = cleanTitle(e.name, loc.name);
+    // The link comes from the feed, so it is kept only if it really is an https link on showpass.com.
+    const link = safeUrlOnHost(e.frontend_details_url, "showpass.com");
     const key = `${regionId}|${title.toLowerCase()}|${dt.date}`;
     if (boxKeys.has(key)) continue;
     const dedupe = `${key}|${dt.time}|${(loc.name ?? "").toLowerCase()}`;
@@ -161,9 +164,9 @@ export async function storeShowpassEvents(found: ShowpassEvent[]): Promise<{ ins
       endTime: null,
       coverChargeCents: null,
       lastVerifiedAt: now,
-      sourceUrl: e.frontend_details_url,
+      sourceUrl: link,
       confidence: 0.9,
-      extractionNotes: `${SOURCE_TAG} | ${e.frontend_details_url ?? ""}`,
+      extractionNotes: `${SOURCE_TAG} | ${link ?? ""}`,
     });
   }
   if (skippedCities.size > 0) {

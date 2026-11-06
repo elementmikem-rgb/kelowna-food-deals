@@ -10,6 +10,7 @@ import { ConfirmedBadges } from "./ConfirmedBadges";
 import { EventInterestButton } from "./EventInterestButton";
 import { ReportButton } from "./ReportButton";
 import { t, EVENT_TYPE_LABELS, type Language } from "@/lib/i18n";
+import { safeHttpUrl } from "@/lib/safe-url";
 
 export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?: Language }) {
   const tr = t(lang);
@@ -120,9 +121,9 @@ export function EventRow({ event, lang = "en" }: { event: EventWithVenue; lang?:
           <span className="text-[11px] text-stale">
             stale -- {formatVerifiedRelative(event.lastVerifiedAt)}
           </span>
-        ) : event.venueId === null && event.sourceUrl ? (
+        ) : event.venueId === null && safeHttpUrl(event.sourceUrl) ? (
           <a
-            href={event.sourceUrl}
+            href={safeHttpUrl(event.sourceUrl)!}
             target="_blank"
             rel="noopener noreferrer"
             className="relative z-10 text-[11px] text-accent-dim hover:underline"
