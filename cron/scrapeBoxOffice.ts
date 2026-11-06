@@ -62,17 +62,20 @@ export function parsePriceFromCents(text: string): number | null {
 
 const SMALL_WORDS = new Set(["a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "vs", "x"]);
 
-// The site writes many titles in capitals ("OKANAGAN FIGHT NIGHT 8"). Turn an all-caps title into Title Case and
-// leave a mixed-case one alone ("UBCO Heat vs UBC Thunderbirds").
+// The site writes many titles in capitals ("OKANAGAN FIGHT NIGHT 8", "3rd ANNUAL HITS FOR HERITAGE"). Turn a mostly
+// capitals title into Title Case and leave a mixed-case one alone ("UBCO Heat vs UBC Thunderbirds"). A dangling
+// colon or dash left by the page's own line break ("SWEET CAROLINE -") is dropped.
 export function tidyTitle(raw: string): string {
-  const title = decodeEntities(raw).replace(/\s+/g, " ").trim();
+  const title = decodeEntities(raw).replace(/\s+/g, " ").replace(/[\s:-]+$/, "").trim();
   const letters = title.replace(/[^A-Za-zÀ-ÿ]/g, "");
-  if (!letters || letters !== letters.toUpperCase()) return title;
+  const upper = letters.replace(/[^A-ZÀ-ß]/g, "");
+  if (!letters || upper.length / letters.length < 0.8) return title;
   return title
     .toLowerCase()
     .split(" ")
     .map((w, i) => (i > 0 && SMALL_WORDS.has(w) ? w : w.replace(/(^|[-(])([a-zà-ÿ])/g, (_, p, c) => p + c.toUpperCase())))
-    .join(" ");
+    .join(" ")
+    .replace(/\bMc([a-z])/g, (_, c) => "Mc" + c.toUpperCase());
 }
 
 // The site's own tag for the event -> our event type. Concerts are live music and games are sports nights;
@@ -82,6 +85,14 @@ export function eventTypeForCategory(category: string | null): EventType {
   if (c === "music") return "live_music";
   if (c === "sports") return "sports_night";
   return "other";
+}
+
+// "1375 Water St, Kelowna, BC" -> "Kelowna". Region matching looks only at this city: matching the whole address
+// also catches the province, and a few venues in the database carry "BC" as their city, which made every BC
+// address look like it belonged to several regions at once.
+export function cityOfAddress(address: string): string {
+  const m = address.match(/,\s*([^,]+?),?\s*(?:BC|B\.C\.|British Columbia)\s*$/i);
+  return (m ? m[1] : address).trim();
 }
 
 function formatDollars(cents: number): string {
@@ -149,39 +160,31 @@ export function buildDescription(e: ParsedBoxOfficeEvent): string {
   return `${parts.join(", ")}.`;
 }
 
-async function safeFetch(session: BrowserSession, url: string): Promise<string | null> {
-  const result = await session.fetchHtml(url);
-  if (!result.ok) {
-    console.error(`Box Office fetch failed for ${url}: ${result.error}`);
-    return null;
+// The pages fill in after the load event, so a read taken a moment too early comes back as a shell with no events
+// in it (seen live: a listing page with zero links, an event page with no dates, then fine on the next try). Ask
+// again, a little later each time, until the page parses or the tries run out.
+const FETCH_TRIES = 3;
+const PAGE_DELAY_MS = 4000;
+
+async function fetchParsed<T>(session: BrowserSession, url: string, parse: (html: string) => T | null): Promise<T | null> {
+  for (let attempt = 1; attempt <= FETCH_TRIES; attempt++) {
+    const result = await session.fetchHtml(url);
+    if (result.ok) {
+      const value = parse(result.html);
+      if (value !== null) return value;
+    } else {
+      console.error(`Box Office fetch failed for ${url}: ${result.error}`);
+    }
+    if (attempt < FETCH_TRIES) await new Promise((r) => setTimeout(r, attempt * 3000));
   }
-  return result.html;
+  return null;
 }
 
-export async function scrapeBoxOfficeEvents(): Promise<{ inserted: number }> {
+// Replaces the stored Box Office rows with one row per showtime of `parsed`. Split from the fetching so the
+// same step can store events that were read some other way (for example by hand in Chrome).
+export async function storeBoxOfficeEvents(parsed: ParsedBoxOfficeEvent[]): Promise<{ inserted: number }> {
   const regionMatchers = await buildRegionCityMatchers();
   if (regionMatchers.size === 0) return { inserted: 0 };
-
-  const parsed: ParsedBoxOfficeEvent[] = [];
-  const session = await openBrowserSession();
-  try {
-    const eventUrls: string[] = [];
-    for (let page = 0; page < MAX_LISTING_PAGES; page++) {
-      const html = await safeFetch(session, `${BASE_URL}/upcoming-events?page=${page}`);
-      if (!html) break;
-      const fresh = parseListingLinks(html).filter((u) => !eventUrls.includes(u));
-      if (fresh.length === 0) break;
-      eventUrls.push(...fresh);
-    }
-    for (const url of eventUrls) {
-      const html = await safeFetch(session, url);
-      if (!html) continue;
-      const ev = parseEventPage(html, url);
-      if (ev) parsed.push(ev);
-    }
-  } finally {
-    await session.close();
-  }
 
   // One row per showtime, attributed to the region the venue's address is in.
   const knownVenues = await db
@@ -194,7 +197,7 @@ export async function scrapeBoxOfficeEvents(): Promise<{ inserted: number }> {
   const seen = new Set<string>();
   const rows: (typeof events.$inferInsert)[] = [];
   for (const e of parsed) {
-    const regionId = matchRegionForLocation(`${e.venueAddress ?? ""} ${e.venueName ?? ""}`, regionMatchers);
+    const regionId = matchRegionForLocation(cityOfAddress(e.venueAddress ?? e.venueName ?? ""), regionMatchers);
     if (regionId === null) continue;
     const matchedVenueId = e.venueName ? venueByRegionAndName.get(`${regionId}|${e.venueName.toLowerCase()}`) ?? null : null;
     for (const st of e.showtimes) {
@@ -240,4 +243,35 @@ export async function scrapeBoxOfficeEvents(): Promise<{ inserted: number }> {
     await tx.insert(events).values(rows);
   });
   return { inserted: rows.length };
+}
+
+export async function scrapeBoxOfficeEvents(): Promise<{ inserted: number }> {
+  const parsed: ParsedBoxOfficeEvent[] = [];
+  const session = await openBrowserSession();
+  try {
+    const eventUrls: string[] = [];
+    for (let page = 0; page < MAX_LISTING_PAGES; page++) {
+      // A page with no new links, even after retries, is the end of the list.
+      const fresh = await fetchParsed(session, `${BASE_URL}/upcoming-events?page=${page}`, (html) => {
+        const links = parseListingLinks(html).filter((u) => !eventUrls.includes(u));
+        return links.length > 0 ? links : null;
+      });
+      if (!fresh) break;
+      eventUrls.push(...fresh);
+    }
+    let unreadable = 0;
+    for (const url of eventUrls) {
+      const ev = await fetchParsed(session, url, (html) => parseEventPage(html, url));
+      if (ev) parsed.push(ev);
+      else unreadable++;
+      // A few seconds between event pages on top of the shared rate limit: this is one site's whole calendar,
+      // read once a night, and there is no hurry.
+      await new Promise((r) => setTimeout(r, PAGE_DELAY_MS));
+    }
+    console.log(`Box Office: ${eventUrls.length} events listed, ${parsed.length} read, ${unreadable} unreadable`);
+  } finally {
+    await session.close();
+  }
+
+  return storeBoxOfficeEvents(parsed);
 }

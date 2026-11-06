@@ -6,6 +6,7 @@ vi.mock("./fetch", () => ({ openBrowserSession: vi.fn() }));
 
 import {
   parseShowtime,
+  cityOfAddress,
   parsePriceFromCents,
   tidyTitle,
   eventTypeForCategory,
@@ -50,6 +51,17 @@ describe("parseShowtime", () => {
   });
 });
 
+describe("cityOfAddress", () => {
+  it("takes the city out of a street address", () => {
+    expect(cityOfAddress("1375 Water St, Kelowna, BC")).toBe("Kelowna");
+    expect(cityOfAddress("325 Power St, Penticton, BC")).toBe("Penticton");
+    expect(cityOfAddress("228 Valley Rd, West Kelowna BC")).toBe("West Kelowna");
+  });
+  it("falls back to the whole text when there is no province", () => {
+    expect(cityOfAddress("Kelowna Community Theatre")).toBe("Kelowna Community Theatre");
+  });
+});
+
 describe("parsePriceFromCents", () => {
   it("takes the lowest price of a range", () => {
     expect(parsePriceFromCents("$19.99 - $31.46 including fees & GST")).toBe(1999);
@@ -65,6 +77,12 @@ describe("tidyTitle", () => {
     expect(tidyTitle("OKANAGAN FIGHT NIGHT 8")).toBe("Okanagan Fight Night 8");
     expect(tidyTitle("THE PASSION OF AMY WINEHOUSE - BACK TO BLACK")).toBe("The Passion of Amy Winehouse - Back to Black");
     expect(tidyTitle("KEN'S KINGS NIGHT")).toBe("Ken's Kings Night");
+  });
+  it("handles mostly-capital titles, Mc names and a dangling dash or colon", () => {
+    expect(tidyTitle("3rd ANNUAL HITS FOR HERITAGE")).toBe("3rd Annual Hits for Heritage");
+    expect(tidyTitle("SÉAN McCANN")).toBe("Séan McCann");
+    expect(tidyTitle("SWEET CAROLINE -")).toBe("Sweet Caroline");
+    expect(tidyTitle("FORWARD x BEST DAY EVER")).toBe("Forward x Best Day Ever");
   });
   it("leaves a mixed-case title alone", () => {
     expect(tidyTitle("UBCO Heat vs UBC Thunderbirds")).toBe("UBCO Heat vs UBC Thunderbirds");

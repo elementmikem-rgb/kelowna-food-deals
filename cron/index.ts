@@ -927,7 +927,7 @@ async function runScrapeCycle() {
   try {
     // The Box Office (Kelowna Community Theatre, Rotary Centre, UBCO, Cleland Theatre ...): a browser run that reads
     // every listing page and every event's own page, so it gets a long timeout of its own.
-    const { inserted } = await withTimeout(scrapeBoxOfficeEvents(), 15 * 60_000, "Box Office scrape");
+    const { inserted } = await withTimeout(scrapeBoxOfficeEvents(), 30 * 60_000, "Box Office scrape");
     console.log(`Box Office events: refreshed ${inserted} theatre and arena showtime(s)`);
   } catch (err) {
     console.error("Box Office scrape failed:", err instanceof Error ? err.message : err);
