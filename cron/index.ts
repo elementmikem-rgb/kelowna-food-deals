@@ -3,6 +3,7 @@ import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
 import { scrapeBoxOfficeEvents } from "./scrapeBoxOffice";
+import { scrapeShowpassEvents } from "./scrapeShowpass";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -931,6 +932,16 @@ async function runScrapeCycle() {
     console.log(`Box Office events: refreshed ${inserted} theatre and arena showtime(s)`);
   } catch (err) {
     console.error("Box Office scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // Showpass public events feed, kept to theatres and performance halls in regions we cover: about 145 pages
+    // read 1.5 seconds apart, so a long timeout of its own. Runs after the Box Office step so a show listed on
+    // both is stored once.
+    const { inserted } = await withTimeout(scrapeShowpassEvents(), 25 * 60_000, "Showpass scrape");
+    console.log(`Showpass events: refreshed ${inserted} theatre and performance-hall event(s)`);
+  } catch (err) {
+    console.error("Showpass scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
