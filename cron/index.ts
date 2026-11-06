@@ -4,6 +4,7 @@ import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
 import { scrapeBoxOfficeEvents } from "./scrapeBoxOffice";
 import { scrapeShowpassEvents } from "./scrapeShowpass";
+import { scrapeTicketsellerEvents } from "./scrapeTicketseller";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -942,6 +943,15 @@ async function runScrapeCycle() {
     console.log(`Showpass events: refreshed ${inserted} theatre and performance-hall event(s)`);
   } catch (err) {
     console.error("Showpass scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // Ticket Seller (Vernon and District Performing Arts Centre, Creekside Theatre, Prince George, Kamloops ...):
+    // plain HTML, about 120 pages read 2 seconds apart.
+    const { inserted } = await withTimeout(scrapeTicketsellerEvents(), 20 * 60_000, "Ticket Seller scrape");
+    console.log(`Ticket Seller events: refreshed ${inserted} theatre event(s)`);
+  } catch (err) {
+    console.error("Ticket Seller scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
