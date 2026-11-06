@@ -554,8 +554,14 @@ export async function fetchHtmlViaBrowser(
   }
 }
 
+export interface FetchHtmlOptions {
+  // A page that builds itself in the browser (a ticketing app) is not ready at "load". Wait for this CSS
+  // selector to appear (up to 12 seconds) before reading the page; if it never does, read whatever is there.
+  waitForSelector?: string;
+}
+
 export interface BrowserSession {
-  fetchHtml(url: string): Promise<{ ok: true; html: string } | { ok: false; error: string }>;
+  fetchHtml(url: string, options?: FetchHtmlOptions): Promise<{ ok: true; html: string } | { ok: false; error: string }>;
   close(): Promise<void>;
 }
 
@@ -575,7 +581,7 @@ export async function openBrowserSession(): Promise<BrowserSession> {
   const context = await browser.newContext({ userAgent: USER_AGENT });
 
   return {
-    async fetchHtml(url: string) {
+    async fetchHtml(url: string, options?: FetchHtmlOptions) {
       const allowed = await isAllowedByRobots(url);
       if (!allowed) {
         return { ok: false, error: "disallowed by robots.txt" };
@@ -594,6 +600,10 @@ export async function openBrowserSession(): Promise<BrowserSession> {
             await page.waitForFunction(() => document.title !== "Just a moment...", { timeout: 8000 }).catch(() => {});
           } else {
             await page.waitForTimeout(1500);
+          }
+          if (options?.waitForSelector) {
+            await page.waitForSelector(options.waitForSelector, { timeout: 12000 }).catch(() => {});
+            await page.waitForTimeout(800);
           }
           const html = await page.content();
           return { ok: true, html } as const;

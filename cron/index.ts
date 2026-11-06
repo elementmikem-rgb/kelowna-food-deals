@@ -6,6 +6,7 @@ import { scrapeBoxOfficeEvents } from "./scrapeBoxOffice";
 import { scrapeShowpassEvents } from "./scrapeShowpass";
 import { scrapeTicketsellerEvents } from "./scrapeTicketseller";
 import { scrapeOvationEvents } from "./scrapeOvation";
+import { scrapeEvenueEvents } from "./scrapeEvenue";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -962,6 +963,15 @@ async function runScrapeCycle() {
     console.log(`Ovation events: refreshed ${inserted} Quebec hall event(s)`);
   } catch (err) {
     console.error("Ovation scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // eVenue box offices (Centre In The Square in Kitchener, Yates Memorial Centre in Lethbridge): the page builds
+    // itself in the headless browser, so a timeout of its own.
+    const { inserted } = await withTimeout(scrapeEvenueEvents(), 5 * 60_000, "eVenue scrape");
+    console.log(`eVenue events: refreshed ${inserted} hall event(s)`);
+  } catch (err) {
+    console.error("eVenue scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
