@@ -2,6 +2,7 @@ import { fetchAndExtractText, fetchAndExtractTextViaBrowser, type FetchResult, w
 import { scrapeCastanetEvents } from "./scrapeCastanet";
 import { scrapeNowMediaEvents } from "./scrapeNowMedia";
 import { scrape604NowEvents } from "./scrape604now";
+import { scrapeBoxOfficeEvents } from "./scrapeBoxOffice";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -921,6 +922,15 @@ async function runScrapeCycle() {
     console.log(`NowMedia events: refreshed ${inserted} nightlife-adjacent event(s)`);
   } catch (err) {
     console.error("NowMedia scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // The Box Office (Kelowna Community Theatre, Rotary Centre, UBCO, Cleland Theatre ...): a browser run that reads
+    // every listing page and every event's own page, so it gets a long timeout of its own.
+    const { inserted } = await withTimeout(scrapeBoxOfficeEvents(), 15 * 60_000, "Box Office scrape");
+    console.log(`Box Office events: refreshed ${inserted} theatre and arena showtime(s)`);
+  } catch (err) {
+    console.error("Box Office scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
