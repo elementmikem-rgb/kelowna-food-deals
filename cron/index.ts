@@ -8,6 +8,7 @@ import { scrapeTicketsellerEvents } from "./scrapeTicketseller";
 import { scrapeOvationEvents } from "./scrapeOvation";
 import { scrapeEvenueEvents } from "./scrapeEvenue";
 import { scrapeShowareEvents } from "./scrapeShoware";
+import { scrapeTessituraEvents } from "./scrapeTessitura";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -981,6 +982,14 @@ async function runScrapeCycle() {
     console.log(`ShoWare events: refreshed ${inserted} hall event(s)`);
   } catch (err) {
     console.error("ShoWare scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // Tessitura web ticket sites (Richmond Hill Centre): the list builds itself in the headless browser, over a few pages.
+    const { inserted } = await withTimeout(scrapeTessituraEvents(), 5 * 60_000, "Tessitura scrape");
+    console.log(`Tessitura events: refreshed ${inserted} hall event(s)`);
+  } catch (err) {
+    console.error("Tessitura scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
