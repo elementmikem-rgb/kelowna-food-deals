@@ -5,6 +5,7 @@ import { scrape604NowEvents } from "./scrape604now";
 import { scrapeBoxOfficeEvents } from "./scrapeBoxOffice";
 import { scrapeShowpassEvents } from "./scrapeShowpass";
 import { scrapeTicketsellerEvents } from "./scrapeTicketseller";
+import { scrapeOvationEvents } from "./scrapeOvation";
 import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
@@ -952,6 +953,15 @@ async function runScrapeCycle() {
     console.log(`Ticket Seller events: refreshed ${inserted} theatre event(s)`);
   } catch (err) {
     console.error("Ticket Seller scrape failed:", err instanceof Error ? err.message : err);
+  }
+
+  try {
+    // Ovation: the ticketing network behind Quebec halls in Drummondville, Gatineau, Granby, Saguenay and
+    // Sherbrooke. Five plain pages read 2.5 seconds apart.
+    const { inserted } = await withTimeout(scrapeOvationEvents(), 5 * 60_000, "Ovation scrape");
+    console.log(`Ovation events: refreshed ${inserted} Quebec hall event(s)`);
+  } catch (err) {
+    console.error("Ovation scrape failed:", err instanceof Error ? err.message : err);
   }
 
   try {
