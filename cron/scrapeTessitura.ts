@@ -66,14 +66,16 @@ export function parseTessituraPage(html: string, hall: TessituraHall): HallEvent
   return out;
 }
 
-// The page links ("2", "3") for the other pages of the list, as absolute addresses.
-export function pageLinks(html: string, base: string): string[] {
+// The page links ("2", "3") for the other pages of the list, as absolute addresses. Only https links on the
+// hall's own host are kept: a link on the page must never send the browser somewhere else.
+export function pageLinks(html: string, base: string, hostSuffix: string): string[] {
   const $ = cheerio.load(html);
   const seen = new Set<string>();
   $('a[href*="current_page="]').each((_, a) => {
     if (!/^\d+$/.test($(a).text().trim())) return;
     try {
-      seen.add(new URL($(a).attr("href") ?? "", base).toString());
+      const link = safeUrlOnHost(new URL($(a).attr("href") ?? "", base).toString(), hostSuffix);
+      if (link) seen.add(link);
     } catch {
       // an unreadable link is skipped
     }
@@ -98,7 +100,7 @@ export async function scrapeTessituraEvents(): Promise<{ inserted: number }> {
         return { inserted: 0 }; // a half-read list must not replace the stored one
       }
       const events = parseTessituraPage(first.html, hall);
-      for (const link of pageLinks(first.html, hall.url).slice(0, MAX_PAGES - 1)) {
+      for (const link of pageLinks(first.html, hall.url, hall.hostSuffix).slice(0, MAX_PAGES - 1)) {
         await new Promise((r) => setTimeout(r, PAGE_DELAY_MS));
         const next = await session.fetchHtml(link, { waitForSelector: CARD_DATE });
         if (!next.ok) {

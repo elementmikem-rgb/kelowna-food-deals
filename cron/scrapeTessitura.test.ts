@@ -53,8 +53,12 @@ describe("parseTessituraPage", () => {
 
 describe("pageLinks", () => {
   it("returns each numbered page once, as an absolute address", () => {
-    const links = pageLinks(PAGE, "https://tickets.rhcentre.ca/Online/default.asp");
+    const links = pageLinks(PAGE, "https://tickets.rhcentre.ca/Online/default.asp", "rhcentre.ca");
     expect(links).toHaveLength(2);
     expect(links[0]).toMatch(/^https:\/\/tickets\.rhcentre\.ca\/Online\/default\.asp\?sToken=/);
+  });
+  it("drops links to other hosts and non-https links", () => {
+    const html = `<a href="https://evil.example/x?current_page=2">2</a><a href="http://tickets.rhcentre.ca/a?current_page=3">3</a><a href="javascript:alert(1)//current_page=4">4</a>`;
+    expect(pageLinks(html, "https://tickets.rhcentre.ca/Online/default.asp", "rhcentre.ca")).toEqual([]);
   });
 });
