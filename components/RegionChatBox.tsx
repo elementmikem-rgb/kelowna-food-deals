@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Language } from "@/lib/i18n";
+import { chatText } from "@/lib/chat-text";
 
 const MAX_QUESTION_LENGTH = 200;
 // Mirrors lib/region-chat.ts's MAX_HISTORY_TURNS -- only the last few turns are ever
@@ -13,7 +15,8 @@ interface Turn {
   answer: string;
 }
 
-export function RegionChatBox({ regionId }: { regionId: number }) {
+export function RegionChatBox({ regionId, lang = "en" }: { regionId: number; lang?: Language }) {
+  const c = chatText(lang);
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -43,11 +46,11 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+      if (!res.ok) throw new Error(data.error ?? c.error);
       setTurns((prev) => [...prev, { question: trimmed, answer: data.answer }]);
       setStatus("idle");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : c.error);
       setStatus("error");
     }
   }
@@ -65,7 +68,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Ask what's on tonight"
+        aria-label={c.open}
         className="press-pill fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-[calc(1.25rem+env(safe-area-inset-right))] z-50 flex items-center justify-center gap-2 rounded-full bg-accent text-background shadow-lg h-12 w-12 sm:h-auto sm:w-auto sm:px-5 sm:py-3"
       >
         <svg
@@ -79,7 +82,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
         >
           <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
         </svg>
-        <span className="hidden sm:inline text-sm font-medium">Ask what's on tonight</span>
+        <span className="hidden sm:inline text-sm font-medium">{c.open}</span>
       </button>
     );
   }
@@ -87,11 +90,11 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
   return (
     <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-[calc(1.25rem+env(safe-area-inset-right))] z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-surface shadow-xl flex flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <span className="text-sm font-medium">Ask about today</span>
+        <span className="text-sm font-medium">{c.title}</span>
         <button
           type="button"
           onClick={handleClose}
-          aria-label="Close chat"
+          aria-label={c.close}
           className="text-foreground/60 hover:text-foreground text-lg leading-none"
         >
           ×
@@ -118,7 +121,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             maxLength={MAX_QUESTION_LENGTH}
-            placeholder={turns.length > 0 ? "Ask a follow-up…" : "What's on tonight? Cheapest beer?"}
+            placeholder={turns.length > 0 ? c.followUp : c.placeholder}
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
           />
           <button
@@ -126,7 +129,7 @@ export function RegionChatBox({ regionId }: { regionId: number }) {
             disabled={status === "sending" || !question.trim()}
             className="press-pill rounded-full bg-accent text-background px-5 py-2 text-sm font-medium disabled:opacity-50"
           >
-            {status === "sending" ? "Asking…" : "Ask"}
+            {status === "sending" ? c.sending : c.send}
           </button>
         </form>
 

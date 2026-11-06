@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Language } from "@/lib/i18n";
+import { chatText } from "@/lib/chat-text";
 
 // List/Map switch. The board that owns the `view` state renders this, but the
 // buttons are portalled into the header's #view-toggle-slot (see SiteHeader) so
 // they sit in the top pill row, just before Share. If the slot isn't on the page
 // (or before hydration) it renders in place, so the toggle never disappears.
-export function ViewToggle({ view, onChange }: { view: "list" | "map"; onChange: (v: "list" | "map") => void }) {
+export function ViewToggle({ view, onChange, lang = "en" }: { view: "list" | "map"; onChange: (v: "list" | "map") => void; lang?: Language }) {
+  const c = chatText(lang);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setSlot(document.getElementById("view-toggle-slot"));
@@ -25,7 +28,7 @@ export function ViewToggle({ view, onChange }: { view: "list" | "map"; onChange:
             view === v ? "bg-accent text-background" : "text-muted"
           }`}
         >
-          {v}
+          {v === "list" ? c.list : c.map}
         </button>
       ))}
     </div>

@@ -87,7 +87,7 @@ export default async function Home() {
       <FAQSection lang={lang} />
       <SiteFooter />
 
-      <RegionChatBox regionId={region.id} />
+      <RegionChatBox regionId={region.id} lang={lang} />
     </div>
   );
 }

@@ -537,7 +537,7 @@ export function SpecialsBoard({
 
       {/* List/Map toggle -- defaults to List (unchanged existing behaviour) so
           nothing about the page visitors already use changes unless they opt in. */}
-      <ViewToggle view={view} onChange={setView} />
+      <ViewToggle view={view} onChange={setView} lang={lang} />
 
       {view === "map" && (
         <MapView
