@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats, getTrafficQuality, getVisitorLocationStats } from "@/lib/analytics";
 import { ANALYTICS_NOTES } from "@/lib/analytics-notes";
+import { fillBuckets } from "@/lib/chart-axis";
 import { noteMarkers, type TrafficSource } from "@/lib/traffic-quality";
 import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
@@ -72,7 +73,7 @@ export default async function AdminAnalyticsPage({
   const scope = await getSelectedAdminScope();
   const stats = await getAnalyticsStats(window, scope.regionIds);
   const quality = await getTrafficQuality(window, scope.regionIds);
-  const chartData = realOnly ? quality.realTrend : stats.dailyTrend;
+  const chartData = fillBuckets(realOnly ? quality.realTrend : stats.dailyTrend, window.from, window.to);
   const markers = noteMarkers(
     chartData.map((d) => d.date),
     ANALYTICS_NOTES

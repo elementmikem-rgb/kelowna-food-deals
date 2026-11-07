@@ -51,3 +51,41 @@ export function labelIndices(count: number, maxLabels = 6): number[] {
   const step = (count - 1) / (maxLabels - 1);
   return [...new Set(Array.from({ length: maxLabels }, (_, i) => Math.round(i * step)))];
 }
+
+const PACIFIC = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Vancouver",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+});
+
+// The chart's bucket key for an instant, in Pacific time: "2026-11-07" or "2026-11-07 08:00".
+function pacificBucket(t: Date, hourly: boolean): string {
+  const p = Object.fromEntries(PACIFIC.formatToParts(t).map((x) => [x.type, x.value]));
+  const day = `${p.year}-${p.month}-${p.day}`;
+  return hourly ? `${day} ${p.hour}:00` : day;
+}
+
+// The query only returns buckets that had traffic, so a quiet hour or day would vanish and the
+// line would run straight across the gap. This lists every bucket in the window (hourly when it
+// spans a day or less, matching the query) and puts a zero where there was no traffic. A row
+// outside the window is kept rather than dropped.
+export function fillBuckets<T extends { date: string; pageviews: number; visitors: number }>(
+  rows: T[],
+  from: Date,
+  to: Date
+): (T | { date: string; pageviews: number; visitors: number })[] {
+  const hourly = to.getTime() - from.getTime() <= 24 * 60 * 60 * 1000;
+  const HOUR = 60 * 60 * 1000;
+  const byKey = new Map<string, T | { date: string; pageviews: number; visitors: number }>(
+    rows.map((r) => [r.date, r])
+  );
+  // Step an hour at a time so a daylight saving change cannot skip or repeat a day.
+  for (let t = Math.floor(from.getTime() / HOUR) * HOUR; t < to.getTime(); t += HOUR) {
+    const key = pacificBucket(new Date(t), hourly);
+    if (!byKey.has(key)) byKey.set(key, { date: key, pageviews: 0, visitors: 0 });
+  }
+  return [...byKey.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
