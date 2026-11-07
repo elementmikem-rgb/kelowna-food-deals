@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats, getVisitorLocationStats } from "@/lib/analytics";
+import { buildWindow, buildHourWindow, buildCustomWindow, getAnalyticsStats, getAppInstallStats, getTrafficQuality, getVisitorLocationStats } from "@/lib/analytics";
+import { ANALYTICS_NOTES } from "@/lib/analytics-notes";
+import { noteMarkers, type TrafficSource } from "@/lib/traffic-quality";
 import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { AdminShell } from "@/components/AdminShell";
@@ -41,12 +43,22 @@ function StatCard({
 const HOUR_PRESETS = [1, 6, 12, 24];
 const DAY_PRESETS = [7, 30, 90];
 
+const SOURCE_LABELS: Record<TrafficSource, string> = {
+  facebook: "Facebook",
+  google: "Google",
+  other: "Other sites",
+  direct: "Direct or none",
+};
+
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; hours?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ days?: string; hours?: string; from?: string; to?: string; real?: string }>;
 }) {
-  const { days: daysParam, hours: hoursParam, from: fromParam, to: toParam } = await searchParams;
+  const { days: daysParam, hours: hoursParam, from: fromParam, to: toParam, real: realParam } = await searchParams;
+  const realOnly = realParam === "1";
+  // Keeps the "likely real only" choice when switching the time range.
+  const withReal = (path: string) => (realOnly ? `${path}${path.includes("?") ? "&" : "?"}real=1` : path);
 
   const hours = HOUR_PRESETS.includes(Number(hoursParam)) ? Number(hoursParam) : null;
   const isCustom = Boolean(fromParam && toParam);
@@ -59,6 +71,12 @@ export default async function AdminAnalyticsPage({
       : buildWindow(days);
   const scope = await getSelectedAdminScope();
   const stats = await getAnalyticsStats(window, scope.regionIds);
+  const quality = await getTrafficQuality(window, scope.regionIds);
+  const chartData = realOnly ? quality.realTrend : stats.dailyTrend;
+  const markers = noteMarkers(
+    chartData.map((d) => d.date),
+    ANALYTICS_NOTES
+  );
   const installs = await getAppInstallStats(window, scope.regionIds);
   const visitors = await getVisitorLocationStats(window, scope.regionIds);
 
@@ -78,7 +96,7 @@ export default async function AdminAnalyticsPage({
             {HOUR_PRESETS.map((h) => (
               <Link
                 key={h}
-                href={`/admin/analytics?hours=${h}`}
+                href={withReal(`/admin/analytics?hours=${h}`)}
                 className={`press-pill rounded-full px-3 py-1 text-xs border ${
                   h === hours && !isCustom
                     ? "bg-accent text-background border-accent"
@@ -91,7 +109,7 @@ export default async function AdminAnalyticsPage({
             {DAY_PRESETS.map((d) => (
               <Link
                 key={d}
-                href={`/admin/analytics?days=${d}`}
+                href={withReal(`/admin/analytics?days=${d}`)}
                 className={`press-pill rounded-full px-3 py-1 text-xs border ${
                   d === days && !hours && !isCustom
                     ? "bg-accent text-background border-accent"
@@ -109,6 +127,7 @@ export default async function AdminAnalyticsPage({
               isCustom ? "border-accent" : "border-border"
             }`}
           >
+            {realOnly && <input type="hidden" name="real" value="1" />}
             <input
               type="date"
               name="from"
@@ -134,7 +153,7 @@ export default async function AdminAnalyticsPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         <StatCard label="Pageviews" value={stats.pageviews} previous={stats.previous.pageviews} />
         <StatCard
           label="Unique visitors"
@@ -142,6 +161,7 @@ export default async function AdminAnalyticsPage({
           previous={stats.previous.uniqueVisitors}
         />
         <StatCard label="Sessions" value={stats.sessions} previous={stats.previous.sessions} />
+        <StatCard label="Likely real sessions" value={quality.likelyReal} />
         <StatCard label="Bounce rate" value={`${stats.bounceRate.toFixed(0)}%`} />
         <StatCard
           label="Returning visitors"
@@ -157,27 +177,105 @@ export default async function AdminAnalyticsPage({
         </p>
       )}
 
-      {stats.likelyBotSessions > 0 && (
+      {quality.likelyBot + quality.facebookLinkCheck > 0 && (
         <p className="text-xs text-stale -mt-2">
-          {stats.likelyBotSessions} of {stats.sessions} session{stats.sessions === 1 ? "" : "s"} look
-          like bot traffic (single pageview, no referrer at all) -- a common signature for
-          domain-scanning bots that use a real browser user-agent to slip past filtering. Worth
-          discounting before trusting these numbers as real visitors, especially for a region with
-          little or no active promotion.
+          {quality.likelyBot + quality.facebookLinkCheck} of {quality.sessions} session
+          {quality.sessions === 1 ? "" : "s"} look automated, leaving {quality.likelyReal} likely real.{" "}
+          {quality.likelyBot} {quality.likelyBot === 1 ? "is a" : "are"} single pageview
+          {quality.likelyBot === 1 ? "" : "s"} with no referrer at all (the signature of a domain-scanning
+          bot); {quality.facebookLinkCheck} {quality.facebookLinkCheck === 1 ? "is a" : "are"} single
+          Facebook-referred view{quality.facebookLinkCheck === 1 ? "" : "s"} from the US, Ireland or
+          Sweden, where Facebook runs its data centres, which matches Facebook checking a posted
+          link. These are pattern guesses, not proof for any one session, so the raw totals above stay
+          unchanged.
         </p>
       )}
 
       <div className="rounded-xl border border-border bg-surface p-4">
-        <div className="flex items-center gap-4 mb-2 text-xs text-muted-2">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 bg-accent" /> Pageviews
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 bg-evergreen" style={{ borderTop: "1.5px dashed" }} />{" "}
-            Visitors
-          </span>
+        <div className="flex items-center justify-between gap-4 mb-2 text-xs text-muted-2 flex-wrap">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-3 h-0.5 bg-accent" /> Pageviews
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-3 h-0.5 bg-evergreen" style={{ borderTop: "1.5px dashed" }} />{" "}
+              Visitors
+            </span>
+            <span>{realOnly ? "Showing likely real traffic only" : "Showing all traffic"}</span>
+          </div>
+          <Link
+            href={`/admin/analytics?${new URLSearchParams({
+              ...(hours ? { hours: String(hours) } : isCustom ? { from: fromParam!, to: toParam! } : { days: String(days) }),
+              ...(realOnly ? {} : { real: "1" }),
+            }).toString()}`}
+            className="press-pill rounded-full px-3 py-1 border border-border text-muted"
+          >
+            {realOnly ? "Show all traffic" : "Show likely real only"}
+          </Link>
         </div>
-        <AnalyticsChart data={stats.dailyTrend} />
+        <AnalyticsChart data={chartData} markers={markers} />
+        {markers.length > 0 && (
+          <p className="mt-2 text-xs text-muted-2">
+            Dotted lines:{" "}
+            {markers
+              .map(
+                (m) =>
+                  `${new Date(`${m.date}T12:00:00`).toLocaleDateString("en-CA", { month: "short", day: "numeric" })} ${m.label}`
+              )
+              .join("; ")}
+            .
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg text-foreground">Where sessions come from</h2>
+          <div className="rounded-xl border border-border bg-surface divide-y divide-border text-sm">
+            <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-2">
+              <span>Source</span>
+              <span>All / likely real</span>
+            </div>
+            {quality.sources.map((s) => (
+              <div key={s.source} className="flex items-center justify-between px-3 py-2">
+                <span className="text-foreground/90">{SOURCE_LABELS[s.source]}</span>
+                <span className="font-mono-tabular text-muted shrink-0 ml-2">
+                  {s.all} / {s.real}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg text-foreground">Facebook by landing region</h2>
+          <div className="rounded-xl border border-border bg-surface divide-y divide-border text-sm">
+            {quality.facebookByRegion.length === 0 ? (
+              <p className="p-3 text-sm text-muted-2">No Facebook sessions in this window.</p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-2">
+                  <span>Region</span>
+                  <span>All / likely real / in Canada</span>
+                </div>
+                {quality.facebookByRegion.slice(0, 12).map((r) => (
+                  <div key={r.region} className="flex items-center justify-between px-3 py-2">
+                    <span className="text-foreground/90">{r.region}</span>
+                    <span className="font-mono-tabular text-muted shrink-0 ml-2">
+                      {r.all} / {r.likelyReal} / {r.canadian}
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+          {quality.facebookCanadianTrend.length > 0 && (
+            <p className="text-xs text-muted-2">
+              Canadian Facebook sessions by {window.to.getTime() - window.from.getTime() <= 24 * 60 * 60 * 1000 ? "hour" : "day"}:{" "}
+              {quality.facebookCanadianTrend.map((t) => `${t.date.slice(5)} ${t.sessions}`).join(", ")}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

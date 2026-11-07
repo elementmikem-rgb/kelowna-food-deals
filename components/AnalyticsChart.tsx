@@ -23,7 +23,7 @@ function buildPath(values: number[], max: number): { line: string; area: string 
   return { line, area };
 }
 
-export function AnalyticsChart({ data }: { data: Point[] }) {
+export function AnalyticsChart({ data, markers = [] }: { data: Point[]; markers?: { index: number; label: string }[] }) {
   if (data.length === 0) {
     return (
       <div className="h-40 flex items-center justify-center text-sm text-muted-2">
@@ -38,6 +38,7 @@ export function AnalyticsChart({ data }: { data: Point[] }) {
 
   const pv = buildPath(pageviews, max);
   const vis = buildPath(visitors, max);
+  const step = data.length > 1 ? (WIDTH - PADDING * 2) / (data.length - 1) : 0;
 
   return (
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full h-40" preserveAspectRatio="none">
@@ -47,6 +48,19 @@ export function AnalyticsChart({ data }: { data: Point[] }) {
           <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
       </defs>
+      {markers.map((m) => (
+        <line
+          key={`${m.index}-${m.label}`}
+          x1={PADDING + m.index * step}
+          x2={PADDING + m.index * step}
+          y1={PADDING}
+          y2={HEIGHT - PADDING}
+          stroke="var(--muted-2)"
+          strokeWidth="1"
+          strokeDasharray="2 3"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
       <path d={pv.area} fill="url(#pvGradient)" />
       <path d={pv.line} fill="none" stroke="var(--accent)" strokeWidth="2" />
       <path d={vis.line} fill="none" stroke="var(--evergreen)" strokeWidth="1.5" strokeDasharray="4 3" />

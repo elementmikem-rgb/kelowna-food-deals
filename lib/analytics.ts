@@ -1,6 +1,7 @@
 import { db, analyticsEvents, regions } from "@/db";
-import { and, gte, lt, eq, sql, inArray } from "drizzle-orm";
+import { and, gte, lt, eq, sql, inArray, type AnyColumn } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
+import { summarizeSessions, type TrafficSummary } from "@/lib/traffic-quality";
 import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
 
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
@@ -309,6 +310,52 @@ export async function getAnalyticsStats(
       sessions: prevSessionCount.count,
     },
   };
+}
+
+// One row per session in the window (first referrer, country and landing page, pageview count),
+// summarised by lib/traffic-quality.ts into the likely-real counts, the source split, the
+// Facebook panel and the likely-real trend.
+export async function getTrafficQuality(
+  window: AnalyticsWindow,
+  regionIds: number[] | "all"
+): Promise<TrafficSummary> {
+  const spanMs = window.to.getTime() - window.from.getTime();
+  // Same bucket format as the main trend in getAnalyticsStats.
+  const bucketFormat = spanMs <= 24 * 60 * 60 * 1000 ? "YYYY-MM-DD HH24:00" : "YYYY-MM-DD";
+  const first = (column: AnyColumn) => sql<string | null>`(array_agg(${column} order by ${analyticsEvents.createdAt}))[1]`;
+
+  const rows = await db
+    .select({
+      sessionId: analyticsEvents.sessionId,
+      visitorId: first(analyticsEvents.visitorId),
+      pageviews: sql<number>`count(*)::int`,
+      referrer: first(analyticsEvents.referrer),
+      country: first(analyticsEvents.country),
+      landing: first(analyticsEvents.page),
+      bucket: sql<string>`to_char(min(${analyticsEvents.createdAt}) at time zone 'America/Vancouver', ${bucketFormat})`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        gte(analyticsEvents.createdAt, window.from),
+        lt(analyticsEvents.createdAt, window.to),
+        regionScopeCondition(analyticsEvents.regionId, regionIds),
+        eq(analyticsEvents.eventType, "pageview")
+      )
+    )
+    .groupBy(analyticsEvents.sessionId);
+
+  return summarizeSessions(
+    rows.map((r) => ({
+      sessionId: r.sessionId,
+      visitorId: r.visitorId ?? r.sessionId,
+      pageviews: r.pageviews,
+      referrer: r.referrer,
+      country: r.country,
+      landing: r.landing ?? "",
+      bucket: r.bucket,
+    }))
+  );
 }
 
 // A venue detail pageview's own `page` column is always exactly
