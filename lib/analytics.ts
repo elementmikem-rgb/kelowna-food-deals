@@ -3,6 +3,7 @@ import { and, gte, lt, eq, sql, inArray, type AnyColumn } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { summarizeSessions, type TrafficSummary } from "@/lib/traffic-quality";
 import { HERE_KM, NEARBY_KM } from "@/lib/visitor-location";
+import { pacificDayRange } from "@/lib/pacific-time";
 
 // Covers common crawlers, bots, HTTP libraries, and AI crawlers — without this,
 // blog/SEO content gets crawled far more than it gets actually visited, and
@@ -99,13 +100,10 @@ export function buildHourWindow(hours: number): AnalyticsWindow {
   return { from, to: now };
 }
 
-// fromISO/toISO are plain YYYY-MM-DD dates (from a <input type="date"> picker) --
-// `to` is treated as inclusive by rolling forward to the start of the next day.
+// fromISO/toISO are plain YYYY-MM-DD dates (from a <input type="date"> picker), read as Pacific
+// days to match the chart buckets (the server runs in UTC); `to` is inclusive.
 export function buildCustomWindow(fromISO: string, toISO: string): AnalyticsWindow {
-  const from = new Date(`${fromISO}T00:00:00`);
-  const to = new Date(`${toISO}T00:00:00`);
-  to.setDate(to.getDate() + 1);
-  return { from, to };
+  return pacificDayRange(fromISO, toISO);
 }
 
 export function buildPreviousWindow(window: AnalyticsWindow): AnalyticsWindow {
