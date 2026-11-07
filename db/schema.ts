@@ -161,6 +161,10 @@ export const venues = specialsSchema.table(
     // that's confirmed so the cron uses a headless-browser fetch for this
     // venue instead of wasting a plain-fetch attempt every night.
     requiresBrowser: boolean("requires_browser").notNull().default(false),
+    // True when the listing is maintained by hand (verified rows with a null source_url). The nightly
+    // cron skips the venue entirely: it only replaces rows it wrote itself, so scraping would add a
+    // second copy of every deal next to the hand-entered ones. See cron/skip.ts.
+    manualOnly: boolean("manual_only").notNull().default(false),
     // Set when a venue unsubscribes from outreach email via the link in that email.
     // Checked before every outreach send so a "stop" is honored, not just noted.
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),

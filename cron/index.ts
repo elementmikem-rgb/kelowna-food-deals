@@ -25,6 +25,7 @@ import {
 } from "./batchExtract";
 import { discoverVenueLinks, isAutomatableUrl } from "./discover";
 import { venuesToScrapeTonight } from "./rotation";
+import { scrapeSkipReason } from "./skip";
 import { db, regions } from "@/db";
 import { eq, sql } from "drizzle-orm";
 import {
@@ -193,9 +194,26 @@ export async function processVenue(
     menuUrl: string | null;
     sourceUrls: string[];
     requiresBrowser: boolean;
+    claimedAt?: Date | null;
+    manualOnly?: boolean;
   },
   regionId: number
 ): Promise<{ tokensUsed: number; error?: string }> {
+  const skipReason = scrapeSkipReason(venue);
+  if (skipReason) {
+    await logScrapeRun({
+      venueId: venue.id,
+      contentHash: null,
+      changed: false,
+      tokensUsed: 0,
+      cacheCreationTokens: 0,
+      cacheReadTokens: 0,
+      outputTokens: 0,
+      error: null,
+    });
+    console.log(`[${venue.name}] skipped: ${skipReason}`);
+    return { tokensUsed: 0 };
+  }
   const urls = venueUrls(venue);
   if (urls.length === 0) {
     // Not an "error" for scrape-health purposes -- a venue with no website on
@@ -388,6 +406,7 @@ async function fetchVenueForBatch(
     sourceUrls: string[];
     requiresBrowser: boolean;
     claimedAt: Date | null;
+    manualOnly?: boolean;
   },
   regionId: number
 ): Promise<
@@ -400,7 +419,8 @@ async function fetchVenueForBatch(
   // owner's own rows from cron/upsert.ts's reconciliation (see the plan this shipped
   // from), but skipping entirely here also avoids wasting extraction tokens on a venue
   // whose page content the site will never actually use.
-  if (venue.claimedAt !== null) {
+  const skipReason = scrapeSkipReason(venue);
+  if (skipReason) {
     await logScrapeRun({
       venueId: venue.id,
       contentHash: null,
@@ -411,7 +431,7 @@ async function fetchVenueForBatch(
       outputTokens: 0,
       error: null,
     });
-    console.log(`[${venue.name}] skipped: venue is owner-claimed`);
+    console.log(`[${venue.name}] skipped: ${skipReason}`);
     return { kind: "logged", tokensUsed: 0 };
   }
 
@@ -695,10 +715,12 @@ async function resolvePendingBatches(waitMs: number, billing: { failures: number
 // just another URL to fetch. Pure discovery -- no Haiku calls, so its cost
 // is only the extra homepage/sitemap fetches, not extraction tokens.
 export async function runLinkDiscovery(
-  venueList: { id: number; name: string; website: string | null; sourceUrls: string[] }[]
+  venueList: { id: number; name: string; website: string | null; sourceUrls: string[]; claimedAt?: Date | null; manualOnly?: boolean }[]
 ): Promise<void> {
   for (const venue of venueList) {
     if (!venue.website) continue;
+    // Discovery adds pages to source_urls; a hand-managed or owner-claimed venue must not grow a cron list.
+    if (scrapeSkipReason(venue)) continue;
     try {
       const known = [venue.website, ...venue.sourceUrls];
       const discovered = await discoverVenueLinks(venue.website, known);

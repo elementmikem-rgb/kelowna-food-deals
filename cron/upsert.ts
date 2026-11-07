@@ -391,6 +391,7 @@ export async function getActiveVenues(regionId: number) {
       sourceUrls: venues.sourceUrls,
       requiresBrowser: venues.requiresBrowser,
       claimedAt: venues.claimedAt,
+      manualOnly: venues.manualOnly,
       // Used by cron/index.ts's CRON_NEVER_SCRAPED_ONLY filter -- a brand-new region
       // launch only needs this subset, not a re-check of every already-known venue.
       neverScraped: sql<boolean>`${lastRun.ranAt} is null`,
