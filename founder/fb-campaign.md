@@ -1,7 +1,7 @@
 # Today's Tab — Facebook Group Campaign Tracker
 
 **Total joined:** ~198 groups · **Campaign-relevant:** ~139 · **Community groups posted:** 27 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~87  
-**Last updated:** 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
+**Last updated:** 2026-11-09 (Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
 
 Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule risk`
 
@@ -157,11 +157,11 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Penny Pinchers Winnipeg | ✅ JOINED | Joined 2026-10-28 — 129K members — pending approval |
+| Penny Pinchers Winnipeg | ⚠️ JOINED — rule risk, skipped 2026-11-09 | 130K, member now. Rules: no advertising your business or page, removed posts must not be reposted or you are removed. Not posted |
 | Support Local Business Winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-10-29 (live in feed; group About welcomes promotion) |
 | savemoneyinwinnipeg | ✅ JOINED | |
 | people of winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-11-07, PENDING admin approval (35.4K; About says post what you want); rechecked 2026-11-09: still pending |
-| Winnipeg Events - What to do in and around Winnipeg, Manitoba | ✅ JOINED | Joined 2026-10-29 — 3.9K |
+| Winnipeg Events - What to do in and around Winnipeg, Manitoba | ⚠️ JOINED — rule risk, skipped 2026-11-09 | 4.1K. Rule 3: no self-promotion, spam or irrelevant links; rule 5: events only. Not posted |
 
 ---
 
@@ -172,8 +172,8 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | REGINA Takeout | ✔ POSTED | todaystab.com/regina — 2026-10-28 |
-| What's happening Regina?!!!! | ✅ JOINED | |
-| Support Local Business Regina | ✅ JOINED | |
+| What's happening Regina?!!!! | ⚠️ JOINED — membership review pending 2026-11-09 | Admins have not approved membership, posts cannot publish. Not posted |
+| Support Local Business Regina | ⚠️ JOINED — membership review pending 2026-11-09 | Old pending post from 2026-10-16 (old template) deleted 2026-11-09. Not reposted until membership is approved |
 | Rant And Rave Regina | ✔ POSTED | todaystab.com/regina — 2026-11-07, PENDING admin approval (checked same day; new "excited" wording; 21K); rechecked 2026-11-09: still pending, and the group shows "Your review is still pending" (admins have not finished reviewing the membership request, so the post cannot go up until it clears) |
 
 ### Saskatoon
@@ -239,7 +239,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 |-------|--------|-------|
 | Best food in Waterloo region | ✔ POSTED | todaystab.com/kitchener-waterloo-cambridge — 2026-10-28 (pending posts deleted — correct Oct 6 post also deleted per Mike) |
 | Food in the Waterloo Region | ✔ POSTED | todaystab.com/kitchener-waterloo-cambridge — 2026-10-28 (136K members) |
-| Promote Yourself - Waterloo Region & surrounding area | ✅ JOINED | |
+| Promote Yourself - Waterloo Region & surrounding area | ⚠️ JOINED — membership review pending 2026-11-09 | Old pending post from 2026-10-06 (old template) deleted 2026-11-09. Not reposted until membership is approved |
 
 ### Guelph
 
@@ -252,7 +252,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Kingston Shameless Promotion | ✔ POSTED | todaystab.com — 2026-10-26 |
+| Kingston Shameless Promotion | ✔ POSTED | todaystab.com — 2026-10-26; reposted 2026-11-09 with the new fun template (group is explicitly for promotion, 9.4K). Published at once, no approval |
 
 ### Barrie
 
