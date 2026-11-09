@@ -13,6 +13,7 @@ import { refreshNhlSchedule } from "@/lib/nhl-schedule";
 import { pruneAnalyticsEvents } from "@/lib/analytics";
 import { pruneChatQueries } from "@/lib/chat-retention";
 import { sendWeeklyDigests } from "@/lib/weekly-digest";
+import { weeklyDigestsEnabled } from "@/lib/weekly-digest-switch";
 import { normalizeText, hashText } from "./hash";
 import { syncBookings } from "./booking-sync";
 import { extractVenueContent, truncatePageText } from "./extract";
@@ -756,7 +757,9 @@ async function main() {
     // once per cron invocation, independent of CRON_REGIONS_FILTER -- which regions a
     // given night's scrape happens to be scoped to has nothing to do with which
     // claimed venues are due a digest.
-    if (new Date().getDay() === 1) {
+    if (new Date().getDay() === 1 && !weeklyDigestsEnabled()) {
+      console.log("Monday -- weekly owner digests are off (WEEKLY_DIGEST_ENABLED is not 1).");
+    } else if (new Date().getDay() === 1) {
       console.log("Monday -- sending weekly owner digests...");
       await sendWeeklyDigests();
     }
