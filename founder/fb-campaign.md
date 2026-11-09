@@ -1,7 +1,7 @@
 # Today's Tab — Facebook Group Campaign Tracker
 
 **Total joined:** ~198 groups · **Campaign-relevant:** ~139 · **Community groups posted:** 27 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~87  
-**Last updated:** 2026-11-09 (joined Amazing Deals Surrey Canada; joined 3 more: Edmonton Food - FoodYEG, Manitoba Food Bloggers, Support Local YYC Business; Kelowna Rant And Rave posted; Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
+**Last updated:** 2026-11-09 (posted in Amazing Deals Surrey Canada, pending admin approval; joined it; joined 3 more: Edmonton Food - FoodYEG, Manitoba Food Bloggers, Support Local YYC Business; Kelowna Rant And Rave posted; Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
 
 Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule risk`
 
@@ -89,7 +89,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Squamish Rant & Rave | ✔ POSTED | todaystab.com/whistler — 2026-10-29 |
 | Golden BC Free/ Local Buy / Sell / Trade | ✅ JOINED | |
 | Revelstoke Community | ✅ JOINED | |
-| Amazing Deals Surrey Canada | ✅ JOINED 2026-11-09 | Public, 55K, about 10 posts a day, 13 of Mike's friends are members. Joined at once, no questions, no rules listed on its About page. Surrey region: todaystab.com/surrey. Not posted yet |
+| Amazing Deals Surrey Canada | ✅ JOINED 2026-11-09 | Public, 55K, about 10 posts a day, 13 of Mike's friends are members. Joined at once, no questions, no rules listed on its About page. Surrey region: todaystab.com/surrey. Posted 2026-11-09 (bubbly young voice version), pending admin approval; group is mostly secondhand buy and sell, so off-topic risk. Recheck in 2 to 3 days |
 
 ---
 
@@ -387,7 +387,7 @@ About 41 of 98 active regions have no joined group, judged by group names agains
 - **Atlantic (6):** St. John's NL (119), Cape Breton (102), Saint John (96), Fredericton (94), Charlottetown (89), Annapolis Valley (92)
 - **Ontario (7):** Prince Edward County (100), Peterborough & Kawarthas (91), Collingwood & Blue Mountain (87), Brantford (74), North Bay (69), Muskoka (21), Chatham-Kent (18)
 - **Prairies and Alberta (6):** Brandon (77), Medicine Hat (72), Fort McMurray (60), Grande Prairie (19), Sherwood Park (19), Banff & Canmore (20)
-- **BC (5):** Surrey & White Rock (113, joined Amazing Deals Surrey Canada 2026-11-09, no post yet), Burnaby & Tri-Cities (20), Richmond (20), North Shore (18), Fraser Valley (17)
+- **BC (5):** Surrey & White Rock (113, Amazing Deals Surrey Canada joined and posted 2026-11-09, pending approval), Burnaby & Tri-Cities (20), Richmond (20), North Shore (18), Fraser Valley (17)
 
 Biggest gaps in English: St. John's, Surrey, Cape Breton, Prince Edward County, Saint John, Fredericton. Next step offered to Mike: join groups for the top gaps, then read each group's rules and its pending-content page before posting.
 
