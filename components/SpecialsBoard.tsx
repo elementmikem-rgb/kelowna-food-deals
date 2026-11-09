@@ -67,6 +67,7 @@ export function SpecialsBoard({
   initialTag,
   regionLat = null,
   regionLng = null,
+  accessibleVenueIds = [],
 }: {
   specials: SpecialWithVenue[];
   categorySponsors?: CategorySponsor[];
@@ -94,6 +95,8 @@ export function SpecialsBoard({
   // in view (e.g. a filter that matches zero venues in one corner of town).
   regionLat?: number | null;
   regionLng?: number | null;
+  // Venues with a visitor-confirmed accessibility note (lib/accessibility.ts); drives the "Access" filter.
+  accessibleVenueIds?: number[];
 }) {
   const tr = t(lang);
   // The page is served from an ISR cache that can be an evening old, so the day baked
@@ -113,6 +116,8 @@ export function SpecialsBoard({
   const [when, setWhen] = useState<WhenMode>("any");
   const [under10, setUnder10] = useState(false);
   const [late, setLate] = useState(false);
+  const [accessibleOnly, setAccessibleOnly] = useState(false);
+  const accessibleSet = useMemo(() => new Set(accessibleVenueIds), [accessibleVenueIds]);
   const [sheetOpen, setSheetOpen] = useState(false);
   // The browser's reading of the region's clock, in minutes. Null on the server and on first paint so the
   // cached HTML never claims something is on now; it is filled in on mount and kept fresh every minute.
@@ -300,6 +305,7 @@ export function SpecialsBoard({
       .filter((s) => selectedTag === "all" || (tagsById.get(s.id) ?? []).includes(selectedTag))
       .filter((s) => !under10 || (s.priceCents !== null && s.priceCents <= UNDER_10_CENTS))
       .filter((s) => !late || isLateNight(s.startTime, s.endTime))
+      .filter((s) => !accessibleOnly || (s.venueId !== null && accessibleSet.has(s.venueId)))
       .filter((s) => {
         if (when === "any" || clock === null) return true;
         const st = liveStatus(s.startTime, s.endTime, clock);
@@ -335,7 +341,7 @@ export function SpecialsBoard({
         if (timeDiff !== 0) return timeDiff;
         return freshnessDiff;
       });
-  }, [allSpecials, selectedDay, selectedCategory, selectedTag, under10, late, when, clock, tagsById, selectedCity, normalizedQuery]);
+  }, [allSpecials, selectedDay, selectedCategory, selectedTag, under10, late, accessibleOnly, accessibleSet, when, clock, tagsById, selectedCity, normalizedQuery]);
 
   const grouped = useMemo(() => {
     const groups = groupByVenue(filtered);
@@ -394,6 +400,7 @@ export function SpecialsBoard({
   if (selectedTag !== "all" && selectedTag !== "food" && selectedTag !== "drink")
     extras.push({ key: "tag", label: TL[selectedTag], onClear: () => setSelectedTag("all") });
   if (late) extras.push({ key: "late", label: FT.late, onClear: () => setLate(false) });
+  if (accessibleOnly) extras.push({ key: "access", label: FT.accessible, onClear: () => setAccessibleOnly(false) });
   if (selectedCategory !== "all")
     extras.push({ key: "cat", label: CATEGORY_LABELS[lang][selectedCategory], onClear: () => setSelectedCategory("all") });
   if (selectedCity !== "all") extras.push({ key: "city", label: selectedCity, onClear: () => setSelectedCity("all") });
@@ -404,6 +411,7 @@ export function SpecialsBoard({
     setWhen("any");
     setUnder10(false);
     setLate(false);
+    setAccessibleOnly(false);
     setSelectedCategory("all");
     setSelectedCity("all");
   }
@@ -483,6 +491,9 @@ export function SpecialsBoard({
         onUnder10={setUnder10}
         late={late}
         onLate={setLate}
+        accessible={accessibleOnly}
+        onAccessible={setAccessibleOnly}
+        showAccessible={accessibleVenueIds.length > 0}
         tag={selectedTag}
         onTag={setSelectedTag}
         category={selectedCategory}

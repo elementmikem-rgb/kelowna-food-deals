@@ -114,3 +114,32 @@ describe("French privacy copy", () => {
     expect(cookies).not.toMatch(/Un témoin \(cookie\) enregistre/);
   });
 });
+
+describe("privacy copy: accessibility notes", () => {
+  const fr = source.slice(source.indexOf("  fr: {"));
+  const section = (text: string) => text.slice(text.indexOf("accessBody:"), text.indexOf("cookiesHeading:"));
+  const enAccess = section(en);
+  const frAccess = section(fr);
+  const lib = readFileSync(join(__dirname, "accessibility.ts"), "utf8");
+  const months = Math.round(Number(lib.match(/ACCESS_MAX_AGE_DAYS = (\d+)/)![1]) / 30.4);
+
+  it("explains what is stored: answers, a random browser id kept as a hash, no name or account", () => {
+    expect(enAccess).toMatch(/random/i);
+    expect(enAccess).toMatch(/local storage/i);
+    expect(enAccess).toMatch(/hash/i);
+    expect(enAccess).toMatch(/no name|not an account|no account/i);
+    expect(frAccess).toMatch(/aléatoire/i);
+    expect(frAccess).toMatch(/stockage local/i);
+    expect(frAccess).toMatch(/hach/i);
+  });
+
+  it("says how long answers count, matching the code", () => {
+    expect(enAccess).toContain(`${months} months`);
+    expect(frAccess).toContain(`${months} mois`);
+  });
+
+  it("does not claim the site itself says a place is accessible", () => {
+    expect(enAccess).toMatch(/reported by visitors|visitors confirm/i);
+    expect(frAccess).toMatch(/visiteurs/i);
+  });
+});

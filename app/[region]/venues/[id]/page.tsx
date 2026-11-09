@@ -37,6 +37,9 @@ import { venueTitle, venueDescription, areaNameFromBrand } from "@/lib/page-titl
 import { isThinVenuePage } from "@/lib/venue-indexability";
 import { TagFilteredGrid } from "@/components/TagFilteredGrid";
 import { tagSpecial } from "@/lib/special-tags";
+import { AccessibilityNote } from "@/components/AccessibilityNote";
+import { getVenueAccessibility } from "@/lib/accessibility-data";
+import { accessibilityEnabled } from "@/lib/accessibility";
 
 const content = {
   en: {
@@ -159,13 +162,15 @@ export default async function VenuePage({ params }: PageProps) {
 
   const { timezone } = await getRegionContext(region);
 
-  const [venueSpecials, venueEvents, previousSpecials, venuePhotos, venueMenuItems] =
+  const showAccessibility = accessibilityEnabled(region.slug);
+  const [venueSpecials, venueEvents, previousSpecials, venuePhotos, venueMenuItems, accessibilityShown] =
     await Promise.all([
       getVenueSpecials(venueId),
       getVenueEvents(venueId, timezone),
       getVenuePreviousSpecials(venueId),
       getVenuePhotos(venueId),
       getVenueMenuItems(venueId),
+      showAccessibility ? getVenueAccessibility(venueId) : Promise.resolve([]),
     ]);
 
   const areaName = areaNameFromBrand(region.brandName);
@@ -280,6 +285,7 @@ export default async function VenuePage({ params }: PageProps) {
               </div>
             )}
             <p className="text-muted text-sm">{venue.address}</p>
+            {showAccessibility && <AccessibilityNote venueId={venue.id} shown={accessibilityShown} lang={lang} />}
           </header>
 
           <section className="flex flex-col gap-3">

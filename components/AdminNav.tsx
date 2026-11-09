@@ -13,6 +13,7 @@ type AdminSection =
   | "revenue"
   | "analytics"
   | "flagged"
+  | "access"
   | "scrapeHealth"
   | "chat"
   | "badges";
@@ -206,6 +207,7 @@ export function AdminNav({
     { key: "revenue", href: "/admin/revenue", label: "Revenue" },
     { key: "analytics", href: "/admin/analytics", label: "Analytics" },
     { key: "flagged", href: "/admin/flagged", label: "Flagged", badge: flaggedCount, tone: "accent" },
+    { key: "access", href: "/admin/accessibility", label: "Access votes" },
     { key: "scrapeHealth", href: "/admin/scrape-health", label: "Scrape health", badge: scrapeHealthCount, tone: "accent" },
     { key: "chat", href: "/admin/chat", label: "Chat" },
     { key: "badges", href: "/admin/badges", label: "Badges" },

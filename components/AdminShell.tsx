@@ -29,6 +29,7 @@ export async function AdminShell({
     | "revenue"
     | "analytics"
     | "flagged"
+    | "access"
     | "scrapeHealth"
     | "chat"
     | "badges"

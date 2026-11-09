@@ -783,6 +783,28 @@ export const dealFeedback = specialsSchema.table("deal_feedback", {
 });
 export type DealFeedback = typeof dealFeedback.$inferSelect;
 
+// Visitor-confirmed accessibility notes (lib/accessibility.ts). One row per browser per
+// feature per venue: voting again replaces the earlier answer. token_hash is a SHA-256 of a
+// random per-browser token, so the table holds nothing that identifies a person.
+export const accessibilityVotes = specialsSchema.table(
+  "accessibility_votes",
+  {
+    id: serial("id").primaryKey(),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venues.id, { onDelete: "cascade" }),
+    feature: text("feature").$type<"entrance" | "space" | "washroom">().notNull(),
+    answer: text("answer").$type<"yes" | "no" | "unsure">().notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("accessibility_votes_venue_feature_token").on(table.venueId, table.feature, table.tokenHash),
+    index("accessibility_votes_venue").on(table.venueId),
+  ]
+);
+export type AccessibilityVoteRow = typeof accessibilityVotes.$inferSelect;
+
 // A visitor's Web Push subscription (components/PushOptIn.tsx / lib/push-send.ts).
 // Scoped to a region rather than a lat/lng radius -- a true geofence would need a second
 // browser permission (Geolocation) on top of Notifications, and this site is already

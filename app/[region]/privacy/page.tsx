@@ -27,6 +27,8 @@ interface PrivacyCopy {
   thirdPartiesBody: string;
   tipsHeading: string;
   tipsBody: string;
+  accessHeading: string;
+  accessBody: string;
   cookiesHeading: string;
   cookiesBody: string;
   sponsoredHeading: string;
@@ -74,6 +76,9 @@ const copy: Record<Language, PrivacyCopy> = {
     tipsHeading: "Tips",
     tipsBody:
       "The tip jar redirects to Stripe's own checkout page -- this site never sees or stores your card details.",
+    accessHeading: "Accessibility notes",
+    accessBody:
+      "On a venue page you can answer short questions about a step-free entrance, room to move inside and the washroom. Your answers are stored with a random ID that your browser keeps in local storage. We keep only a hash of that ID, so it is not an account and carries no name, email or location. It lets you change your own answer later instead of adding another. A note appears on the page only when 3 visitors confirm it, and it is shown as reported by visitors, not as a claim of our own. Answers older than 18 months stop counting.",
     cookiesHeading: "Cookies",
     cookiesBody:
       "Your visitor and session IDs for the analytics described above are kept in your browser's local storage, not in cookies. The only analytics-related cookie is one we use to leave our own team's visits out of the numbers. No third-party advertising or tracking cookies are used.",
@@ -129,6 +134,9 @@ const copy: Record<Language, PrivacyCopy> = {
     tipsHeading: "Pourboires",
     tipsBody:
       "Le pot à pourboires redirige vers la page de paiement de Stripe -- ce site ne voit ni ne stocke jamais vos coordonnées bancaires.",
+    accessHeading: "Notes d'accessibilité",
+    accessBody:
+      "Sur la fiche d'un établissement, vous pouvez répondre à de courtes questions sur l'entrée sans marches, l'espace pour circuler et les toilettes. Vos réponses sont enregistrées avec un identifiant aléatoire que votre navigateur conserve dans le stockage local. Nous ne gardons qu'une version hachée de cet identifiant : ce n'est pas un compte et il ne contient ni nom, ni courriel, ni emplacement. Il vous permet de modifier votre propre réponse plus tard plutôt que d'en ajouter une autre. Une note n'apparaît que lorsque 3 visiteurs la confirment, et elle est présentée comme rapportée par des visiteurs, non comme une affirmation de notre part. Les réponses de plus de 18 mois ne comptent plus.",
     cookiesHeading: "Témoins (cookies)",
     cookiesBody:
       "Vos identifiants de session et de visiteur pour les analyses décrites ci-dessus sont conservés dans le stockage local de votre navigateur, et non dans des témoins. Le seul témoin lié aux analyses sert à exclure les visites de notre propre équipe des statistiques. Aucun témoin publicitaire ou de suivi tiers n'est utilisé.",
@@ -220,6 +228,11 @@ export default async function PrivacyPage() {
         <div>
           <h2 className="font-display text-xl text-foreground mb-2">{c.tipsHeading}</h2>
           <p>{c.tipsBody}</p>
+        </div>
+
+        <div>
+          <h2 className="font-display text-xl text-foreground mb-2">{c.accessHeading}</h2>
+          <p>{c.accessBody}</p>
         </div>
 
         <div>

@@ -11,6 +11,7 @@ import { GuideLinks } from "@/components/GuideLinks";
 import { getGuideLinks } from "@/lib/guide-links";
 import { getTownsForRegion } from "@/lib/towns";
 import { getNearbyRegions } from "@/lib/nearby-regions";
+import { getAccessibleVenueIds } from "@/lib/accessibility-data";
 import { getTagPageSlugsForRegion } from "@/lib/tag-pages-data";
 import { areaNameFromBrand } from "@/lib/page-titles";
 import { FAQSection } from "@/components/FAQSection";
@@ -32,13 +33,14 @@ export default async function Home() {
   const lang = await getEffectiveLanguage(region);
   const { timezone, province } = await getRegionContext(region);
   const today = todayDowInRegion(timezone);
-  const [specials, categorySponsors, areas, towns, nearby, tagPages] = await Promise.all([
+  const [specials, categorySponsors, areas, towns, nearby, tagPages, accessibleVenueIds] = await Promise.all([
     getSpecialsWithVenueForDay(region.id, today),
     getActiveCategorySponsors([region.id]),
     getActiveVenueCities(region.id),
     getTownsForRegion(region.id, region.slug, areaNameFromBrand(region.brandName)),
     getNearbyRegions(region),
     region.language === "fr" ? Promise.resolve([]) : getTagPageSlugsForRegion(region.id),
+    getAccessibleVenueIds(region.id),
   ]);
 
   const jsonLd = buildSpecialsJsonLd(specials, region.brandName, timezone, province.code);
@@ -67,6 +69,7 @@ export default async function Home() {
         lang={lang}
         regionLat={region.lat}
         regionLng={region.lng}
+        accessibleVenueIds={accessibleVenueIds}
       />
 
       <TipJar

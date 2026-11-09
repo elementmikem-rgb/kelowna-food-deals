@@ -21,6 +21,7 @@ import { tagFromSlug, TAG_PAGE_LABELS, type SpecialTag } from "@/lib/special-tag
 import { getTagPageSlugsForRegion } from "@/lib/tag-pages-data";
 import { getTownsForRegion, townSlug, type Town } from "@/lib/towns";
 import { getNearbyRegions } from "@/lib/nearby-regions";
+import { getAccessibleVenueIds } from "@/lib/accessibility-data";
 import type { SpecialCategory } from "@/db/schema";
 
 // Same per-request region resolution as the home page (app/[region]/page.tsx)
@@ -138,11 +139,12 @@ export default async function SlugPage({ params }: SlugPageProps) {
   // the page is about.
   const dayToLoad = resolved.kind === "day" ? resolved.dow : todayDowInRegion(timezone);
   const areaName = areaNameFromBrand(region.brandName);
-  const [specials, categorySponsors, towns, nearby] = await Promise.all([
+  const [specials, categorySponsors, towns, nearby, accessibleVenueIds] = await Promise.all([
     getSpecialsWithVenueForDay(region.id, dayToLoad),
     getActiveCategorySponsors([region.id]),
     getTownsForRegion(region.id, region.slug, areaName),
     getNearbyRegions(region),
+    getAccessibleVenueIds(region.id),
   ]);
 
   // A town page's structured data lists only that town's specials.
@@ -208,6 +210,7 @@ export default async function SlugPage({ params }: SlugPageProps) {
         initialCity={resolved.kind === "town" ? resolved.town.city : undefined}
         regionLat={region.lat}
         regionLng={region.lng}
+        accessibleVenueIds={accessibleVenueIds}
       />
 
       <TipJar regionSlug={region.slug} lang={lang} />

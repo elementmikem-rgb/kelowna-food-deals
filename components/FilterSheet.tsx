@@ -46,6 +46,9 @@ export function FilterSheet({
   onUnder10,
   late,
   onLate,
+  accessible,
+  onAccessible,
+  showAccessible,
   tag,
   onTag,
   category,
@@ -68,6 +71,9 @@ export function FilterSheet({
   onUnder10: (v: boolean) => void;
   late: boolean;
   onLate: (v: boolean) => void;
+  accessible: boolean;
+  onAccessible: (v: boolean) => void;
+  showAccessible: boolean;
   tag: SpecialTag | "all";
   onTag: (t: SpecialTag | "all") => void;
   category: SpecialCategory | "all";
@@ -154,6 +160,14 @@ export function FilterSheet({
               {L.late}
             </Pill>
           </Section>
+
+          {showAccessible && (
+            <Section title={L.accessTitle}>
+              <Pill on={accessible} onClick={() => onAccessible(!accessible)}>
+                {L.accessible}
+              </Pill>
+            </Section>
+          )}
 
           <Section title={L.type}>
             <Pill on={category === "all"} onClick={() => onCategory("all")}>
