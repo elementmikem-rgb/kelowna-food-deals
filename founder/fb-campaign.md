@@ -1,7 +1,7 @@
 # Today's Tab — Facebook Group Campaign Tracker
 
 **Total joined:** ~198 groups · **Campaign-relevant:** ~139 · **Community groups posted:** 27 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~87  
-**Last updated:** 2026-11-09 (Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
+**Last updated:** 2026-11-09 (Kelowna Rant And Rave posted; Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
 
 Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule risk`
 
@@ -14,7 +14,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Everything Kelowna | ✔ POSTED | todaystab.com/kelowna — 2026-10-28 |
-| Kelowna Rant And Rave | ✅ JOINED | |
+| Kelowna Rant And Rave | ✔ POSTED | todaystab.com/kelowna — 2026-11-09 (new fun template). Private, 4.9K, quiet (about 22 posts a month). Published at once |
 | West Kelowna Rave and Rant NEW | ✔ POSTED | kelownafooddeals.shop — 2026-09-07 |
 | Kelowna Grocery Deals | ✔ POSTED | kelownafooddeals.shop — 2026-09-07 |
 | Winfield Local | ✅ JOINED | Lake Country area |
