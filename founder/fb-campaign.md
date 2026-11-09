@@ -378,6 +378,20 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 ---
 
+## Regions with no joined group (checked 2026-11-09)
+
+About 41 of 98 active regions have no joined group, judged by group names against region names, so treat it as approximate. This tracker was wrong about several groups on 2026-11-09, and only about 70 of 180 joined group names were seen. Some regions may be covered by a broader group (Surrey by Vancouver, Calgary quadrants by Calgary). Venue counts in brackets.
+
+- **Quebec (17, French posts needed):** Laval (133), Gatineau (115), Laurentides (114), Sherbrooke (101), Abitibi-Témiscamingue (101), Saguenay (99), Longueuil (95), Lévis (93), Saint-Jean-sur-Richelieu (91), Brossard (87), Trois-Rivières (86), Granby (70), Drummondville (84), Charlevoix (82), Rimouski (20), Gaspésie Nord (20), Gaspésie Sud (15)
+- **Atlantic (6):** St. John's NL (119), Cape Breton (102), Saint John (96), Fredericton (94), Charlottetown (89), Annapolis Valley (92)
+- **Ontario (7):** Prince Edward County (100), Peterborough & Kawarthas (91), Collingwood & Blue Mountain (87), Brantford (74), North Bay (69), Muskoka (21), Chatham-Kent (18)
+- **Prairies and Alberta (6):** Brandon (77), Medicine Hat (72), Fort McMurray (60), Grande Prairie (19), Sherwood Park (19), Banff & Canmore (20)
+- **BC (5):** Surrey & White Rock (113), Burnaby & Tri-Cities (20), Richmond (20), North Shore (18), Fraser Valley (17)
+
+Biggest gaps in English: St. John's, Surrey, Cape Breton, Prince Edward County, Saint John, Fredericton. Next step offered to Mike: join groups for the top gaps, then read each group's rules and its pending-content page before posting.
+
+---
+
 ## Post copy template
 
 > Hey [CITY] neighbours -- I built a free site that tracks happy hours and daily food/drink specials at bars and restaurants around the city, pulled straight from each place's own menu/site so it's actually current. No app, no account needed. If something's missing or out of date there's a quick confirm/report button right on the listing.
