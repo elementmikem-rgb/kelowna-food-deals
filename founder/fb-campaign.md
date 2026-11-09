@@ -1,7 +1,7 @@
 # Today's Tab — Facebook Group Campaign Tracker
 
 **Total joined:** ~198 groups · **Campaign-relevant:** ~139 · **Community groups posted:** 27 · **Food Deals groups posted:** 25 · **Community groups not yet posted:** ~87  
-**Last updated:** 2026-11-09 (Kelowna Rant And Rave posted; Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
+**Last updated:** 2026-11-09 (joined 3 more: Edmonton Food - FoodYEG, Manitoba Food Bloggers, Support Local YYC Business; Kelowna Rant And Rave posted; Kingston Shameless Promotion reposted with new template; stale pending posts deleted in Support Local Business Regina and Promote Yourself Waterloo; Winnipeg Events and Penny Pinchers Winnipeg skipped for no-promo rules; four 11-07 posts still pending) · 2026-10-30 (1 post: Windsor's Finest; Red Deer Rants and Raves skipped for no-ad rules; Rant And Rave Regina drafted but Facebook rate limit hit, not posted, stopped after 2 attempts of 5 requested; earlier 10-29, later: 4 more posts — Windsor Food Spotters repost, Local Moncton Events, Support Local Business Winnipeg, St. Albert alberta RANT AND RAVE; skipped Penticton Foodies, REGINA Takeout, Edmonton YOU'VE GOT TO EAT HERE, St Albert Chat-Rants And Raves; earlier: 5 new posts — Edmonton Rant & Rave, Nanaimo, Nelson, Calgary Hub, Squamish Rant & Rave; 10 new groups joined — Edmonton Exposed, St. Albert x2, Red Deer Rant & Rave, people of winnipeg, Winnipeg Events, Rant And Rave Regina, Victoria BC x2, What's Going On In Lethbridge)
 
 Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule risk`
 
@@ -104,6 +104,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Events in Calgary | ✅ JOINED | |
 | Calgary Rant and Rave | ✅ JOINED | |
 | Ask Calgary | ✅ JOINED | |
+| Support Local YYC Business | ✅ JOINED 2026-11-09 | Public, 26K, 60+ posts a day. Joined at once, no questions. Check rules before posting |
 
 ### Airdrie & Cochrane
 
@@ -126,6 +127,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Edmonton Events | ✅ JOINED | |
 | Events In Edmonton | ✅ JOINED | |
 | Edmonton Hub | ✅ JOINED | |
+| Edmonton Food - FoodYEG (A group for Foodies!) | ✅ JOINED 2026-11-09 | Public, 13K, about 3 posts a day. Joined at once, no questions. Check rules before posting |
 | EDMONTON RANT AND RAVE | ✔ POSTED | todaystab.com/edmonton — 2026-10-29 (pending admin approval) |
 | Edmonton What's Happening | ✅ JOINED | |
 | North Side Hub (Edmonton) | ✅ JOINED | |
@@ -158,6 +160,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Penny Pinchers Winnipeg | ⚠️ JOINED — rule risk, skipped 2026-11-09 | 130K, member now. Rules: no advertising your business or page, removed posts must not be reposted or you are removed. Not posted |
+| Manitoba Food Bloggers | ✅ JOINED 2026-11-09 | Public, 2.8K, about 5 posts a day. Joined at once, no questions. Check rules before posting |
 | Support Local Business Winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-10-29 (live in feed; group About welcomes promotion) |
 | savemoneyinwinnipeg | ✅ JOINED | |
 | people of winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-11-07, PENDING admin approval (35.4K; About says post what you want); rechecked 2026-11-09: still pending |
