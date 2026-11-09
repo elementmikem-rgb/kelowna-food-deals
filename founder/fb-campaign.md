@@ -51,7 +51,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Victoria, BC Community | ✅ JOINED | |
-| Victoria, BC | ✔ POSTED | todaystab.com/victoria — 2026-11-07, pending admin approval (48.9K) |
+| Victoria, BC | ✔ POSTED | todaystab.com/victoria — 2026-11-07, pending admin approval (48.9K); rechecked 2026-11-09 via group "Your content": still pending |
 | Victoria Buzz | ⚠️ JOINED — rule risk, skipped 2026-11-07 | 54.7K. News publisher group; welcome rules list spam as removable, 10 posts/day. Not posted |
 
 ### Nanaimo
@@ -131,7 +131,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | North Side Hub (Edmonton) | ✅ JOINED | |
 | Edmonton Community | ✅ JOINED | |
 | Edmonton Chat And Community | ✅ JOINED | |
-| Edmonton Exposed | ✔ POSTED | todaystab.com/edmonton — 2026-11-07, PENDING admin approval (12.8K; rule: keep it civil) |
+| Edmonton Exposed | ✔ POSTED | todaystab.com/edmonton — 2026-11-07, PENDING admin approval (12.8K; rule: keep it civil); rechecked 2026-11-09: still pending |
 | St. Albert alberta RANT AND RAVE | ✔ POSTED | todaystab.com/st-albert-spruce-grove — 2026-10-29 (live in feed) |
 | St Albert Chat-Rants And Raves | ⚠️ JOINED — rule risk | Joined 2026-10-29 — 9.2K — rule 1: no promotions or spam, do not post. Idea parked 2026-10-29: ask admin for one-time permission (Mike said leave for now) |
 
@@ -147,7 +147,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | What's Going On In Lethbridge and Area | ✅ JOINED | |
-| What's Going On In Lethbridge | ✔ POSTED | todaystab.com/lethbridge — 2026-11-07, PENDING admin approval (73.7K; About: post anything local) |
+| What's Going On In Lethbridge | ✔ POSTED | todaystab.com/lethbridge — 2026-11-07, APPROVED and live (admin approval notice about 11:20 AM Pacific; 73.8K; 1 reaction, 0 comments at first check) |
 
 ---
 
@@ -160,7 +160,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Penny Pinchers Winnipeg | ✅ JOINED | Joined 2026-10-28 — 129K members — pending approval |
 | Support Local Business Winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-10-29 (live in feed; group About welcomes promotion) |
 | savemoneyinwinnipeg | ✅ JOINED | |
-| people of winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-11-07, PENDING admin approval (35.4K; About says post what you want) |
+| people of winnipeg | ✔ POSTED | todaystab.com/winnipeg — 2026-11-07, PENDING admin approval (35.4K; About says post what you want); rechecked 2026-11-09: still pending |
 | Winnipeg Events - What to do in and around Winnipeg, Manitoba | ✅ JOINED | Joined 2026-10-29 — 3.9K |
 
 ---
@@ -174,7 +174,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | REGINA Takeout | ✔ POSTED | todaystab.com/regina — 2026-10-28 |
 | What's happening Regina?!!!! | ✅ JOINED | |
 | Support Local Business Regina | ✅ JOINED | |
-| Rant And Rave Regina | ✔ POSTED | todaystab.com/regina — 2026-11-07, PENDING admin approval (checked same day; new "excited" wording; 21K) |
+| Rant And Rave Regina | ✔ POSTED | todaystab.com/regina — 2026-11-07, PENDING admin approval (checked same day; new "excited" wording; 21K); rechecked 2026-11-09: still pending, and the group shows "Your review is still pending" (admins have not finished reviewing the membership request, so the post cannot go up until it clears) |
 
 ### Saskatoon
 
