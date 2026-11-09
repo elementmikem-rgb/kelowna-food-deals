@@ -23,5 +23,5 @@ export const ANALYTICS_NOTES: AnalyticsNote[] = [
   { date: "2026-10-28", label: "FB posts" },
   { date: "2026-10-29", label: "FB posts" },
   { date: "2026-10-30", label: "FB posts" },
-  { date: "2026-11-07", label: "FB posts (5, waiting on admin approval)" },
+  { date: "2026-11-07", label: "FB posts (5 groups, Lethbridge approved first)" },
 ];
