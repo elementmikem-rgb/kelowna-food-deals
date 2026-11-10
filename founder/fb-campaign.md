@@ -14,7 +14,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 | Group | Status | Notes |
 |-------|--------|-------|
 | Everything Kelowna | ✔ POSTED | todaystab.com/kelowna — 2026-10-28 |
-| Kelowna Rant And Rave | ✔ POSTED | todaystab.com/kelowna — 2026-11-09 (new fun template). Private, 4.9K, quiet (about 22 posts a month). Published at once |
+| Kelowna Rant And Rave | ✘ REMOVED | todaystab.com/kelowna — 2026-11-09 (new fun template). Private, 4.9K. Published at once, then REMOVED by an admin about 6 hours later; admin feedback: "no advertising". Do not repost |
 | West Kelowna Rave and Rant NEW | ✔ POSTED | kelownafooddeals.shop — 2026-09-07 |
 | Kelowna Grocery Deals | ✔ POSTED | kelownafooddeals.shop — 2026-09-07 |
 | Winfield Local | ✅ JOINED | Lake Country area |
