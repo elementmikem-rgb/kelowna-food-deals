@@ -256,7 +256,7 @@ Legend: `✔ POSTED` | `✅ JOINED — not yet posted` | `⚠️ JOINED — rule
 
 | Group | Status | Notes |
 |-------|--------|-------|
-| Kingston Shameless Promotion | ✔ POSTED | todaystab.com — 2026-10-26; reposted 2026-11-09 with the new fun template (group is explicitly for promotion, 9.4K). Published at once, no approval |
+| Kingston Shameless Promotion | ✔ POSTED | todaystab.com — 2026-10-26; reposted 2026-11-09 with the new fun template (group is explicitly for promotion, 9.4K). Checked 2026-11-09 evening: the repost is PENDING admin approval (it did not publish at once, earlier note was wrong); the 10-26 post status was not rechecked. Recheck in 2-3 days |
 
 ### Barrie
 
