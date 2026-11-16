@@ -1,5 +1,51 @@
 import { describe, it, expect } from "vitest";
-import { parseOpeningHours, formatTime12, hoursRows, openingHoursJsonLd, type OpeningHours } from "./opening-hours";
+import { parseOpeningHours, formatTime12, hoursRows, openingHoursJsonLd, hoursFromEntries, type OpeningHours } from "./opening-hours";
+
+describe("hoursFromEntries", () => {
+  const week = [
+    { days_of_week: [1], open: null, close: null },
+    { days_of_week: [2, 3, 4], open: "11:00", close: "22:00" },
+    { days_of_week: [5, 6], open: "11:00", close: "23:00" },
+    { days_of_week: [0], open: "12:00", close: "20:00" },
+  ];
+
+  it("expands day groups into a full week, null open/close meaning closed", () => {
+    expect(hoursFromEntries(week)).toEqual({
+      "0": [["12:00", "20:00"]],
+      "1": null,
+      "2": [["11:00", "22:00"]],
+      "3": [["11:00", "22:00"]],
+      "4": [["11:00", "22:00"]],
+      "5": [["11:00", "23:00"]],
+      "6": [["11:00", "23:00"]],
+    });
+  });
+
+  it("keeps split shifts as two ranges on the same day", () => {
+    const h = hoursFromEntries([
+      { days_of_week: [1], open: null, close: null },
+      { days_of_week: [2, 3, 4, 5, 6, 0], open: "11:00", close: "14:00" },
+      { days_of_week: [2, 3, 4, 5, 6, 0], open: "17:00", close: "22:00" },
+    ]);
+    expect(h?.["3"]).toEqual([["11:00", "14:00"], ["17:00", "22:00"]]);
+  });
+
+  it("returns null when a day is not covered (unknown is not closed)", () => {
+    expect(hoursFromEntries(week.slice(0, 3))).toBeNull();
+  });
+
+  it("returns null when a day is both closed and open", () => {
+    expect(hoursFromEntries([...week, { days_of_week: [1], open: "10:00", close: "12:00" }])).toBeNull();
+  });
+
+  it("returns null for half-filled, malformed or non-array input", () => {
+    expect(hoursFromEntries([{ days_of_week: [0, 1, 2, 3, 4, 5, 6], open: "09:00", close: null }])).toBeNull();
+    expect(hoursFromEntries([{ days_of_week: [9], open: "09:00", close: "17:00" }])).toBeNull();
+    expect(hoursFromEntries("9 to 5")).toBeNull();
+    expect(hoursFromEntries(null)).toBeNull();
+    expect(hoursFromEntries([])).toBeNull();
+  });
+});
 
 const MISS_PATS: OpeningHours = {
   "0": [["09:00", "16:35"]],

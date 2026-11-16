@@ -4,6 +4,7 @@ import type { ExtractedSpecial, ExtractedEvent, ExtractedMenuItem } from "./extr
 import { pacificTodayISODate } from "@/lib/time";
 import { specialIdentityKey, eventIdentityKey } from "@/lib/archived-match";
 import { shouldHoldEmptyExtraction } from "./wipe-guard";
+import type { OpeningHours } from "@/lib/opening-hours";
 
 function menuItemIdentityKey(m: {
   name: string;
@@ -339,6 +340,28 @@ export async function replaceVenueMenuItems(
 // cap existed). Capped well above what a legitimate venue needs (website + menu +
 // a handful of specials/happy-hour/events pages) so real discovery still has room.
 export const MAX_VENUE_SOURCE_URLS = 10;
+
+// The label the cron stores next to hours it read from a venue's own pages. Hours entered by hand
+// or from another source carry a different label, and are never overwritten by the cron.
+export const AUTO_HOURS_SOURCE = "its website";
+
+// Saves hours the extraction verified. Does nothing for null (a page without usable hours must
+// not wipe hours we already have). Only writes when the venue has no hours yet or its hours
+// came from this same cron path, so hand-entered hours are never overwritten.
+export async function saveVenueOpeningHours(venueId: number, hours: OpeningHours | null): Promise<boolean> {
+  if (!hours) return false;
+  const updated = await db
+    .update(venues)
+    .set({ openingHours: hours, openingHoursSource: AUTO_HOURS_SOURCE })
+    .where(
+      and(
+        eq(venues.id, venueId),
+        sql`(${venues.openingHoursSource} is null or ${venues.openingHoursSource} = ${AUTO_HOURS_SOURCE})`
+      )
+    )
+    .returning({ id: venues.id });
+  return updated.length > 0;
+}
 
 export async function mergeVenueSourceUrls(venueId: number, newUrls: string[]): Promise<void> {
   if (newUrls.length === 0) return;

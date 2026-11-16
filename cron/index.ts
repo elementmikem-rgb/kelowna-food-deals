@@ -37,6 +37,7 @@ import {
   replaceVenueSpecials,
   replaceVenueEvents,
   replaceVenueMenuItems,
+  saveVenueOpeningHours,
   mergeVenueSourceUrls,
   archiveExpiredMonthlySpecials,
   hasFreshMenuItems,
@@ -299,7 +300,7 @@ export async function processVenue(
     // truncated, unparseable tool_use response.
     const includeMenuItems =
       normalized.length <= MENU_ITEMS_MAX_SOURCE_CHARS && !(await hasFreshMenuItems(venue.id, MENU_ITEMS_RECHECK_DAYS));
-    const { specials, events, menuItems, tokensUsed, cacheCreationTokens, cacheReadTokens, outputTokens } =
+    const { specials, events, menuItems, openingHours, tokensUsed, cacheCreationTokens, cacheReadTokens, outputTokens } =
       await extractVenueContent(normalized, includeMenuItems);
     tokensSpent += tokensUsed;
     const { held } = await replaceVenueSpecials(venue.id, regionId, sourceUrl, specials);
@@ -326,6 +327,12 @@ export async function processVenue(
     // item for this venue, as if the venue had removed its whole menu.
     if (includeMenuItems) {
       await replaceVenueMenuItems(venue.id, sourceUrl, menuItems);
+    }
+    // Hours are a bonus: a failure here must never fail the venue's night or hide its spend.
+    try {
+      if (await saveVenueOpeningHours(venue.id, openingHours)) console.log(`[${venue.name}] saved opening hours`);
+    } catch (err) {
+      console.warn(`[${venue.name}] could not save opening hours: ${err instanceof Error ? err.message : String(err)}`);
     }
     await logScrapeRun({
       venueId: venue.id,
@@ -558,7 +565,7 @@ async function applyBatchItemResult(
     return;
   }
 
-  const { specials, events, menuItems } = outcome.data;
+  const { specials, events, menuItems, openingHours } = outcome.data;
   const tokensSpent = item.fetchTokens + outcome.tokensUsed;
   // A malformed-but-zod-valid value (e.g. start_time "24:30" or specific_date
   // "2026-02-30") passes extraction validation but fails Postgres's own time/date
@@ -594,6 +601,12 @@ async function applyBatchItemResult(
     // this venue, as if the venue had removed its whole menu.
     if (item.includeMenuItems) {
       await replaceVenueMenuItems(item.venueId, item.sourceUrl, menuItems);
+    }
+    // Hours are a bonus: a failure saving them must not fail the item's other results.
+    try {
+      await saveVenueOpeningHours(item.venueId, openingHours);
+    } catch (hoursErr) {
+      console.warn(`[venue ${item.venueId}] could not save opening hours: ${hoursErr instanceof Error ? hoursErr.message : String(hoursErr)}`);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

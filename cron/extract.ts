@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { SpecialCategory, EventType } from "@/db/schema";
 import { pacificTodayISODate } from "@/lib/time";
+import { hoursFromEntries, quoteSupportsHours, type OpeningHours } from "@/lib/opening-hours";
 
 const MODEL = "claude-haiku-5-5";
 
@@ -107,7 +108,40 @@ const extractionResultSchema = z.object({
   specials: arrayOrEmptyOnMistype,
   events: arrayOrEmptyOnMistype,
   menu_items: arrayOrEmptyOnMistype,
+  // Deliberately unvalidated here: hours are optional and verified on their own in
+  // verifyOpeningHours, so a bad value can never fail the whole extraction.
+  opening_hours: z.unknown().optional(),
 });
+
+const MIN_HOURS_QUOTE_CHARS = 15;
+
+// Opening hours are the extra, low-stakes part of an extraction: anything wrong with them
+// (missing, malformed, a quote that is not on the page, a week with a gap) means "no hours",
+// never an error, so specials, events and menu items are unaffected.
+function verifyOpeningHours(raw: unknown, haystack: string): OpeningHours | null {
+  try {
+    if (!raw || typeof raw !== "object") return null;
+    const { evidence_quote, days } = raw as { evidence_quote?: unknown; days?: unknown };
+    if (typeof evidence_quote !== "string") return null;
+    const quote = collapseWhitespace(evidence_quote);
+    if (quote.length < MIN_HOURS_QUOTE_CHARS) return null;
+    if (!haystack.includes(quote)) {
+      console.warn(`dropped opening hours: evidence_quote not found verbatim in source text ("${evidence_quote}")`);
+      return null;
+    }
+    const hours = hoursFromEntries(days);
+    if (!hours) return null;
+    // The quote must itself contain every time reported and name more than one day, otherwise a
+    // fragment like "Monday 11 AM - 12 AM" would "prove" a whole week the page may not state.
+    if (!quoteSupportsHours(quote, hours)) {
+      console.warn(`dropped opening hours: quote does not contain every reported time or cover the week ("${evidence_quote}")`);
+      return null;
+    }
+    return hours;
+  } catch {
+    return null;
+  }
+}
 
 const MENU_ITEMS_SECTION = `
 MENU ITEMS rules, no exceptions:
@@ -116,6 +150,17 @@ MENU ITEMS rules, no exceptions:
 - Do NOT extract items with no stated price (e.g. "Ask your server", "MP"/market price, or a category heading with no price of its own).
 - If the source text is a very long full menu, prioritize the most prominent/signature items rather than exhaustively transcribing every single line — extract at most 40 items per page, favoring named dishes over minor variations (e.g. skip listing every burger topping add-on as its own item).
 - description: a short one-line summary of what's included, if the text gives one (e.g. ingredients). Null if none stated.
+`;
+
+const HOURS_SECTION = `
+OPENING HOURS rules (optional, separate from the arrays above), no exceptions:
+- opening_hours is the venue's regular weekly hours of operation (when the doors are open), NOT a happy hour or specials window. "Happy Hour 3-6pm" is never opening hours.
+- Report it ONLY when the text states hours for the venue itself and covers all seven days, with each day either given a time range or explicitly marked closed (e.g. "Mon closed" or "Closed Mondays"). If any day is not stated or is unclear, omit opening_hours entirely: an unmentioned day is unknown, not closed.
+- days: a list of entries, each {days_of_week, open, close}. days_of_week uses 0=Sunday ... 6=Saturday and lists EVERY day that shares that time range ("Tue-Thu 11am-10pm" -> days_of_week [2,3,4], open "11:00", close "22:00"). Use 24-hour "HH:MM". A closed day is an entry with open null and close null. A split shift (lunch and dinner) is two entries for the same days. If a venue closes after midnight, give the real closing time (e.g. "02:00").
+- If the page shows different hours for different seasons or locations, or only a "holiday hours" notice, omit opening_hours.
+- evidence_quote: a VERBATIM substring copied from the page text (exact characters) that contains the day names AND every opening and closing time you report, so copy the whole hours block, up to about 400 characters (a longer quote is fine). A fragment such as a single day's line is not enough. If you cannot copy one, omit opening_hours.
+- When the text DOES state the venue's hours for all seven days, you must report opening_hours every time. Do not skip it because the rest of the page has no specials.
+- Many pages have no usable hours. Omitting opening_hours is the correct answer for those.
 `;
 
 // Few-shot examples for the rules above -- genuinely improves extraction accuracy on the
@@ -213,6 +258,7 @@ EVENTS rules, no exceptions:
 - event_type: "live_music" for bands/DJs/performers, "trivia" for trivia/quiz nights, "karaoke", "sports_night" for game-watching nights, "other" for anything else that qualifies.
 - cover_charge_cents: whole cents if a cover/ticket price is explicitly stated, otherwise null (null does not disqualify the event — most local live music nights are free).
 ${includeMenuItems ? MENU_ITEMS_SECTION : ""}
+${HOURS_SECTION}
 ${WORKED_EXAMPLES}
 Shared rules for ${includeMenuItems ? "ALL THREE (specials, events, menu items)" : "BOTH (specials, events)"}:
 - evidence_quote: for every item you report, copy a short VERBATIM substring (exact characters, no paraphrasing) directly from the provided page text proving this item is real (the price/discount language for a special; the day/date + event-type language for an event${includeMenuItems ? "; the name + price for a menu item" : ""}). If you cannot find and copy such a literal substring, do not report that item at all — this is not optional.
@@ -226,6 +272,7 @@ export interface ExtractionOutcome {
   specials: ExtractedSpecial[];
   events: ExtractedEvent[];
   menuItems: ExtractedMenuItem[];
+  openingHours: OpeningHours | null;
   tokensUsed: number;
   cacheCreationTokens: number;
   cacheReadTokens: number;
@@ -445,6 +492,29 @@ export function buildExtractionRequestParams(truncated: string, includeMenuItems
                 ],
               },
             },
+            opening_hours: {
+              type: ["object", "null"],
+              description: "The venue's regular weekly opening hours, only when all seven days are stated. Omit otherwise.",
+              properties: {
+                days: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      days_of_week: { type: "array", items: { type: "integer" } },
+                      open: { type: ["string", "null"] },
+                      close: { type: ["string", "null"] },
+                    },
+                    required: ["days_of_week", "open", "close"],
+                  },
+                },
+                evidence_quote: {
+                  type: "string",
+                  description: "Verbatim substring copied from the source text that contains the hours.",
+                },
+              },
+              required: ["days", "evidence_quote"],
+            },
             ...(includeMenuItems
               ? {
                   menu_items: {
@@ -476,6 +546,7 @@ export function buildExtractionRequestParams(truncated: string, includeMenuItems
                 }
               : {}),
           },
+          // opening_hours is deliberately NOT required: omitting it is the normal answer.
           required: includeMenuItems ? ["specials", "events", "menu_items"] : ["specials", "events"],
         },
       },
@@ -488,6 +559,7 @@ export interface VerifiedExtraction {
   specials: ExtractedSpecial[];
   events: ExtractedEvent[];
   menuItems: ExtractedMenuItem[];
+  openingHours: OpeningHours | null;
 }
 
 // The verification pass shared by both the sync and batch paths: parses the model's raw
@@ -610,7 +682,12 @@ export function verifyExtraction(toolInput: unknown, haystack: string): Verified
     });
   }
 
-  return { specials: verifiedSpecials, events: verifiedEvents, menuItems: verifiedMenuItems };
+  return {
+    specials: verifiedSpecials,
+    events: verifiedEvents,
+    menuItems: verifiedMenuItems,
+    openingHours: verifyOpeningHours(extractionData.opening_hours, haystack),
+  };
 }
 
 export async function extractVenueContent(
