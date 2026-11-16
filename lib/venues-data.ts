@@ -6,6 +6,7 @@ import type { EventWithVenue } from "./events-data";
 import { recurringColumns } from "./events-data";
 import { regionTodayISODate, toDateOrNull } from "./time";
 import { previousSpecialsCutoff } from "./previous-specials-window";
+import { parseOpeningHours, type OpeningHours } from "./opening-hours";
 
 export interface VenueDetail {
   id: number;
@@ -22,6 +23,8 @@ export interface VenueDetail {
   claimedAt: Date | null;
   membersOnly: boolean;
   googlePlaceId: string | null;
+  openingHours: OpeningHours | null;
+  openingHoursSource: string | null;
 }
 
 export async function getVenueById(id: number): Promise<VenueDetail | null> {
@@ -41,12 +44,17 @@ export async function getVenueById(id: number): Promise<VenueDetail | null> {
       claimedAt: venues.claimedAt,
       membersOnly: venues.membersOnly,
       googlePlaceId: venues.googlePlaceId,
+      openingHours: venues.openingHours,
+      openingHoursSource: venues.openingHoursSource,
     })
     .from(venues)
     .where(and(eq(venues.id, id), eq(venues.active, true)))
     .limit(1);
 
-  return rows[0] ?? null;
+  const row = rows[0];
+  if (!row) return null;
+  // Anything malformed in the column is treated as "no hours" rather than shown.
+  return { ...row, openingHours: parseOpeningHours(row.openingHours) };
 }
 
 export async function getVenueSpecials(venueId: number): Promise<SpecialWithVenue[]> {

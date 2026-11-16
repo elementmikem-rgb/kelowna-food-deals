@@ -30,6 +30,8 @@ import { ShareButton } from "@/components/ShareButton";
 import { SaveVenueButton } from "@/components/SaveVenueButton";
 import { MembersOnlyBadge } from "@/components/MembersOnlyBadge";
 import { formatPrice } from "@/lib/format";
+import { hoursRows, openingHoursJsonLd } from "@/lib/opening-hours";
+import { todayDowInRegion } from "@/lib/time";
 import { groupByDayRange, groupEventsByDayRange } from "@/lib/group-days";
 import type { Language } from "@/lib/i18n";
 import { getEffectiveLanguage } from "@/lib/i18n";
@@ -205,6 +207,7 @@ export default async function VenuePage({ params }: PageProps) {
     hasMap: mapsPlaceUrl(venue.googlePlaceId) ?? undefined,
     url: venue.website ?? undefined,
     telephone: venue.phone ?? undefined,
+    openingHoursSpecification: venue.openingHours ? openingHoursJsonLd(venue.openingHours) : undefined,
     menu: venue.menuUrl ?? undefined,
     image:
       venuePhotos.length > 0
@@ -452,6 +455,23 @@ export default async function VenuePage({ params }: PageProps) {
             >
               {content[lang].writeReviewLabel}
             </a>
+          )}
+
+          {venue.openingHours && lang !== "fr" && (
+            <section aria-label="Opening hours" className="rounded-xl border border-border px-4 py-3 text-sm mt-2">
+              <h2 className="font-medium text-foreground mb-2">Hours</h2>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                {hoursRows(venue.openingHours, todayDowInRegion(timezone)).map((r) => (
+                  <div key={r.dow} className="contents">
+                    <dt className={r.isToday ? "font-medium text-foreground" : "text-muted"}>{r.day}</dt>
+                    <dd className={r.isToday ? "font-medium text-foreground text-right" : "text-right"}>{r.text}</dd>
+                  </div>
+                ))}
+              </dl>
+              {venue.openingHoursSource && (
+                <p className="mt-2 text-xs text-muted">Hours from {venue.openingHoursSource}. Check with the venue before you go.</p>
+              )}
+            </section>
           )}
 
           <div className="rounded-xl overflow-hidden border border-border h-48 mt-2">

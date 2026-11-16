@@ -141,6 +141,10 @@ export const venues = specialsSchema.table(
     website: text("website"),
     menuUrl: text("menu_url"),
     instagramHandle: text("instagram_handle"),
+    // Weekly opening hours, see lib/opening-hours.ts for the shape. Null = unknown (most venues).
+    openingHours: jsonb("opening_hours").$type<Record<string, [string, string][] | null> | null>(),
+    // Where the hours came from, shown next to them ("venue website", "Uber Eats", ...).
+    openingHoursSource: text("opening_hours_source"),
     contactEmail: text("contact_email"),
     sourceUrls: text("source_urls").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
