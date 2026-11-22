@@ -46,3 +46,40 @@ describe("stripQuotePrefix", () => {
     expect(stripQuotePrefix(">> deeper")).toBe("> deeper");
   });
 });
+
+describe("splitQuoted: header-style quotes (Outlook, French and English)", () => {
+  const outlookFr =
+    "Bonjour Mike,\n\nOui nous organisons des evenements.\n\nVeronique\nPub Theatre Metro\n[cid:abc]\n\n________________________________\nDe : Bons Plans <x@y.com>\nEnvoyé : 9 octobre 2026 15:37\nÀ : a@b.com\nObjet : Fiche\n\nBonjour,\nJe gère un site.";
+
+  it("collapses everything from the Outlook divider down", () => {
+    const out = splitQuoted(outlookFr);
+    expect(out.main).toContain("Oui nous organisons");
+    expect(out.main).not.toContain("Je gère un site");
+    expect(out.main).not.toContain("________");
+    expect(out.quoted).toContain("De : Bons Plans");
+    expect(out.quoted).toContain("Je gère un site");
+    expect(out.after).toBe("");
+  });
+
+  it("collapses an English Outlook block starting at From: with Sent: beneath", () => {
+    const out = splitQuoted("Thanks!\n\nFrom: Mike <m@x.com>\nSent: Tuesday\nTo: a@b.com\nSubject: Hi\n\nold text");
+    expect(out.main).toBe("Thanks!");
+    expect(out.quoted).toContain("old text");
+  });
+
+  it("collapses a -----Original Message----- block", () => {
+    const out = splitQuoted("Yes.\n\n-----Original Message-----\nFrom: a\nold");
+    expect(out.main).toBe("Yes.");
+    expect(out.quoted).toContain("old");
+  });
+
+  it("does not treat a lone 'From:' line in a normal message as a quote", () => {
+    const body = "Hi\nFrom: the team at the pub we love Fridays\nbye";
+    expect(splitQuoted(body)).toEqual({ main: body, quoted: null, after: "" });
+  });
+
+  it("does not collapse when the divider is the very first line", () => {
+    const body = "________________\nDe : a\nEnvoyé : b\nx";
+    expect(splitQuoted(body).quoted).toBeNull();
+  });
+});

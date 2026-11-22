@@ -24,7 +24,7 @@ export function splitQuoted(body: string): QuoteSplit {
       last = i;
     }
   }
-  if (first === -1) return { main: body, quoted: null, after: "" };
+  if (first === -1) return splitHeaderQuote(body, lines);
 
   const mainLines = lines.slice(0, first);
   while (mainLines.length > 0 && mainLines[mainLines.length - 1].trim() === "") mainLines.pop();
@@ -44,4 +44,25 @@ export function stripQuotePrefix(text: string): string {
     .split("\n")
     .map((line) => (line.startsWith("> ") ? line.slice(2) : line.startsWith(">") ? line.slice(1) : line))
     .join("\n");
+}
+
+// Outlook-style replies have no ">" prefixes: the history sits under a rule of underscores or an
+// "-----Original Message-----" line, or under a "De :" / "From:" header block followed by
+// "Envoyé :" / "Sent:" / "Date:". Everything from the first such marker down is history.
+const DIVIDER = /^\s*(_{10,}|-{3,}\s*(Original Message|Message d.origine)\s*-{3,})\s*$/i;
+const FROM_LINE = /^\s*(De|From)\s?:/i;
+const SENT_LINE = /^\s*(Envoy[ée]|Sent|Date)\s?:/i;
+
+function splitHeaderQuote(body: string, lines: string[]): QuoteSplit {
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (DIVIDER.test(lines[i])) { start = i; break; }
+    if (FROM_LINE.test(lines[i]) && lines.slice(i + 1, i + 5).some((l) => SENT_LINE.test(l))) { start = i; break; }
+  }
+  if (start === -1) return { main: body, quoted: null, after: "" };
+  const mainLines = lines.slice(0, start);
+  while (mainLines.length > 0 && mainLines[mainLines.length - 1].trim() === "") mainLines.pop();
+  // Nothing of the sender's own above the marker: leave the body whole rather than hide all of it.
+  if (mainLines.length === 0) return { main: body, quoted: null, after: "" };
+  return { main: mainLines.join("\n"), quoted: lines.slice(start).join("\n"), after: "" };
 }
