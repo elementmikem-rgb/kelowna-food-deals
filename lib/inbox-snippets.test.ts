@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SNIPPETS, fillSnippet, snippetsFor } from "./inbox-snippets";
+import { SNIPPETS, fillSnippet, snippetsFor, ownerLoginUrl } from "./inbox-snippets";
 
 describe("SNIPPETS", () => {
   it("has at least 12 snippets (6 EN + 6 FR pairs)", () => {
@@ -121,5 +121,55 @@ describe("fillSnippet", () => {
     const body = "Hi {{name}}, I added {{venue}} -- check {{venue}} at the link. Mike";
     const result = fillSnippet(body, { name: "Sue", venue: "The Pub" });
     expect(result.split("The Pub").length - 1).toBe(2);
+  });
+});
+
+describe("poster upsell snippets (owners only)", () => {
+  const upsell = SNIPPETS.filter((s) => s.id.includes("poster"));
+
+  it("has one English and one French version, both marked claimed-only", () => {
+    expect(upsell.map((s) => s.lang).sort()).toEqual(["en", "fr"]);
+    expect(upsell.every((s) => s.claimedOnly === true)).toBe(true);
+  });
+
+  it("is hidden for a venue that has not claimed its listing", () => {
+    expect(snippetsFor("en").some((s) => s.id.includes("poster"))).toBe(false);
+    expect(snippetsFor("en", { claimed: false }).some((s) => s.id.includes("poster"))).toBe(false);
+  });
+
+  it("is offered for a claimed venue", () => {
+    expect(snippetsFor("en", { claimed: true }).some((s) => s.id.includes("poster"))).toBe(true);
+    expect(snippetsFor("fr", { claimed: true }).some((s) => s.id.includes("poster"))).toBe(true);
+  });
+
+  it("only promises what was verified: the poster shows while the Boost runs, and Boosts are reviewed first", () => {
+    const en = upsell.find((s) => s.lang === "en")!.body;
+    expect(en).toMatch(/while the boost (is running|runs)/i);
+    expect(en).toMatch(/review/i);
+  });
+
+  it("quotes no price and makes no reach or results claim", () => {
+    for (const s of upsell) {
+      expect(s.body).not.toMatch(/\$\s?\d/);
+      expect(s.body).not.toMatch(/\d\s?\$/);
+      expect(s.body).not.toMatch(/views|more customers|guarantee|clients|visibility boost/i);
+    }
+  });
+
+  it("uses the owner login link variable and fills it", () => {
+    for (const s of upsell) expect(s.body).toContain("{{owner_link}}");
+    const filled = fillSnippet(upsell[0].body, { name: "Ana", venue: "Pub X", ownerLink: "https://todaystab.com/owner/login" });
+    expect(filled).toContain("https://todaystab.com/owner/login");
+    expect(filled).not.toContain("{{");
+  });
+});
+
+describe("ownerLoginUrl", () => {
+  it("builds the owner login link from the venue page address", () => {
+    expect(ownerLoginUrl("https://todaystab.com/kelowna/venues/553")).toBe("https://todaystab.com/owner/login");
+  });
+  it("returns null when there is no usable address", () => {
+    expect(ownerLoginUrl(null)).toBeNull();
+    expect(ownerLoginUrl("not a url")).toBeNull();
   });
 });

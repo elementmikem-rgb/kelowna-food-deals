@@ -3,10 +3,12 @@ export interface Snippet {
   label: string;
   lang: "en" | "fr";
   body: string;
+  // Only offered when the venue has claimed its listing (an owner, not a cold contact).
+  claimedOnly?: boolean;
 }
 
 // Canned reply snippets for the admin inbox.
-// Variables: {{name}}, {{venue}}, {{link}}.
+// Variables: {{name}}, {{venue}}, {{link}}, {{owner_link}} (the owner login page).
 // Rules: plain and warm, one ask per snippet, no emojis, no em dashes, signed Mike.
 // French uses proper accents and formal vous.
 export const SNIPPETS: Snippet[] = [
@@ -145,15 +147,58 @@ Pas de souci. J'ai retiré {{venue}} de notre liste et vous ne recevrez plus de 
 
 Mike`,
   },
+  // 7. Thanks for the photo, poster offer (claimed owners only).
+  // Promises only what was verified on 2026-11-22: a poster shows on that special's card while the Boost runs,
+  // and every Boost is reviewed before it goes live. No price and no reach claims.
+  {
+    id: "en-photo-poster-offer",
+    label: "Thanks for the photo, poster offer (owners)",
+    lang: "en",
+    claimedOnly: true,
+    body: `Hi {{name}},
+
+Thanks for sending the photo. It is now on the {{venue}} listing.
+
+If you would like a poster to show on the card of one of your specials, you can add it when you boost that special from your dashboard: {{owner_link}}
+
+The poster shows on that special's card while the Boost is running. I review each Boost before it goes live.
+
+Mike`,
+  },
+  {
+    id: "fr-photo-poster-offer",
+    label: "Merci pour la photo, offre d'affiche (propriétaires)",
+    lang: "fr",
+    claimedOnly: true,
+    body: `Bonjour {{name}},
+
+Merci pour la photo. Elle figure maintenant sur la fiche de {{venue}}.
+
+Si vous souhaitez qu'une affiche s'affiche sur la carte d'un de vos spéciaux, vous pouvez l'ajouter en lançant un coup de pouce pour ce spécial depuis votre tableau de bord : {{owner_link}}
+
+L'affiche apparaît sur la carte de ce spécial tant que le coup de pouce est actif. J'examine chaque coup de pouce avant sa mise en ligne.
+
+Mike`,
+  },
 ];
 
-export function snippetsFor(lang: "en" | "fr"): Snippet[] {
-  return SNIPPETS.filter((s) => s.lang === lang);
+export function snippetsFor(lang: "en" | "fr", opts: { claimed?: boolean } = {}): Snippet[] {
+  return SNIPPETS.filter((s) => s.lang === lang && (!s.claimedOnly || opts.claimed === true));
+}
+
+// The owner login page lives at the site root, not under a region, so build it from the venue page's origin.
+export function ownerLoginUrl(venueUrl: string | null | undefined): string | null {
+  if (!venueUrl) return null;
+  try {
+    return `${new URL(venueUrl).origin}/owner/login`;
+  } catch {
+    return null;
+  }
 }
 
 export function fillSnippet(
   body: string,
-  vars: { name?: string; venue?: string; link?: string }
+  vars: { name?: string; venue?: string; link?: string; ownerLink?: string }
 ): string {
   let result = body;
 
@@ -163,6 +208,7 @@ export function fillSnippet(
   result = result.replaceAll("{{name}}", vars.name ?? "");
   result = result.replaceAll("{{venue}}", vars.venue ?? "");
   result = result.replaceAll("{{link}}", vars.link ?? "");
+  result = result.replaceAll("{{owner_link}}", vars.ownerLink ?? "");
 
   // When name was not provided (or empty), the greeting becomes "Hi ," or
   // "Bonjour ," -- tighten those up to "Hi," / "Bonjour,".

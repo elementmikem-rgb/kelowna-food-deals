@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { db, venues, specials, events, venuePhotos, outreachSends, inboundEmails } from "@/db";
 import { emailBasis, type EmailBasis } from "@/lib/email-basis";
-import { formatSpecialLine } from "@/lib/inbox-venue-format";
+import { formatSpecialLine, formatOwnerFunnel } from "@/lib/inbox-venue-format";
 
 // A read-only snapshot of a venue for the inbox side panel, so a reply can be compared with what the
 // listing currently says. Nothing here writes.
@@ -18,6 +18,7 @@ export interface VenuePanelData {
   specials: string[]; // one line each, see formatSpecialLine
   eventCount: number;
   photoCount: number;
+  ownerFunnel: string | null; // credits, live Boosts and photos for a claimed venue (see formatOwnerFunnel)
   note: string | null; // the audit note (checked_no_listings_note), trimmed
   sends: { kind: string; status: string; at: string; opened: boolean; clicked: boolean }[];
 }
@@ -36,6 +37,7 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
       note: venues.checkedNoListingsNote,
       contactEmailSource: venues.contactEmailSource,
       contactEmailVerifiedAt: venues.contactEmailVerifiedAt,
+      creditBalance: venues.creditBalance,
     })
     .from(venues)
     .where(eq(venues.id, venueId))
@@ -52,7 +54,7 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
       ).length > 0
     : false;
 
-  const [activeSpecials, [eventRow], [photoRow], sends] = await Promise.all([
+  const [activeSpecials, [eventRow], [photoRow], sends, [boostSpecials], [boostEvents]] = await Promise.all([
     db
       .select({
         title: specials.title,
@@ -82,6 +84,14 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
       .where(and(eq(outreachSends.venueId, venueId), eq(outreachSends.hiddenFromInbox, false)))
       .orderBy(desc(outreachSends.createdAt))
       .limit(4),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(specials)
+      .where(and(eq(specials.venueId, venueId), isNull(specials.archivedAt), sql`${specials.boostedUntil} > now()`)),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(events)
+      .where(and(eq(events.venueId, venueId), isNull(events.archivedAt), sql`${events.boostedUntil} > now()`)),
   ]);
 
   return {
@@ -99,6 +109,12 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
     specials: activeSpecials.map(formatSpecialLine),
     eventCount: eventRow?.n ?? 0,
     photoCount: photoRow?.n ?? 0,
+    ownerFunnel: formatOwnerFunnel({
+      claimed: v.claimedAt !== null,
+      creditBalance: v.creditBalance,
+      activeBoosts: (boostSpecials?.n ?? 0) + (boostEvents?.n ?? 0),
+      photoCount: photoRow?.n ?? 0,
+    }),
     note: v.note ? v.note.slice(0, 400) : null,
     sends: sends.map((s) => ({
       kind: s.kind,

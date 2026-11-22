@@ -44,6 +44,7 @@ export default async function ThreadPage({ params }: PageProps) {
           displayName={thread.displayName}
           contactEmail={thread.contactEmail}
           venueUrl={thread.venueUrl}
+          venueClaimed={venue?.claimed ?? false}
           starred={thread.starred}
           status={thread.status}
           snoozedUntil={thread.snoozedUntil ? thread.snoozedUntil.toISOString() : null}

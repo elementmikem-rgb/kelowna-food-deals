@@ -33,6 +33,7 @@ export function VenuePanel({
           {venue.claimed && <span className="rounded-md bg-evergreen/15 px-2 py-0.5 text-evergreen">Claimed</span>}
           {venue.unsubscribed && <span className="rounded-md bg-danger/10 px-2 py-0.5 text-danger">Unsubscribed</span>}
         </div>
+        {venue.ownerFunnel && <p className="mt-2 text-xs text-muted-2">Owner: {venue.ownerFunnel}</p>}
       </div>
 
       {(newPhones.length > 0 || prices.length > 0) && (

@@ -6,7 +6,7 @@ import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
 import { cleanBodyText, tokenizeLinks } from "@/lib/email-display";
 import { detectLanguage } from "@/lib/detect-language";
 import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
-import { fillSnippet, snippetsFor } from "@/lib/inbox-snippets";
+import { fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
 import type { InboxThreadStatus } from "@/db/schema";
@@ -193,6 +193,7 @@ interface InboxThreadProps {
   displayName: string;
   contactEmail: string | null;
   venueUrl?: string | null;
+  venueClaimed?: boolean;
   starred?: boolean;
   status?: InboxThreadStatus | null;
   snoozedUntil?: string | null;
@@ -213,6 +214,7 @@ export function InboxThread({
   displayName,
   contactEmail,
   venueUrl,
+  venueClaimed = false,
   starred = false,
   status = null,
   snoozedUntil = null,
@@ -538,6 +540,7 @@ export function InboxThread({
       name: first && !first.includes("@") ? first : undefined,
       venue: displayName,
       link: venueUrl ?? undefined,
+      ownerLink: ownerLoginUrl(venueUrl) ?? undefined,
     });
     setReplyText((prev) => (prev.trim() ? `${prev}\n\n${filled}` : filled));
     setSnippetsOpen(false);
@@ -842,7 +845,7 @@ export function InboxThread({
                 {snippetsOpen && (
                   <div className="absolute bottom-full left-0 z-20 mb-1 max-h-72 w-72 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-lg">
                     <p className="px-4 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-muted-2">{replyLang === "fr" ? "French" : "English"}</p>
-                    {snippetsFor(replyLang).map((s) => (
+                    {snippetsFor(replyLang, { claimed: venueClaimed }).map((s) => (
                       <button key={s.id} onClick={() => insertSnippet(s.body)} className="block w-full px-4 py-2 text-left text-sm text-muted hover:bg-accent-soft/30 hover:text-foreground">
                         {s.label}
                       </button>

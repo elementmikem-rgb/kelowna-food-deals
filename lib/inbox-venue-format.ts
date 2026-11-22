@@ -52,3 +52,25 @@ export function formatSpecialSummary(s: SpecialSummary): string {
   const when = start && end ? `${dayText} ${start} to ${end}` : start ? `${dayText} from ${start}` : dayText;
   return [when, s.priceCents !== null ? dollars(s.priceCents) : null, s.title].filter(Boolean).join(", ");
 }
+
+export interface OwnerFunnel {
+  claimed: boolean;
+  creditBalance: number;
+  activeBoosts: number;
+  photoCount: number;
+}
+
+function plural(n: number, one: string): string {
+  return `${n} ${one}${n === 1 ? "" : "s"}`;
+}
+
+// One line showing where a claimed owner is in the funnel (credit left, any live Boost, photos), so a
+// conversation shows context before replying. Null for a venue that has not claimed its listing.
+export function formatOwnerFunnel(f: OwnerFunnel): string | null {
+  if (!f.claimed) return null;
+  return [
+    plural(f.creditBalance, "credit"),
+    f.activeBoosts === 0 ? "no active Boost" : plural(f.activeBoosts, "active Boost"),
+    f.photoCount === 0 ? "no photos" : plural(f.photoCount, "photo"),
+  ].join(", ");
+}
