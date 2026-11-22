@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
 import { cleanBodyText, tokenizeLinks } from "@/lib/email-display";
 import { detectLanguage } from "@/lib/detect-language";
-import { joinTranslated, splitForTranslation } from "@/lib/translate-units";
+import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { fillSnippet, snippetsFor } from "@/lib/inbox-snippets";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
@@ -137,6 +137,15 @@ function translateErrorMessage(e: unknown): string {
   return "Translation failed. Try again, or use Chrome 138 or newer.";
 }
 
+// Greetings and closings come from a small glossary, a bare word is sent with a period so the translator has
+// something to anchor on, everything else goes straight through.
+async function translateUnit(tr: TranslatorLike, text: string): Promise<string> {
+  const fixed = glossaryTranslation(text);
+  if (fixed) return fixed;
+  if (isSingleWord(text)) return finishSingleWord(text, await tr.translate(`${text}.`));
+  return tr.translate(text);
+}
+
 async function translateText(
   text: string,
   from: string,
@@ -159,7 +168,7 @@ async function translateText(
   // original paragraphs and signature lines, so the translated message keeps its layout.
   const units = splitForTranslation(text);
   const out: string[] = [];
-  for (const u of units) out.push(u.translate ? await tr.translate(u.text) : u.text);
+  for (const u of units) out.push(u.translate ? await translateUnit(tr, u.text) : u.text);
   return joinTranslated(units, out);
 }
 
@@ -223,6 +232,7 @@ export function InboxThread({
   const [moreOpen, setMoreOpen] = useState(false);
   const [popover, setPopover] = useState<"snooze" | "status" | null>(null);
   const [isStarred, setIsStarred] = useState(starred);
+  const [photoStates, setPhotoStates] = useState<Record<number, "idle" | "busy" | "done" | "error">>({});
   const [currentStatus, setCurrentStatus] = useState<InboxThreadStatus | null>(status);
   const [snippetsOpen, setSnippetsOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set([messages[messages.length - 1]?.id ?? ""]));
@@ -260,6 +270,21 @@ export function InboxThread({
       body: JSON.stringify({ keys: [threadKey], ...patch }),
     }).catch(() => null);
     return !!res && res.ok;
+  }
+
+  // Puts an image the venue emailed us on their public listing. Asks first, because it goes live on the site.
+  async function addToListing(attachmentId: number, fileName: string, mode: "photo" | "logo") {
+    if (venueId === null) return;
+    const what = mode === "logo" ? "logo" : "photo";
+    if (!window.confirm(`Add ${fileName} to ${displayName}'s public listing as its ${what}? Visitors will see it.`)) return;
+    setPhotoStates((prev) => ({ ...prev, [attachmentId]: "busy" }));
+    const res = await fetch(`/api/admin/inbox/attachments/${attachmentId}/use-as-photo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venueId, mode }),
+    }).catch(() => null);
+    setPhotoStates((prev) => ({ ...prev, [attachmentId]: res && res.ok ? "done" : "error" }));
+    if (res && res.ok) router.refresh();
   }
 
   async function toggleStar() {
@@ -709,9 +734,10 @@ export function InboxThread({
                     <div className="flex flex-wrap gap-3 border-t border-border pt-4">
                       {m.attachments.map((a) => {
                         const isImage = a.contentType.startsWith("image/");
+                        const photoState = photoStates[a.id] ?? "idle";
                         return (
+                          <div key={a.id} className="flex flex-col gap-2">
                           <a
-                            key={a.id}
                             href={`/api/admin/inbox/attachments/${a.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -732,6 +758,32 @@ export function InboxThread({
                               </span>
                             </span>
                           </a>
+                          {isImage && venueId !== null && !outbound && (
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              {photoState === "done" ? (
+                                <span className="text-evergreen">On the listing</span>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => void addToListing(a.id, a.fileName, "photo")}
+                                    disabled={photoState === "busy"}
+                                    className="rounded-full border border-border bg-surface px-3 py-1 text-muted transition hover:border-accent-dim/50 hover:text-foreground disabled:opacity-50"
+                                  >
+                                    {photoState === "busy" ? "Adding…" : "Use as photo"}
+                                  </button>
+                                  <button
+                                    onClick={() => void addToListing(a.id, a.fileName, "logo")}
+                                    disabled={photoState === "busy"}
+                                    className="rounded-full border border-border bg-surface px-3 py-1 text-muted transition hover:border-accent-dim/50 hover:text-foreground disabled:opacity-50"
+                                  >
+                                    Use as logo
+                                  </button>
+                                </>
+                              )}
+                              {photoState === "error" && <span className="text-stale">Could not add it.</span>}
+                            </div>
+                          )}
+                          </div>
                         );
                       })}
                     </div>

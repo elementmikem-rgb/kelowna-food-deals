@@ -1,5 +1,7 @@
 import type { VenuePanelData } from "@/lib/inbox-venue";
 import { extractPhones, extractPrices, samePhone } from "@/lib/reply-facts";
+import { suggestSpecial } from "@/lib/reply-prefill";
+import { AddSpecialForm, UsePhoneButton } from "@/components/inbox/VenueApply";
 import { formatMessageDate } from "@/lib/inbox-format";
 
 // Read-only venue snapshot beside a conversation: what the listing says now, and details in the venue's
@@ -15,6 +17,7 @@ export function VenuePanel({
 }) {
   const phones = replyText ? extractPhones(replyText) : [];
   const prices = replyText ? extractPrices(replyText) : [];
+  const suggestion = replyText ? suggestSpecial(replyText) : null;
   const newPhones = phones.filter((p) => !samePhone(p, venue.phone));
   const row = "flex flex-col gap-0.5";
   const label = "text-[11px] font-medium uppercase tracking-wider text-muted-2";
@@ -41,6 +44,7 @@ export function VenuePanel({
                 <span className="text-xs text-muted-2">
                   {venue.phone ? `Listing has ${venue.phone}` : "No phone on the listing"}
                 </span>
+                <UsePhoneButton venueId={venue.id} venueName={venue.name} phone={p} current={venue.phone} />
               </li>
             ))}
             {prices.length > 0 && (
@@ -67,6 +71,9 @@ export function VenuePanel({
         <p className="mt-2 text-xs text-muted-2">
           {venue.eventCount} event{venue.eventCount === 1 ? "" : "s"}, {venue.photoCount} photo{venue.photoCount === 1 ? "" : "s"}
         </p>
+        <div className="mt-3">
+          <AddSpecialForm venueId={venue.id} venueName={venue.name} suggestion={suggestion} />
+        </div>
       </div>
 
       <dl className="flex flex-col gap-3 text-sm">
