@@ -582,6 +582,13 @@
       "when": 1794500000000,
       "tag": "0082_inbox_proposals",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1794600000000,
+      "tag": "0083_venue_contact_email_source",
+      "breakpoints": true
     }
   ]
 }

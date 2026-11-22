@@ -1,5 +1,6 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { db, venues, specials, events, venuePhotos, outreachSends } from "@/db";
+import { db, venues, specials, events, venuePhotos, outreachSends, inboundEmails } from "@/db";
+import { emailBasis, type EmailBasis } from "@/lib/email-basis";
 import { formatSpecialLine } from "@/lib/inbox-venue-format";
 
 // A read-only snapshot of a venue for the inbox side panel, so a reply can be compared with what the
@@ -11,6 +12,7 @@ export interface VenuePanelData {
   phone: string | null;
   website: string | null;
   contactEmail: string | null;
+  emailBasis: EmailBasis | null; // how well we can show we may email that address (null when there is none)
   claimed: boolean;
   unsubscribed: boolean;
   specials: string[]; // one line each, see formatSpecialLine
@@ -32,11 +34,23 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
       claimedAt: venues.claimedAt,
       unsubscribedAt: venues.unsubscribedAt,
       note: venues.checkedNoListingsNote,
+      contactEmailSource: venues.contactEmailSource,
+      contactEmailVerifiedAt: venues.contactEmailVerifiedAt,
     })
     .from(venues)
     .where(eq(venues.id, venueId))
     .limit(1);
   if (!v) return null;
+
+  const wroteUs = v.contactEmail
+    ? (
+        await db
+          .select({ id: inboundEmails.id })
+          .from(inboundEmails)
+          .where(and(eq(inboundEmails.venueId, venueId), sql`lower(${inboundEmails.fromEmail}) = lower(${v.contactEmail})`))
+          .limit(1)
+      ).length > 0
+    : false;
 
   const [activeSpecials, [eventRow], [photoRow], sends] = await Promise.all([
     db
@@ -77,6 +91,9 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
     phone: v.phone,
     website: v.website,
     contactEmail: v.contactEmail,
+    emailBasis: v.contactEmail
+      ? emailBasis({ contactEmail: v.contactEmail, website: v.website, wroteUs, verifiedAt: v.contactEmailVerifiedAt, source: v.contactEmailSource })
+      : null,
     claimed: v.claimedAt !== null,
     unsubscribed: v.unsubscribedAt !== null,
     specials: activeSpecials.map(formatSpecialLine),

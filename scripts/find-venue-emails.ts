@@ -192,7 +192,7 @@ async function main() {
       found++;
       console.log(`[${v.id}] ${v.name}: found ${email}`);
       if (!dryRun) {
-        await db.update(venues).set({ contactEmail: email }).where(eq(venues.id, v.id));
+        await db.update(venues).set({ contactEmail: email, contactEmailSource: "website", contactEmailSourceUrl: v.website, contactEmailVerifiedAt: null }).where(eq(venues.id, v.id));
       }
     }
 

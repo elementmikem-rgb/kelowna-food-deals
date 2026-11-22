@@ -146,6 +146,14 @@ export const venues = specialsSchema.table(
     // Where the hours came from, shown next to them ("venue website", "Uber Eats", ...).
     openingHoursSource: text("opening_hours_source"),
     contactEmail: text("contact_email"),
+    // Where contact_email came from, for CASL: the sender has to be able to show how it got an address. "website" (found
+    // on the venue's own site), "web_search" (found through a search, possibly a third-party directory), "owner_reply"
+    // (the owner wrote to us from it), "manual" (typed or confirmed by hand), null = origin not recorded (every row that
+    // predates 2026-11-22 unless it could be proven). contact_email_verified_at is set when Mike confirmed the address is
+    // published by the business itself. Added 2026-11-22.
+    contactEmailSource: text("contact_email_source").$type<"website" | "web_search" | "owner_reply" | "manual">(),
+    contactEmailSourceUrl: text("contact_email_source_url"),
+    contactEmailVerifiedAt: timestamp("contact_email_verified_at", { withTimezone: true }),
     sourceUrls: text("source_urls").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
     // A placeholder venue row created for a non-venue advertiser (a brewery, tourism

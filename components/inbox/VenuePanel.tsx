@@ -1,7 +1,8 @@
 import type { VenuePanelData } from "@/lib/inbox-venue";
 import { extractPhones, extractPrices, samePhone } from "@/lib/reply-facts";
 import { suggestSpecial } from "@/lib/reply-prefill";
-import { AddSpecialForm, UsePhoneButton } from "@/components/inbox/VenueApply";
+import { AddSpecialForm, UsePhoneButton, VerifyEmailButton } from "@/components/inbox/VenueApply";
+import { BASIS_LABEL, PROVEN } from "@/lib/email-basis";
 import { formatMessageDate } from "@/lib/inbox-format";
 
 // Read-only venue snapshot beside a conversation: what the listing says now, and details in the venue's
@@ -95,6 +96,20 @@ export function VenuePanel({
           <div className={row}>
             <dt className={label}>Email</dt>
             <dd className="truncate text-foreground">{venue.contactEmail}</dd>
+            {venue.emailBasis && (
+              <dd className="mt-1 flex flex-col items-start gap-1.5">
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                    PROVEN.has(venue.emailBasis) ? "bg-evergreen/15 text-evergreen" : "bg-stale/15 text-stale"
+                  }`}
+                >
+                  {BASIS_LABEL[venue.emailBasis]}
+                </span>
+                {!PROVEN.has(venue.emailBasis) && (
+                  <VerifyEmailButton venueId={venue.id} venueName={venue.name} email={venue.contactEmail} />
+                )}
+              </dd>
+            )}
           </div>
         )}
       </dl>

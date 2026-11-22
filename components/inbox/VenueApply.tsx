@@ -56,6 +56,36 @@ export function UsePhoneButton({ venueId, venueName, phone, current }: { venueId
   );
 }
 
+export function VerifyEmailButton({ venueId, venueName, email }: { venueId: number; venueName: string; email: string }) {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+
+  async function verify() {
+    const ok = window.confirm(
+      `Mark ${email} as confirmed to be published by ${venueName} itself (for example on their own website or social page)? This only records it. It does not change who gets emailed.`
+    );
+    if (!ok) return;
+    setState("busy");
+    const res = await post({ action: "verify_email", venueId });
+    setState(res.ok ? "done" : "error");
+    if (res.ok) router.refresh();
+  }
+
+  if (state === "done") return <span className="text-xs text-evergreen">Recorded as verified</span>;
+  return (
+    <span className="flex items-center gap-2">
+      <button
+        onClick={verify}
+        disabled={state === "busy"}
+        className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted transition hover:border-accent-dim/50 hover:text-foreground disabled:opacity-50"
+      >
+        {state === "busy" ? "Saving…" : "Mark as verified"}
+      </button>
+      {state === "error" && <span className="text-xs text-stale">Could not save.</span>}
+    </span>
+  );
+}
+
 export function AddSpecialForm({
   venueId,
   venueName,

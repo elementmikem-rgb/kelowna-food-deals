@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { specialCategory } from "@/db";
 import { isAdminAuthed } from "@/lib/admin-auth";
-import { addSpecialToVenue, setVenuePhone } from "@/lib/venue-apply";
+import { addSpecialToVenue, setVenuePhone, verifyVenueEmail } from "@/lib/venue-apply";
 
 // "Apply from the reply": writes one confirmed detail from a venue's email onto its listing. Called only when
 // the admin clicks Save after reviewing an editable form, never automatically.
@@ -19,6 +19,7 @@ const specialSchema = z.object({
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("set_phone"), venueId: z.number().int().positive(), phone: z.string().min(7).max(30) }),
   z.object({ action: z.literal("add_special"), venueId: z.number().int().positive(), special: specialSchema }),
+  z.object({ action: z.literal("verify_email"), venueId: z.number().int().positive() }),
 ]);
 
 export async function POST(req: NextRequest) {
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
   const result =
     body.action === "set_phone"
       ? await setVenuePhone(body.venueId, body.phone)
-      : await addSpecialToVenue(body.venueId, body.special);
+      : body.action === "verify_email"
+        ? await verifyVenueEmail(body.venueId)
+        : await addSpecialToVenue(body.venueId, body.special);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json(result);
 }

@@ -41,6 +41,29 @@ export async function setVenuePhone(
   return { ok: true, phone };
 }
 
+// Mike confirmed the contact address is published by the business itself. Records when and, if the source was not
+// known, marks it "manual". Does not change the address or who gets emailed.
+export async function verifyVenueEmail(venueId: number, now: Date = new Date()): Promise<ApplyResult<{ alreadyVerified?: boolean }>> {
+  const [venue] = await db
+    .select({ id: venues.id, email: venues.contactEmail, source: venues.contactEmailSource, verifiedAt: venues.contactEmailVerifiedAt, note: venues.checkedNoListingsNote })
+    .from(venues)
+    .where(eq(venues.id, venueId))
+    .limit(1);
+  if (!venue) return { ok: false, status: 404, error: "venue not found" };
+  if (!venue.email) return { ok: false, status: 400, error: "venue has no contact email" };
+  if (venue.verifiedAt) return { ok: true, alreadyVerified: true };
+  const isoDate = now.toISOString().slice(0, 10);
+  await db
+    .update(venues)
+    .set({
+      contactEmailVerifiedAt: now,
+      contactEmailSource: venue.source ?? "manual",
+      checkedNoListingsNote: appendNote(venue.note, isoDate, `contact email ${venue.email} confirmed by hand as published by the business.`),
+    })
+    .where(eq(venues.id, venue.id));
+  return { ok: true };
+}
+
 export async function addSpecialToVenue(
   venueId: number,
   input: SpecialInput,

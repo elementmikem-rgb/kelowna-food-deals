@@ -250,6 +250,7 @@ async function main() {
               website: ig ? null : c.website,
               instagramHandle: ig,
               contactEmail: c.contactEmail,
+              contactEmailSource: c.contactEmail ? "web_search" : null,
               sourceUrls: c.website ? [c.website] : [],
               active: true,
             })
