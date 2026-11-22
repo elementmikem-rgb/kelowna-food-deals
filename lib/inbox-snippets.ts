@@ -5,10 +5,12 @@ export interface Snippet {
   body: string;
   // Only offered when the venue has claimed its listing (an owner, not a cold contact).
   claimedOnly?: boolean;
+  // Only offered when the venue is known to be unclaimed (shows the free claim offer).
+  unclaimedOnly?: boolean;
 }
 
 // Canned reply snippets for the admin inbox.
-// Variables: {{name}}, {{venue}}, {{link}}, {{owner_link}} (the owner login page).
+// Variables: {{name}}, {{venue}}, {{link}}, {{owner_link}} (the owner login page), {{claim_link}} (the free claim page).
 // Rules: plain and warm, one ask per snippet, no emojis, no em dashes, signed Mike.
 // French uses proper accents and formal vous.
 export const SNIPPETS: Snippet[] = [
@@ -180,10 +182,60 @@ L'affiche apparaît sur la carte de ce spécial tant que le coup de pouce est ac
 
 Mike`,
   },
+
+  // 8. Thanks, added, plus the free claim offer (unclaimed venues only).
+  // Promises only what the claim page says: a free claim that Mike verifies, editing specials and events,
+  // $10 in free credit, no card. No results or reach claims.
+  {
+    id: "en-thanks-claim-offer",
+    label: "Thanks, added, and offer the free claim",
+    lang: "en",
+    unclaimedOnly: true,
+    body: `Hi {{name}},
+
+Thanks for getting in touch. I have added {{venue}} to the listing at {{link}}.
+
+If you are the owner or manager, you can also claim the listing for free: {{claim_link}}
+
+Once I verify it, you can edit your specials and events yourself, and you get $10 in free credit to promote your listing or a special. No card needed.
+
+Mike`,
+  },
+  {
+    id: "fr-thanks-claim-offer",
+    label: "Merci, ajouté, et offre de réclamer la fiche",
+    lang: "fr",
+    unclaimedOnly: true,
+    body: `Bonjour {{name}},
+
+Merci de nous avoir contactés. J'ai ajouté {{venue}} à notre liste sur {{link}}.
+
+Si vous êtes le propriétaire ou le gérant, vous pouvez aussi réclamer la fiche gratuitement : {{claim_link}}
+
+Une fois votre demande vérifiée, vous pourrez modifier vous-même vos spéciaux et événements, et vous recevrez 10 $ de crédit gratuit pour promouvoir votre fiche ou un spécial. Aucune carte requise.
+
+Mike`,
+  },
 ];
 
 export function snippetsFor(lang: "en" | "fr", opts: { claimed?: boolean } = {}): Snippet[] {
-  return SNIPPETS.filter((s) => s.lang === lang && (!s.claimedOnly || opts.claimed === true));
+  return SNIPPETS.filter(
+    (s) =>
+      s.lang === lang &&
+      (!s.claimedOnly || opts.claimed === true) &&
+      (!s.unclaimedOnly || opts.claimed === false)
+  );
+}
+
+// The free claim page is the venue page address plus /claim.
+export function claimUrl(venueUrl: string | null | undefined): string | null {
+  if (!venueUrl) return null;
+  try {
+    const u = new URL(venueUrl);
+    return `${u.origin}${u.pathname.replace(/\/+$/, "")}/claim`;
+  } catch {
+    return null;
+  }
 }
 
 // The owner login page lives at the site root, not under a region, so build it from the venue page's origin.
@@ -198,7 +250,7 @@ export function ownerLoginUrl(venueUrl: string | null | undefined): string | nul
 
 export function fillSnippet(
   body: string,
-  vars: { name?: string; venue?: string; link?: string; ownerLink?: string }
+  vars: { name?: string; venue?: string; link?: string; ownerLink?: string; claimLink?: string }
 ): string {
   let result = body;
 
@@ -209,6 +261,7 @@ export function fillSnippet(
   result = result.replaceAll("{{venue}}", vars.venue ?? "");
   result = result.replaceAll("{{link}}", vars.link ?? "");
   result = result.replaceAll("{{owner_link}}", vars.ownerLink ?? "");
+  result = result.replaceAll("{{claim_link}}", vars.claimLink ?? "");
 
   // When name was not provided (or empty), the greeting becomes "Hi ," or
   // "Bonjour ," -- tighten those up to "Hi," / "Bonjour,".

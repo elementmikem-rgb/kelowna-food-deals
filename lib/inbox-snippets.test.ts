@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SNIPPETS, fillSnippet, snippetsFor, ownerLoginUrl } from "./inbox-snippets";
+import { SNIPPETS, fillSnippet, snippetsFor, ownerLoginUrl, claimUrl } from "./inbox-snippets";
 
 describe("SNIPPETS", () => {
   it("has at least 12 snippets (6 EN + 6 FR pairs)", () => {
@@ -171,5 +171,55 @@ describe("ownerLoginUrl", () => {
   it("returns null when there is no usable address", () => {
     expect(ownerLoginUrl(null)).toBeNull();
     expect(ownerLoginUrl("not a url")).toBeNull();
+  });
+});
+
+describe("claim offer snippets (unclaimed venues only)", () => {
+  const offer = SNIPPETS.filter((s) => s.id.includes("claim-offer"));
+
+  it("has one English and one French version, both marked unclaimed-only", () => {
+    expect(offer.map((s) => s.lang).sort()).toEqual(["en", "fr"]);
+    expect(offer.every((s) => s.unclaimedOnly === true)).toBe(true);
+  });
+
+  it("is shown only when the venue is known to be unclaimed", () => {
+    expect(snippetsFor("en").some((s) => s.id.includes("claim-offer"))).toBe(false);
+    expect(snippetsFor("en", { claimed: true }).some((s) => s.id.includes("claim-offer"))).toBe(false);
+    expect(snippetsFor("en", { claimed: false }).some((s) => s.id.includes("claim-offer"))).toBe(true);
+    expect(snippetsFor("fr", { claimed: false }).some((s) => s.id.includes("claim-offer"))).toBe(true);
+  });
+
+  it("promises only what the claim page says: free, a verified claim, editing, $10 credit, no card", () => {
+    const en = offer.find((s) => s.lang === "en")!.body;
+    expect(en).toMatch(/free/i);
+    expect(en).toMatch(/verify/i);
+    expect(en).toMatch(/edit/i);
+    expect(en).toContain("$10");
+    expect(en).toMatch(/no card/i);
+    const fr = offer.find((s) => s.lang === "fr")!.body;
+    expect(fr).toContain("10 $");
+    expect(fr).toMatch(/aucune carte/i);
+  });
+
+  it("uses the claim link variable and fills it", () => {
+    for (const s of offer) expect(s.body).toContain("{{claim_link}}");
+    const filled = fillSnippet(offer[0].body, { name: "Ana", venue: "Pub X", link: "https://todaystab.com/kelowna/venues/9", claimLink: "https://todaystab.com/kelowna/venues/9/claim" });
+    expect(filled).toContain("https://todaystab.com/kelowna/venues/9/claim");
+    expect(filled).not.toContain("{{");
+  });
+
+  it("makes no results or reach claims", () => {
+    for (const s of offer) expect(s.body).not.toMatch(/views|more customers|guarantee|clients/i);
+  });
+});
+
+describe("claimUrl", () => {
+  it("adds /claim to the venue page address", () => {
+    expect(claimUrl("https://todaystab.com/kelowna/venues/553")).toBe("https://todaystab.com/kelowna/venues/553/claim");
+    expect(claimUrl("https://todaystab.com/kelowna/venues/553/")).toBe("https://todaystab.com/kelowna/venues/553/claim");
+  });
+  it("is null with no usable address", () => {
+    expect(claimUrl(null)).toBeNull();
+    expect(claimUrl("not a url")).toBeNull();
   });
 });

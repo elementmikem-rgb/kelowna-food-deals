@@ -6,7 +6,7 @@ import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
 import { cleanBodyText, tokenizeLinks } from "@/lib/email-display";
 import { detectLanguage } from "@/lib/detect-language";
 import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
-import { fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
+import { claimUrl, fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
 import { threadSignals } from "@/lib/inbox-signals";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
@@ -546,6 +546,7 @@ export function InboxThread({
       venue: displayName,
       link: venueUrl ?? undefined,
       ownerLink: ownerLoginUrl(venueUrl) ?? undefined,
+      claimLink: claimUrl(venueUrl) ?? undefined,
     });
     setReplyText((prev) => (prev.trim() ? `${prev}\n\n${filled}` : filled));
     setSnippetsOpen(false);
@@ -868,7 +869,7 @@ export function InboxThread({
                 {snippetsOpen && (
                   <div className="absolute bottom-full left-0 z-20 mb-1 max-h-72 w-72 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-lg">
                     <p className="px-4 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-muted-2">{replyLang === "fr" ? "French" : "English"}</p>
-                    {snippetsFor(replyLang, { claimed: venueClaimed }).map((s) => (
+                    {snippetsFor(replyLang, { claimed: venueId !== null ? venueClaimed : undefined }).map((s) => (
                       <button key={s.id} onClick={() => insertSnippet(s.body)} className="block w-full px-4 py-2 text-left text-sm text-muted hover:bg-accent-soft/30 hover:text-foreground">
                         {s.label}
                       </button>
