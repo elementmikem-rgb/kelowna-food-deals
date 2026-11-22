@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { tidySnippet } from "@/lib/email-display";
 import { matchThread, parseQuery, type SearchableThread } from "@/lib/inbox-search";
 import { formatCount, formatListDate } from "@/lib/inbox-format";
+import { folderFilter, type Folder } from "@/lib/inbox-folders";
 import {
   ArchiveIcon,
   ChevronDownIcon,
@@ -32,13 +33,13 @@ interface ThreadRow {
   lastSubject: string;
   lastFromMe: boolean;
   hasAttachments: boolean;
+  inboundCount: number;
   lastAt: string;
   unreadCount: number;
   archived: boolean;
   messageCount: number;
 }
 
-type Folder = "inbox" | "unread" | "sent" | "archive";
 type BulkAction = "archive" | "unarchive" | "delete" | "markRead" | "markUnread";
 
 const PAGE_SIZE = 50;
@@ -105,12 +106,13 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
 
   const visible = useMemo(() => {
     const q = parseQuery(query);
-    if (!q.in) {
-      if (folder === "sent") q.in = "sent";
-      else if (folder === "archive") q.in = "archive";
-      if (folder === "unread" && !q.is.includes("unread")) q.is = [...q.is, "unread"];
-    }
+    const hasQuery = query.trim().length > 0;
+    // An explicit in: operator in the search box wins over the folder, like Gmail. Otherwise the folder
+    // decides what is shown and the search only narrows it (so the search itself must not filter by scope).
+    const explicitScope = q.in !== null;
+    if (!explicitScope) q.in = "all";
     return rows.filter((t) => {
+      if (!explicitScope && !folderFilter(t, folder, hasQuery)) return false;
       const searchable: SearchableThread = {
         displayName: t.displayName,
         contactEmail: t.contactEmail,

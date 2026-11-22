@@ -31,6 +31,7 @@ export interface InboxThread {
   lastSubject: string; // subject of the newest message, shown before the snippet like Gmail does
   lastFromMe: boolean; // newest message is one we sent (drives the Sent folder)
   hasAttachments: boolean;
+  inboundCount: number; // messages received from the venue; 0 means unreplied outreach
   lastAt: Date;
   unreadCount: number;
   archived: boolean;
@@ -102,6 +103,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         lastSubject: e.subject ?? "",
         lastFromMe: false,
         hasAttachments: withAttachments.has(e.id),
+        inboundCount: 1,
         lastAt: e.receivedAt,
         unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
         archived: e.archivedAt !== null,
@@ -109,6 +111,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
       });
     } else {
       existing.messageCount++;
+      existing.inboundCount++;
       if (!e.read && e.archivedAt === null) existing.unreadCount++;
       if (withAttachments.has(e.id)) existing.hasAttachments = true;
       if (isNewest) {
@@ -133,6 +136,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         lastSubject: s.subject ?? "",
         lastFromMe: true,
         hasAttachments: existing?.hasAttachments ?? false,
+        inboundCount: existing?.inboundCount ?? 0,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,
         archived: existing?.archived ?? false,
