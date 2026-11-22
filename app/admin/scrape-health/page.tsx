@@ -6,6 +6,7 @@ import {
   ZERO_LISTING_RECHECK_DAYS,
 } from "@/lib/scrape-health";
 import { getSelectedAdminScope } from "@/lib/admin-region";
+import { describeDrift, getRegionDrift } from "@/lib/region-drift";
 import { ZeroListingVenuesPanel } from "@/components/ZeroListingVenuesPanel";
 
 export const dynamic = "force-dynamic";
@@ -16,15 +17,32 @@ function formatUsd(n: number): string {
 
 export default async function AdminScrapeHealthPage() {
   const { regionIds } = await getSelectedAdminScope();
-  const [zeroListingVenues, failingVenues, cronSpend] = await Promise.all([
+  const [zeroListingVenues, failingVenues, cronSpend, drift] = await Promise.all([
     getZeroListingVenues(regionIds),
     getRecentlyFailingVenues(regionIds),
     getCronSpend(14),
+    getRegionDrift(),
   ]);
+  const driftInfo = describeDrift(drift);
 
   return (
     <AdminShell active="scrapeHealth" maxWidth="max-w-2xl">
       <h1 className="font-display text-2xl text-foreground">Scrape health</h1>
+
+      <div
+        className={`rounded-xl border px-4 py-3 text-sm ${
+          driftInfo.inSync ? "border-border bg-surface text-muted" : "border-stale/40 bg-stale/10 text-foreground"
+        }`}
+      >
+        <span className="font-medium text-foreground">Region tags: </span>
+        {driftInfo.summary}
+        {!driftInfo.inSync && (
+          <span className="mt-1 block text-xs text-muted">
+            Moving a venue to another region needs its specials and events moved too, or its events show on the wrong region&apos;s
+            page. See docs/region-sync-trigger-draft.md.
+          </span>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
