@@ -1,7 +1,8 @@
-import { db, outreachSends, inboundEmails, venues, emailAttachments, regions } from "@/db";
+import { db, outreachSends, inboundEmails, venues, emailAttachments, regions, inboxThreadState, type InboxThreadStatus } from "@/db";
 import { and, eq, isNull, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { parseThreadKey, threadKeyFor } from "@/lib/inbox-thread-key";
+import { isSnoozedNow } from "@/lib/inbox-snooze";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -32,6 +33,10 @@ export interface InboxThread {
   lastFromMe: boolean; // newest message is one we sent (drives the Sent folder)
   hasAttachments: boolean;
   inboundCount: number; // messages received from the venue; 0 means unreplied outreach
+  starred: boolean;
+  snoozed: boolean; // currently snoozed (wake time in the future and no reply since)
+  snoozedUntil: Date | null;
+  status: InboxThreadStatus | null;
   lastAt: Date;
   unreadCount: number;
   archived: boolean;
@@ -84,6 +89,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
   const withAttachments = new Set(attachmentRows.map((a) => a.inboundEmailId));
 
   const threads = new Map<string, InboxThread>();
+  const lastInboundAt = new Map<string, Date>();
 
   // Inbound processed first so a real name (the venue's, or the sender's own
   // fromName) is established before a reply/auto-reply -- which only knows a
@@ -91,6 +97,8 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
   // source of a display name for that thread.
   for (const e of inbound) {
     const key = threadKeyFor(e.venueId, e.fromEmail);
+    const prevInbound = lastInboundAt.get(key);
+    if (!prevInbound || e.receivedAt > prevInbound) lastInboundAt.set(key, e.receivedAt);
     const existing = threads.get(key);
     const isNewest = !existing || e.receivedAt > existing.lastAt;
     if (!existing) {
@@ -104,6 +112,10 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         lastFromMe: false,
         hasAttachments: withAttachments.has(e.id),
         inboundCount: 1,
+        starred: false,
+        snoozed: false,
+        snoozedUntil: null,
+        status: null,
         lastAt: e.receivedAt,
         unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
         archived: e.archivedAt !== null,
@@ -137,6 +149,10 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         lastFromMe: true,
         hasAttachments: existing?.hasAttachments ?? false,
         inboundCount: existing?.inboundCount ?? 0,
+        starred: existing?.starred ?? false,
+        snoozed: existing?.snoozed ?? false,
+        snoozedUntil: existing?.snoozedUntil ?? null,
+        status: existing?.status ?? null,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,
         archived: existing?.archived ?? false,
@@ -145,6 +161,22 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
     } else {
       existing.messageCount++;
     }
+  }
+
+  // Stars, snoozes and status live in a small side table keyed by thread key. No row means defaults.
+  const stateRows = await db.select().from(inboxThreadState);
+  const now = new Date();
+  for (const st of stateRows) {
+    const t = threads.get(st.threadKey);
+    if (!t) continue;
+    t.starred = st.starred;
+    t.status = st.status;
+    t.snoozedUntil = st.snoozedUntil;
+    t.snoozed = isSnoozedNow(
+      { snoozedUntil: st.snoozedUntil ? st.snoozedUntil.toISOString() : null, updatedAt: st.updatedAt.toISOString() },
+      lastInboundAt.get(st.threadKey)?.toISOString() ?? null,
+      now
+    );
   }
 
   return [...threads.values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
@@ -170,8 +202,20 @@ export interface ThreadDetail {
   displayName: string;
   contactEmail: string | null;
   venueUrl: string | null; // public listing page, used to fill {{link}} in canned replies
+  starred: boolean;
+  status: InboxThreadStatus | null;
+  snoozedUntil: Date | null;
   archived: boolean;
   messages: ThreadMessage[];
+}
+
+async function loadThreadState(key: string) {
+  const [st] = await db.select().from(inboxThreadState).where(eq(inboxThreadState.threadKey, key)).limit(1);
+  return {
+    starred: st?.starred ?? false,
+    status: st?.status ?? null,
+    snoozedUntil: st && st.snoozedUntil && st.snoozedUntil.getTime() > Date.now() ? st.snoozedUntil : null,
+  };
 }
 
 export async function getThreadMessages(key: string): Promise<ThreadDetail | null> {
@@ -263,6 +307,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       displayName: venue.name,
       contactEmail: venue.contactEmail,
       venueUrl,
+      ...(await loadThreadState(key)),
       archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };
@@ -346,6 +391,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       displayName: inbound[0]?.fromName ?? email,
       contactEmail: email,
       venueUrl: null,
+      ...(await loadThreadState(key)),
       archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };

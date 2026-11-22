@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, outreachSends, venues } from "@/db";
-import { isNull, and, sql, eq } from "drizzle-orm";
-import { classifyBrevoEvent, extractSendId } from "@/lib/brevo-events";
+import { isNull, and, sql, eq, ne } from "drizzle-orm";
+import { classifyBrevoEvent, extractSendId, softBounceOutcome, SOFT_BOUNCE_LIMIT } from "@/lib/brevo-events";
 
 // Confirmed live 2026-09-24: this webhook's real "message-id" field is Brevo's
 // own internal id (format "an#123..."), NOT the SMTP Message-ID our send API
@@ -76,8 +76,8 @@ export async function POST(
         .where(and(idMatch, isNull(outreachSends.openedAt)));
     } else if (action.type === "hard_failure") {
       // hard_bounce, blocked and invalid_email are permanent for this address.
-      // A soft bounce (mailbox full, temporary server issue) may still get
-      // delivered on retry, so it isn't treated as a final status here.
+      // Soft bounces (mailbox full, temporary server issue) are handled separately
+      // in the soft_bounce branch below: a single one is noise, three escalate to "bounced".
       await db
         .update(outreachSends)
         .set({ status: "bounced", errorMessage: action.errorMessage })
@@ -99,10 +99,25 @@ export async function POST(
           .set({ unsubscribedAt: new Date() })
           .where(and(eq(venues.id, send.venueId), isNull(venues.unsubscribedAt)));
       }
+    } else if (action.type === "soft_bounce") {
+      // Increment soft_bounce_count atomically in a single UPDATE ... RETURNING
+      // so two concurrent events cannot race. If the new count reaches
+      // SOFT_BOUNCE_LIMIT, treat the send as a hard bounce -- but only when the
+      // row hasn't already been replied to or bounced (a reply wins over a later
+      // bounce event and a double-delivery of the bounce event must not wipe a
+      // "replied" status).
+      const [send] = await db
+        .update(outreachSends)
+        .set({ softBounceCount: sql`${outreachSends.softBounceCount} + 1` })
+        .where(idMatch)
+        .returning({ softBounceCount: outreachSends.softBounceCount, status: outreachSends.status });
+      if (send && softBounceOutcome(send.softBounceCount) === "bounce") {
+        await db
+          .update(outreachSends)
+          .set({ status: "bounced", errorMessage: `soft bounce x${SOFT_BOUNCE_LIMIT}` })
+          .where(and(idMatch, ne(outreachSends.status, "bounced"), ne(outreachSends.status, "replied")));
+      }
     }
-    // soft_bounce: deliberately no action. Suppressing after repeated soft
-    // bounces needs a per-recipient counter, and no existing column records
-    // soft bounces, so that waits on a schema change.
   }
 
   return NextResponse.json({ ok: true });

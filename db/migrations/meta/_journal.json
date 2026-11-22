@@ -568,6 +568,13 @@
       "when": 1794300000000,
       "tag": "0080_venues_opening_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1794400000000,
+      "tag": "0081_inbox_thread_state_and_soft_bounce",
+      "breakpoints": true
     }
   ]
 }

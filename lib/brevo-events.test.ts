@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyBrevoEvent, extractSendId } from "./brevo-events";
+import { classifyBrevoEvent, extractSendId, softBounceOutcome, SOFT_BOUNCE_LIMIT } from "./brevo-events";
 
 describe("extractSendId", () => {
   it("reads the send-<id> tag", () => {
@@ -47,13 +47,33 @@ describe("classifyBrevoEvent", () => {
     expect(classifyBrevoEvent("unsubscribe")).toEqual({ type: "suppress", errorMessage: "unsubscribed via Brevo" });
   });
 
-  it("does not suppress or fail on a soft bounce", () => {
+  it("classifies soft_bounce as soft_bounce (count decision is separate)", () => {
     expect(classifyBrevoEvent("soft_bounce")).toEqual({ type: "soft_bounce" });
   });
 
-  it("ignores everything else", () => {
+  it("ignores everything else (delivered, deferred, etc.)", () => {
     for (const e of ["request", "delivered", "deferred", "proxy_open", "unique_proxy_open", "", undefined]) {
       expect(classifyBrevoEvent(e)).toEqual({ type: "ignore" });
     }
+  });
+});
+
+describe("softBounceOutcome", () => {
+  it("exports SOFT_BOUNCE_LIMIT = 3", () => {
+    expect(SOFT_BOUNCE_LIMIT).toBe(3);
+  });
+
+  it("returns 'count' below the limit", () => {
+    expect(softBounceOutcome(1)).toBe("count");
+    expect(softBounceOutcome(2)).toBe("count");
+  });
+
+  it("returns 'bounce' at the limit", () => {
+    expect(softBounceOutcome(3)).toBe("bounce");
+  });
+
+  it("returns 'bounce' above the limit", () => {
+    expect(softBounceOutcome(4)).toBe("bounce");
+    expect(softBounceOutcome(100)).toBe("bounce");
   });
 });

@@ -364,6 +364,23 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // for rows that predate this column. Assigned deterministically by venue id
   // parity (see sendVenueOutreachEmail) so a retried send doesn't flip variants.
   variant: text("variant").$type<"branded" | "plain">(),
+  // Brevo soft_bounce events seen for this send (mailbox full, temporary failure). One is noise; the
+  // webhook treats the send as bounced once it reaches 3 (lib/brevo-events.ts). Added 2026-11-22.
+  softBounceCount: integer("soft_bounce_count").notNull().default(0),
+});
+
+// Per-conversation inbox state for the admin inbox (stars, snooze, status). Keyed by the thread key used
+// in /admin/inbox/t/<key> ("v<venueId>" or "u<encoded email>"). No row means not starred, not snoozed,
+// no status, so the table starts empty and existing inbox behavior is unchanged. Added 2026-11-22.
+export const inboxThreadStatus = ["new", "interested", "waiting", "needs_update", "done"] as const;
+export type InboxThreadStatus = (typeof inboxThreadStatus)[number];
+
+export const inboxThreadState = specialsSchema.table("inbox_thread_state", {
+  threadKey: text("thread_key").primaryKey(),
+  starred: boolean("starred").notNull().default(false),
+  snoozedUntil: timestamp("snoozed_until", { withTimezone: true }),
+  status: text("status").$type<InboxThreadStatus>(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const inboundEmails = specialsSchema.table("inbound_emails", {

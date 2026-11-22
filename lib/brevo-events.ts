@@ -22,11 +22,18 @@ export type BrevoEventAction =
   // status is left as is (there is no "complained" status) and errorMessage
   // records why.
   | { type: "suppress"; errorMessage: string }
-  // Not acted on: a single soft bounce is temporary, and nothing records how
-  // many earlier soft bounces a recipient has had (that needs a counter
-  // column, which is a schema change).
+  // The send's soft_bounce_count is incremented atomically by the route.
+  // Once it reaches SOFT_BOUNCE_LIMIT the route promotes the send to "bounced".
   | { type: "soft_bounce" }
   | { type: "ignore" };
+
+// After incrementing soft_bounce_count, return "bounce" once the new count
+// reaches or exceeds this limit -- the route then promotes the send to "bounced".
+export const SOFT_BOUNCE_LIMIT = 3;
+
+export function softBounceOutcome(newCount: number): "count" | "bounce" {
+  return newCount >= SOFT_BOUNCE_LIMIT ? "bounce" : "count";
+}
 
 // Event names are Brevo's transactional-webhook payload spellings (snake_case,
 // see the route's comment). "complaint" and "unsubscribe" are accepted as

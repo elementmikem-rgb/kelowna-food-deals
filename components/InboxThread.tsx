@@ -8,16 +8,22 @@ import { detectLanguage } from "@/lib/detect-language";
 import { joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { fillSnippet, snippetsFor } from "@/lib/inbox-snippets";
 import { formatMessageDate } from "@/lib/inbox-format";
+import { statusLabel, statusPill } from "@/lib/inbox-status";
+import type { InboxThreadStatus } from "@/db/schema";
+import { SnoozeMenu } from "@/components/inbox/SnoozeMenu";
+import { StatusMenu } from "@/components/inbox/StatusMenu";
 import {
   ArchiveIcon,
   ArrowLeftIcon,
   BlockIcon,
   ChevronDownIcon,
+  ClockIcon,
   CloseIcon,
   ForwardIcon,
   MailIcon,
   PaperclipIcon,
   ReplyIcon,
+  StarIcon,
   TrashIcon,
   TranslateIcon,
 } from "@/components/inbox/icons";
@@ -178,6 +184,9 @@ interface InboxThreadProps {
   displayName: string;
   contactEmail: string | null;
   venueUrl?: string | null;
+  starred?: boolean;
+  status?: InboxThreadStatus | null;
+  snoozedUntil?: string | null;
   archived: boolean;
   messages: Message[];
 }
@@ -189,7 +198,18 @@ function plainPreview(m: Message): string {
   return cleanBodyText(raw).replace(/\s+/g, " ").slice(0, 140);
 }
 
-export function InboxThread({ venueId, displayName, contactEmail, venueUrl, archived, messages }: InboxThreadProps) {
+export function InboxThread({
+  threadKey,
+  venueId,
+  displayName,
+  contactEmail,
+  venueUrl,
+  starred = false,
+  status = null,
+  snoozedUntil = null,
+  archived,
+  messages,
+}: InboxThreadProps) {
   const router = useRouter();
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -201,6 +221,9 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
   const [forwardTo, setForwardTo] = useState("");
   const [forwardNote, setForwardNote] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [popover, setPopover] = useState<"snooze" | "status" | null>(null);
+  const [isStarred, setIsStarred] = useState(starred);
+  const [currentStatus, setCurrentStatus] = useState<InboxThreadStatus | null>(status);
   const [snippetsOpen, setSnippetsOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set([messages[messages.length - 1]?.id ?? ""]));
   const [translated, setTranslated] = useState<Record<string, string>>({});
@@ -227,6 +250,34 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
   const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
   const lastInboundLang = lastInbound?.bodyText ? detectLanguage(lastInbound.bodyText).lang : "unknown";
   const replyLang: "en" | "fr" = lastInboundLang === "fr" ? "fr" : "en";
+
+  // Stars, snooze and status for this conversation, through /api/admin/inbox/state.
+  async function patchThreadState(patch: { starred?: boolean; snoozedUntil?: string | null; status?: InboxThreadStatus | null }) {
+    setPopover(null);
+    const res = await fetch("/api/admin/inbox/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keys: [threadKey], ...patch }),
+    }).catch(() => null);
+    return !!res && res.ok;
+  }
+
+  async function toggleStar() {
+    const next = !isStarred;
+    setIsStarred(next);
+    if (!(await patchThreadState({ starred: next }))) setIsStarred(!next);
+  }
+
+  async function pickStatus(s: InboxThreadStatus | null) {
+    const before = currentStatus;
+    setCurrentStatus(s);
+    if (!(await patchThreadState({ status: s }))) setCurrentStatus(before);
+  }
+
+  async function snoozeTo(until: Date) {
+    // Like Gmail: snoozing sends you back to the list, with the conversation out of the way until it wakes.
+    if (await patchThreadState({ snoozedUntil: until.toISOString() })) router.push("/admin/inbox");
+  }
 
   async function handleMarkUnread() {
     if (inboundIds.length === 0) return;
@@ -498,6 +549,19 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
         <button onClick={handleMarkUnread} disabled={actionBusy} title="Mark as unread" aria-label="Mark as unread" className={iconBtn}>
           <MailIcon />
         </button>
+        <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+        <div className="relative">
+          <button onClick={() => setPopover((p) => (p === "snooze" ? null : "snooze"))} title="Snooze" aria-label="Snooze" className={iconBtn}>
+            <ClockIcon />
+          </button>
+          {popover === "snooze" && <SnoozeMenu onPick={(d) => void snoozeTo(d)} className="absolute left-0 top-full z-40 mt-1" />}
+        </div>
+        <div className="relative">
+          <button onClick={() => setPopover((p) => (p === "status" ? null : "status"))} title="Set status" className="rounded-full px-3 py-1.5 text-sm text-muted hover:bg-accent-soft/40 hover:text-foreground">
+            Status
+          </button>
+          {popover === "status" && <StatusMenu current={currentStatus} onPick={(s) => void pickStatus(s)} className="absolute left-0 top-full z-40 mt-1" />}
+        </div>
         <div className="relative">
           <button onClick={() => setMoreOpen((v) => !v)} disabled={actionBusy} title="More" aria-label="More" className={`${iconBtn} w-auto gap-1 px-3 text-sm`}>
             More <ChevronDownIcon width={14} height={14} />
@@ -526,7 +590,24 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
 
       {/* Subject */}
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
+        <button
+          onClick={() => void toggleStar()}
+          aria-label={isStarred ? "Remove star" : "Add star"}
+          aria-pressed={isStarred}
+          title={isStarred ? "Starred" : "Not starred"}
+          className={`rounded-full p-1 transition ${isStarred ? "text-accent" : "text-muted-2/60 hover:text-muted"}`}
+        >
+          <StarIcon width={24} height={24} filled={isStarred} />
+        </button>
         <h1 className="font-display text-[26px] leading-tight text-foreground">{firstSubject}</h1>
+        {currentStatus && (
+          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusPill(currentStatus)}`}>{statusLabel(currentStatus)}</span>
+        )}
+        {snoozedUntil && (
+          <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs text-muted" suppressHydrationWarning>
+            <ClockIcon width={12} height={12} /> Snoozed until {new Date(snoozedUntil).toLocaleString("en-CA", { timeZone: "America/Vancouver", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+          </span>
+        )}
         <span className="rounded-md bg-accent-soft/50 px-2 py-0.5 text-xs text-accent-dim">{archived ? "Archived" : "Inbox"}</span>
         {lastInboundLang === "fr" && <span className="rounded-md border border-border px-2 py-0.5 text-xs text-muted">French</span>}
       </header>

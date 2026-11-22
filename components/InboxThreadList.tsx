@@ -7,9 +7,14 @@ import { tidySnippet } from "@/lib/email-display";
 import { matchThread, parseQuery, type SearchableThread } from "@/lib/inbox-search";
 import { formatCount, formatListDate } from "@/lib/inbox-format";
 import { folderFilter, type Folder } from "@/lib/inbox-folders";
+import { statusLabel, statusPill } from "@/lib/inbox-status";
+import type { InboxThreadStatus } from "@/db/schema";
+import { SnoozeMenu } from "@/components/inbox/SnoozeMenu";
+import { StatusMenu } from "@/components/inbox/StatusMenu";
 import {
   ArchiveIcon,
   ChevronDownIcon,
+  ClockIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -22,6 +27,7 @@ import {
   RefreshIcon,
   SearchIcon,
   SendIcon,
+  StarIcon,
   TrashIcon,
 } from "@/components/inbox/icons";
 
@@ -34,6 +40,10 @@ interface ThreadRow {
   lastFromMe: boolean;
   hasAttachments: boolean;
   inboundCount: number;
+  starred: boolean;
+  snoozed: boolean;
+  snoozedUntil: string | null;
+  status: InboxThreadStatus | null;
   lastAt: string;
   unreadCount: number;
   archived: boolean;
@@ -46,6 +56,8 @@ const PAGE_SIZE = 50;
 
 const FOLDERS: { id: Folder; label: string; icon: typeof InboxIcon }[] = [
   { id: "inbox", label: "Inbox", icon: InboxIcon },
+  { id: "starred", label: "Starred", icon: StarIcon },
+  { id: "snoozed", label: "Snoozed", icon: ClockIcon },
   { id: "unread", label: "Unread", icon: MailIcon },
   { id: "sent", label: "Sent", icon: SendIcon },
   { id: "archive", label: "Archived", icon: ArchiveIcon },
@@ -58,6 +70,8 @@ const SHORTCUTS: [string, string][] = [
   ["o or Enter", "Open conversation"],
   ["x", "Select conversation"],
   ["e", "Archive"],
+  ["s", "Star or unstar"],
+  ["b", "Snooze"],
   ["#", "Delete"],
   ["Shift + I", "Mark as read"],
   ["Shift + U", "Mark as unread"],
@@ -92,8 +106,11 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
   const [selectMenu, setSelectMenu] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [menu, setMenu] = useState<{ kind: "snooze" | "status"; keys: string[] } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const gPending = useRef(false);
+  type StatePatch = { starred?: boolean; snoozedUntil?: string | null; status?: InboxThreadStatus | null };
+  const patchRef = useRef<(keys: string[], patch: StatePatch, toastText?: string, undoPatch?: StatePatch) => Promise<void>>(async () => {});
   const applyRef = useRef<(keys: string[], action: BulkAction, opts?: { quiet?: boolean }) => Promise<void>>(async () => {});
   const toastId = useRef(0);
 
@@ -131,7 +148,8 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = visible.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
-  const unreadTotal = rows.reduce((n, t) => n + (t.archived ? 0 : t.unreadCount), 0);
+  const unreadTotal = rows.reduce((n, t) => n + (t.archived || t.snoozed ? 0 : t.unreadCount), 0);
+  const snoozedTotal = rows.reduce((n, t) => n + (t.snoozed && !t.archived ? 1 : 0), 0);
 
   const viewKey = `${folder}|${query}`;
   const [seenViewKey, setSeenViewKey] = useState(viewKey);
@@ -197,6 +215,58 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
     applyRef.current = apply;
   }, [apply]);
 
+  // Stars, snooze and status: optimistic like apply(), through /api/admin/inbox/state.
+  const patchState = useCallback(
+    async (keys: string[], patch: StatePatch, toastText?: string, undoPatch?: StatePatch) => {
+      if (keys.length === 0) return;
+      const before = rows;
+      const keySet = new Set(keys);
+      setRows((prev) =>
+        prev.map((t) => {
+          if (!keySet.has(t.key)) return t;
+          const next = { ...t };
+          if (patch.starred !== undefined) next.starred = patch.starred;
+          if (patch.status !== undefined) next.status = patch.status;
+          if (patch.snoozedUntil !== undefined) {
+            next.snoozedUntil = patch.snoozedUntil;
+            next.snoozed = patch.snoozedUntil !== null && new Date(patch.snoozedUntil).getTime() > Date.now();
+          }
+          return next;
+        })
+      );
+      setSelected(new Set());
+      setMenu(null);
+      try {
+        const res = await fetch("/api/admin/inbox/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys, ...patch }),
+        });
+        const data = await res.json().catch(() => ({ ok: false }));
+        if (!res.ok || !data.ok) throw new Error("state failed");
+        if (toastText) pushToast(toastText, undoPatch ? () => void patchRef.current(keys, undoPatch) : undefined);
+      } catch {
+        setRows(before);
+        pushToast("Something went wrong. Nothing was changed.");
+      }
+    },
+    [rows, pushToast]
+  );
+
+  useEffect(() => {
+    patchRef.current = patchState;
+  }, [patchState]);
+
+  function toggleStar(keys: string[]) {
+    const allStarred = keys.length > 0 && keys.every((k) => rows.find((r) => r.key === k)?.starred);
+    void patchState(keys, { starred: !allStarred });
+  }
+
+  function snoozeTo(keys: string[], until: Date) {
+    const label = until.toLocaleString("en-CA", { timeZone: "America/Vancouver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    void patchState(keys, { snoozedUntil: until.toISOString() }, `Snoozed until ${label}`, { snoozedUntil: null });
+  }
+
   function toggle(key: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -258,6 +328,14 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
         case "#":
           confirmDelete(targetKeys());
           break;
+        case "s":
+          toggleStar(targetKeys());
+          break;
+        case "b": {
+          const keys = targetKeys();
+          if (keys.length > 0) setMenu({ kind: "snooze", keys });
+          break;
+        }
         case "I":
           void apply(targetKeys(), "markRead");
           break;
@@ -283,6 +361,7 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
           setSelected(new Set());
           setHelpOpen(false);
           setSelectMenu(false);
+          setMenu(null);
           break;
       }
     }
@@ -317,7 +396,7 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
           {FOLDERS.map((f) => {
             const Icon = f.icon;
             const active = folder === f.id;
-            const count = f.id === "inbox" ? unreadTotal : 0;
+            const count = f.id === "inbox" ? unreadTotal : f.id === "snoozed" ? snoozedTotal : 0;
             return (
               <button
                 key={f.id}
@@ -342,7 +421,7 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
       </aside>
 
       {/* Main */}
-      <section className="flex min-w-0 flex-col gap-3">
+      <section className="relative flex min-w-0 flex-col gap-3">
         {/* Search */}
         <div className="relative">
           <div
@@ -437,6 +516,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
               <button onClick={() => apply([...selected], "markRead")} disabled={busy} title="Mark as read (Shift+I)" aria-label="Mark as read" className={iconBtn}>
                 <MailOpenIcon />
               </button>
+              <button onClick={() => toggleStar([...selected])} title="Star (s)" aria-label="Star" className={iconBtn}>
+                <StarIcon />
+              </button>
+              <button onClick={() => setMenu({ kind: "snooze", keys: [...selected] })} title="Snooze (b)" aria-label="Snooze" className={iconBtn}>
+                <ClockIcon />
+              </button>
+              <button onClick={() => setMenu({ kind: "status", keys: [...selected] })} title="Set status" className="rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:bg-accent-soft/40 hover:text-foreground">
+                Status
+              </button>
               <span className="ml-2 text-xs text-muted-2">{selected.size} selected</span>
             </>
           ) : (
@@ -458,6 +546,22 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
             </button>
           </div>
         </div>
+
+        {menu && (
+          <>
+            <div className="fixed inset-0 z-30" onClick={() => setMenu(null)} aria-hidden />
+            <div className="absolute left-2 top-[112px] z-40">
+              {menu.kind === "snooze" ? (
+                <SnoozeMenu onPick={(d) => snoozeTo(menu.keys, d)} />
+              ) : (
+                <StatusMenu
+                  current={rows.find((r) => r.key === menu.keys[0])?.status ?? null}
+                  onPick={(st) => void patchState(menu.keys, { status: st }, st ? `Status set to ${statusLabel(st)}` : "Status cleared")}
+                />
+              )}
+            </div>
+          </>
+        )}
 
         {/* Rows */}
         {pageRows.length === 0 ? (
@@ -493,6 +597,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     aria-label={`Select ${t.displayName}`}
                     className="h-4 w-4 shrink-0"
                   />
+                  <button
+                    onClick={() => void patchState([t.key], { starred: !t.starred })}
+                    aria-label={t.starred ? "Remove star" : "Add star"}
+                    aria-pressed={t.starred}
+                    title={t.starred ? "Starred" : "Not starred"}
+                    className={`shrink-0 rounded-full p-1 transition ${t.starred ? "text-accent" : "text-muted-2/50 hover:text-muted"}`}
+                  >
+                    <StarIcon width={18} height={18} filled={t.starred} />
+                  </button>
                   <Link href={`/admin/inbox/t/${t.key}`} className="flex min-w-0 flex-1 flex-col gap-0.5 md:flex-row md:items-center md:gap-4">
                     <span className={`flex shrink-0 items-center gap-2 md:w-52 ${unread ? "font-semibold text-foreground" : "text-foreground/75"}`}>
                       <span className="truncate text-sm">{t.displayName}</span>
@@ -500,6 +613,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                       <span className="truncate">
+                        {t.status && (
+                          <span className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${statusPill(t.status)}`}>{statusLabel(t.status)}</span>
+                        )}
+                        {t.snoozed && t.snoozedUntil && (
+                          <span className="mr-2 inline-flex items-center gap-1 text-[11px] text-muted-2">
+                            <ClockIcon width={12} height={12} />
+                            {formatListDate(t.snoozedUntil)}
+                          </span>
+                        )}
                         <span className={unread ? "font-semibold text-foreground" : "text-foreground/75"}>
                           {t.lastSubject || "(no subject)"}
                         </span>
@@ -521,6 +643,9 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     </button>
                     <button onClick={() => confirmDelete([t.key])} title="Delete" aria-label="Delete" className={iconBtn}>
                       <TrashIcon width={18} height={18} />
+                    </button>
+                    <button onClick={() => setMenu({ kind: "snooze", keys: [t.key] })} title="Snooze" aria-label="Snooze" className={iconBtn}>
+                      <ClockIcon width={18} height={18} />
                     </button>
                     <button onClick={() => apply([t.key], unread ? "markRead" : "markUnread")} title={unread ? "Mark as read" : "Mark as unread"} aria-label={unread ? "Mark as read" : "Mark as unread"} className={iconBtn}>
                       {unread ? <MailOpenIcon width={18} height={18} /> : <MailIcon width={18} height={18} />}

@@ -11,7 +11,13 @@ export default async function AdminInboxPage() {
 
   return (
     <AdminShell active="inbox" maxWidth="max-w-7xl">
-      <InboxThreadList threads={threads.map((t) => ({ ...t, lastAt: t.lastAt.toISOString() }))} />
+      <InboxThreadList
+        threads={threads.map((t) => ({
+          ...t,
+          lastAt: t.lastAt.toISOString(),
+          snoozedUntil: t.snoozedUntil ? t.snoozedUntil.toISOString() : null,
+        }))}
+      />
     </AdminShell>
   );
 }
