@@ -55,3 +55,45 @@ describe("joinTranslated", () => {
     expect(out).toBe("NOUS N'AVONS AUCUN HAPPY HOURS.\n\nMERCI\n\nPUB METRO\nSENNETERRE");
   });
 });
+
+import { glossaryTranslation, isSingleWord, finishSingleWord } from "./translate-units";
+
+describe("glossaryTranslation (greetings and closings the on-device translator gets wrong)", () => {
+  it("translates a bare Merci to Thank you", () => {
+    expect(glossaryTranslation("Merci")).toBe("Thank you");
+    expect(glossaryTranslation("merci")).toBe("Thank you");
+  });
+
+  it("keeps trailing punctuation and drops the French space before it", () => {
+    expect(glossaryTranslation("Merci !")).toBe("Thank you!");
+    expect(glossaryTranslation("Merci.")).toBe("Thank you.");
+    expect(glossaryTranslation("Cordialement,")).toBe("Kind regards,");
+  });
+
+  it("covers the common greetings", () => {
+    expect(glossaryTranslation("Bonjour")).toBe("Hello");
+    expect(glossaryTranslation("Salut")).toBe("Hi");
+    expect(glossaryTranslation("Bonsoir")).toBe("Good evening");
+  });
+
+  it("returns null for anything else so the translator handles it", () => {
+    expect(glossaryTranslation("Merci pour votre réponse")).toBeNull();
+    expect(glossaryTranslation("Nous n'avons aucun happy hours.")).toBeNull();
+  });
+});
+
+describe("single word handling", () => {
+  it("recognises a single word", () => {
+    expect(isSingleWord("Fermé")).toBe(true);
+    expect(isSingleWord("  Fermé ")).toBe(true);
+    expect(isSingleWord("Merci beaucoup")).toBe(false);
+    expect(isSingleWord("Fermé.")).toBe(false);
+    expect(isSingleWord("231")).toBe(false);
+  });
+
+  it("removes the period we added and restores the original capitalization", () => {
+    expect(finishSingleWord("Fermé", "closed.")).toBe("Closed");
+    expect(finishSingleWord("fermé", "Closed.")).toBe("closed");
+    expect(finishSingleWord("Fermé", "Closed")).toBe("Closed");
+  });
+});

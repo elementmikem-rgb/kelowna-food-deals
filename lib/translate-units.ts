@@ -55,3 +55,37 @@ export function splitForTranslation(raw: string): TranslationUnit[] {
 export function joinTranslated(units: TranslationUnit[], translated: string[]): string {
   return units.map((u, i) => (translated[i] ?? u.text) + u.sepAfter).join("");
 }
+
+// The on-device translator mangles a few one-word greetings and closings ("Merci" becomes "Thank",
+// "Salut" becomes "Salvation"). These are fixed answers, matched case-insensitively, with any trailing
+// punctuation kept and the French space before ! ? : ; dropped.
+const GLOSSARY: Record<string, string> = {
+  merci: "Thank you",
+  bonjour: "Hello",
+  bonsoir: "Good evening",
+  salut: "Hi",
+  cordialement: "Kind regards",
+  "bien cordialement": "Kind regards",
+  "bonne journée": "Have a good day",
+  "bonne soirée": "Have a good evening",
+};
+
+export function glossaryTranslation(text: string): string | null {
+  const m = text.trim().match(/^(\p{L}[\p{L}' ]*?)\s*([.!?,;:]*)$/u);
+  if (!m) return null;
+  const hit = GLOSSARY[m[1].toLowerCase()];
+  return hit ? hit + m[2] : null;
+}
+
+// A bare word with no context translates badly, so it is sent with a trailing period and finished here.
+export function isSingleWord(text: string): boolean {
+  return /^\p{L}[\p{L}'-]*$/u.test(text.trim());
+}
+
+export function finishSingleWord(original: string, translated: string): string {
+  const stripped = translated.trim().replace(/\.$/, "");
+  if (!stripped) return stripped;
+  const first = original.trim()[0];
+  const wasUpper = first === first.toUpperCase() && first !== first.toLowerCase();
+  return (wasUpper ? stripped[0].toUpperCase() : stripped[0].toLowerCase()) + stripped.slice(1);
+}

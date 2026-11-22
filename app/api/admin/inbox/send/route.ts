@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   // shows up in that thread's history in the admin inbox either way.
   const [sendRow] = await db
     .insert(outreachSends)
-    .values({ venueId, toEmail, subject, htmlBody, status: "queued" })
+    .values({ venueId, toEmail, subject, htmlBody, status: "queued", kind: "admin_reply" })
     .returning({ id: outreachSends.id });
 
   try {

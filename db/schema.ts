@@ -334,11 +334,14 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // "you're in, here's your login link" email, the very first touchpoint a brand
   // new owner ever gets -- worth tracking specifically because a low open rate
   // here would explain downstream funnel drop-off before anything else can).
+  // "admin_reply" (app/api/admin/inbox/send/route.ts, 2026-11-22) is a reply or message typed by hand in the admin
+  // inbox. It used to be saved with the default "first_contact", which inflated first-contact counts and made a
+  // venue we only ever replied to look like it had received cold outreach.
   // Default keeps every pre-existing row correctly labeled without a backfill.
   // app/api/admin/outreach/send/route.ts's "already sent" guard checks this
   // kind specifically, so one campaign's send doesn't get silently blocked by
   // (or silently re-trigger a duplicate of) a different kind's send.
-  kind: text("kind").$type<"first_contact" | "follow_up" | "weekend_promo" | "credit_nudge" | "weekly_digest" | "claim_approved">().notNull().default("first_contact"),
+  kind: text("kind").$type<"first_contact" | "follow_up" | "weekend_promo" | "credit_nudge" | "weekly_digest" | "claim_approved" | "admin_reply">().notNull().default("first_contact"),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),
