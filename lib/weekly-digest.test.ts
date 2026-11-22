@@ -55,3 +55,13 @@ describe("buildDigestEmail", () => {
     expect(htmlBody).toContain(`/owner/venue/${base.venueId}`);
   });
 });
+
+import { digestUnsubscribeHeaders } from "./weekly-digest";
+
+describe("digestUnsubscribeHeaders", () => {
+  it("sends the one-click unsubscribe headers mail providers look for (RFC 8058)", () => {
+    const h = digestUnsubscribeHeaders("https://todaystab.com/api/owner/digest-unsubscribe?venueOwnerId=7&token=abc");
+    expect(h["List-Unsubscribe"]).toBe("<https://todaystab.com/api/owner/digest-unsubscribe?venueOwnerId=7&token=abc>");
+    expect(h["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+  });
+});

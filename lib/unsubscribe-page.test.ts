@@ -67,3 +67,28 @@ describe("isFormConfirmation", () => {
     expect(isFormConfirmation("")).toBe(false);
   });
 });
+
+describe("renderUnsubscribePage: weekly stats digest wording", () => {
+  it("says it is the weekly stats emails, not all emails, in English", () => {
+    const html = renderUnsubscribePage({ state: "confirm", brand: "Whistler Food Deals", language: "en", action: "/x", kind: "digest" });
+    expect(html).toMatch(/weekly listing stats/i);
+    expect(html).toMatch(/<form[^>]*method="post"/i);
+  });
+
+  it("confirms in English once done", () => {
+    const html = renderUnsubscribePage({ state: "done", brand: "Whistler Food Deals", language: "en", kind: "digest" });
+    expect(html).toMatch(/weekly listing stats/i);
+    expect(html).not.toMatch(/<form/i);
+  });
+
+  it("uses French for a French region", () => {
+    const html = renderUnsubscribePage({ state: "confirm", brand: "Bons Plans", language: "fr", action: "/x", kind: "digest" });
+    expect(html).toMatch(/résumé hebdomadaire|statistiques hebdomadaires/i);
+    expect(html).not.toMatch(/weekly/i);
+  });
+
+  it("defaults to the outreach wording when no kind is given", () => {
+    const html = renderUnsubscribePage({ state: "confirm", brand: "X", language: "en", action: "/x" });
+    expect(html).not.toMatch(/weekly/i);
+  });
+});

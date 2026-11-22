@@ -6,6 +6,8 @@
 // provider's native one-click button POSTs "List-Unsubscribe=One-Click" and is handled separately by the route.
 
 export type UnsubscribeState = "confirm" | "done" | "invalid";
+// "outreach" is the cold-outreach link; "digest" is the weekly listing stats email sent to owners who claimed a venue.
+export type UnsubscribeKind = "outreach" | "digest";
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -32,11 +34,35 @@ const TEXT = {
   },
 } as const;
 
-export function renderUnsubscribePage(args: { state: UnsubscribeState; brand: string; language: "en" | "fr"; action?: string }): string {
+const DIGEST_TEXT = {
+  en: {
+    confirmBody: (brand: string) => `Click the button to stop the weekly listing stats emails from ${brand}.`,
+    doneBody: (brand: string) => `You have been unsubscribed from the weekly listing stats emails from ${brand}.`,
+  },
+  fr: {
+    confirmBody: (brand: string) => `Cliquez sur le bouton pour ne plus recevoir le résumé hebdomadaire de votre fiche de ${brand}.`,
+    doneBody: (brand: string) => `Vous êtes désabonné du résumé hebdomadaire de votre fiche de ${brand}.`,
+  },
+} as const;
+
+export function renderUnsubscribePage(args: {
+  state: UnsubscribeState;
+  brand: string;
+  language: "en" | "fr";
+  action?: string;
+  kind?: UnsubscribeKind;
+}): string {
   const t = TEXT[args.language];
+  const d = DIGEST_TEXT[args.language];
+  const digest = args.kind === "digest";
   const brand = esc(args.brand);
   const title = args.state === "confirm" ? t.confirmTitle : args.state === "done" ? t.doneTitle : t.invalidTitle;
-  const body = args.state === "confirm" ? t.confirmBody(brand) : args.state === "done" ? t.doneBody(brand) : t.invalidBody;
+  const body =
+    args.state === "confirm"
+      ? (digest ? d.confirmBody(brand) : t.confirmBody(brand))
+      : args.state === "done"
+        ? (digest ? d.doneBody(brand) : t.doneBody(brand))
+        : t.invalidBody;
   const form =
     args.state === "confirm"
       ? `<form method="post" action="${esc(args.action ?? "")}"><input type="hidden" name="confirm" value="1"><button type="submit">${t.button}</button></form>`

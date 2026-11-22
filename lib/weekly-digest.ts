@@ -4,11 +4,21 @@ import { getRegionVenueWeeklyViews } from "@/lib/analytics";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { wrapOutreachHtml } from "@/lib/outreach-send";
 import { buildDigestUnsubscribeUrl } from "@/lib/owner-digest-unsubscribe";
+import { suppressionReason } from "@/lib/suppression";
 import type { Language } from "@/lib/i18n";
 
 // Only the top 3 gets the "#N most-viewed" bonus line -- outside that it's not a
 // compelling stat, and would just read as an arbitrary/unflattering number.
 const RANK_CALLOUT_THRESHOLD = 3;
+
+// One-click unsubscribe headers (RFC 8058), so Gmail, Yahoo and Outlook show their own Unsubscribe button. The POST is
+// answered by /api/owner/digest-unsubscribe.
+export function digestUnsubscribeHeaders(unsubscribeUrl: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
 
 export interface DigestEmailContent {
   subject: string;
@@ -180,6 +190,13 @@ export async function sendWeeklyDigests(): Promise<void> {
         .limit(1);
       if (!owner) continue;
 
+      // Never email an address that bounced, is a blocked sender, or has unsubscribed (lib/suppression.ts).
+      const suppressed = await suppressionReason(owner.email);
+      if (suppressed) {
+        console.log(`[weekly-digest] skipped venue ${venue.venueId}: ${suppressed}`);
+        continue;
+      }
+
       // Logged the same way every other campaign in this codebase is -- a "queued" row
       // inserted before the send (its id becomes the send-<id> Brevo tag the webhook
       // matches on), updated to "sent"/"failed" after. This recurring weekly send had
@@ -201,6 +218,7 @@ export async function sendWeeklyDigests(): Promise<void> {
             ? `reply@reply.${region.domain}`
             : `reply@reply.${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}`,
           tags: [`send-${sendRow.id}`],
+          headers: digestUnsubscribeHeaders(buildDigestUnsubscribeUrl(venue.venueOwnerId)),
         });
         await db.update(outreachSends).set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() }).where(eq(outreachSends.id, sendRow.id));
       } catch (err) {
