@@ -60,7 +60,7 @@ export default async function ThreadPage({ params }: PageProps) {
         </div>
         {venue && (
           <div className="xl:sticky xl:top-4 xl:self-start">
-            <VenuePanel venue={venue} venueUrl={thread.venueUrl} replyText={lastReply?.bodyText ?? null} />
+            <VenuePanel venue={venue} venueUrl={thread.venueUrl} replyText={lastReply?.bodyText ?? null} replyFrom={lastReply?.fromEmail ?? null} />
           </div>
         )}
       </div>

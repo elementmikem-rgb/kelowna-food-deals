@@ -4,6 +4,7 @@ import { suggestSpecial } from "@/lib/reply-prefill";
 import { AddSpecialForm, UsePhoneButton, VerifyEmailButton } from "@/components/inbox/VenueApply";
 import { BASIS_LABEL, PROVEN } from "@/lib/email-basis";
 import { formatMessageDate } from "@/lib/inbox-format";
+import { senderMismatch, unfamiliarLinkDomains } from "@/lib/inbox-warnings";
 
 // Read-only venue snapshot beside a conversation: what the listing says now, and details in the venue's
 // latest reply that differ from it. Server component, no state.
@@ -11,14 +12,18 @@ export function VenuePanel({
   venue,
   venueUrl,
   replyText,
+  replyFrom = null,
 }: {
   venue: VenuePanelData;
   venueUrl: string | null;
   replyText: string | null;
+  replyFrom?: string | null;
 }) {
   const phones = replyText ? extractPhones(replyText) : [];
   const prices = replyText ? extractPrices(replyText) : [];
   const suggestion = replyText ? suggestSpecial(replyText) : null;
+  const oddLinks = unfamiliarLinkDomains(replyText, venue.website);
+  const otherSender = senderMismatch(replyFrom, venue.contactEmail);
   const newPhones = phones.filter((p) => !samePhone(p, venue.phone));
   const row = "flex flex-col gap-0.5";
   const label = "text-[11px] font-medium uppercase tracking-wider text-muted-2";
@@ -35,6 +40,24 @@ export function VenuePanel({
         </div>
         {venue.ownerFunnel && <p className="mt-2 text-xs text-muted-2">Owner: {venue.ownerFunnel}</p>}
       </div>
+
+      {(oddLinks.length > 0 || otherSender) && (
+        <div role="note" className="rounded-xl border border-stale/40 bg-stale/10 p-3 text-xs text-foreground">
+          <p className={label}>Check before applying anything</p>
+          <ul className="mt-1.5 flex flex-col gap-1.5">
+            {otherSender && (
+              <li>
+                Sent from {replyFrom}, not the address on file ({venue.contactEmail}). It may be a staff member or someone else.
+              </li>
+            )}
+            {oddLinks.length > 0 && (
+              <li>
+                Links to sites that are not the venue&apos;s own: {oddLinks.join(", ")}. Do not open them unless you expect them.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
 
       {(newPhones.length > 0 || prices.length > 0) && (
         <div className="rounded-xl bg-accent-soft/30 p-3">
