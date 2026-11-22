@@ -126,3 +126,61 @@ describe("checkDraftReply (also applied to a draft Mike edited before sending)",
     expect(checkDraftReply("go to https://evil.example now")).toMatch(/another site/);
   });
 });
+
+import { findDisallowedLink } from "./reply-proposal";
+
+describe("findDisallowedLink: strict allowlist, only todaystab.com and its subdomains", () => {
+  const blocked = [
+    "visit evil.example/pay today",
+    "go to EVIL.COM now",
+    "see //evil.com/x",
+    "grab it at ftp://files.example.com/a",
+    "write mailto:a@evil.com",
+    "click javascript:alert(1)",
+    "https://todaystab.com@evil.com/login",
+    "https://todaystab.com.evil.com/x",
+    "https://evil.com/todaystab.com",
+    "http://evil.com",
+    "go to evil。com today",
+    "go to evil．com today",
+    "go to ev​il.com today",
+    "email bob@gmail.com for details",
+    "call 1.2.3.4 now",
+    "https://x.com:8080/a",
+  ];
+  for (const text of blocked) {
+    it(`blocks: ${JSON.stringify(text)}`, () => {
+      expect(findDisallowedLink(text)).not.toBeNull();
+    });
+  }
+
+  const allowed = [
+    "Votre fiche: https://todaystab.com/abitibi-temiscamingue/venues/4828",
+    "see todaystab.com for details",
+    "see www.todaystab.com",
+    "https://mail.todaystab.com/x",
+    "write to admin@todaystab.com",
+    "Bonjour Veronique, merci! Les ailes a 1$ le samedi soir, de 16h30 a 18h. Tel (819) 860-6646. Mike",
+    "Price is 5.50 $ or $12.99 (e.g. at 5 p.m.) etc.",
+  ];
+  for (const text of allowed) {
+    it(`allows: ${JSON.stringify(text)}`, () => {
+      expect(findDisallowedLink(text)).toBeNull();
+    });
+  }
+});
+
+describe("parseProposerOutput: links in the special's own text", () => {
+  it("rejects a title or description that contains a link, since they go on the public listing", () => {
+    const base = {
+      intent: "special",
+      special: { title: "Wings evil.example/win", daysOfWeek: [6], startTime: null, endTime: null, priceCents: 100, category: "wing_night", description: null },
+      phone: null,
+      language: "en",
+      draftReply: "Thanks. Mike",
+      confidence: "high",
+    };
+    expect(parseProposerOutput(base).ok).toBe(false);
+    expect(parseProposerOutput({ ...base, special: { ...base.special, title: "Wings", description: "Details at https://evil.com" } }).ok).toBe(false);
+  });
+});

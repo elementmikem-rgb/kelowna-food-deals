@@ -5,7 +5,7 @@ import { db, inboxProposals, inboundEmails, specialCategory } from "@/db";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { addSpecialToVenue, setVenuePhone } from "@/lib/venue-apply";
 import { sendInboxReply } from "@/lib/inbox-send";
-import { checkDraftReply } from "@/lib/reply-proposal";
+import { checkDraftReply, findDisallowedLink } from "@/lib/reply-proposal";
 
 // Acts on one proposal made by scripts/propose-replies.ts. Runs only when Mike clicks a button on the proposal card.
 // "dismiss" just closes it. "apply" writes what he left ticked, in this order: the special, the phone, and the reply
@@ -62,10 +62,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .limit(1);
   if (!inbound) return NextResponse.json({ error: "original email is gone" }, { status: 404 });
 
-  // Validate the reply BEFORE any write, so an unsafe edit changes nothing.
+  // Validate everything BEFORE any write, so an unsafe edit changes nothing. The special's text goes on the public
+  // listing and the reply goes out under Mike's name, so both get the same strict link check.
   if (body.reply !== null) {
     const problem = checkDraftReply(body.reply);
     if (problem) return NextResponse.json({ error: problem }, { status: 400 });
+  }
+  if (body.special && (findDisallowedLink(body.special.title) || (body.special.description && findDisallowedLink(body.special.description)))) {
+    return NextResponse.json({ error: "the special's text contains a link to another site" }, { status: 400 });
   }
 
   const done: string[] = [];
