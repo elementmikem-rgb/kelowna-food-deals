@@ -27,3 +27,19 @@ export function formatSpecialLine(s: SpecialLine): string {
         : dayName(s.dayOfWeek);
   return [when, s.priceCents !== null ? dollars(s.priceCents) : null, s.title].filter(Boolean).join(", ");
 }
+
+export interface SpecialSummary {
+  title: string;
+  daysOfWeek: number[];
+  startTime: string | null;
+  endTime: string | null;
+  priceCents: number | null;
+}
+
+// Like formatSpecialLine, for a suggestion that may cover several days.
+export function formatSpecialSummary(s: SpecialSummary): string {
+  const days = [...new Set(s.daysOfWeek)].sort((a, b) => a - b);
+  const dayText = days.length === 0 || days.length === 7 ? "Daily" : days.map((d) => dayName(d)).join(", ");
+  const when = s.startTime && s.endTime ? `${dayText} ${s.startTime} to ${s.endTime}` : s.startTime ? `${dayText} from ${s.startTime}` : dayText;
+  return [when, s.priceCents !== null ? dollars(s.priceCents) : null, s.title].filter(Boolean).join(", ");
+}

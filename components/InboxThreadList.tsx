@@ -44,6 +44,7 @@ interface ThreadRow {
   snoozed: boolean;
   snoozedUntil: string | null;
   status: InboxThreadStatus | null;
+  hasProposal: boolean;
   lastAt: string;
   unreadCount: number;
   archived: boolean;
@@ -613,6 +614,9 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                       <span className="truncate">
+                        {t.hasProposal && (
+                          <span className="mr-2 rounded bg-accent px-1.5 py-0.5 text-[11px] font-medium text-background">Suggestion</span>
+                        )}
                         {t.status && (
                           <span className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${statusPill(t.status)}`}>{statusLabel(t.status)}</span>
                         )}

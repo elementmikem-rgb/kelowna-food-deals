@@ -3,6 +3,7 @@ import { and, eq, isNull, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
 import { parseThreadKey, threadKeyFor } from "@/lib/inbox-thread-key";
 import { isSnoozedNow } from "@/lib/inbox-snooze";
+import { getPendingProposalVenueIds } from "@/lib/inbox-proposals";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -37,6 +38,7 @@ export interface InboxThread {
   snoozed: boolean; // currently snoozed (wake time in the future and no reply since)
   snoozedUntil: Date | null;
   status: InboxThreadStatus | null;
+  hasProposal: boolean; // a suggestion from the reply is waiting for Mike's click
   lastAt: Date;
   unreadCount: number;
   archived: boolean;
@@ -116,6 +118,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: false,
         snoozedUntil: null,
         status: null,
+        hasProposal: false,
         lastAt: e.receivedAt,
         unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
         archived: e.archivedAt !== null,
@@ -153,6 +156,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: existing?.snoozed ?? false,
         snoozedUntil: existing?.snoozedUntil ?? null,
         status: existing?.status ?? null,
+        hasProposal: existing?.hasProposal ?? false,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,
         archived: existing?.archived ?? false,
@@ -177,6 +181,11 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
       lastInboundAt.get(st.threadKey)?.toISOString() ?? null,
       now
     );
+  }
+
+  for (const venueId of await getPendingProposalVenueIds()) {
+    const t = threads.get(`v${venueId}`);
+    if (t) t.hasProposal = true;
   }
 
   return [...threads.values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());

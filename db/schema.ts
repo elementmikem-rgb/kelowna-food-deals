@@ -386,6 +386,29 @@ export const inboxThreadState = specialsSchema.table("inbox_thread_state", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// One row per venue reply that the local `claude -p` script (scripts/propose-replies.ts) has read: the validated
+// suggestion (special, phone, draft reply) waiting for Mike's click in the admin inbox. A proposal never changes a
+// listing or sends an email by itself. UNIQUE on inbound_email_id so a reply is read at most once. Added 2026-11-22.
+export const inboxProposalStatus = ["pending", "applied", "dismissed", "failed"] as const;
+export type InboxProposalStatus = (typeof inboxProposalStatus)[number];
+
+export const inboxProposals = specialsSchema.table("inbox_proposals", {
+  id: serial("id").primaryKey(),
+  inboundEmailId: integer("inbound_email_id")
+    .notNull()
+    .unique()
+    .references(() => inboundEmails.id, { onDelete: "cascade" }),
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  status: text("status").$type<InboxProposalStatus>().notNull().default("pending"),
+  intent: text("intent").notNull(),
+  confidence: text("confidence").notNull(),
+  proposal: jsonb("proposal").notNull(),
+  error: text("error"),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+});
+
 export const inboundEmails = specialsSchema.table("inbound_emails", {
   id: serial("id").primaryKey(),
   venueId: integer("venue_id").references(() => venues.id, { onDelete: "set null" }), // matched by from-email, nullable if no match
