@@ -768,7 +768,6 @@ export function InboxThread({
                       </button>
                     </div>
                   )}
-                  {draftRestored && <p className="text-xs text-muted-2">Draft restored from your last visit.</p>}
             {translateError && <p className="text-xs text-stale">{translateError}</p>}
 
                   {showT ? (
@@ -878,6 +877,7 @@ export function InboxThread({
               placeholder="Write your reply…"
               className="resize-y bg-transparent text-[15px] leading-relaxed outline-none placeholder:text-muted-2 disabled:opacity-60"
             />
+            {draftRestored && <p className="text-xs text-muted-2">Draft restored from your last visit.</p>}
             {translateError && <p className="text-xs text-stale">{translateError}</p>}
             <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">
               {state === "pending" ? (
