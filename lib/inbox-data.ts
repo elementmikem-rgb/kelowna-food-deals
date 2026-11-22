@@ -1,3 +1,4 @@
+import { threadSignals, type ThreadSignals } from "@/lib/inbox-signals";
 import { db, outreachSends, inboundEmails, venues, emailAttachments, regions, inboxThreadState, type InboxThreadStatus } from "@/db";
 import { and, eq, isNull, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
@@ -18,7 +19,7 @@ function snippet(text: string | null, max = 140): string {
 // Inbound htmlBody comes from whoever emails the reply address — untrusted
 // content that must never be rendered as raw HTML in the admin UI. Only
 // outbound (our own composed) HTML is safe to render directly.
-function safeInboundText(textBody: string | null, htmlBody: string | null): string | null {
+export function safeInboundText(textBody: string | null, htmlBody: string | null): string | null {
   if (textBody) return textBody;
   if (htmlBody) return stripTags(htmlBody);
   return null;
@@ -38,6 +39,7 @@ export interface InboxThread {
   snoozed: boolean; // currently snoozed (wake time in the future and no reply since)
   snoozedUntil: Date | null;
   status: InboxThreadStatus | null;
+  signals: ThreadSignals; // what the newest reply from them is about (stop request, decline, sales lead)
   hasProposal: boolean; // a suggestion from the reply is waiting for Mike's click
   lastAt: Date;
   unreadCount: number;
@@ -118,6 +120,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: false,
         snoozedUntil: null,
         status: null,
+        signals: threadSignals(safeInboundText(e.textBody, e.htmlBody)),
         hasProposal: false,
         lastAt: e.receivedAt,
         unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
@@ -132,6 +135,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
       if (isNewest) {
         existing.lastSubject = e.subject ?? "";
         existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
+        existing.signals = threadSignals(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
         existing.archived = e.archivedAt !== null;
       }
@@ -156,6 +160,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: existing?.snoozed ?? false,
         snoozedUntil: existing?.snoozedUntil ?? null,
         status: existing?.status ?? null,
+        signals: existing?.signals ?? { stop: false, decline: false, lead: false },
         hasProposal: existing?.hasProposal ?? false,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,

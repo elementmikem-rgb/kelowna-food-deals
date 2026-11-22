@@ -316,3 +316,22 @@ describe("matchThread - operators", () => {
     expect(matchThread({ ...base, lang: "fr" }, parseQuery("lang:fr"))).toBe(true);
   });
 });
+
+describe("signal search operators (is:stop, is:declined, is:lead)", () => {
+  const withSignals = (s: { stop?: boolean; decline?: boolean; lead?: boolean }): SearchableThread => ({
+    ...base,
+    signals: { stop: false, decline: false, lead: false, ...s },
+  });
+  it("is:stop finds only threads asking to stop", () => {
+    const q = parseQuery("is:stop");
+    expect(matchThread(withSignals({ stop: true }), q)).toBe(true);
+    expect(matchThread(withSignals({ lead: true }), q)).toBe(false);
+    expect(matchThread(base, q)).toBe(false);
+  });
+  it("is:declined and is:lead work the same way", () => {
+    expect(matchThread(withSignals({ decline: true }), parseQuery("is:declined"))).toBe(true);
+    expect(matchThread(withSignals({ stop: true }), parseQuery("is:declined"))).toBe(false);
+    expect(matchThread(withSignals({ lead: true }), parseQuery("is:lead"))).toBe(true);
+    expect(matchThread(base, parseQuery("is:lead"))).toBe(false);
+  });
+});

@@ -7,6 +7,7 @@ import { cleanBodyText, tokenizeLinks } from "@/lib/email-display";
 import { detectLanguage } from "@/lib/detect-language";
 import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
+import { threadSignals } from "@/lib/inbox-signals";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
 import type { InboxThreadStatus } from "@/db/schema";
@@ -194,6 +195,7 @@ interface InboxThreadProps {
   contactEmail: string | null;
   venueUrl?: string | null;
   venueClaimed?: boolean;
+  venueUnsubscribed?: boolean;
   starred?: boolean;
   status?: InboxThreadStatus | null;
   snoozedUntil?: string | null;
@@ -215,6 +217,7 @@ export function InboxThread({
   contactEmail,
   venueUrl,
   venueClaimed = false,
+  venueUnsubscribed = false,
   starred = false,
   status = null,
   snoozedUntil = null,
@@ -262,6 +265,8 @@ export function InboxThread({
   const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
   const lastInboundLang = lastInbound?.bodyText ? detectLanguage(lastInbound.bodyText).lang : "unknown";
   const replyLang: "en" | "fr" = lastInboundLang === "fr" ? "fr" : "en";
+  const signals = threadSignals(lastInbound?.bodyText);
+  const showStopBanner = (signals.stop || signals.decline) && venueId !== null && !venueUnsubscribed && !(actionResult?.kind === "unsubscribe" && actionResult.ok);
 
   // Stars, snooze and status for this conversation, through /api/admin/inbox/state.
   async function patchThreadState(patch: { starred?: boolean; snoozedUntil?: string | null; status?: InboxThreadStatus | null }) {
@@ -615,6 +620,24 @@ export function InboxThread({
           </span>
         )}
       </div>
+
+      {showStopBanner && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-foreground">
+          <span className="flex-1">
+            {signals.stop
+              ? "This reply looks like a request to stop hearing from us. Under CASL, act on it within 10 business days."
+              : "This reply looks like a no. Consider unsubscribing this venue so it is not emailed again."}
+          </span>
+          <button onClick={() => void handleUnsubscribe()} disabled={actionBusy} className="rounded-full bg-danger px-4 py-1.5 text-sm font-medium text-background disabled:opacity-50">
+            Unsubscribe venue
+          </button>
+        </div>
+      )}
+      {signals.lead && (
+        <div className="rounded-xl border border-evergreen/40 bg-evergreen/10 px-4 py-3 text-sm text-foreground">
+          Possible sales lead: this reply asks about advertising, pricing or sponsoring.
+        </div>
+      )}
 
       {/* Subject */}
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">

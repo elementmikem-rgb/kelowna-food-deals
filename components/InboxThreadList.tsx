@@ -45,6 +45,7 @@ interface ThreadRow {
   snoozedUntil: string | null;
   status: InboxThreadStatus | null;
   hasProposal: boolean;
+  signals: { stop: boolean; decline: boolean; lead: boolean };
   lastAt: string;
   unreadCount: number;
   archived: boolean;
@@ -64,7 +65,7 @@ const FOLDERS: { id: Folder; label: string; icon: typeof InboxIcon }[] = [
   { id: "archive", label: "Archived", icon: ArchiveIcon },
 ];
 
-const OPERATOR_HINTS = ["from:", "is:unread", "has:attachment", "in:sent", "in:archive", "older_than:7d", "lang:fr"];
+const OPERATOR_HINTS = ["from:", "is:unread", "has:attachment", "is:lead", "is:stop", "in:sent", "in:archive", "older_than:7d", "lang:fr"];
 
 const SHORTCUTS: [string, string][] = [
   ["j / k", "Next / previous conversation"],
@@ -141,6 +142,7 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
         archived: t.archived,
         hasAttachments: t.hasAttachments,
         lastFromMe: t.lastFromMe,
+        signals: t.signals,
       };
       return matchThread(searchable, q);
     });
@@ -614,6 +616,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                       <span className="truncate">
+                        {t.signals.stop && (
+                          <span className="mr-2 rounded bg-danger px-1.5 py-0.5 text-[11px] font-medium text-background">Stop request</span>
+                        )}
+                        {!t.signals.stop && t.signals.decline && (
+                          <span className="mr-2 rounded bg-danger/15 px-1.5 py-0.5 text-[11px] font-medium text-danger">Declined</span>
+                        )}
+                        {t.signals.lead && (
+                          <span className="mr-2 rounded bg-evergreen px-1.5 py-0.5 text-[11px] font-medium text-background">Lead</span>
+                        )}
                         {t.hasProposal && (
                           <span className="mr-2 rounded bg-accent px-1.5 py-0.5 text-[11px] font-medium text-background">Suggestion</span>
                         )}

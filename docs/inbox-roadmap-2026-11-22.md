@@ -47,7 +47,34 @@ TESTED 2026-11-22 (Mike approved; hidden test venue, rows removed afterwards, pr
 - Fact for the reply wording: a paid Boost still waits for admin approval before it goes live.
 - Prices as configured: Boost $2/day, photo add-on $1/day, a bundle discount of 10% at 3 venues and 20% at 5 venues exists in checkout (the backlog line below that says bundle pricing is missing is out of date).
 
-Backlog from the same brainstorm (not scheduled): bundle offers for chains (a bundle discount already exists, so this is only about promoting it); a self-serve checkout for non-venue sponsors; enabling the weekly owner stats email (needs cron-service variables); owner referral credit; booking and ticket commission (a separate project); per-venue to-do notes; auto-advance to the next conversation; a duplicate-reply guard; export replies to a spreadsheet.
+Added to Phase 1B after the poster test:
+
+| # | Feature | How | Database | Effort |
+|---|---|---|---|---|
+| R4 | Tell Mike when a paid booking is waiting for approval | A paid or credit-paid booking sits in "pending approval" until an admin approves it, and nothing alerts anyone. Show a count in the admin sidebar and include it in the daily summary (item 15). Never auto-approve. | None. | S |
+| R5 | Test the card payment path | Prove the Stripe checkout and webhook with Stripe TEST mode (test keys and Stripe's published test cards) against a hidden test venue, with the same cleanup as the credit test. Production keeps its live key; nothing is charged. | None. | M |
+
+## Phase 5: smaller ideas (scoped lightly, build after Phases 1 to 4 unless a change in priorities)
+
+| # | Feature | How | Database | Effort |
+|---|---|---|---|---|
+| 17 | Chain context in the venue panel | Show "N locations share this address or chain" with links; feeds item 13 and chain bundle offers (a 10% discount at 3 venues and 20% at 5 already exists in checkout). | None. | S |
+| 18 | Auto-advance | After archiving or sending, open the next conversation. | None. | S |
+| 19 | Duplicate-reply guard | Warn when a reply to this thread was sent in the last few minutes. | None. | S |
+| 20 | Per-venue to-do notes | A short private note and a done tick on each venue, shown in the panel. | New column or table. | S to M |
+| 21 | Export replies to a spreadsheet | CSV of replies (date, venue, status, language) from the current filter. | None. | S |
+| 22 | Owner referral credit | Credit for bringing in a venue. Costs nothing until used, but touches credits, so needs a design and Mike's yes first. | Likely. | M |
+| 23 | Self-serve checkout for non-venue sponsors | A purchase path for breweries, tourism boards and similar, replacing the manual contact form. Touches payments, so needs a design and Mike's yes first. | Likely. | L |
+| 24 | Turn on the weekly owner stats email | Already built and off. Needs cron-service variables (a production change, needs Mike's yes). | None. | S |
+| 25 | Booking and ticket commission | The big revenue swing from the earlier notes. A separate project, not an inbox feature. | Yes. | XL |
+
+## Open operational items (not features; each needs Mike)
+- Schedule the reply-suggestion task: Mike runs one `schtasks` command.
+- Relabel 59 sent replies filed under the wrong kind (SQL shown first, needs a yes).
+- One real click-through of "Apply selected" on a suggestion card.
+- Decide whether to test removing click tracking (customer-facing).
+- Tighten DMARC to p=quarantine after 2 to 4 weeks of clean Cloudflare reports.
+- Re-check The Longhorn venue after 2026-12-03.
 
 ## Phase 2: day-to-day workflow
 
@@ -78,7 +105,7 @@ Backlog from the same brainstorm (not scheduled): bundle offers for chains (a bu
 
 ## Totals
 - 4 new tables (`sender_aliases`, `inbox_snippets`, `venue_change_log`, and a small status addition for scheduled sends if needed), each shown as exact SQL first and each additive.
-- Items 1 to 4 are the first ship. Items 5 to 10 can follow in any order. Item 11 must come before 12 and 13.
+- Phase 1B now has R1 to R5. Items 1 to 4 are the first ship. Items 5 to 10 can follow in any order. Item 11 must come before 12 and 13.
 - Nothing here needs a paid service or a change to production environment variables. The weekly digest, the cron service variables and the scheduled task from earlier remain separate decisions.
 
 ## Decisions needed from Mike

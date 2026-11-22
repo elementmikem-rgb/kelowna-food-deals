@@ -11,6 +11,7 @@ export interface SearchableThread {
   starred?: boolean;
   snoozedUntil?: string | null;
   lang?: string | null;
+  signals?: { stop: boolean; decline: boolean; lead: boolean };
 }
 
 export interface ParsedQuery {
@@ -18,7 +19,7 @@ export interface ParsedQuery {
   negated: string[];
   from: string[];
   subject: string[];
-  is: string[]; // unread read starred snoozed
+  is: string[]; // unread read starred snoozed stop declined lead
   has: string[]; // attachment
   in: "inbox" | "sent" | "archive" | "snoozed" | "starred" | "all" | null;
   before: Date | null;
@@ -230,6 +231,9 @@ export function matchThread(t: SearchableThread, q: ParsedQuery, now: Date = new
     if (filter === "snoozed") {
       if (!t.snoozedUntil || new Date(t.snoozedUntil) <= now) return false;
     }
+    if (filter === "stop" && !t.signals?.stop) return false;
+    if (filter === "declined" && !t.signals?.decline) return false;
+    if (filter === "lead" && !t.signals?.lead) return false;
   }
 
   // 3. has: filters
