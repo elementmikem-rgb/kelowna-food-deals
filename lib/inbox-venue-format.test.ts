@@ -53,3 +53,10 @@ describe("formatSpecialSummary (a proposal can cover several days)", () => {
     expect(formatSpecialSummary({ title: "chicken wings", daysOfWeek: [6], startTime: null, endTime: null, priceCents: 100 })).toBe("Sat, $1, chicken wings");
   });
 });
+
+describe("times from the database include seconds", () => {
+  it("shows HH:MM, not HH:MM:SS", () => {
+    expect(formatSpecialLine({ title: "Sunset Sessions", dayOfWeek: 0, startTime: "18:00:00", endTime: null, priceCents: 1000 })).toBe("Sun from 18:00, $10, Sunset Sessions");
+    expect(formatSpecialSummary({ title: "Pints", daysOfWeek: [2], startTime: "16:00:00", endTime: "18:30:00", priceCents: null })).toBe("Tue 16:00 to 18:30, Pints");
+  });
+});
