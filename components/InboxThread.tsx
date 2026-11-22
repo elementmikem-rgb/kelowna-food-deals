@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { splitQuoted, stripQuotePrefix } from "@/lib/email-quote";
 import { cleanBodyText, tokenizeLinks } from "@/lib/email-display";
 import { detectLanguage } from "@/lib/detect-language";
+import { joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { fillSnippet, snippetsFor } from "@/lib/inbox-snippets";
 import { formatMessageDate } from "@/lib/inbox-format";
 import {
@@ -148,11 +149,12 @@ async function translateText(
       });
     },
   });
-  // Translate paragraph by paragraph: long inputs are slow and can be truncated.
-  const parts = text.split(/\n{2,}/);
+  // Translate piece by piece (long inputs are slow and can be truncated) and put the pieces back with the
+  // original paragraphs and signature lines, so the translated message keeps its layout.
+  const units = splitForTranslation(text);
   const out: string[] = [];
-  for (const p of parts) out.push(p.trim() ? await tr.translate(p) : p);
-  return out.join("\n\n");
+  for (const u of units) out.push(u.translate ? await tr.translate(u.text) : u.text);
+  return joinTranslated(units, out);
 }
 
 interface Message {
@@ -596,7 +598,7 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
                   {canTranslate && lang === "fr" && !outbound && (
                     <div className="flex items-center gap-3 rounded-lg bg-accent-soft/25 px-3 py-2 text-xs text-muted">
                       <TranslateIcon width={16} height={16} className="shrink-0" />
-                      <span>This message is in French.</span>
+                      <span>{showT ? "Showing the English translation." : "This message is in French."}</span>
                       <button onClick={() => handleTranslate(m)} disabled={translating === m.id} className="font-semibold text-accent-dim hover:underline disabled:opacity-50">
                         {translating === m.id ? (downloadPct !== null ? `Downloading language pack ${downloadPct}%` : "Translating…") : tText ? (showOriginal[m.id] ? "Translate to English" : "Show original") : "Translate to English"}
                       </button>
@@ -605,7 +607,9 @@ export function InboxThread({ venueId, displayName, contactEmail, venueUrl, arch
                   {translateError && <p className="text-xs text-stale">{translateError}</p>}
 
                   {showT ? (
-                    <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/90">{tText}</p>
+                    <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/90">
+                      <Linkified text={tText} />
+                    </p>
                   ) : outbound && m.bodyHtml ? (
                     // Safe: outbound HTML is always our own composed content, never sender-supplied --
                     // see lib/inbox-data.ts for why inbound never sets bodyHtml.
