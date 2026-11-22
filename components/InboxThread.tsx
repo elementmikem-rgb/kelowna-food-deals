@@ -8,6 +8,7 @@ import { detectLanguage } from "@/lib/detect-language";
 import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { claimUrl, fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
 import { threadSignals } from "@/lib/inbox-signals";
+import { clearDraft, loadDraft, saveDraft, type DraftStorage } from "@/lib/inbox-draft";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
 import type { InboxThreadStatus } from "@/db/schema";
@@ -227,6 +228,7 @@ export function InboxThread({
   const router = useRouter();
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
   const [state, setState] = useState<"idle" | "pending" | "sending" | "sent" | "error">("idle");
   const [secondsLeft, setSecondsLeft] = useState(UNDO_SECONDS);
   const [actionBusy, setActionBusy] = useState(false);
@@ -432,6 +434,33 @@ export function InboxThread({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Autosaved draft: restored when this conversation opens, saved shortly after each keystroke, cleared on send or
+  // an explicit discard. Browser storage can be blocked, in which case there is simply no autosave.
+  function draftStore(): DraftStorage | null {
+    try {
+      return typeof window !== "undefined" ? window.localStorage : null;
+    } catch {
+      return null;
+    }
+  }
+  useEffect(() => {
+    const saved = loadDraft(draftStore(), threadKey);
+    if (saved) {
+      // Browser storage is not readable during server rendering, so restoring has to happen after mount.
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setReplyText(saved);
+      setReplyOpen(true);
+      setDraftRestored(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [threadKey]);
+  useEffect(() => {
+    // Debounced, and cancelled by the next change: the first render's empty text is replaced by the restored
+    // draft before this timer fires, so it can never erase a saved draft.
+    const t = window.setTimeout(() => saveDraft(draftStore(), threadKey, replyText), 400);
+    return () => window.clearTimeout(t);
+  }, [replyText, threadKey]);
+
   // Undo send: the message is held for a few seconds before the real request goes out. If the tab is
   // closed or navigated away mid-countdown it is sent immediately (keepalive) rather than silently lost.
   const doSend = useCallback(
@@ -447,13 +476,15 @@ export function InboxThread({
         if (!res.ok) throw new Error();
         setState("sent");
         setReplyText("");
+        setDraftRestored(false);
+        clearDraft(draftStore(), threadKey);
         setReplyOpen(false);
         router.refresh();
       } catch {
         setState("error");
       }
     },
-    [venueId, contactEmail, router]
+    [venueId, contactEmail, router, threadKey]
   );
 
   function clearTimers() {
@@ -737,7 +768,8 @@ export function InboxThread({
                       </button>
                     </div>
                   )}
-                  {translateError && <p className="text-xs text-stale">{translateError}</p>}
+                  {draftRestored && <p className="text-xs text-muted-2">Draft restored from your last visit.</p>}
+            {translateError && <p className="text-xs text-stale">{translateError}</p>}
 
                   {showT ? (
                     <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/90">
@@ -833,7 +865,7 @@ export function InboxThread({
                   <span className="font-medium text-foreground">{displayName}</span> &lt;{contactEmail}&gt;
                 </span>
               </span>
-              <button onClick={() => { setReplyOpen(false); handleUndo(); }} aria-label="Discard draft" title="Discard draft" className={iconBtn}>
+              <button onClick={() => { setReplyOpen(false); setReplyText(""); setDraftRestored(false); clearDraft(draftStore(), threadKey); handleUndo(); }} aria-label="Discard draft" title="Discard draft" className={iconBtn}>
                 <CloseIcon width={18} height={18} />
               </button>
             </div>
