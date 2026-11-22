@@ -1,6 +1,6 @@
-# Keep specials and events in the same region as their venue (trigger draft, NOT APPLIED)
+# Keep specials and events in the same region as their venue (trigger APPLIED 2026-11-22)
 
-Drafted 2026-11-22 for Mike's review. Nothing here has been run.
+Applied to production by hand on 2026-11-22 after Mike approved the exact SQL (migration 0084). Tested live by moving an inactive venue to another region and back: its 212 specials followed both ways, the venue was restored, and no drift remained anywhere.
 
 ## Why
 

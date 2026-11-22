@@ -589,6 +589,13 @@
       "when": 1794600000000,
       "tag": "0083_venue_contact_email_source",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1794700000000,
+      "tag": "0084_venues_sync_item_regions_trigger",
+      "breakpoints": true
     }
   ]
 }
