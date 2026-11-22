@@ -5,10 +5,10 @@ import sharp from "sharp";
 
 export type VenuePhotoMode = "photo" | "logo";
 
-// The public listing page crops its hero image to a wide banner (object-cover), which cuts a square logo to a
-// strip. A logo is therefore centered on a banner-shaped canvas in the page's surface color (--surface:
+// The public listing page crops its hero image to a wide banner (object-cover): about 3.4 to 1 on desktop (h-72 at
+// roughly 1000 px wide), which cuts a square logo to a strip. A logo is therefore centered on a banner-shaped canvas in the page's surface color (--surface:
 // #fffbf0), so the whole logo shows and the edges blend into the card.
-export const LOGO_CANVAS = { width: 1000, height: 420 } as const;
+export const LOGO_CANVAS = { width: 1000, height: 290 } as const;
 const SURFACE = { r: 255, g: 251, b: 240 };
 
 export async function prepareVenuePhoto(
