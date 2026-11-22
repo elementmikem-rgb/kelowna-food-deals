@@ -7,6 +7,7 @@
 // timed to this specific outreach list rather than as a standing offer (see the
 // honesty note on the 10-credit framing below).
 import { db, venues, outreachSends, regions } from "@/db";
+import { suppressionReason } from "@/lib/suppression";
 import { eq, and } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
@@ -137,6 +138,9 @@ export async function sendVenueFollowUpEmail(venueId: number): Promise<FollowUpS
 
   if (!venue || !venue.contactEmail) return { ok: false, reason: "venue has no contact email on file" };
   if (venue.unsubscribedAt) return { ok: false, reason: "venue has unsubscribed from outreach email" };
+  // Address-level check: an inbox shared by several venues stays suppressed once ANY of them unsubscribed (lib/suppression.ts).
+  const suppressed = await suppressionReason(venue.contactEmail);
+  if (suppressed) return { ok: false, reason: suppressed };
   if (venue.claimedAt) return { ok: false, reason: "venue already claimed -- no need for the claim pitch" };
 
   const [firstContact] = await db

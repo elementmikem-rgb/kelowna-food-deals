@@ -8,6 +8,7 @@
 // framing as the follow-up template. See that file's comment on why the credit framing
 // must stay honest (no fake countdown) if this template is ever reused later.
 import { db, venues, outreachSends, regions } from "@/db";
+import { suppressionReason } from "@/lib/suppression";
 import { eq, and } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
@@ -138,6 +139,9 @@ export async function sendVenueWeekendEmail(venueId: number): Promise<WeekendSen
   if (!venue || !venue.active) return { ok: false, reason: "venue not found or inactive" };
   if (!venue.contactEmail) return { ok: false, reason: "venue has no contact email on file" };
   if (venue.unsubscribedAt) return { ok: false, reason: "venue has unsubscribed from outreach email" };
+  // Address-level check: an inbox shared by several venues stays suppressed once ANY of them unsubscribed (lib/suppression.ts).
+  const suppressed = await suppressionReason(venue.contactEmail);
+  if (suppressed) return { ok: false, reason: suppressed };
   if (venue.claimedAt) return { ok: false, reason: "venue already claimed" };
 
   const [alreadySent] = await db

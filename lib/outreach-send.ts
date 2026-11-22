@@ -1,4 +1,5 @@
 import { db, venues, outreachSends, specials, events, inboundEmails, blockedSenders } from "@/db";
+import { suppressionReason } from "@/lib/suppression";
 import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { sendOutreachEmail } from "@/lib/outreach-email";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
@@ -386,6 +387,9 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
 
   if (!venue || !venue.contactEmail) return { ok: false, reason: "venue has no contact email on file" };
   if (venue.unsubscribedAt) return { ok: false, reason: "venue has unsubscribed from outreach email" };
+  // Address-level check: an inbox shared by several venues stays suppressed once ANY of them unsubscribed (lib/suppression.ts).
+  const suppressed = await suppressionReason(venue.contactEmail);
+  if (suppressed) return { ok: false, reason: suppressed };
 
   const region = await getRegionById(venue.regionId);
   if (!region) return { ok: false, reason: "venue has no valid region" };
