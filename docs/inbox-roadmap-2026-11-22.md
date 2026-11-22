@@ -28,7 +28,7 @@ Facts behind it (read-only, 2026-11-22): no live payments on record; 37 claimed 
 | # | Feature | How | Database | Effort |
 |---|---|---|---|---|
 | R1 | Get claimed owners to spend their free credit | Review the existing credit-reminder email (scripts/send-credit-nudge.ts) and its wording, show Mike the exact recipient list and a preview, and send only after his yes, in small batches. Add the owner's credit balance, last login and active Boost to the venue panel so a conversation shows where they are in the funnel. | None. | S |
-| R2 | Turn replies into claims | After a special is applied, the drafted thank-you offers the free claim (their listing, editing, and the credit) with the claim link, in the venue's language. Track which claims came from a reply. | None (reuses the claim flow). | S |
+| R2 | Turn replies into claims (DONE 2026-11-22: unclaimed-only English and French thank-you with the free claim link) | After a special is applied, the drafted thank-you offers the free claim (their listing, editing, and the credit) with the claim link, in the venue's language. Track which claims came from a reply. | None (reuses the claim flow). | S |
 | R3 | Photo and poster upsell at the right moment | The photo or poster add-on already exists (priced per day on top of a Boost). This adds the moment and the link: when an owner emails a photo, the drafted reply thanks them, says it is on their listing, and offers the add-on that puts a poster behind a specific Boosted special, with the link. The venue panel shows whether the venue has a photo, a Boost, and credit. No new product and no price change. | None. | S to M |
 
 Rules for all three: they go only to claimed owners and to venues whose address is proven by an owner reply (lib/email-basis.ts), each message is approved by Mike before it goes, and every link is tagged so purchases can be tied back to the email (feeds item 16).
@@ -51,7 +51,7 @@ Added to Phase 1B after the poster test:
 
 | # | Feature | How | Database | Effort |
 |---|---|---|---|---|
-| R4 | Tell Mike when a paid booking is waiting for approval | A paid or credit-paid booking sits in "pending approval" until an admin approves it, and nothing alerts anyone. Show a count in the admin sidebar and include it in the daily summary (item 15). Never auto-approve. | None. | S |
+| R4 | Tell Mike when a paid booking is waiting for approval | CORRECTED 2026-11-22: the admin nav already shows a count badge on the Sponsored tab for bookings pending approval (components/AdminNav.tsx, lib/admin-counts.ts). Only the push side is missing: include the count in the daily summary (item 15). Never auto-approve. | None. | S (folded into item 15) |
 | R5 | Test the card payment path | Prove the Stripe checkout and webhook with Stripe TEST mode (test keys and Stripe's published test cards) against a hidden test venue, with the same cleanup as the credit test. Production keeps its live key; nothing is charged. | None. | M |
 
 ## Phase 5: smaller ideas (scoped lightly, build after Phases 1 to 4 unless a change in priorities)
@@ -80,7 +80,7 @@ Added to Phase 1B after the poster test:
 
 | # | Feature | How | Database | Effort |
 |---|---|---|---|---|
-| 5 | "Needs follow-up" folder | Threads where we wrote last and have had no reply for 7 days (setting adjustable), with a one-click canned nudge in the venue's language. Optional model-written nudge later. | None. | S |
+| 5 | "Needs follow-up" folder | DONE 2026-11-22. Threads where the venue replied, our newest message was a human answer that asked them something, and 7 or more days have passed with no reply; excludes unsubscribed venues. Real data: 2 threads. A gentle follow-up canned reply exists in English and French. | None. | S |
 | 6 | Out-of-office dates | Parse "back on Dec 3" and "de retour le 3 décembre" from auto-replies and offer to snooze the thread until then. | None (uses existing snooze). | S |
 | 7 | Autosave drafts | Keep an unsent reply per thread in the browser so closing the tab never loses it. | None (browser storage). | S |
 | 8 | Editable canned replies and `status:` search | Edit, add and delete canned replies in the interface instead of code; `status:interested` and similar operators. | New table `inbox_snippets`, seeded from today's twelve. | M |

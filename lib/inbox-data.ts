@@ -1,3 +1,4 @@
+import { asksQuestion, isConversationalSend } from "@/lib/inbox-folders";
 import { settleSignals, threadSignals, type ThreadSignals } from "@/lib/inbox-signals";
 import { db, outreachSends, inboundEmails, venues, emailAttachments, regions, inboxThreadState, type InboxThreadStatus } from "@/db";
 import { and, eq, isNull, inArray } from "drizzle-orm";
@@ -39,6 +40,9 @@ export interface InboxThread {
   snoozed: boolean; // currently snoozed (wake time in the future and no reply since)
   snoozedUntil: Date | null;
   status: InboxThreadStatus | null;
+  unsubscribed: boolean; // the venue has been unsubscribed
+  lastSendWasReply: boolean; // our newest message was an answer to them, not bulk outreach
+  lastSendAsked: boolean; // that message asked them something
   signals: ThreadSignals; // what the newest reply from them is about (stop request, decline, sales lead)
   hasProposal: boolean; // a suggestion from the reply is waiting for Mike's click
   lastAt: Date;
@@ -75,6 +79,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
       .select({
         venueId: outreachSends.venueId,
         venueName: venues.name,
+        venueUnsubscribedAt: venues.unsubscribedAt,
+        kind: outreachSends.kind,
+        variant: outreachSends.variant,
         toEmail: outreachSends.toEmail,
         subject: outreachSends.subject,
         htmlBody: outreachSends.htmlBody,
@@ -121,6 +128,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: false,
         snoozedUntil: null,
         status: null,
+        unsubscribed: e.venueUnsubscribedAt !== null,
+        lastSendWasReply: false,
+        lastSendAsked: false,
         signals: settleSignals(threadSignals(safeInboundText(e.textBody, e.htmlBody)), e.venueUnsubscribedAt !== null),
         hasProposal: false,
         lastAt: e.receivedAt,
@@ -161,6 +171,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         snoozed: existing?.snoozed ?? false,
         snoozedUntil: existing?.snoozedUntil ?? null,
         status: existing?.status ?? null,
+        unsubscribed: existing?.unsubscribed ?? s.venueUnsubscribedAt !== null,
+        lastSendWasReply: isConversationalSend(s),
+        lastSendAsked: asksQuestion(s.htmlBody),
         signals: existing?.signals ?? { stop: false, decline: false, lead: false },
         hasProposal: existing?.hasProposal ?? false,
         lastAt: s.createdAt,

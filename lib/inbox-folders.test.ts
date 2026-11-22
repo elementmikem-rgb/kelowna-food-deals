@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { folderFilter, type FolderThread } from "./inbox-folders";
+import { folderFilter, isConversationalSend, asksQuestion, type FolderThread } from "./inbox-folders";
 
 const t = (o: Partial<FolderThread> = {}): FolderThread => ({
   inboundCount: 0,
@@ -8,6 +8,10 @@ const t = (o: Partial<FolderThread> = {}): FolderThread => ({
   lastFromMe: true,
   starred: false,
   snoozed: false,
+  lastAt: "2026-11-22T12:00:00Z",
+  unsubscribed: false,
+  lastSendWasReply: false,
+  lastSendAsked: false,
   ...o,
 });
 
@@ -64,5 +68,63 @@ describe("folderFilter", () => {
 
   it("searching still finds a snoozed conversation", () => {
     expect(folderFilter(t({ inboundCount: 0, snoozed: true }), "inbox", true)).toBe(true);
+  });
+});
+
+describe("Follow up folder (they replied, we answered last, then silence)", () => {
+  const now = new Date("2026-11-22T12:00:00Z");
+  const quiet = (o: Partial<FolderThread> = {}) =>
+    t({ inboundCount: 1, lastFromMe: true, lastSendWasReply: true, lastSendAsked: true, lastAt: "2026-11-10T12:00:00Z", ...o });
+
+  it("shows a replied conversation where our answer has had no reply for 7 or more days", () => {
+    expect(folderFilter(quiet(), "followup", false, now)).toBe(true);
+    expect(folderFilter(quiet({ lastAt: "2026-11-15T12:00:00Z" }), "followup", false, now)).toBe(true);
+  });
+  it("not yet: under 7 days", () => {
+    expect(folderFilter(quiet({ lastAt: "2026-11-16T12:00:00Z" }), "followup", false, now)).toBe(false);
+  });
+  it("never for cold outreach that nobody replied to", () => {
+    expect(folderFilter(quiet({ inboundCount: 0 }), "followup", false, now)).toBe(false);
+  });
+  it("not when they wrote last", () => {
+    expect(folderFilter(quiet({ lastFromMe: false }), "followup", false, now)).toBe(false);
+  });
+  it("not when our last send was bulk outreach rather than an answer to them", () => {
+    expect(folderFilter(quiet({ lastSendWasReply: false }), "followup", false, now)).toBe(false);
+  });
+  it("not when our last message asked them nothing (a finished conversation)", () => {
+    expect(folderFilter(quiet({ lastSendAsked: false }), "followup", false, now)).toBe(false);
+  });
+  it("not for an unsubscribed venue, archived, or snoozed conversation", () => {
+    expect(folderFilter(quiet({ unsubscribed: true }), "followup", false, now)).toBe(false);
+    expect(folderFilter(quiet({ archived: true }), "followup", false, now)).toBe(false);
+    expect(folderFilter(quiet({ snoozed: true }), "followup", false, now)).toBe(false);
+  });
+});
+
+describe("isConversationalSend (an answer from Mike, not bulk outreach)", () => {
+  it("is true for an admin reply", () => {
+    expect(isConversationalSend({ kind: "admin_reply", variant: null, subject: "Re: x" })).toBe(true);
+  });
+  it("is true for an older reply filed as first_contact with a Re: subject and no variant", () => {
+    expect(isConversationalSend({ kind: "first_contact", variant: null, subject: "Re: Got a listing" })).toBe(true);
+  });
+  it("is false for real outreach, follow-ups and promos", () => {
+    expect(isConversationalSend({ kind: "first_contact", variant: "A", subject: "Got a listing started" })).toBe(false);
+    expect(isConversationalSend({ kind: "first_contact", variant: null, subject: "Got a listing started" })).toBe(false);
+    expect(isConversationalSend({ kind: "follow_up", variant: null, subject: "Re: Got a listing" })).toBe(false);
+    expect(isConversationalSend({ kind: "weekend_promo", variant: null, subject: "Weekend" })).toBe(false);
+  });
+});
+
+describe("asksQuestion", () => {
+  it("is true when the message contains a question", () => {
+    expect(asksQuestion("<p>Thanks! Could you send the Friday hours?</p>")).toBe(true);
+    expect(asksQuestion("Pourriez-vous confirmer les heures ?")).toBe(true);
+  });
+  it("is false for a statement, and ignores a question mark inside a web address", () => {
+    expect(asksQuestion("<p>Done. It is live at <a href=\"https://todaystab.com/x?utm=1\">here</a>.</p>")).toBe(false);
+    expect(asksQuestion("Thanks, added.")).toBe(false);
+    expect(asksQuestion(null)).toBe(false);
   });
 });

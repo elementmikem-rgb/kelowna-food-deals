@@ -216,6 +216,28 @@ Une fois votre demande vérifiée, vous pourrez modifier vous-même vos spéciau
 
 Mike`,
   },
+
+  // 9. Gentle follow-up after we answered and they went quiet. Same for every venue, no offer.
+  {
+    id: "en-nudge",
+    label: "Gentle follow-up",
+    lang: "en",
+    body: `Hi {{name}},
+
+Just checking in on {{venue}}. If anything has changed since we last spoke, such as hours or specials, reply here and I will update the listing.
+
+Mike`,
+  },
+  {
+    id: "fr-nudge",
+    label: "Suivi en douceur",
+    lang: "fr",
+    body: `Bonjour {{name}},
+
+Je me permets de faire un suivi pour {{venue}}. Si quelque chose a changé depuis notre dernier échange, par exemple les heures ou les spéciaux, vous n'avez qu'à répondre ici et je mettrai la liste à jour.
+
+Mike`,
+  },
 ];
 
 export function snippetsFor(lang: "en" | "fr", opts: { claimed?: boolean } = {}): Snippet[] {

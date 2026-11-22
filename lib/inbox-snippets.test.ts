@@ -223,3 +223,15 @@ describe("claimUrl", () => {
     expect(claimUrl("not a url")).toBeNull();
   });
 });
+
+describe("gentle follow-up snippet", () => {
+  it("exists in English and French for any venue, with no price, claim or promotion", () => {
+    const nudge = SNIPPETS.filter((s) => s.id.endsWith("-nudge"));
+    expect(nudge.map((s) => s.lang).sort()).toEqual(["en", "fr"]);
+    for (const s of nudge) {
+      expect(s.claimedOnly).toBeUndefined();
+      expect(s.unclaimedOnly).toBeUndefined();
+      expect(s.body).not.toMatch(/\$|claim|boost|réclam/i);
+    }
+  });
+});

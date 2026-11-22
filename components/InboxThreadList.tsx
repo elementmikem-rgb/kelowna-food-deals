@@ -19,6 +19,7 @@ import {
   ChevronRightIcon,
   CloseIcon,
   InboxIcon,
+  ReplyIcon,
   KeyboardIcon,
   MailIcon,
   MailOpenIcon,
@@ -45,6 +46,9 @@ interface ThreadRow {
   snoozedUntil: string | null;
   status: InboxThreadStatus | null;
   hasProposal: boolean;
+  unsubscribed: boolean;
+  lastSendWasReply: boolean;
+  lastSendAsked: boolean;
   signals: { stop: boolean; decline: boolean; lead: boolean };
   lastAt: string;
   unreadCount: number;
@@ -60,6 +64,7 @@ const FOLDERS: { id: Folder; label: string; icon: typeof InboxIcon }[] = [
   { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "starred", label: "Starred", icon: StarIcon },
   { id: "snoozed", label: "Snoozed", icon: ClockIcon },
+  { id: "followup", label: "Follow up", icon: ReplyIcon },
   { id: "unread", label: "Unread", icon: MailIcon },
   { id: "sent", label: "Sent", icon: SendIcon },
   { id: "archive", label: "Archived", icon: ArchiveIcon },
