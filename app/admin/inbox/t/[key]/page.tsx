@@ -5,6 +5,7 @@ import { getPendingProposal } from "@/lib/inbox-proposals";
 import { ProposalCard } from "@/components/inbox/ProposalCard";
 import { InboxThread } from "@/components/InboxThread";
 import { VenuePanel } from "@/components/inbox/VenuePanel";
+import { AssignVenue } from "@/components/inbox/AssignVenue";
 import { AdminShell } from "@/components/AdminShell";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function ThreadPage({ params }: PageProps) {
     <AdminShell active="inbox" maxWidth={venue ? "max-w-6xl" : "max-w-4xl"}>
       <div className={venue ? "grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]" : ""}>
         <div className="flex min-w-0 flex-col gap-6">
+        {thread.venueId === null && thread.contactEmail && <AssignVenue email={thread.contactEmail} />}
         {pending && venue && (
           <ProposalCard
             proposalId={pending.id}

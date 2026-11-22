@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, inboundEmails, outreachSends, venues, blockedSenders, emailAttachments } from "@/db";
+import { db, inboundEmails, outreachSends, venues, blockedSenders, emailAttachments, senderAliases } from "@/db";
 import { eq, sql } from "drizzle-orm";
 import { classifyInbound, type InboundHeaders } from "@/lib/inbound-classify";
 import { inboundArchivedAt, replyAttribution, shouldLookUpVenueByInReplyTo } from "@/lib/inbound-reply";
+import { pickVenueId } from "@/lib/sender-alias";
 
 const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024; // 4MB, matches app/api/submit/route.ts's MAX_PHOTO_BYTES
 
@@ -120,7 +121,15 @@ export async function POST(
     // (owner replies personally to a message sent to info@). Fall back to the
     // outreach send this is a reply to so the message still lands in the right
     // thread instead of an orphan one.
-    let venueId: number | null = matchedVenue?.id ?? null;
+    // A sender Mike has assigned to a venue by hand (lib/sender-alias.ts) lands in that venue's thread too.
+    const [aliasVenue] = matchedVenue
+      ? []
+      : await db
+          .select({ venueId: senderAliases.venueId })
+          .from(senderAliases)
+          .where(sql`lower(${senderAliases.email}) = ${fromEmail}`)
+          .limit(1);
+    let venueId: number | null = pickVenueId({ contactVenueId: matchedVenue?.id ?? null, aliasVenueId: aliasVenue?.venueId ?? null });
     const inReplyTo = item.InReplyTo ?? null;
     if (inReplyTo && shouldLookUpVenueByInReplyTo(venueId, inReplyTo)) {
       const [originalSend] = await db

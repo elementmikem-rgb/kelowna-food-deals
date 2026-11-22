@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgSchema,
   serial,
@@ -393,6 +394,21 @@ export const inboxThreadState = specialsSchema.table("inbox_thread_state", {
   status: text("status").$type<InboxThreadStatus>(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Remembers that mail from this address belongs to this venue (a reply from a staff member or a parent-company desk
+// that is not the venue's own contact email). Added 2026-11-22. Never used to decide who we send outreach to.
+export const senderAliases = specialsSchema.table(
+  "sender_aliases",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venues.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("sender_aliases_email_unique").on(sql`lower(${table.email})`)]
+);
 
 // One row per venue reply that the local `claude -p` script (scripts/propose-replies.ts) has read: the validated
 // suggestion (special, phone, draft reply) waiting for Mike's click in the admin inbox. A proposal never changes a
