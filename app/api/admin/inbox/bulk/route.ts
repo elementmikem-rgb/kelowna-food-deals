@@ -6,7 +6,7 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 
 const bulkSchema = z.object({
   keys: z.array(z.string()).min(1).max(200),
-  action: z.enum(["archive", "unarchive", "delete"]),
+  action: z.enum(["archive", "unarchive", "delete", "markRead", "markUnread"]),
 });
 
 // A malformed key (bad %-encoding, non-numeric venue id, unrecognized prefix)
@@ -71,6 +71,11 @@ export async function POST(req: NextRequest) {
         if (sendsCondition) {
           await db.update(outreachSends).set({ hiddenFromInbox: true }).where(sendsCondition);
         }
+      } else if (parsed.data.action === "markRead" || parsed.data.action === "markUnread") {
+        await db
+          .update(inboundEmails)
+          .set({ read: parsed.data.action === "markRead" })
+          .where(condition);
       } else {
         await db
           .update(inboundEmails)

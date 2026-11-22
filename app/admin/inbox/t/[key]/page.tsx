@@ -15,12 +15,13 @@ export default async function ThreadPage({ params }: PageProps) {
   if (!thread) notFound();
 
   return (
-    <AdminShell active="inbox" backHref="/admin/inbox" backLabel="Inbox" maxWidth="max-w-2xl">
+    <AdminShell active="inbox" maxWidth="max-w-4xl">
       <InboxThread
         threadKey={key}
         venueId={thread.venueId}
         displayName={thread.displayName}
         contactEmail={thread.contactEmail}
+        venueUrl={thread.venueUrl}
         archived={thread.archived}
         messages={thread.messages.map((m) => ({
           ...m,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, outreachSends } from "@/db";
+import { db, outreachSends, venues } from "@/db";
 import { isNull, and, sql, eq } from "drizzle-orm";
+import { classifyBrevoEvent, extractSendId } from "@/lib/brevo-events";
 
 // Confirmed live 2026-09-24: this webhook's real "message-id" field is Brevo's
 // own internal id (format "an#123..."), NOT the SMTP Message-ID our send API
@@ -12,14 +13,6 @@ import { isNull, and, sql, eq } from "drizzle-orm";
 // fallback for older in-flight sends and in case Brevo ever fixes this field.
 function matchesMessageId(messageId: string) {
   return sql`replace(replace(${outreachSends.brevoMessageId}, '<', ''), '>', '') = replace(replace(${messageId}, '<', ''), '>', '')`;
-}
-
-function extractSendId(tags: string[] | undefined): number | null {
-  for (const tag of tags ?? []) {
-    const match = /^send-(\d+)$/.exec(tag);
-    if (match) return Number(match[1]);
-  }
-  return null;
 }
 
 // Brevo's transactional-webhook payload uses snake_case event names
@@ -55,13 +48,13 @@ export async function POST(
 
   for (const item of items) {
     const messageId = item["message-id"];
-    const event = item.event?.toLowerCase();
     const sendId = extractSendId(item.tags);
-    if ((!messageId && sendId === null) || !event) continue;
+    const action = classifyBrevoEvent(item.event, item.reason);
+    if ((!messageId && sendId === null) || action.type === "ignore") continue;
 
     const idMatch = sendId !== null ? eq(outreachSends.id, sendId) : matchesMessageId(messageId!);
 
-    if (event === "opened" || event === "unique_opened") {
+    if (action.type === "open") {
       // Brevo fires "opened" on every open (image reloads, forwards, etc.),
       // not just the first -- only record the first one, so this stays a
       // real "did they ever open it" signal instead of a noisy counter.
@@ -69,7 +62,7 @@ export async function POST(
         .update(outreachSends)
         .set({ openedAt: new Date() })
         .where(and(idMatch, isNull(outreachSends.openedAt)));
-    } else if (event === "click") {
+    } else if (action.type === "click") {
       // A click implies an open even if the "opened" pixel itself got
       // blocked (common with image-blocking mail clients), so backfill
       // openedAt here too if it's still unset.
@@ -81,15 +74,35 @@ export async function POST(
         .update(outreachSends)
         .set({ openedAt: new Date() })
         .where(and(idMatch, isNull(outreachSends.openedAt)));
-    } else if (event === "hard_bounce") {
-      // Only a hard bounce is permanent -- a soft bounce (mailbox full,
-      // temporary server issue) may still get delivered on retry, so it
-      // isn't treated as a final status here.
+    } else if (action.type === "hard_failure") {
+      // hard_bounce, blocked and invalid_email are permanent for this address.
+      // A soft bounce (mailbox full, temporary server issue) may still get
+      // delivered on retry, so it isn't treated as a final status here.
       await db
         .update(outreachSends)
-        .set({ status: "bounced", errorMessage: item.reason ?? "hard bounce" })
+        .set({ status: "bounced", errorMessage: action.errorMessage })
         .where(idMatch);
+    } else if (action.type === "suppress") {
+      // Spam complaint or Brevo unsubscribe: stop all further outreach to the
+      // venue via venues.unsubscribedAt, the same column the public
+      // unsubscribe link sets. isNull keeps the first timestamp when Brevo
+      // retries the webhook. A send with no venue (an inbox reply to an
+      // unmatched sender) has nothing to suppress.
+      const [send] = await db
+        .update(outreachSends)
+        .set({ errorMessage: action.errorMessage })
+        .where(idMatch)
+        .returning({ venueId: outreachSends.venueId });
+      if (send?.venueId != null) {
+        await db
+          .update(venues)
+          .set({ unsubscribedAt: new Date() })
+          .where(and(eq(venues.id, send.venueId), isNull(venues.unsubscribedAt)));
+      }
     }
+    // soft_bounce: deliberately no action. Suppressing after repeated soft
+    // bounces needs a per-recipient counter, and no existing column records
+    // soft bounces, so that waits on a schema change.
   }
 
   return NextResponse.json({ ok: true });

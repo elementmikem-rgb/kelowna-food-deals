@@ -1,6 +1,7 @@
-import { db, outreachSends, inboundEmails, venues, emailAttachments } from "@/db";
+import { db, outreachSends, inboundEmails, venues, emailAttachments, regions } from "@/db";
 import { and, eq, isNull, inArray } from "drizzle-orm";
 import { regionScopeCondition } from "@/lib/admin-region";
+import { parseThreadKey, threadKeyFor } from "@/lib/inbox-thread-key";
 
 function stripTags(text: string): string {
   return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -27,6 +28,9 @@ export interface InboxThread {
   displayName: string;
   contactEmail: string | null;
   lastSnippet: string;
+  lastSubject: string; // subject of the newest message, shown before the snippet like Gmail does
+  lastFromMe: boolean; // newest message is one we sent (drives the Sent folder)
+  hasAttachments: boolean;
   lastAt: Date;
   unreadCount: number;
   archived: boolean;
@@ -41,6 +45,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
   const [inbound, sends] = await Promise.all([
     db
       .select({
+        id: inboundEmails.id,
         venueId: inboundEmails.venueId,
         venueName: venues.name,
         fromEmail: inboundEmails.fromEmail,
@@ -69,6 +74,14 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
       .where(and(eq(outreachSends.hiddenFromInbox, false), regionScopeCondition(venues.regionId, regionIds))),
   ]);
 
+  const attachmentRows = inbound.length > 0
+    ? await db
+        .selectDistinct({ inboundEmailId: emailAttachments.inboundEmailId })
+        .from(emailAttachments)
+        .where(inArray(emailAttachments.inboundEmailId, inbound.map((e) => e.id)))
+    : [];
+  const withAttachments = new Set(attachmentRows.map((a) => a.inboundEmailId));
+
   const threads = new Map<string, InboxThread>();
 
   // Inbound processed first so a real name (the venue's, or the sender's own
@@ -76,7 +89,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
   // bare email address for an unmatched sender -- could become the only
   // source of a display name for that thread.
   for (const e of inbound) {
-    const key = e.venueId !== null ? `v${e.venueId}` : `u${encodeURIComponent(e.fromEmail)}`;
+    const key = threadKeyFor(e.venueId, e.fromEmail);
     const existing = threads.get(key);
     const isNewest = !existing || e.receivedAt > existing.lastAt;
     if (!existing) {
@@ -86,6 +99,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         displayName: e.venueName ?? e.fromName ?? e.fromEmail,
         contactEmail: e.fromEmail,
         lastSnippet: snippet(safeInboundText(e.textBody, e.htmlBody)),
+        lastSubject: e.subject ?? "",
+        lastFromMe: false,
+        hasAttachments: withAttachments.has(e.id),
         lastAt: e.receivedAt,
         unreadCount: !e.read && e.archivedAt === null ? 1 : 0,
         archived: e.archivedAt !== null,
@@ -94,7 +110,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
     } else {
       existing.messageCount++;
       if (!e.read && e.archivedAt === null) existing.unreadCount++;
+      if (withAttachments.has(e.id)) existing.hasAttachments = true;
       if (isNewest) {
+        existing.lastSubject = e.subject ?? "";
         existing.lastSnippet = snippet(safeInboundText(e.textBody, e.htmlBody));
         existing.lastAt = e.receivedAt;
         existing.archived = e.archivedAt !== null;
@@ -103,7 +121,7 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
   }
 
   for (const s of sends) {
-    const key = s.venueId !== null ? `v${s.venueId}` : `u${encodeURIComponent(s.toEmail)}`;
+    const key = threadKeyFor(s.venueId, s.toEmail);
     const existing = threads.get(key);
     if (!existing || s.createdAt > existing.lastAt) {
       threads.set(key, {
@@ -112,6 +130,9 @@ export async function getInboxThreads(regionIds: number[] | "all"): Promise<Inbo
         displayName: existing?.displayName ?? s.venueName ?? s.toEmail,
         contactEmail: s.toEmail,
         lastSnippet: `You: ${snippet(s.htmlBody)}`,
+        lastSubject: s.subject ?? "",
+        lastFromMe: true,
+        hasAttachments: existing?.hasAttachments ?? false,
         lastAt: s.createdAt,
         unreadCount: existing?.unreadCount ?? 0,
         archived: existing?.archived ?? false,
@@ -144,21 +165,30 @@ export interface ThreadDetail {
   venueId: number | null;
   displayName: string;
   contactEmail: string | null;
+  venueUrl: string | null; // public listing page, used to fill {{link}} in canned replies
   archived: boolean;
   messages: ThreadMessage[];
 }
 
 export async function getThreadMessages(key: string): Promise<ThreadDetail | null> {
-  if (key.startsWith("v")) {
-    const venueId = Number(key.slice(1));
-    if (!Number.isInteger(venueId)) return null;
+  const parsed = parseThreadKey(key);
+  if (parsed?.type === "venue") {
+    const venueId = parsed.venueId;
 
     const [venue] = await db
-      .select({ id: venues.id, name: venues.name, contactEmail: venues.contactEmail })
+      .select({ id: venues.id, name: venues.name, contactEmail: venues.contactEmail, regionId: venues.regionId })
       .from(venues)
       .where(eq(venues.id, venueId))
       .limit(1);
     if (!venue) return null;
+
+    // Same URL shape the outreach emails link to (lib/outreach-send.ts).
+    const [region] = venue.regionId
+      ? await db.select({ slug: regions.slug }).from(regions).where(eq(regions.id, venue.regionId)).limit(1)
+      : [];
+    const venueUrl = region
+      ? `https://${process.env.PATH_BASED_DOMAIN ?? "todaystab.com"}/${region.slug}/venues/${venue.id}`
+      : null;
 
     const [sends, inbound] = await Promise.all([
       db
@@ -228,13 +258,14 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       venueId: venue.id,
       displayName: venue.name,
       contactEmail: venue.contactEmail,
+      venueUrl,
       archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };
   }
 
-  if (key.startsWith("u")) {
-    const email = decodeURIComponent(key.slice(1));
+  if (parsed?.type === "email") {
+    const email = parsed.email;
     const [inbound, sends] = await Promise.all([
       db
         .select()
@@ -310,6 +341,7 @@ export async function getThreadMessages(key: string): Promise<ThreadDetail | nul
       venueId: null,
       displayName: inbound[0]?.fromName ?? email,
       contactEmail: email,
+      venueUrl: null,
       archived: inbound.length > 0 ? inbound[inbound.length - 1].archivedAt !== null : false,
       messages,
     };

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, inboundEmails, outreachSends, venues, blockedSenders, emailAttachments } from "@/db";
 import { eq, sql } from "drizzle-orm";
+import { classifyInbound, type InboundHeaders } from "@/lib/inbound-classify";
+import { inboundArchivedAt, replyAttribution, shouldLookUpVenueByInReplyTo } from "@/lib/inbound-reply";
 
 const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024; // 4MB, matches app/api/submit/route.ts's MAX_PHOTO_BYTES
 
@@ -19,6 +21,8 @@ interface BrevoInboundItem {
   Subject?: string;
   RawTextBody?: string;
   RawHtmlBody?: string;
+  // Header name to value; a repeated header arrives as string[] (Brevo inbound parsing docs).
+  Headers?: InboundHeaders;
   Attachments?: { Name: string; ContentType: string; ContentLength: number; DownloadToken: string }[];
 }
 
@@ -118,7 +122,7 @@ export async function POST(
     // thread instead of an orphan one.
     let venueId: number | null = matchedVenue?.id ?? null;
     const inReplyTo = item.InReplyTo ?? null;
-    if (venueId === null && inReplyTo) {
+    if (inReplyTo && shouldLookUpVenueByInReplyTo(venueId, inReplyTo)) {
       const [originalSend] = await db
         .select({ venueId: outreachSends.venueId })
         .from(outreachSends)
@@ -135,19 +139,27 @@ export async function POST(
     // leaving every reply unlinked. Skipped for a blocked sender, same as the
     // inboundEmails row below gets archivedAt instead of landing in the live
     // inbox -- a blocklisted address shouldn't be able to pollute reply-rate
-    // metrics any more than it can post into the inbox.
-    if (!blocked && inReplyTo) {
+    // metrics any more than it can post into the inbox. Auto replies,
+    // out-of-office messages and bounce notices are skipped the same way.
+    const classification = classifyInbound({
+      headers: item.Headers,
+      subject: item.Subject,
+      fromEmail,
+      textBody: item.RawTextBody,
+    });
+    const attribution = replyAttribution({ blocked: !!blocked, kind: classification.kind, inReplyTo, venueId });
+    if (attribution.mode === "in_reply_to") {
       await db
         .update(outreachSends)
         .set({ status: "replied" })
-        .where(sql`${outreachSends.brevoMessageId} = ${inReplyTo} and ${outreachSends.status} = 'sent'`);
-    } else if (!blocked && venueId !== null) {
+        .where(sql`${outreachSends.brevoMessageId} = ${attribution.inReplyTo} and ${outreachSends.status} = 'sent'`);
+    } else if (attribution.mode === "latest_sent") {
       await db.execute(sql`
         update specials.outreach_sends
         set status = 'replied'
         where id = (
           select id from specials.outreach_sends
-          where venue_id = ${venueId} and status = 'sent'
+          where venue_id = ${attribution.venueId} and status = 'sent'
           order by sent_at desc nulls last
           limit 1
         )
@@ -165,7 +177,7 @@ export async function POST(
         subject: item.Subject ?? null,
         textBody: item.RawTextBody ?? null,
         htmlBody: item.RawHtmlBody ?? null,
-        archivedAt: blocked ? new Date() : null,
+        archivedAt: inboundArchivedAt({ blocked: !!blocked, kind: classification.kind }, new Date()),
       })
       .returning({ id: inboundEmails.id });
 

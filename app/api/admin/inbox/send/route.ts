@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, outreachSends } from "@/db";
-import { eq } from "drizzle-orm";
+import { db, outreachSends, inboundEmails } from "@/db";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { sendOutreachEmail } from "@/lib/outreach-email";
+import { buildThreadingHeaders } from "@/lib/email-threading";
 
 const sendSchema = z.object({
   venueId: z.number().int().positive().nullable(),
@@ -49,6 +50,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Thread the reply under the venue's newest inbound message that has a
+  // stored Message-ID (inboundEmails.brevoMessageId), matching the same thread
+  // the inbox shows: by venue, or by sender address for an unmatched sender.
+  // Not done for persist:false above, which is a forward to a third party.
+  const [latestInbound] = await db
+    .select({ messageId: inboundEmails.brevoMessageId, inReplyTo: inboundEmails.inReplyTo })
+    .from(inboundEmails)
+    .where(
+      and(
+        isNotNull(inboundEmails.brevoMessageId),
+        venueId !== null
+          ? eq(inboundEmails.venueId, venueId)
+          : and(isNull(inboundEmails.venueId), eq(inboundEmails.fromEmail, toEmail.toLowerCase().trim()))
+      )
+    )
+    .orderBy(desc(inboundEmails.receivedAt))
+    .limit(1);
+  const headers = buildThreadingHeaders(latestInbound ?? null);
+
   // Every reply gets a persisted outbound copy now, venue-matched or not, so it
   // shows up in that thread's history in the admin inbox either way.
   const [sendRow] = await db
@@ -57,7 +77,7 @@ export async function POST(req: NextRequest) {
     .returning({ id: outreachSends.id });
 
   try {
-    const { messageId } = await sendOutreachEmail({ to: toEmail, subject, htmlContent: htmlBody });
+    const { messageId } = await sendOutreachEmail({ to: toEmail, subject, htmlContent: htmlBody, headers });
     await db
       .update(outreachSends)
       .set({ status: "sent", brevoMessageId: messageId, sentAt: new Date() })

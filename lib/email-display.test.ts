@@ -40,3 +40,15 @@ describe("tokenizeLinks", () => {
     ]);
   });
 });
+
+import { tidySnippet } from "./email-display";
+
+describe("tidySnippet", () => {
+  it("shortens a long tracking url to its host", () => {
+    const s = "Voir votre fiche <https://bbaidbga.r.af.d.sendibt2.com/tr/cl/" + "A".repeat(200) + "> merci";
+    expect(tidySnippet(s)).toBe("Voir votre fiche bbaidbga.r.af.d.sendibt2.com merci");
+  });
+  it("drops cid placeholders and collapses whitespace", () => {
+    expect(tidySnippet("a  [cid:xyz-1]\n\n b")).toBe("a b");
+  });
+});

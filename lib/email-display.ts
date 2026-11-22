@@ -50,3 +50,13 @@ export function tokenizeLinks(text: string): Token[] {
   if (last < text.length) out.push({ type: "text", value: text.slice(last) });
   return out.length ? out : [{ type: "text", value: text }];
 }
+
+// Preview line for list rows: shorten tracking URLs to their host and drop inline-image placeholders
+// so the snippet reads like a sentence.
+export function tidySnippet(s: string): string {
+  return s
+    .replace(/\[cid:[^\]\s]*\]/gi, "")
+    .replace(/<?https?:\/\/([^\s/<>]+)[^\s<>]*>?/gi, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
