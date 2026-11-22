@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ownText, detectStopRequest, detectDecline, detectLead, threadSignals } from "./inbox-signals";
+import { ownText, detectStopRequest, detectDecline, detectLead, threadSignals, settleSignals } from "./inbox-signals";
 
 describe("ownText (only what the sender wrote this time)", () => {
   it("drops quoted lines and everything after a reply header", () => {
@@ -105,5 +105,15 @@ describe("threadSignals", () => {
   });
   it("is all false for no text", () => {
     expect(threadSignals(null)).toEqual({ stop: false, decline: false, lead: false });
+  });
+});
+
+describe("settleSignals (a stop or decline already acted on is not shown again)", () => {
+  const raised = { stop: true, decline: true, lead: true };
+  it("clears stop and decline once the venue is unsubscribed, keeps the lead", () => {
+    expect(settleSignals(raised, true)).toEqual({ stop: false, decline: false, lead: true });
+  });
+  it("leaves everything alone while the venue is still subscribed", () => {
+    expect(settleSignals(raised, false)).toEqual(raised);
   });
 });

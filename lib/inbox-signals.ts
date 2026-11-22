@@ -119,3 +119,8 @@ export function threadSignals(body: string | null | undefined): ThreadSignals {
   const own = ownText(body ?? "");
   return { stop: detectStopRequest(own), decline: detectDecline(own), lead: detectLead(own) };
 }
+
+// A stop request or decline that has already been acted on (the venue is unsubscribed) needs no more attention.
+export function settleSignals(s: ThreadSignals, venueUnsubscribed: boolean): ThreadSignals {
+  return venueUnsubscribed ? { ...s, stop: false, decline: false } : s;
+}
