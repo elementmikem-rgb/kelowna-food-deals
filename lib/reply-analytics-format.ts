@@ -1,5 +1,8 @@
 export function formatPercent(r: number | null): string {
-  return r === null ? "-" : `${Math.round(r * 100)}%`;
+  if (r === null) return "-";
+  const pct = r * 100;
+  // Small rates need a decimal, or 1.4% and 4.0% both look like round numbers and hide how big the gap is.
+  return pct === 0 ? "0%" : pct < 10 ? `${pct.toFixed(1)}%` : `${Math.round(pct)}%`;
 }
 
 export function formatHours(h: number | null): string {

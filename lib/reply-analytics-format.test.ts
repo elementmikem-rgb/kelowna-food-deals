@@ -2,9 +2,12 @@ import { describe, it, expect } from "vitest";
 import { formatPercent, formatHours, languageLabel } from "./reply-analytics-format";
 
 describe("formatPercent", () => {
-  it("shows a whole percent, or a dash when there is nothing to measure", () => {
+  it("shows a whole percent from 10% up, one decimal below that, and a dash when there is nothing to measure", () => {
     expect(formatPercent(0.5)).toBe("50%");
-    expect(formatPercent(0.0724)).toBe("7%");
+    expect(formatPercent(0.1)).toBe("10%");
+    expect(formatPercent(0.0724)).toBe("7.2%");
+    expect(formatPercent(0.0399)).toBe("4.0%");
+    expect(formatPercent(0.0141)).toBe("1.4%");
     expect(formatPercent(0)).toBe("0%");
     expect(formatPercent(null)).toBe("-");
   });
