@@ -21,7 +21,7 @@ import { wrapOutreachHtml } from "../lib/outreach-send";
 import { buildUnsubscribeUrl } from "../lib/unsubscribe";
 import { getRegionById, getRegionContext } from "../lib/regions";
 import { suppressionReason } from "../lib/suppression";
-import { buildCreditNudge, creditNudgeFooter, tidyFirstName } from "../lib/credit-nudge-email";
+import { buildCreditNudge, creditNudgeFooter, tidyFirstName, escapeHtml } from "../lib/credit-nudge-email";
 import { inLocalWindow } from "../lib/local-window";
 
 const MIN_DAYS_SINCE_CLAIM = 7;
@@ -94,7 +94,7 @@ async function main() {
 
     if (!previewed.has(lang)) {
       previewed.add(lang);
-      writeFileSync(join(previewDir, `preview-${lang}.html`), `<!doctype html><meta charset="utf-8"><title>${nudge.subject}</title>${htmlContent}`);
+      writeFileSync(join(previewDir, `preview-${lang}.html`), `<!doctype html><meta charset="utf-8"><title>${escapeHtml(nudge.subject)}</title>${htmlContent}`);
       writeFileSync(join(previewDir, `preview-${lang}.txt`), `Subject: ${nudge.subject}\n\n${textContent}`);
     }
 

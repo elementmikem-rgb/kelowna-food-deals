@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildCreditNudge, creditNudgeFooter, tidyFirstName } from "./credit-nudge-email";
+import { buildCreditNudge, creditNudgeFooter, tidyFirstName, escapeHtml } from "./credit-nudge-email";
 
 const input = {
   firstName: "Ana",
@@ -102,5 +102,11 @@ describe("tidyFirstName (names are stored as typed, sometimes in capitals)", () 
   it("is empty for nothing", () => {
     expect(tidyFirstName("")).toBe("");
     expect(tidyFirstName("   ")).toBe("");
+  });
+});
+
+describe("escapeHtml (exported so previews can use it)", () => {
+  it("escapes the characters that could start markup", () => {
+    expect(escapeHtml(`<script>alert("x")</script> & co`)).toBe("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; co");
   });
 });
