@@ -374,7 +374,8 @@ export const outreachSends = specialsSchema.table("outreach_sends", {
   // reads as a real person rather than a marketing blast and gets meaningfully
   // higher reply rates. Null for every send kind other than first_contact and
   // for rows that predate this column. Assigned deterministically by venue id
-  // parity (see sendVenueOutreachEmail) so a retried send doesn't flip variants.
+  // (see lib/outreach-variant.ts: even/odd split until 2026-11-23, then 90% plain and
+  // 10% branded as a control) so a retried send doesn't flip variants.
   variant: text("variant").$type<"branded" | "plain">(),
   // Brevo soft_bounce events seen for this send (mailbox full, temporary failure). One is noise; the
   // webhook treats the send as bounced once it reaches 3 (lib/brevo-events.ts). Added 2026-11-22.

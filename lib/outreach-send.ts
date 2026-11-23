@@ -1,3 +1,4 @@
+import { pickOutreachVariant } from "@/lib/outreach-variant";
 import { db, venues, outreachSends, specials, events, inboundEmails, blockedSenders } from "@/db";
 import { suppressionReason } from "@/lib/suppression";
 import { eq, and, or, inArray, sql } from "drizzle-orm";
@@ -438,13 +439,14 @@ export async function sendVenueOutreachEmail(venueId: number): Promise<OutreachS
   const footer = buildFooter(unsubscribeUrl, region.mailingAddress, lang);
   const footerText = buildFooterText(unsubscribeUrl, region.mailingAddress, lang);
 
-  // A/B test (2026-10-09): deterministic by venue id parity, not random per
+  // A/B test (2026-10-09): deterministic by venue id, not random per
   // call -- a retried send (e.g. after a transient Brevo failure) must land
   // the same variant it would have gotten the first time, not re-roll into
   // the other bucket. See wrapPlainOutreachHtml's comment for why "plain"
   // exists; see outreachSends.variant's schema comment for how results get
   // compared later.
-  const variant: "branded" | "plain" = venue.id % 2 === 0 ? "branded" : "plain";
+  // Since 2026-11-23: about 90% plain, 10% branded as a control (see lib/outreach-variant.ts for the reasoning).
+  const variant: "branded" | "plain" = pickOutreachVariant(venue.id);
 
   const verifyUrl = buildVenueVerifyUrl(venue.id, region.slug);
 

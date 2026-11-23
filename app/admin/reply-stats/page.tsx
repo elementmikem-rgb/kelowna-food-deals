@@ -95,7 +95,7 @@ export default async function ReplyStatsPage() {
           title="By email style"
           rows={a.byVariant}
           labelOf={(l) => STYLE_LABEL[l] ?? l}
-          note="The style was assigned by venue number (even gets branded, odd gets plain), so the two groups are comparable. The plain email also asks a single question and leaves out the advertising pitch, so the gap reflects the whole template, not only how it looks. Older sends predate the style being recorded."
+          note="Until 2026-11-23 the style was split evenly by venue number, so those two groups are comparable. Since then about 90% get plain and every tenth venue stays on branded as a control, so new sends are mostly plain. The plain email also asks a single question and leaves out the advertising pitch, so the gap reflects the whole template, not only how it looks. Older sends predate the style being recorded."
         />
         <GroupTable title="By language" rows={a.byLanguage} labelOf={languageLabel} />
 

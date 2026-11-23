@@ -75,6 +75,11 @@ Added to Phase 1B after the poster test:
 - Still open from the review: Slabtown 7521 needs a reply asking for its weekly features; Tommy's 7893 asked for a happy hour wording change plus Trivia Sunday 19:00 and Karaoke Tuesday 20:30 (free Tommy's Light); Malt and Barley 2353 needed nothing (they claimed on 2026-10-03); Turbo Haus, Milestones, Aqua Trois-Rivieres and Character's Pub need follow-ups; Ivanhoe Pub 3761 may be the wrong business.
 - The credit reminder script gained --exclude=ids so Cafe de la Brulerie (1293), who just got a personal reply, can be left out.
 
+## Outreach template switch (2026-11-23, Mike's instruction "Switch outreach")
+- Evidence: over about 2,900 venues emailed 2026-10-09 to 2026-11-03 with an even split by venue number, the plain email got 3.7% replies against 1.1% for branded in English, and 4.8% against 2.2% in French.
+- Change: first-contact emails now go out plain to about 90% of venues, with every tenth venue kept on branded as a control (lib/outreach-variant.ts, used by lib/outreach-send.ts). Deterministic by venue number so a retried send never flips style. To go 100% plain, change PLAIN_SHARE and the modulo rule in that one file.
+- No first-contact email has been sent since 2026-11-03, so this only affects the next outreach run. The reply stats page note was updated to explain the new split.
+
 ## Open operational items (not features; each needs Mike)
 - Schedule the reply-suggestion task: Mike runs one `schtasks` command.
 - Relabel 59 sent replies filed under the wrong kind (SQL shown first, needs a yes).
