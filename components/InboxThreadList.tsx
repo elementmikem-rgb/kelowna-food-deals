@@ -426,6 +426,9 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
             );
           })}
         </nav>
+        <Link href="/admin/reply-stats" className="mt-3 hidden px-4 text-xs text-muted-2 underline underline-offset-2 hover:text-foreground md:block">
+          Reply stats
+        </Link>
       </aside>
 
       {/* Main */}

@@ -101,7 +101,7 @@ Added to Phase 1B after the poster test:
 |---|---|---|---|---|
 | 14 | Send at 9:30 their time | Use Brevo's own scheduled-send option (it accepts a send time up to 72 hours ahead), so nothing has to run on Mike's PC. The scheduled message appears in the thread as "scheduled" and can be cancelled. To be verified against the live API before building. | Possibly a `scheduled` send status. | M |
 | 15 | Notifications | A once-a-day summary email to Mike (new replies, pending suggestions, leads, stop requests), sent by the same scheduled task that reads replies. Alternative: a Windows pop-up. Needs Mike's choice. | None. | S to M |
-| 16 | Reply analytics | A read-only admin page: reply rate by region, language and email style (branded versus plain), time to first reply, and how fast Mike answers. Opens are shown with a warning that they are unreliable. | None. | M |
+| 16 | Reply analytics (BUILT 2026-11-22 at /admin/reply-stats, linked from the inbox sidebar; first real numbers: 5,746 venues emailed, 120 replied = 2.1%; plain emails 4.0% vs branded 1.4%) | A read-only admin page: reply rate by region, language and email style (branded versus plain), time to first reply, and how fast Mike answers. Opens are shown with a warning that they are unreliable. | None. | M |
 
 ## Totals
 - 4 new tables (`sender_aliases`, `inbox_snippets`, `venue_change_log`, and a small status addition for scheduled sends if needed), each shown as exact SQL first and each additive.
