@@ -68,6 +68,13 @@ Added to Phase 1B after the poster test:
 | 24 | Turn on the weekly owner stats email | Already built and off. Needs cron-service variables (a production change, needs Mike's yes). | None. | S |
 | 25 | Booking and ticket commission | The big revenue swing from the earlier notes. A separate project, not an inbox feature. | Yes. | XL |
 
+## Findings and fixes from the unanswered-replies review (2026-11-22, late)
+- 68 replies had no answer sent from the inbox. Reading the 35 that showed no sign of being handled found about a dozen needing action and two sales-flavoured threads (Cafe de la Brulerie 1293, Commonwealth 3255). Personal replies were drafted by Claude, approved by Mike and sent through the inbox (admin_reply ids 9932 and 9933).
+- The Commonwealth reply went to the venue address on file (info@) instead of the person who wrote (sadie@): the inbox addressed replies to the address on file, and 21 of 128 replies come from a different address. FIXED: replies now go to whoever wrote last (lib/reply-address.ts), with a visible note when that differs from the address on file; no-reply and system addresses fall back to the one on file.
+- Owner-provided specials had been wiped by the nightly run (rows with a source link are archived automatically; the known "wipe to zero" bug, fixed 2026-10-22). Restored with Mike's yes: 16 rows for McKibbin's 1216 (7), Crosscut 1627 (6), La Molisana 1712 (1) and Farm League 6573 (2), with archived_at and source_url set to null so they survive. Backup of the original values: specials-restore-backup-2026-11-22.json in Mike's home folder. Six other empty venues that replied were scraped and were left alone.
+- Still open from the review: Slabtown 7521 needs a reply asking for its weekly features; Tommy's 7893 asked for a happy hour wording change plus Trivia Sunday 19:00 and Karaoke Tuesday 20:30 (free Tommy's Light); Malt and Barley 2353 needed nothing (they claimed on 2026-10-03); Turbo Haus, Milestones, Aqua Trois-Rivieres and Character's Pub need follow-ups; Ivanhoe Pub 3761 may be the wrong business.
+- The credit reminder script gained --exclude=ids so Cafe de la Brulerie (1293), who just got a personal reply, can be left out.
+
 ## Open operational items (not features; each needs Mike)
 - Schedule the reply-suggestion task: Mike runs one `schtasks` command.
 - Relabel 59 sent replies filed under the wrong kind (SQL shown first, needs a yes).
