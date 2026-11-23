@@ -10,12 +10,13 @@
 //
 //   npm run send-credit-nudge                        dry run for everyone eligible
 //   npm run send-credit-nudge -- --ids=474,358       limit to these venue ids
+//   npm run send-credit-nudge -- --exclude=1293      leave these venue ids out (for example one that just got a personal reply)
 //   npm run send-credit-nudge -- --timezone=America/Vancouver
 //   npm run send-credit-nudge -- --send              really send (only to those passing every check)
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { db, venues, venueOwners, venueOwnerVenues, outreachSends } from "../db";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { sendOutreachEmail } from "../lib/outreach-email";
 import { wrapOutreachHtml } from "../lib/outreach-send";
 import { buildUnsubscribeUrl } from "../lib/unsubscribe";
@@ -40,6 +41,8 @@ async function main() {
   const tzFilter = arg("timezone");
   const previewDir = arg("preview-dir") ?? join(process.env.TEMP ?? ".", "credit-nudge-preview");
   const venueIds = idsArg ? idsArg.split(",").map(Number) : null;
+  const excludeArg = arg("exclude");
+  const excludeIds = excludeArg ? excludeArg.split(",").map(Number).filter((n) => Number.isInteger(n)) : [];
 
   // Eligible: claimed, still holding credit, never spent any, never sent this reminder, claimed a while ago.
   const rows = await db
@@ -61,7 +64,8 @@ async function main() {
         sql`${venues.claimedAt} <= now() - (${MIN_DAYS_SINCE_CLAIM} || ' days')::interval`,
         sql`not exists (select 1 from specials.credit_ledger l where l.venue_id = ${venues.id} and l.reason = 'spend')`,
         sql`not exists (select 1 from specials.outreach_sends x where x.venue_id = ${venues.id} and x.kind = 'credit_nudge')`,
-        venueIds ? inArray(venues.id, venueIds) : undefined
+        venueIds ? inArray(venues.id, venueIds) : undefined,
+        excludeIds.length > 0 ? notInArray(venues.id, excludeIds) : undefined
       )
     );
 

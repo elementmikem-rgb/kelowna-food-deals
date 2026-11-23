@@ -8,6 +8,7 @@ import { detectLanguage } from "@/lib/detect-language";
 import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, splitForTranslation } from "@/lib/translate-units";
 import { claimUrl, fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
 import { threadSignals } from "@/lib/inbox-signals";
+import { pickReplyAddress } from "@/lib/reply-address";
 import { clearDraft, loadDraft, saveDraft, type DraftStorage } from "@/lib/inbox-draft";
 import { loadOrder, nextKeyAfter, recentSendMinutes, type OrderStorage } from "@/lib/inbox-flow";
 import { formatMessageDate } from "@/lib/inbox-format";
@@ -268,6 +269,8 @@ export function InboxThread({
   const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
   const lastInboundLang = lastInbound?.bodyText ? detectLanguage(lastInbound.bodyText).lang : "unknown";
   const replyLang: "en" | "fr" = lastInboundLang === "fr" ? "fr" : "en";
+  // Reply to whoever wrote last (not always the address on file); see lib/reply-address.ts.
+  const reply = pickReplyAddress({ lastInboundEmail: lastInbound?.fromEmail ?? null, venueContactEmail: contactEmail });
   const signals = threadSignals(lastInbound?.bodyText);
   const showStopBanner = (signals.stop || signals.decline) && venueId !== null && !venueUnsubscribed && !(actionResult?.kind === "unsubscribe" && actionResult.ok);
 
@@ -484,7 +487,7 @@ export function InboxThread({
         const res = await fetch("/api/admin/inbox/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ venueId, toEmail: contactEmail, subject: payload.subject, body: payload.body }),
+          body: JSON.stringify({ venueId, toEmail: reply.to, subject: payload.subject, body: payload.body }),
           keepalive,
         });
         if (!res.ok) throw new Error();
@@ -498,7 +501,7 @@ export function InboxThread({
         setState("error");
       }
     },
-    [venueId, contactEmail, router, threadKey]
+    [venueId, reply.to, router, threadKey]
   );
 
   function clearTimers() {
@@ -509,7 +512,7 @@ export function InboxThread({
   }
 
   function handleSend() {
-    if (!replyText.trim() || !contactEmail) return;
+    if (!replyText.trim() || !reply.to) return;
     // A canned reply with a variable we could not fill (for example {{link}} on an unmatched sender)
     // must never go out as literal braces.
     if (/\{\{\w+\}\}/.test(replyText)) {
@@ -878,20 +881,25 @@ export function InboxThread({
       </div>
 
       {/* Reply area */}
-      {contactEmail ? (
+      {reply.to ? (
         replyOpen ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-md focus-within:border-accent-dim/60">
             <div className="flex items-center justify-between gap-3 text-xs text-muted-2">
               <span className="flex min-w-0 items-center gap-2">
                 <ReplyIcon width={16} height={16} />
                 <span className="truncate">
-                  <span className="font-medium text-foreground">{displayName}</span> &lt;{contactEmail}&gt;
+                  <span className="font-medium text-foreground">{displayName}</span> &lt;{reply.to}&gt;
                 </span>
               </span>
               <button onClick={() => { setReplyOpen(false); setReplyText(""); setDraftRestored(false); clearDraft(draftStore(), threadKey); handleUndo(); }} aria-label="Discard draft" title="Discard draft" className={iconBtn}>
                 <CloseIcon width={18} height={18} />
               </button>
             </div>
+            {reply.differsFromFile && (
+              <p className="text-xs text-stale">
+                This goes to the address they wrote from, which is not the address on file ({contactEmail}).
+              </p>
+            )}
             <textarea
               autoFocus
               value={replyText}
