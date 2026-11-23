@@ -1,7 +1,8 @@
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 import { db, venues, specials, events, venuePhotos, outreachSends, inboundEmails } from "@/db";
 import { emailBasis, type EmailBasis } from "@/lib/email-basis";
 import { formatSpecialLine, formatOwnerFunnel } from "@/lib/inbox-venue-format";
+import { siblingLine, summarizeSiblings } from "@/lib/inbox-siblings";
 
 // A read-only snapshot of a venue for the inbox side panel, so a reply can be compared with what the
 // listing currently says. Nothing here writes.
@@ -18,6 +19,7 @@ export interface VenuePanelData {
   specials: string[]; // one line each, see formatSpecialLine
   eventCount: number;
   photoCount: number;
+  siblings: string | null; // other locations in the same chain or sharing this email address, as one line
   ownerFunnel: string | null; // credits, live Boosts and photos for a claimed venue (see formatOwnerFunnel)
   note: string | null; // the audit note (checked_no_listings_note), trimmed
   sends: { kind: string; status: string; at: string; opened: boolean; clicked: boolean }[];
@@ -38,6 +40,7 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
       contactEmailSource: venues.contactEmailSource,
       contactEmailVerifiedAt: venues.contactEmailVerifiedAt,
       creditBalance: venues.creditBalance,
+      chainId: venues.chainId,
     })
     .from(venues)
     .where(eq(venues.id, venueId))
@@ -53,6 +56,25 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
           .limit(1)
       ).length > 0
     : false;
+
+  // Other locations in the same chain or with the same contact email. Active venues only, capped.
+  const sameChain = v.chainId !== null ? eq(venues.chainId, v.chainId) : undefined;
+  const sameEmail = v.contactEmail ? sql`lower(${venues.contactEmail}) = lower(${v.contactEmail})` : undefined;
+  const siblingCondition = or(sameChain, sameEmail);
+  const siblingRows = siblingCondition
+    ? await db
+        .select({
+          id: venues.id,
+          name: venues.name,
+          city: venues.city,
+          viaChain: v.chainId !== null ? sql<boolean>`${venues.chainId} = ${v.chainId}` : sql<boolean>`false`,
+          viaEmail: v.contactEmail ? sql<boolean>`lower(${venues.contactEmail}) = lower(${v.contactEmail})` : sql<boolean>`false`,
+        })
+        .from(venues)
+        .where(and(ne(venues.id, venueId), eq(venues.active, true), siblingCondition))
+        .orderBy(venues.name)
+        .limit(60)
+    : [];
 
   const [activeSpecials, [eventRow], [photoRow], sends, [boostSpecials], [boostEvents]] = await Promise.all([
     db
@@ -109,6 +131,7 @@ export async function getVenuePanel(venueId: number): Promise<VenuePanelData | n
     specials: activeSpecials.map(formatSpecialLine),
     eventCount: eventRow?.n ?? 0,
     photoCount: photoRow?.n ?? 0,
+    siblings: siblingLine(summarizeSiblings(siblingRows.map((r) => ({ ...r, viaChain: Boolean(r.viaChain), viaEmail: Boolean(r.viaEmail) })), venueId)),
     ownerFunnel: formatOwnerFunnel({
       claimed: v.claimedAt !== null,
       creditBalance: v.creditBalance,

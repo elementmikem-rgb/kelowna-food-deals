@@ -58,7 +58,7 @@ Added to Phase 1B after the poster test:
 
 | # | Feature | How | Database | Effort |
 |---|---|---|---|---|
-| 17 | Chain context in the venue panel | Show "N locations share this address or chain" with links; feeds item 13 and chain bundle offers (a 10% discount at 3 venues and 20% at 5 already exists in checkout). | None. | S |
+| 17 | Chain context in the venue panel (BUILT 2026-11-22; real data: 4 of 115 venues that wrote to us have another location sharing their address, and all 4 look like possible DUPLICATE listings of one business: Siam Thai ids 1646, Tipsy Fox 4392, Cafe de la Brulerie 1293, Couleur Cafe 8507; needs Mike's review, nothing changed) | Show "N locations share this address or chain" with links; feeds item 13 and chain bundle offers (a 10% discount at 3 venues and 20% at 5 already exists in checkout). | None. | S |
 | 18 | Auto-advance | After archiving or sending, open the next conversation. | None. | S |
 | 19 | Duplicate-reply guard | Warn when a reply to this thread was sent in the last few minutes. | None. | S |
 | 20 | Per-venue to-do notes | A short private note and a done tick on each venue, shown in the panel. | New column or table. | S to M |

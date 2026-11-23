@@ -39,6 +39,7 @@ export function VenuePanel({
           {venue.unsubscribed && <span className="rounded-md bg-danger/10 px-2 py-0.5 text-danger">Unsubscribed</span>}
         </div>
         {venue.ownerFunnel && <p className="mt-2 text-xs text-muted-2">Owner: {venue.ownerFunnel}</p>}
+        {venue.siblings && <p className="mt-2 text-xs text-muted-2">{venue.siblings}</p>}
       </div>
 
       {(oddLinks.length > 0 || otherSender) && (
