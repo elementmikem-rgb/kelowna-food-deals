@@ -9,6 +9,7 @@ import { finishSingleWord, glossaryTranslation, isSingleWord, joinTranslated, sp
 import { claimUrl, fillSnippet, ownerLoginUrl, snippetsFor } from "@/lib/inbox-snippets";
 import { threadSignals } from "@/lib/inbox-signals";
 import { clearDraft, loadDraft, saveDraft, type DraftStorage } from "@/lib/inbox-draft";
+import { loadOrder, nextKeyAfter, recentSendMinutes, type OrderStorage } from "@/lib/inbox-flow";
 import { formatMessageDate } from "@/lib/inbox-format";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
 import type { InboxThreadStatus } from "@/db/schema";
@@ -308,9 +309,22 @@ export function InboxThread({
     if (!(await patchThreadState({ status: s }))) setCurrentStatus(before);
   }
 
+  // After archiving, deleting or snoozing, open the next conversation from the list that was on screen (or the
+  // previous one when this was the last). With no remembered list, go back to the Inbox.
+  function goNext() {
+    let store: OrderStorage | null = null;
+    try {
+      store = window.sessionStorage;
+    } catch {
+      store = null;
+    }
+    const next = nextKeyAfter(loadOrder(store), threadKey);
+    router.push(next ? `/admin/inbox/t/${next}` : "/admin/inbox");
+  }
+
   async function snoozeTo(until: Date) {
     // Like Gmail: snoozing sends you back to the list, with the conversation out of the way until it wakes.
-    if (await patchThreadState({ snoozedUntil: until.toISOString() })) router.push("/admin/inbox");
+    if (await patchThreadState({ snoozedUntil: until.toISOString() })) goNext();
   }
 
   async function handleMarkUnread() {
@@ -337,7 +351,7 @@ export function InboxThread({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: inboundIds, archived: next }),
       });
-      if (res.ok) router.push("/admin/inbox");
+      if (res.ok) goNext();
     } finally {
       setActionBusy(false);
     }
@@ -355,7 +369,7 @@ export function InboxThread({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: inboundIds, venueId, contactEmail }),
       });
-      if (res.ok) router.push("/admin/inbox");
+      if (res.ok) goNext();
       else setActionResult({ kind: "delete", ok: false });
     } finally {
       setActionBusy(false);
@@ -500,6 +514,16 @@ export function InboxThread({
     // must never go out as literal braces.
     if (/\{\{\w+\}\}/.test(replyText)) {
       setTranslateError("Fill in or remove the {{placeholder}} before sending.");
+      return;
+    }
+    // Guard against sending two replies in quick succession (a double click, or answering twice).
+    const justSent = recentSendMinutes(messages.map((m) => ({ direction: m.direction, at: m.at })));
+    if (
+      justSent !== null &&
+      !window.confirm(
+        `You already sent a reply here ${justSent === 0 ? "less than a minute" : `${justSent} minute${justSent === 1 ? "" : "s"}`} ago and they have not written back. Send another?`
+      )
+    ) {
       return;
     }
     setTranslateError(null);

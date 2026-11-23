@@ -7,6 +7,7 @@ import { tidySnippet } from "@/lib/email-display";
 import { matchThread, parseQuery, type SearchableThread } from "@/lib/inbox-search";
 import { formatCount, formatListDate } from "@/lib/inbox-format";
 import { folderFilter, type Folder } from "@/lib/inbox-folders";
+import { saveOrder, threadsToCsv } from "@/lib/inbox-flow";
 import { statusLabel, statusPill } from "@/lib/inbox-status";
 import type { InboxThreadStatus } from "@/db/schema";
 import { SnoozeMenu } from "@/components/inbox/SnoozeMenu";
@@ -152,6 +153,26 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
       return matchThread(searchable, q);
     });
   }, [rows, folder, query]);
+
+  // Remember the order on screen so a conversation opened from here can advance to the next one.
+  useEffect(() => {
+    try {
+      saveOrder(window.sessionStorage, visible.map((t) => t.key));
+    } catch {
+      // storage blocked: no auto-advance
+    }
+  }, [visible]);
+
+  // Downloads the conversations currently shown (after folder and search) as a spreadsheet file.
+  function exportCsv() {
+    const csv = threadsToCsv(visible);
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inbox-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
@@ -543,6 +564,15 @@ export function InboxThreadList({ threads }: { threads: ThreadRow[] }) {
               <RefreshIcon />
             </button>
           )}
+
+          <button
+            onClick={exportCsv}
+            disabled={visible.length === 0}
+            title="Download the conversations shown here as a spreadsheet (CSV)"
+            className="rounded-full px-3 py-1 text-xs text-muted hover:bg-accent-soft/30 hover:text-foreground disabled:opacity-40"
+          >
+            Export
+          </button>
 
           <div className="ml-auto flex items-center gap-1 text-xs text-muted-2">
             <span>{formatCount(pageRows.length, visible.length, safePage * PAGE_SIZE + 1)}</span>
